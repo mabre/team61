@@ -7,8 +7,7 @@ public class TerrainLoader {
     /**
      * @param filename the file containing the board to be loaded
      * @return an ArrayList containing the board ([row][column])
-     * A valid board file may contain the following chars:
-     * TODO
+     * How a valid board looks like is docuemnted in BoardLegend
      */
     public static ArrayList<ArrayList<Character>> load(String filename) {
         // TODO read actual file
@@ -39,7 +38,7 @@ public class TerrainLoader {
         rows.add(l2);
 
         ArrayList <Character> l3 = new ArrayList<>();
-        l3.add('/');
+        l3.add('|');
         l3.add('E');
         l3.add('S');
         l3.add('E');
@@ -47,11 +46,11 @@ public class TerrainLoader {
         rows.add(l3);
 
         ArrayList<Character> l4 = new ArrayList<>();
-        l4.add('*');
-        l4.add('*');
-        l4.add('*');
-        l4.add('*');
-        l4.add('*');
+        l4.add('W');
+        l4.add('W');
+        l4.add('W');
+        l4.add('W');
+        l4.add('W');
         rows.add(l4);
 
         return rows;
