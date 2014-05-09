@@ -18,7 +18,7 @@ import java.util.ArrayList;
  * Created by kegny on 08.05.14.
  * This class is supposed to draw the Array given by "TerrainLoader" rendering the Map visible.
  */
-public class Mapwindow extends Application{
+public class MapWindow extends Application{
     public static void main(String[] args){
          launch(args);
     }
