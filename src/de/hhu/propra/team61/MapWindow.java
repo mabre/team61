@@ -24,7 +24,8 @@ public class MapWindow extends Application{
     }
 
     public void start(Stage primaryStage) {
-        ArrayList<ArrayList<Character>> terrain = TerrainLoader.load("Something"); //Waiting for actual implementation of this method
+        // TODO should become a member variable initialized in constructor
+        ArrayList<ArrayList<Character>> terrain = TerrainLoader.load("Board");
 
         //Draw Terrain
         GridPane grid = new GridPane();
