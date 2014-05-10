@@ -5,6 +5,8 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -34,8 +36,33 @@ public class MapWindow extends Application{
 
         for(int i=0; i < terrain.size(); i++){
             for(int j=0; j < terrain.get(i).size(); j++){
-                Label test = new Label(terrain.get(i).get(j)+""); //+"" Makes the Char a String to avoid type mismatches
-                grid.add(test,j,i);
+                char terraintype = terrain.get(i).get(j);
+                String loadImg ="file:";
+
+                switch(terraintype) {
+                    case 'P': loadImg += "";
+                              break;
+                    case '_': loadImg += "";
+                              break;
+                    case '/': loadImg += "slant_ground_le.png";
+                              break;
+                    case '\\':loadImg += "slant_ground_ri.png";
+                              break;
+                    case '|': loadImg += "Wall_le.png";
+                              break;
+                    case 'S': loadImg += "stones.png";
+                              break;
+                    case 'E': loadImg += "earth.png";
+                              break;
+                    case 'W': loadImg += "water.png";
+                              break;
+                    default : loadImg += "sky.png";
+                }
+                Image image = new Image(loadImg);
+                ImageView content = new ImageView();
+                content.setImage(image);
+
+                grid.add(content,j,i);
             }
         }
 
