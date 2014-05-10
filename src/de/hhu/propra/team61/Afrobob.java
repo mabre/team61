@@ -6,7 +6,7 @@ package de.hhu.propra.team61;
  * Markus Brenneis (Mat.Nr.) Marbre
  * Jan Ecknigk 2202505 (GitName)
  * Jessica (Nachname/Mat.Nr./GitName)
- * Kevin Gnyp (Mat.Nr/GitName)
+ * Kevin Gnyp (Mat.Nr 2166803/GitName: kegny)
  * Simon Franz 2204765 Git: DiniiAntares
  * Project: Worms clone
  *
