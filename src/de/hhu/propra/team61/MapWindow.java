@@ -4,7 +4,6 @@ import de.hhu.propra.team61.IO.TerrainLoader;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -37,16 +36,15 @@ public class MapWindow extends Application{
         for(int i=0; i < terrain.size(); i++){
             for(int j=0; j < terrain.get(i).size(); j++){
                 char terraintype = terrain.get(i).get(j);
-                String loadImg ="file:";
-
+                String loadImg ="file:Res/";
                 switch(terraintype) {
-                    case 'P': loadImg += "";
+                    case 'P': loadImg += "sky.png"; //ToDo sky.png is not the picture we are looking for
                               break;
-                    case '_': loadImg += "";
+                    case '_': loadImg += "plain_ground.png";
                               break;
-                    case '/': loadImg += "slant_ground_le.png";
+                    case '/': loadImg += "slant_ground_ri.png";
                               break;
-                    case '\\':loadImg += "slant_ground_ri.png";
+                    case '\\':loadImg += "slant_ground_le.png";
                               break;
                     case '|': loadImg += "Wall_le.png";
                               break;
@@ -78,5 +76,5 @@ public class MapWindow extends Application{
 
     public static void main(String[] args){
         draw("Board");
-    }
+    } // Just for testing of the class
 }
