@@ -11,8 +11,8 @@ import javafx.stage.*;
 /*
  * Created by dinii on 15.04.14.
  * ProPra Team 61:
- * Markus Brenneis (Mat.Nr.) Marbre
- * Jan Ecknigk 2202505 (GitName)
+ * Markus Brenneis 2194529 Git: mabre
+ * Jan Ecknigk 2202505 Git: Jan-Ecknigk
  * Jessica Petrasch 2166230 Git: Jessypet
  * Kevin Gnyp 2166803 Git: Kegny
  * Simon Franz 2204765 Git: DiniiAntares
@@ -37,8 +37,8 @@ public class Afrobob extends Application {
         grid.setVgap(10);
         grid.setPadding(new Insets(25, 25, 25, 25));
 
-        Button mstartl = new Button("Start local game");  	//menue-start-local, menue-start-network, menue-options, menue-exit
-        grid.setHalignment(mstartl, HPos.CENTER);           //centers the buttons, not needed for mstartn as the biggest button
+        Button mstartl = new Button("Start local game");  //menue-start-local, menue-start-network, menue-options, menue-exit
+        grid.setHalignment(mstartl, HPos.CENTER);  //centers the buttons, not needed for mstartn as the biggest button
         grid.add(mstartl, 0, 1);
         Button mstartn = new Button("Start network game");
         grid.add(mstartn, 0, 2);
