@@ -64,7 +64,6 @@ public class Afrobob extends Application {
             @Override
             public void handle(ActionEvent e) {
                 MapWindow mapwindow = new MapWindow("Board"); // TODO map name is hardcoded
-                mapwindow.draw();
             }
         });
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options

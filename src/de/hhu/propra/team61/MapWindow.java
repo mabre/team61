@@ -17,40 +17,57 @@ import java.util.ArrayList;
  */
 public class MapWindow extends Application{
     private ArrayList<ArrayList<Character>> terrain;
+    private Scene drawing;
+    private Stage primaryStage;
+    private StackPane root;
+    private GridPane grid;
 
     public MapWindow(String map) {
         terrain = TerrainLoader.load(map);
+
+        primaryStage = new Stage();
+
+        root = new StackPane();
+
+        drawFirstTime();
+
+        drawing = new Scene(root, 800, 600);
+
+        primaryStage.setTitle("The Playground");
+        primaryStage.setScene(drawing);
+        primaryStage.show();
     }
 
-    public void draw() {
-        Stage primaryStage = new Stage();
-
+    /**
+     * creates Image objects for the fields
+     */
+    private void drawFirstTime() {
         //Draw Terrain
-        GridPane grid = new GridPane();
+        grid = new GridPane();
         grid.setGridLinesVisible(true); //Gridlines on/off
         grid.setAlignment(Pos.CENTER);
-
+        
         for(int i=0; i < terrain.size(); i++){
             for(int j=0; j < terrain.get(i).size(); j++){
                 char terraintype = terrain.get(i).get(j);
                 String loadImg ="file:resources/";
                 switch(terraintype) {
                     case 'P': loadImg += "sky.png"; //ToDo sky.png is not the picture we are looking for
-                              break;
+                        break;
                     case '_': loadImg += "plain_ground.png";
-                              break;
-                    case '/': loadImg += "slant_ground_re.png";
-                              break;
+                        break;
+                    case '/': loadImg += "slant_ground_ri.png";
+                        break;
                     case '\\':loadImg += "slant_ground_le.png";
-                              break;
-                    case '|': loadImg += "Wall_le.png";
-                              break;
-                    case 'S': loadImg += "Stones.png";
-                              break;
+                        break;
+                    case '|': loadImg += "wall_le.png";
+                        break;
+                    case 'S': loadImg += "stones.png";
+                        break;
                     case 'E': loadImg += "earth.png";
-                              break;
-                    case 'W': loadImg += "Water.png";
-                              break;
+                        break;
+                    case 'W': loadImg += "water.png";
+                        break;
                     default : loadImg += "sky.png";
                 }
                 Image image = new Image(loadImg);
@@ -58,17 +75,16 @@ public class MapWindow extends Application{
                 content.setImage(image);
 
                 grid.add(content,j,i);
+                //grid.setConstraints(content,j,i);
             }
         }
 
-        StackPane root = new StackPane();
         root.getChildren().add(grid);
+    }
 
-        Scene drawing = new Scene(root, 800, 600);
+    public void draw() {
 
-        primaryStage.setTitle("The Playground");
-        primaryStage.setScene(drawing);
-        primaryStage.show();
+        System.out.println("bla");
     }
 
     @Override
