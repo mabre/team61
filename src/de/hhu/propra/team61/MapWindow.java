@@ -52,7 +52,7 @@ public class MapWindow extends Application{
                 char terraintype = terrain.get(i).get(j);
                 String loadImg ="file:resources/";
                 switch(terraintype) {
-                    case 'P': loadImg += "sky.png"; //ToDo sky.png is not the picture we are looking for
+                    case 'P': loadImg += "spawn.png"; // TODO just temporary shown
                         break;
                     case '_': loadImg += "plain_ground.png";
                         break;
