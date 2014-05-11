@@ -42,17 +42,17 @@ public class MapWindow extends Application{
                               break;
                     case '_': loadImg += "plain_ground.png";
                               break;
-                    case '/': loadImg += "slant_ground_ri.png";
+                    case '/': loadImg += "slant_ground_re.png";
                               break;
                     case '\\':loadImg += "slant_ground_le.png";
                               break;
                     case '|': loadImg += "Wall_le.png";
                               break;
-                    case 'S': loadImg += "stones.png";
+                    case 'S': loadImg += "Stones.png";
                               break;
                     case 'E': loadImg += "earth.png";
                               break;
-                    case 'W': loadImg += "water.png";
+                    case 'W': loadImg += "Water.png";
                               break;
                     default : loadImg += "sky.png";
                 }
