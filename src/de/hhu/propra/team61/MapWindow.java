@@ -16,17 +16,14 @@ import java.util.ArrayList;
  * This class is supposed to draw the Array given by "TerrainLoader" rendering the Map visible.
  */
 public class MapWindow extends Application{
-    private static String map = "";
+    private ArrayList<ArrayList<Character>> terrain;
 
-    public static void draw(String map_src){
-        map = map_src;
-        launch();
+    public MapWindow(String map) {
+        terrain = TerrainLoader.load(map);
     }
 
-    public void start(Stage primaryStage) {
-        // ToDo should become a member variable initialized in constructor -mabre
-        // Problem: launch() is static; Can't be called from an Instance; Made a workaround function "draw()" -kegny
-        ArrayList<ArrayList<Character>> terrain = TerrainLoader.load(map);
+    public void draw() {
+        Stage primaryStage = new Stage();
 
         //Draw Terrain
         GridPane grid = new GridPane();
@@ -67,14 +64,13 @@ public class MapWindow extends Application{
         StackPane root = new StackPane();
         root.getChildren().add(grid);
 
-        Scene zeichnung = new Scene(root, 800, 600);
+        Scene drawing = new Scene(root, 800, 600);
 
         primaryStage.setTitle("The Playground");
-        primaryStage.setScene(zeichnung);
+        primaryStage.setScene(drawing);
         primaryStage.show();
     }
 
-    public static void main(String[] args){
-        draw("Board");
-    } // Just for testing of the class
+    @Override
+    public void start(Stage ostage) { }
 }
