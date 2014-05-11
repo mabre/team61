@@ -3,7 +3,6 @@ package de.hhu.propra.team61;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.scene.*;
-import javafx.scene.text.*;
 import javafx.geometry.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -64,7 +63,7 @@ public class Afrobob extends Application {
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options
             @Override
             public void handle(ActionEvent e) {
-                Options optionwindow = new Options();
+                OptionsWindow optionwindow = new OptionsWindow();
                 optionwindow.do_options();
             }
         });

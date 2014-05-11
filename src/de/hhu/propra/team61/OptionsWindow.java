@@ -1,3 +1,5 @@
+package de.hhu.propra.team61;
+
 import javafx.application.*;
 import javafx.event.*;
 import javafx.scene.*;
@@ -14,7 +16,7 @@ import javafx.collections.*;
  *
  */
 
-public class Options extends Application {
+public class OptionsWindow extends Application {
 
 	public void do_options() {
 		Stage ostage = new Stage();
