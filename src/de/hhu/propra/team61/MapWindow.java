@@ -17,6 +17,8 @@ import java.util.ArrayList;
  */
 public class MapWindow extends Application{
     private ArrayList<ArrayList<Character>> terrain;
+    private String ImgSrc ="file:resources/";
+
     private Scene drawing;
     private Stage primaryStage;
     private StackPane root;
@@ -46,46 +48,50 @@ public class MapWindow extends Application{
         grid = new GridPane();
         grid.setGridLinesVisible(true); //Gridlines on/off
         grid.setAlignment(Pos.CENTER);
-        
+
+        //Preload Images
+        Image spawn           = new Image(ImgSrc+"spawn.png");          // TODO just temporary shown
+        Image plain_ground    = new Image(ImgSrc+"plain_ground.png");
+        Image slant_ground_ri = new Image(ImgSrc+"slant_ground_ri.png");
+        Image slant_ground_le = new Image(ImgSrc+"slant_ground_le.png");
+        Image wall_le         = new Image(ImgSrc+"wall_le.png");
+        Image stones          = new Image(ImgSrc+"stones.png");
+        Image earth           = new Image(ImgSrc+"earth.png");
+        Image water           = new Image(ImgSrc+"water.png");
+        Image sky             = new Image(ImgSrc+"sky.png");
+
+        //Draw Images on their positions
         for(int i=0; i < terrain.size(); i++){
             for(int j=0; j < terrain.get(i).size(); j++){
-                char terraintype = terrain.get(i).get(j);
-                String loadImg ="file:resources/";
-                switch(terraintype) {
-                    case 'P': loadImg += "spawn.png"; // TODO just temporary shown
-                        break;
-                    case '_': loadImg += "plain_ground.png";
-                        break;
-                    case '/': loadImg += "slant_ground_ri.png";
-                        break;
-                    case '\\':loadImg += "slant_ground_le.png";
-                        break;
-                    case '|': loadImg += "wall_le.png";
-                        break;
-                    case 'S': loadImg += "stones.png";
-                        break;
-                    case 'E': loadImg += "earth.png";
-                        break;
-                    case 'W': loadImg += "water.png";
-                        break;
-                    default : loadImg += "sky.png";
-                }
-                Image image = new Image(loadImg);
                 ImageView content = new ImageView();
-                content.setImage(image);
+                char terraintype = terrain.get(i).get(j);
+                switch(terraintype) {
+                    case 'P': content.setImage(spawn);
+                        break;
+                    case '_': content.setImage(plain_ground);
+                        break;
+                    case '/': content.setImage(slant_ground_ri);
+                        break;
+                    case '\\': content.setImage(slant_ground_le);
+                        break;
+                    case '|': content.setImage(wall_le);
+                        break;
+                    case 'S': content.setImage(stones);
+                        break;
+                    case 'E': content.setImage(earth);
+                        break;
+                    case 'W': content.setImage(water);
+                        break;
+                    default : content.setImage(sky);
+                }
 
                 grid.add(content,j,i);
                 //grid.setConstraints(content,j,i);
             }
         }
-
         root.getChildren().add(grid);
     }
 
-    public void draw() {
-
-        System.out.println("bla");
-    }
 
     @Override
     public void start(Stage ostage) { }
