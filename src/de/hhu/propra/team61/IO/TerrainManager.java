@@ -4,9 +4,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class TerrainLoader {
+public class TerrainManager {
 
     private static final String LEVEL_DIR = "resources/levels/";
+    private static final String SAVE_LEVEL_FILE = "Afrobob.level.conf";
 
     /**
      * @return a list of available levels, w/o path, including file name extension
@@ -44,6 +45,30 @@ public class TerrainLoader {
         }
 
         return rows;
+    }
+
+    /**
+     * @param level is saved as ordinary level file to SAVE_LEVEL_FILE
+     */
+    public static void save(ArrayList<ArrayList<Character>> level) {
+        String levelString = "";
+        for(ArrayList<Character> row : level) {
+            for(Character field : row) {
+                levelString += field;
+            }
+            levelString += "\n";
+        }
+        if(!levelString.equals("")) {
+            levelString = levelString.substring(0, levelString.length()-1);
+        }
+        try(PrintWriter writer = new PrintWriter(SAVE_LEVEL_FILE, "UTF-8")) {
+            writer.print(levelString);
+        // TODO do something sensible here
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
 }

@@ -1,6 +1,6 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.IO.TerrainLoader;
+import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -13,7 +13,7 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 /**
  * Created by kegny on 08.05.14.
- * This class is supposed to draw the Array given by "TerrainLoader" rendering the Map visible.
+ * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application{
     private ArrayList<ArrayList<Character>> terrain;
@@ -23,7 +23,7 @@ public class MapWindow extends Application{
     private GridPane grid;
 
     public MapWindow(String map) {
-        terrain = TerrainLoader.load(map);
+        terrain = TerrainManager.load(map);
 
         primaryStage = new Stage();
 

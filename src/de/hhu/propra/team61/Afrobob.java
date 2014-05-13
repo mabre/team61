@@ -1,6 +1,6 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.IO.TerrainLoader;
+import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.application.*;
 import javafx.event.*;
 import javafx.scene.*;
@@ -64,7 +64,7 @@ public class Afrobob extends Application {
         mstartl.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                MapWindow mapwindow = new MapWindow(TerrainLoader.getAvailableTerrains().get(0)); // TODO map is hardcoded
+                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0)); // TODO map is hardcoded
             }
         });
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options
