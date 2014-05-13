@@ -7,3 +7,4 @@ Board-Legend
 "W" = water (Not walkable: You also drown if your hitbox is 3/4 in water)
 "S" = stone (graphic/design)
 "E" = earth (graphic/design)
+"I" = ice   (graphic/design)
