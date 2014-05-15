@@ -1,7 +1,10 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -9,6 +12,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.util.ArrayList;
 /**
@@ -22,10 +26,23 @@ public class MapWindow extends Application{
     private StackPane root;
     private GridPane grid;
 
+    private Server server;
+    private Client client;
+    private Thread serverThread;
+    private Thread clientThread;
+
     public MapWindow(String map) {
         terrain = TerrainManager.load(map);
 
         primaryStage = new Stage();
+        primaryStage.setOnCloseRequest(we -> {
+            clientThread.interrupt();
+            serverThread.interrupt();
+            System.out.println("MapWindow threads interrupted");
+            client.stop();
+            server.stop();
+            System.out.println("MapWindow client/server stopped");
+        });
 
         root = new StackPane();
 
@@ -36,6 +53,11 @@ public class MapWindow extends Application{
         primaryStage.setTitle("The Playground");
         primaryStage.setScene(drawing);
         primaryStage.show();
+
+        serverThread = new Thread(server = new Server());
+        serverThread.start();
+        clientThread = new Thread(client = new Client()); // TODO race condition
+        clientThread.start();
     }
 
     /**
