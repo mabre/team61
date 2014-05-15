@@ -7,6 +7,7 @@ import java.util.Arrays;
 public class TerrainManager {
 
     private static final String LEVEL_DIR = "resources/levels/";
+    private static final String LEVEL_FILE_EXTENSION = ".lvl";
     private static final String SAVE_LEVEL_FILE = "Afrobob.level.conf";
 
     /**
@@ -14,7 +15,7 @@ public class TerrainManager {
      */
     public static ArrayList<String> getAvailableTerrains() {
         File dir = new File(LEVEL_DIR);
-        FilenameFilter filter = (f, s) -> s.toLowerCase().endsWith(".txt");
+        FilenameFilter filter = (f, s) -> s.toLowerCase().endsWith(LEVEL_FILE_EXTENSION);
         ArrayList<String> levels = new ArrayList<>(Arrays.asList(dir.list(filter)));
         System.out.println("Levels found: "+levels);
         return levels;
