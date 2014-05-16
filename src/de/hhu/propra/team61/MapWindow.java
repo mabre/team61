@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.application.Application;
 import javafx.geometry.Pos;
@@ -37,6 +38,15 @@ public class MapWindow extends Application{
         primaryStage.setScene(drawing);
         primaryStage.show();
     }
+    public MapWindow(JSONObject input){
+        this.terrain = (ArrayList<ArrayList<Character>>) input.get("playground");
+
+    }
+    public JSONObject toJson(){
+        JSONObject output = new JSONObject();
+        output.put("playground",terrain);
+        return output;
+    }
 
     /**
      * creates Image objects for the fields
@@ -68,6 +78,8 @@ public class MapWindow extends Application{
                         break;
                     case 'W': loadImg += "water.png";
                         break;
+                    case 'I': loadImg += "ice.png";
+                        break;
                     default : loadImg += "sky.png";
                 }
                 Image image = new Image(loadImg);
@@ -82,11 +94,7 @@ public class MapWindow extends Application{
         root.getChildren().add(grid);
     }
 
-    public void draw() {
-
-        System.out.println("bla");
-    }
-
     @Override
     public void start(Stage ostage) { }
+
 }
