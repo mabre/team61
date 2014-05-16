@@ -5,18 +5,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * Created by markus on 15.05.14.
  */
 public class Client implements Runnable {
     BufferedReader in;
+    Socket socket;
     PrintWriter out;
 
     public void run() {
         try {
             String serverAddress = "127.0.0.1"; // TODO
-            Socket socket = new Socket(serverAddress, 9042);
+            socket = new Socket(serverAddress, 9042);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -33,6 +35,8 @@ public class Client implements Runnable {
                 }
                 System.out.println("e");
             }
+        } catch (SocketException e) {
+            System.out.println("CLIENT readLine() interrupted by SocketException");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -41,8 +45,8 @@ public class Client implements Runnable {
     public void stop() {
         System.out.println("CLIENT stopping");
         try {
-            if(in != null) {
-                in.close();
+            if(socket != null) {
+                socket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
