@@ -6,30 +6,46 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+//import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import java.awt.event.KeyEvent;
 
+import java.awt.event.KeyListener;
+import java.security.Key;
 import java.util.ArrayList;
 /**
  * Created by kegny on 08.05.14.
+ * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
-public class MapWindow extends Application{
+public class MapWindow extends Application implements KeyListener {
     private ArrayList<ArrayList<Character>> terrain;
     private Scene drawing;
     private Stage primaryStage;
     private StackPane root;
     private GridPane grid;
+    private int activeTeam = 0;
+    private int turnCount = 0;
+    private int levelCounter = 0;
+
+    ArrayList<Integer> team; //TODO use Team class
+
 
     public MapWindow(String map) {
+        team = new ArrayList<Integer>();
+        team.add(0);
+        team.add(42);
+
+
         terrain = TerrainManager.load(map);
 
         primaryStage = new Stage();
 
         root = new StackPane();
 
-        drawFirstTime();
+        draw();
 
         drawing = new Scene(root, 800, 600);
 
@@ -41,7 +57,7 @@ public class MapWindow extends Application{
     /**
      * creates Image objects for the fields
      */
-    private void drawFirstTime() {
+    private void draw() {
         //Draw Terrain
         grid = new GridPane();
         grid.setGridLinesVisible(true); //Gridlines on/off
@@ -66,7 +82,7 @@ public class MapWindow extends Application{
                         break;
                     case 'E': loadImg += "earth.png";
                         break;
-                    case 'W': loadImg += "water.png";
+                    case 'W': loadImg += "water.png";  //Add Ice and Grass "I" and "G"
                         break;
                     default : loadImg += "sky.png";
                 }
@@ -82,11 +98,55 @@ public class MapWindow extends Application{
         root.getChildren().add(grid);
     }
 
-    public void draw() {
 
-        System.out.println("bla");
+  /*  //Level change trough "Press #" and end turn with "Press Space"
+    @Override
+    public void keyPressed (KeyEvent keyPress){
+        if (keyPress.getCode() == KeyCode.L) {
+            cheatMode();
+        } else if (keyPress.getCode() == KeyCode.SPACE) {
+            endTurn();
+        }
+
+
+    }*/
+
+    public void cheatMode (){
+        levelCounter++;
+        levelCounter = levelCounter % TerrainManager.getAvailableTerrains().size();
+        TerrainManager.getAvailableTerrains().get(levelCounter);
+
+    }
+
+    public void endTurn (){
+        //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
+        turnCount++;
+        turnCount = turnCount % team.size(); //TODO graphical output for turnCount
+
     }
 
     @Override
-    public void start(Stage ostage) { }
+    public void start(Stage ostage) {
+
+    }
+
+    @Override
+    public void keyTyped(java.awt.event.KeyEvent e) {
+
+    }
+
+
+    @Override
+    public void keyPressed(KeyEvent keyPress) {
+        System.out.println("here");
+        switch (keyPress.getKeyCode()) {
+            case KeyEvent.VK_L: cheatMode(); break;
+            case KeyEvent.VK_SPACE: endTurn(); break;
+        }
+    }
+
+    @Override
+    public void keyReleased(java.awt.event.KeyEvent e) {
+
+    }
 }
