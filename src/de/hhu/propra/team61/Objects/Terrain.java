@@ -14,6 +14,8 @@ import java.util.ArrayList;
  * Created by markus on 17.05.14.
  */
 public class Terrain extends GridPane {
+    private static String imgPath = "file:resources/";
+
     private ArrayList<ArrayList<Character>> terrain;
     private ArrayList<Point2D> spawnPoints;
 
@@ -29,31 +31,32 @@ public class Terrain extends GridPane {
         setGridLinesVisible(true); //Gridlines on/off
         setAlignment(Pos.CENTER);
 
+        String img;
+
         for(int i=0; i < terrain.size(); i++){
             for(int j=0; j < terrain.get(i).size(); j++){
                 char terraintype = terrain.get(i).get(j);
-                String loadImg ="file:resources/"; // TODO this was removed in another branch?
                 switch(terraintype) {
-                    case '_': loadImg += "plain_ground.png";
+                    case '_': img = "plain_ground.png";
                         break;
-                    case '/': loadImg += "slant_ground_ri.png";
+                    case '/': img = "slant_ground_ri.png";
                         break;
-                    case '\\':loadImg += "slant_ground_le.png";
+                    case '\\': img = "slant_ground_le.png";
                         break;
-                    case '|': loadImg += "wall_le.png";
+                    case '|': img = "wall_le.png";
                         break;
-                    case 'S': loadImg += "stones.png";
+                    case 'S': img = "stones.png";
                         break;
-                    case 'E': loadImg += "earth.png";
+                    case 'E': img = "earth.png";
                         break;
-                    case 'W': loadImg += "water.png";
+                    case 'W': img = "water.png";
                         break;
                     case 'P': // special case: spawn point, add to list and draw sky
                         spawnPoints.add(new Point2D(i, j));
                         terrain.get(i).set(j, ' ');
-                    default : loadImg += "sky.png";
+                    default : img = "sky.png";
                 }
-                Image image = new Image(loadImg);
+                Image image = new Image(imgPath + img);
                 ImageView content = new ImageView();
                 content.setImage(image);
 

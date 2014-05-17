@@ -38,11 +38,6 @@ public class MapWindow extends Application{
         terrain = new Terrain(TerrainManager.load(name));
     }
 
-    public void draw() {
-
-        System.out.println("bla");
-    }
-
     @Override
     public void start(Stage ostage) { }
 }
