@@ -25,6 +25,7 @@ public class Figure {
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
     }
+
     public Figure(JSONObject input){
         this.name = input.getString("name");
         this.health = input.getInt("health");
@@ -32,7 +33,10 @@ public class Figure {
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
+        System.out.println("FIGURE created by json");
+        printAllAttributes(this);
     }
+
     public JSONObject toJson(){
         JSONObject output = new JSONObject();
         output.put("name", name);
