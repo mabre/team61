@@ -114,8 +114,7 @@ public class MapWindow extends Application /*implements KeyListener*/ {
 
     public void cheatMode (){
         levelCounter++;
-        levelCounter = levelCounter % TerrainManager.getAvailableTerrains().size();
-        terrain = TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter));
+        terrain = TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains()));
         draw();
     }
 
@@ -123,7 +122,6 @@ public class MapWindow extends Application /*implements KeyListener*/ {
         //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
         turnCount++;
         turnCount = turnCount % team.size(); //TODO graphical output for turnCount
-
     }
 
     @Override
