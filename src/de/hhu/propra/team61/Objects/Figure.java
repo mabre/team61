@@ -6,7 +6,7 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
  * Created by kevgny on 14.05.14.
  */
 
-public class Figur {
+public class Figure {
     private String name;
     private int health;
     private int armor;
@@ -16,7 +16,7 @@ public class Figur {
     private boolean isStuck;
 
     // In and Out
-    public Figur(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+    public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
         this.name   = name;
         this.health = hp;
         this.armor  = armor;
@@ -25,7 +25,7 @@ public class Figur {
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
     }
-    public Figur(JSONObject input){
+    public Figure(JSONObject input){
         this.name = input.getString("name");
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
@@ -69,7 +69,7 @@ public class Figur {
 
 
     //For testing purposes only
-    private static void printAllAttributes(Figur testwurm){
+    private static void printAllAttributes(Figure testwurm){
         System.out.println("Health  : " + testwurm.getHealth());
         System.out.println("Armor   : " + testwurm.getArmor());
         System.out.println("Name    : " + testwurm.getName());
@@ -81,7 +81,7 @@ public class Figur {
     public static void main(String[] args){
         System.out.println("Var-Constructor-Test");
         System.out.println("-------------------------");
-        Figur testwurmA = new Figur("Stig",100,36,false,false,true);
+        Figure testwurmA = new Figure("Stig",100,36,false,false,true);
         printAllAttributes(testwurmA);
 
         System.out.println("Getter-Setter-Test");
@@ -97,7 +97,7 @@ public class Figur {
         System.out.println("JSON-Constructor-IO-Test");
         System.out.println("-------------------------");
         System.out.println("JSON: "+testwurmA.toJson().toString());
-        Figur testwurmB = new Figur(testwurmA.toJson());
+        Figure testwurmB = new Figure(testwurmA.toJson());
         printAllAttributes(testwurmB);
     }
 }
