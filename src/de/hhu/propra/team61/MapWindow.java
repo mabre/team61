@@ -1,35 +1,28 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Objects.Terrain;
 import javafx.application.Application;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
 /**
  * Created by kegny on 08.05.14.
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application{
-    private ArrayList<ArrayList<Character>> terrain;
     private Scene drawing;
     private Stage primaryStage;
     private StackPane root;
-    private GridPane grid;
+    private Terrain terrain;
 
     public MapWindow(String map) {
-        terrain = TerrainManager.load(map);
-
         primaryStage = new Stage();
 
         root = new StackPane();
-
-        drawFirstTime();
+        loadTerrain(map);
+        root.getChildren().add(terrain);
 
         drawing = new Scene(root, 800, 600);
 
@@ -41,45 +34,8 @@ public class MapWindow extends Application{
     /**
      * creates Image objects for the fields
      */
-    private void drawFirstTime() {
-        //Draw Terrain
-        grid = new GridPane();
-        grid.setGridLinesVisible(true); //Gridlines on/off
-        grid.setAlignment(Pos.CENTER);
-        
-        for(int i=0; i < terrain.size(); i++){
-            for(int j=0; j < terrain.get(i).size(); j++){
-                char terraintype = terrain.get(i).get(j);
-                String loadImg ="file:resources/";
-                switch(terraintype) {
-                    case 'P': loadImg += "spawn.png"; // TODO just temporary shown
-                        break;
-                    case '_': loadImg += "plain_ground.png";
-                        break;
-                    case '/': loadImg += "slant_ground_ri.png";
-                        break;
-                    case '\\':loadImg += "slant_ground_le.png";
-                        break;
-                    case '|': loadImg += "wall_le.png";
-                        break;
-                    case 'S': loadImg += "stones.png";
-                        break;
-                    case 'E': loadImg += "earth.png";
-                        break;
-                    case 'W': loadImg += "water.png";
-                        break;
-                    default : loadImg += "sky.png";
-                }
-                Image image = new Image(loadImg);
-                ImageView content = new ImageView();
-                content.setImage(image);
-
-                grid.add(content,j,i);
-                //grid.setConstraints(content,j,i);
-            }
-        }
-
-        root.getChildren().add(grid);
+    private void loadTerrain(String name) {
+        terrain = new Terrain(TerrainManager.load(name));
     }
 
     public void draw() {
