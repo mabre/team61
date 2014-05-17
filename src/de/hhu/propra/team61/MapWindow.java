@@ -6,12 +6,7 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Objects.Terrain;
 import javafx.application.Application;
-import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -42,12 +37,8 @@ public class MapWindow extends Application {
         }
 
         teams = new ArrayList<>();
-        for(int i=0; i<2; i++) { // TODO hard coded 2 teams
-            // TODO use Terrain class to get spawn points
-            ArrayList<Point2D> spawnPoints = new ArrayList<>();
-            spawnPoints.add(new Point2D(0,10*i));
-            spawnPoints.add(new Point2D(0,30*i));
-            teams.add(new Team(spawnPoints));
+        for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
+            teams.add(new Team(terrain.getRandomSpawnPoints(2)));
         }
 
         initialize();
@@ -70,6 +61,9 @@ public class MapWindow extends Application {
         initialize();
     }
 
+    /**
+     * creates the stage, so that everything is visible
+     */
     private void initialize() {
         primaryStage = new Stage();
         primaryStage.setOnCloseRequest(event -> {

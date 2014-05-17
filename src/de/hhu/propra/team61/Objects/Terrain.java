@@ -93,4 +93,17 @@ public class Terrain extends GridPane {
         System.out.println("TERRAIN: returning spawn point #" + index + " " + spawnPoint + " (" + spawnPoints.size() + " left)");
         return spawnPoint;
     }
+
+    /**
+     * @param n
+     * @return n random spawn points
+     * @see #getRandomSpawnPoint()
+     */
+    public ArrayList<Point2D> getRandomSpawnPoints(int n) {
+        ArrayList<Point2D> spawnPoints = new ArrayList<>();
+        for(int i=0; i<n; i++) {
+            spawnPoints.add(getRandomSpawnPoint());
+        }
+        return spawnPoints;
+    }
 }
