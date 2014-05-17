@@ -30,6 +30,7 @@ public class MapWindow extends Application {
     private int activeTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
+    private int teamCount=0;
 
     ArrayList<Integer> team; //TODO use Team class
 
@@ -133,7 +134,8 @@ public class MapWindow extends Application {
     public void endTurn (){
         //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
         turnCount++;
-        turnCount = turnCount % team.size(); //TODO graphical output for turnCount
+        teamCount = turnCount % team.size(); //TODO graphical output for turnCount
+        System.out.println(turnCount);
     }
 
     @Override
