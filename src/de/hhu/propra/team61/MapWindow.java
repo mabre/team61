@@ -2,25 +2,25 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-//import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import java.awt.event.KeyEvent;
 
-import java.awt.event.KeyListener;
-import java.security.Key;
 import java.util.ArrayList;
+
+// import java.awt.event.KeyEvent;
 /**
  * Created by kegny on 08.05.14.
  * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
-public class MapWindow extends Application implements KeyListener {
+public class MapWindow extends Application /*implements KeyListener*/ {
     private ArrayList<ArrayList<Character>> terrain;
     private Scene drawing;
     private Stage primaryStage;
@@ -44,10 +44,26 @@ public class MapWindow extends Application implements KeyListener {
         primaryStage = new Stage();
 
         root = new StackPane();
+        grid = new GridPane();
 
         draw();
 
+        root.getChildren().add(grid);
+
         drawing = new Scene(root, 800, 600);
+        drawing.setOnKeyPressed(
+                keyEvent -> {
+                    System.out.println("key pressed: " + keyEvent.getCode());
+                    switch(keyEvent.getCode()) {
+                        case NUMBER_SIGN:
+                            cheatMode();
+                            break;
+                        case SPACE:
+                            endTurn();
+                            break;
+                    }
+                }
+        );
 
         primaryStage.setTitle("The Playground");
         primaryStage.setScene(drawing);
@@ -59,7 +75,7 @@ public class MapWindow extends Application implements KeyListener {
      */
     private void draw() {
         //Draw Terrain
-        grid = new GridPane();
+        grid.getChildren().clear();
         grid.setGridLinesVisible(true); //Gridlines on/off
         grid.setAlignment(Pos.CENTER);
         
@@ -94,28 +110,13 @@ public class MapWindow extends Application implements KeyListener {
                 //grid.setConstraints(content,j,i);
             }
         }
-
-        root.getChildren().add(grid);
     }
-
-
-  /*  //Level change trough "Press #" and end turn with "Press Space"
-    @Override
-    public void keyPressed (KeyEvent keyPress){
-        if (keyPress.getCode() == KeyCode.L) {
-            cheatMode();
-        } else if (keyPress.getCode() == KeyCode.SPACE) {
-            endTurn();
-        }
-
-
-    }*/
 
     public void cheatMode (){
         levelCounter++;
         levelCounter = levelCounter % TerrainManager.getAvailableTerrains().size();
-        TerrainManager.getAvailableTerrains().get(levelCounter);
-
+        terrain = TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter));
+        draw();
     }
 
     public void endTurn (){
@@ -127,26 +128,6 @@ public class MapWindow extends Application implements KeyListener {
 
     @Override
     public void start(Stage ostage) {
-
-    }
-
-    @Override
-    public void keyTyped(java.awt.event.KeyEvent e) {
-
-    }
-
-
-    @Override
-    public void keyPressed(KeyEvent keyPress) {
-        System.out.println("here");
-        switch (keyPress.getKeyCode()) {
-            case KeyEvent.VK_L: cheatMode(); break;
-            case KeyEvent.VK_SPACE: endTurn(); break;
-        }
-    }
-
-    @Override
-    public void keyReleased(java.awt.event.KeyEvent e) {
 
     }
 }
