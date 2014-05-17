@@ -33,7 +33,7 @@ public class Figure {
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
-        System.out.println("FIGURE created by json");
+        System.out.println("FIGURE created from json");
         printAllAttributes(this);
     }
 

@@ -4,19 +4,16 @@ import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Objects.Terrain;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -27,20 +24,18 @@ import java.util.ArrayList;
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application {
-    private ArrayList<ArrayList<Character>> terrain;
     private ArrayList<Team> teams;
     private Scene drawing;
     private Stage primaryStage;
     private StackPane root;
-    private GridPane grid;
+    private Terrain terrain;
     private int activeTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
 
-
     public MapWindow(String map) {
         try {
-            terrain = TerrainManager.load(map);
+            terrain = new Terrain(TerrainManager.load(map));
         } catch (FileNotFoundException e) {
             // TODO do something sensible here
             e.printStackTrace();
@@ -60,7 +55,7 @@ public class MapWindow extends Application {
 
     public MapWindow(JSONObject input) {
         try {
-            this.terrain = TerrainManager.loadSavedLevel();
+            this.terrain = new Terrain(TerrainManager.loadSavedLevel());
         } catch (FileNotFoundException e) {
             // TODO do something sensible here
             e.printStackTrace();
@@ -79,16 +74,12 @@ public class MapWindow extends Application {
         primaryStage = new Stage();
         primaryStage.setOnCloseRequest(event -> {
             GameState.save(this.toJson());
-            //TerrainManager.save(terrain.toArrayList()); // TODO on other branch
+            TerrainManager.save(terrain.toArrayList());
             System.out.println("MapWindow: saved game state");
         });
 
         root = new StackPane();
-        grid = new GridPane();
-
-        draw();
-
-        root.getChildren().add(grid);
+        root.getChildren().add(terrain);
 
         drawing = new Scene(root, 800, 600);
         drawing.setOnKeyPressed(
@@ -124,65 +115,10 @@ public class MapWindow extends Application {
         return output;
     }
 
-    /**
-     * creates Image objects for the fields
-     */
-    private void draw() {
-        //Draw Terrain
-        grid.getChildren().clear();
-        grid.setGridLinesVisible(true); //Gridlines on/off
-        grid.setAlignment(Pos.CENTER);
-
-        for (int i = 0; i < terrain.size(); i++) {
-            for (int j = 0; j < terrain.get(i).size(); j++) {
-                char terraintype = terrain.get(i).get(j);
-                String loadImg = "file:resources/";
-                switch (terraintype) {
-                    case 'P':
-                        loadImg += "spawn.png"; // TODO just temporary shown
-                        break;
-                    case '_':
-                        loadImg += "plain_ground.png";
-                        break;
-                    case '/':
-                        loadImg += "slant_ground_ri.png";
-                        break;
-                    case '\\':
-                        loadImg += "slant_ground_le.png";
-                        break;
-                    case '|':
-                        loadImg += "wall_le.png";
-                        break;
-                    case 'S':
-                        loadImg += "stones.png";
-                        break;
-                    case 'E':
-                        loadImg += "earth.png";
-                        break;
-                    case 'W':
-                        loadImg += "water.png";  //Add Ice and Grass "I" and "G"
-                        break;
-                    case 'I':
-                        loadImg += "ice.png";
-                        break;
-                    default:
-                        loadImg += "sky.png";
-                }
-                Image image = new Image(loadImg);
-                ImageView content = new ImageView();
-                content.setImage(image);
-
-                grid.add(content, j, i);
-                //grid.setConstraints(content,j,i);
-            }
-        }
-    }
-
     public void cheatMode() {
         try {
             levelCounter++;
-            terrain = TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains()));
-            draw();
+            terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
