@@ -22,6 +22,13 @@ public class TerrainManager {
     }
 
     /**
+     * @return the number of level files found
+     */
+    public static int getNumberOfAvailableTerrains() {
+        return getAvailableTerrains().size();
+    }
+
+    /**
      * @param filename the file containing the board to be loaded
      * @return an ArrayList containing the board ([row][column])
      * How a valid board looks like is documented in BoardLegend
@@ -46,6 +53,14 @@ public class TerrainManager {
         }
 
         return rows;
+    }
+
+    /**
+     * @param levelnumber the index of the level in the ArrayList returned by {@link #getAvailableTerrains() getAvailableTerrains}
+     * @return an ArrayList containing the board ([row][column])
+     */
+    public static ArrayList<ArrayList<Character>> load(int levelnumber) {
+        return load(getAvailableTerrains().get(levelnumber));
     }
 
     /**
