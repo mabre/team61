@@ -7,5 +7,7 @@ doc/
 # Java
 *.class
 hs_err_pid*
+# our files
+*.conf
 # others
 .directory
