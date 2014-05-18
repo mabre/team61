@@ -1,12 +1,15 @@
 package de.hhu.propra.team61.Objects;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
+import javafx.geometry.Point2D;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 /**
  * Created by kevgny on 14.05.14.
  */
 
-public class Figure {
+public class Figure extends ImageView {
     private String name;
     private int health;
     private int armor;
@@ -24,17 +27,25 @@ public class Figure {
         this.isBurning  = isBurning;
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
+
+        Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
+        setImage(image);
     }
 
     public Figure(JSONObject input){
         this.name = input.getString("name");
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
+        this.setTranslateX(input.getDouble("position.x"));
+        this.setTranslateY(input.getDouble("position.y"));
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
         System.out.println("FIGURE created from json");
         printAllAttributes(this);
+
+        Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
+        setImage(image);
     }
 
     public JSONObject toJson(){
@@ -42,6 +53,8 @@ public class Figure {
         output.put("name", name);
         output.put("health", health);
         output.put("armor", armor);
+        output.put("position.x", this.getTranslateX()); // TODO save as array
+        output.put("position.y", this.getTranslateY());
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
@@ -70,6 +83,15 @@ public class Figure {
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
 
+    public void setPosition(Point2D position) {
+        this.setTranslateX(8 * position.getX());
+        this.setTranslateY(8 * position.getY());
+    }
+
+    public Point2D getPosition() {
+        return new Point2D(this.getTranslateX()/8, this.getTranslateY()/8);
+    }
+
 
 
     //For testing purposes only
@@ -80,6 +102,7 @@ public class Figure {
         System.out.println("Burning : " + testwurm.getIsBurning());
         System.out.println("Poisoned: " + testwurm.getIsPoisoned());
         System.out.println("Stuck   : " + testwurm.getIsStuck());
+        System.out.println("Position: " + testwurm.getPosition());
         System.out.println();
     }
     public static void main(String[] args){

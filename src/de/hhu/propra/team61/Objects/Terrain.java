@@ -35,7 +35,7 @@ public class Terrain extends GridPane {
 
         //Draw Terrain
         setGridLinesVisible(true); //Gridlines on/off
-        setAlignment(Pos.CENTER);
+        setAlignment(Pos.TOP_LEFT);
 
         String img;
 
@@ -58,7 +58,7 @@ public class Terrain extends GridPane {
                     case 'W': img = "water.png";
                         break;
                     case 'P': // special case: spawn point, add to list and draw sky
-                        spawnPoints.add(new Point2D(i, j));
+                        spawnPoints.add(new Point2D(j, i));
                         terrain.get(i).set(j, ' ');
                     default : img = "sky.png";
                 }

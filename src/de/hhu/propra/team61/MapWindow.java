@@ -6,7 +6,9 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Objects.Terrain;
 import javafx.application.Application;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -22,7 +24,8 @@ public class MapWindow extends Application {
     private ArrayList<Team> teams;
     private Scene drawing;
     private Stage primaryStage;
-    private StackPane root;
+    private BorderPane root;
+    private StackPane centerView;
     private Terrain terrain;
     private int activeTeam = 0;
     private int turnCount = 0;
@@ -73,8 +76,16 @@ public class MapWindow extends Application {
             System.out.println("MapWindow: saved game state");
         });
 
-        root = new StackPane();
-        root.getChildren().add(terrain);
+        // pane containing terrain, labels at the bottom etc.
+        root = new BorderPane();
+        // contains the terrain with figures
+        centerView = new StackPane();
+        centerView.setAlignment(Pos.TOP_LEFT);
+        centerView.getChildren().add(terrain);
+        root.setCenter(centerView);
+        for(Team team: teams) {
+            centerView.getChildren().add(team);
+        }
 
         drawing = new Scene(root, 800, 600);
         drawing.setOnKeyPressed(
@@ -114,6 +125,16 @@ public class MapWindow extends Application {
         try {
             levelCounter++;
             terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
+            // quite bad hack to reload spawn points, but ok as it's a cheat anyway
+            for(Team team: teams) {
+                centerView.getChildren().remove(team);
+            }
+            teams.clear();
+            for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
+                Team team = new Team(terrain.getRandomSpawnPoints(2));
+                teams.add(team);
+                centerView.getChildren().add(team);
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

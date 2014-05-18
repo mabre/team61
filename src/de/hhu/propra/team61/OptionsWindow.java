@@ -1,14 +1,17 @@
 package de.hhu.propra.team61;
 
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.scene.text.*;
-import javafx.geometry.*;
+import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.*;
-import javafx.collections.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 /*
  * Created by Jessypet on 11.05.14.
