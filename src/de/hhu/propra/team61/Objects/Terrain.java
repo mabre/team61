@@ -57,6 +57,8 @@ public class Terrain extends GridPane {
                         break;
                     case 'W': img = "water.png";
                         break;
+                    case 'I': img = "ice.png";
+                        break;
                     case 'P': // special case: spawn point, add to list and draw sky
                         spawnPoints.add(new Point2D(j, i));
                         terrain.get(i).set(j, ' ');
