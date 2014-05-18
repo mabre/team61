@@ -8,6 +8,7 @@ import de.hhu.propra.team61.Objects.Terrain;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -27,6 +28,7 @@ public class MapWindow extends Application {
     private BorderPane root;
     private StackPane centerView;
     private Terrain terrain;
+    private Label teamLabel;
     private int activeTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
@@ -87,6 +89,9 @@ public class MapWindow extends Application {
             centerView.getChildren().add(team);
         }
 
+        teamLabel = new Label("Team" + teamCount + "s turn.");
+        root.setBottom(teamLabel);
+
         drawing = new Scene(root, 800, 600);
         drawing.setOnKeyPressed(
                 keyEvent -> {
@@ -143,8 +148,9 @@ public class MapWindow extends Application {
     public void endTurn() {
         //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
         turnCount++;
-        teamCount = turnCount % teams.size(); //TODO graphical output for turnCount
+        teamCount = turnCount % teams.size();
         System.out.println("Turn " + turnCount + ", Team " + teamCount);
+        teamLabel.setText("Team" + teamCount + "s turn.");
     }
 
     @Override
