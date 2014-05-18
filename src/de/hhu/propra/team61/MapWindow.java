@@ -7,6 +7,7 @@ import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Objects.Terrain;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -28,6 +29,8 @@ public class MapWindow extends Application {
     private int turnCount = 0;
     private int levelCounter = 0;
     private int teamCount=0;
+
+    private Label teamLabel = new Label ();
 
     public MapWindow(String map) {
         try {
@@ -120,10 +123,15 @@ public class MapWindow extends Application {
     }
 
     public void endTurn() {
+
+        String a = "Team" + teamCount + "s turn.";
+
         //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
         turnCount++;
         teamCount = turnCount % teams.size(); //TODO graphical output for turnCount
         System.out.println("Turn " + turnCount + ", Team " + teamCount);
+        teamLabel.setText (a);
+        teamLabel.setVisible(true);
     }
 
     @Override
