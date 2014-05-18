@@ -2,11 +2,6 @@ package de.hhu.propra.team61.IO;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-
 /**
  * Created by markus on 13.05.14.
  */

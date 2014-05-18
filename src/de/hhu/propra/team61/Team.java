@@ -4,20 +4,26 @@ import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.Objects.Figure;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
+import javafx.scene.layout.StackPane;
 
 import java.util.ArrayList;
 
 /**
  * Created by markus on 17.05.14.
  */
-public class Team {
+public class Team extends StackPane {
     private ArrayList<Figure> figures;
 
     public Team(ArrayList<Point2D> spawnPoints) {
         figures = new ArrayList<>();
-        for(Point2D sp: spawnPoints) { // TODO actually use this
-            figures.add(new Figure("Max", 100, 100, false, false, false)); // TODO @Kegny create sensible default constructor
+        for(Point2D sp: spawnPoints) {
+            Figure f = new Figure("Max", 100, 100, false, false, false); // TODO @Kegny create sensible default constructor
+            figures.add(f);
+            f.setPosition(sp);
+            getChildren().add(f);
         }
+        setAlignment(Pos.TOP_LEFT);
     }
 
     /**
@@ -28,8 +34,11 @@ public class Team {
         figures = new ArrayList<>();
         JSONArray figuresArray = state.getJSONArray("figures");
         for(int i=0; i<figuresArray.length(); i++) {
-            figures.add(new Figure(figuresArray.getJSONObject(i)));
+            Figure f = new Figure(figuresArray.getJSONObject(i));
+            figures.add(f);
+            getChildren().add(f);
         }
+        setAlignment(Pos.TOP_LEFT);
     }
 
     /**

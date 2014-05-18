@@ -2,8 +2,6 @@ package de.hhu.propra.team61.IO;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 
-import java.io.*;
-
 /**
  * Created by markus on 13.05.14.
  */
