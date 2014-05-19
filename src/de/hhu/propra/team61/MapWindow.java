@@ -29,10 +29,8 @@ public class MapWindow extends Application {
     private StackPane centerView;
     private Terrain terrain;
     private Label teamLabel;
-    private int activeTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
-    private int teamCount=0;
 
     public MapWindow(String map) {
         try {
@@ -64,6 +62,8 @@ public class MapWindow extends Application {
             teams.add(new Team(teamsArray.getJSONObject(i)));
         }
 
+        turnCount = input.getInt("turnCount");
+
         initialize();
     }
 
@@ -89,7 +89,7 @@ public class MapWindow extends Application {
             centerView.getChildren().add(team);
         }
 
-        teamLabel = new Label("Team" + teamCount + "s turn.");
+        teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn.");
         root.setBottom(teamLabel);
 
         drawing = new Scene(root, 800, 600);
@@ -116,13 +116,13 @@ public class MapWindow extends Application {
      * @return the whole state of the window as JSONObject (except terrain, use terrain.toArrayList())
      */
     public JSONObject toJson() {
-        // TODO @DiniiAntares save/restore turnCount
         JSONObject output = new JSONObject();
         JSONArray teamsArray = new JSONArray();
         for(Team t: teams) {
             teamsArray.put(t.toJson());
         }
         output.put("teams", teamsArray);
+        output.put("turnCount", turnCount);
         return output;
     }
 
@@ -148,7 +148,7 @@ public class MapWindow extends Application {
     public void endTurn() {
         //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
         turnCount++;
-        teamCount = turnCount % teams.size();
+        int teamCount = turnCount % teams.size();
         System.out.println("Turn " + turnCount + ", Team " + teamCount);
         teamLabel.setText("Team" + teamCount + "s turn.");
     }
