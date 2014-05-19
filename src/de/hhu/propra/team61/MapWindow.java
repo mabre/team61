@@ -112,10 +112,8 @@ public class MapWindow extends Application {
                     System.out.println("key pressed: " + keyEvent.getCode());
                     switch (keyEvent.getCode()) {
                         case NUMBER_SIGN:
-                            client.sendKeyEvent(keyEvent.getCode());
-                            break;
                         case SPACE:
-                            endTurn();
+                            client.sendKeyEvent(keyEvent.getCode());
                             break;
                     }
                 }

@@ -39,8 +39,12 @@ public class Client implements Runnable {
                     out.println("MUSTERMANN");
                 } else if(line.startsWith("NAMEACCEPTED")) {
                     System.out.println("CLIENT: connected");
+                // use runLater; otherwise, an exception will be thrown:
+                // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
                 } else if(line.contains("KEYEVENT Number Sign")) {
-                    Platform.runLater(() -> mapwindow.cheatMode()); // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
+                    Platform.runLater(() -> mapwindow.cheatMode());
+                } else if(line.contains("KEYEVENT Space")) {
+                    Platform.runLater(() -> mapwindow.endTurn());
                 } else if(line.startsWith("EXIT")) {
                     System.out.println("CLIENT: exit");
                     break;
