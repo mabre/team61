@@ -113,7 +113,9 @@ public class Server implements Runnable {
                 }
                 synchronized (writers) {
                     for(PrintWriter writer: writers) {
-                        writer.println("MESSAGE " + name + ": " + input);
+                        String message = "MESSAGE " + name + ": " + input;
+                        System.out.println("SERVER send received message: " + message);
+                        writer.println(message);
                     }
                 }
             }

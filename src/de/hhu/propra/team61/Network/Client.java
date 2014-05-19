@@ -1,5 +1,10 @@
 package de.hhu.propra.team61.Network;
 
+import de.hhu.propra.team61.MapWindow;
+import javafx.application.Platform;
+import javafx.scene.input.KeyCode;
+
+import javax.xml.bind.SchemaOutputResolver;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,6 +19,11 @@ public class Client implements Runnable {
     BufferedReader in;
     Socket socket;
     PrintWriter out;
+    MapWindow mapwindow;
+
+    public Client(MapWindow mapWindow) {
+        this.mapwindow = mapWindow;
+    }
 
     public void run() {
         try {
@@ -29,17 +39,27 @@ public class Client implements Runnable {
                     out.println("MUSTERMANN");
                 } else if(line.startsWith("NAMEACCEPTED")) {
                     System.out.println("CLIENT: connected");
+                } else if(line.contains("KEYEVENT Number Sign")) {
+                    Platform.runLater(() -> mapwindow.cheatMode()); // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
                 } else if(line.startsWith("EXIT")) {
                     System.out.println("CLIENT: exit");
                     break;
                 }
-                System.out.println("e");
             }
         } catch (SocketException e) {
             System.out.println("CLIENT readLine() interrupted by SocketException");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendKeyEvent(KeyCode code) {
+        send("KEYEVENT " + code.getName());
+    }
+
+    private void send(String message) {
+        System.out.println("CLIENT send: " + message);
+        out.println(message);
     }
 
     public void stop() {

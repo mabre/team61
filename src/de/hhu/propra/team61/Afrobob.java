@@ -1,13 +1,17 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.TerrainManager;
-import javafx.application.*;
-import javafx.event.*;
-import javafx.scene.*;
-import javafx.geometry.*;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.*;
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
 
 /*
  * Created by dinii on 15.04.14.
@@ -41,14 +45,17 @@ public class Afrobob extends Application {
         Button mstartl = new Button("Start local game");  //menue-start-local, menue-start-network, menue-options, menue-exit
         grid.setHalignment(mstartl, HPos.CENTER);  //centers the buttons, not needed for mstartn as the biggest button
         grid.add(mstartl, 0, 1);
+        Button mstartsaved = new Button("Start saved game");
+        grid.setHalignment(mstartsaved, HPos.CENTER);
+        grid.add(mstartsaved, 0, 2);
         Button mstartn = new Button("Start network game");
-        grid.add(mstartn, 0, 2);
+        grid.add(mstartn, 0, 3);
         Button moptions = new Button("Options");
         grid.setHalignment(moptions, HPos.CENTER);
-        grid.add(moptions, 0, 3);
+        grid.add(moptions, 0, 4);
         Button mexit = new Button("Exit");
         grid.setHalignment(mexit, HPos.CENTER);
-        grid.add(mexit, 0, 4);
+        grid.add(mexit, 0, 5);
 
         mstartl.setOnAction(new EventHandler<ActionEvent>() {  //Click on button starts game.. well not yet
             @Override
@@ -65,6 +72,12 @@ public class Afrobob extends Application {
             @Override
             public void handle(ActionEvent e) {
                 MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0)); // TODO map is hardcoded
+            }
+        });
+        mstartsaved.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                MapWindow mapwindow = new MapWindow(GameState.getSavedGameState());
             }
         });
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options
