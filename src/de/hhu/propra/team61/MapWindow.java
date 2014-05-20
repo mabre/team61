@@ -97,6 +97,7 @@ public class MapWindow extends Application {
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
                     switch (keyEvent.getCode()) {
+                        case L:
                         case NUMBER_SIGN:
                             cheatMode();
                             break;
