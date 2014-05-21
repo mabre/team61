@@ -54,4 +54,7 @@ public class Team extends StackPane {
         return output;
     }
 
+    public ArrayList<Figure> getFigures() {
+        return figures;
+    }
 }

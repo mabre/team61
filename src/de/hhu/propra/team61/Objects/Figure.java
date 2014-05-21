@@ -10,6 +10,8 @@ import javafx.scene.image.ImageView;
  */
 
 public class Figure extends ImageView {
+    private boolean facing_right; //Needed for Weaponclass, e.g. making crosshair or gun point in correct direction
+
     private String name;
     private int health;
     private int armor;
@@ -17,6 +19,8 @@ public class Figure extends ImageView {
     private boolean isBurning;
     private boolean isPoisoned;
     private boolean isStuck;
+
+    private Weapon selectedItem; //TODO Change that to Item
 
     // In and Out
     public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
@@ -27,6 +31,8 @@ public class Figure extends ImageView {
         this.isBurning  = isBurning;
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
+
+        this.facing_right = true;
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
         setImage(image);
@@ -41,7 +47,27 @@ public class Figure extends ImageView {
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
+
+        this.facing_right = true;
         System.out.println("FIGURE created from json");
+        printAllAttributes(this);
+
+        Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
+        setImage(image);
+    }
+
+    public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjusments after implementation of Options
+        this.name = name;
+        this.health = input.getInt("health");
+        this.armor  = input.getInt("armor");
+        this.setTranslateX(input.getDouble("position.x"));
+        this.setTranslateY(input.getDouble("position.y"));
+        this.isBurning  = input.getBoolean("isBurning");
+        this.isPoisoned = input.getBoolean("isPoisoned");
+        this.isStuck    = input.getBoolean("isStuck");
+
+        this.facing_right = true;
+        System.out.println("FIGURE created from OptionsJson");
         printAllAttributes(this);
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
@@ -76,8 +102,8 @@ public class Figure extends ImageView {
 
     public boolean getIsBurning() {return isBurning;}
     public void setIsBurning(boolean isBurning){this.isBurning = isBurning;}
-    public boolean getIsPoisoned() {return isPoisoned;}
 
+    public boolean getIsPoisoned() {return isPoisoned;}
     public void setIsPoisoned(boolean isPoisoned){this.isPoisoned = isPoisoned;}
 
     public boolean getIsStuck() {return isStuck;}
@@ -87,12 +113,19 @@ public class Figure extends ImageView {
         this.setTranslateX(8 * position.getX());
         this.setTranslateY(8 * position.getY());
     }
-
     public Point2D getPosition() {
         return new Point2D(this.getTranslateX()/8, this.getTranslateY()/8);
     }
 
+    public Weapon getSelectedItem(){return selectedItem;} //TODO Change that to Item
+    public void setSelectedItem(Weapon select){
+        this.selectedItem = select;
+    }
 
+    public void setFacing_right(boolean facing_right) {
+        this.facing_right = facing_right;
+    }
+    public boolean getFacing_right(){return facing_right;}
 
     //For testing purposes only
     private static void printAllAttributes(Figure testwurm){

@@ -4,11 +4,15 @@ import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Objects.Figure;
+import de.hhu.propra.team61.Objects.Gun;
 import de.hhu.propra.team61.Objects.Terrain;
+import de.hhu.propra.team61.Objects.Weapon;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -23,6 +27,7 @@ import java.util.ArrayList;
  */
 public class MapWindow extends Application {
     private ArrayList<Team> teams;
+    private Figure nextUp;
     private Scene drawing;
     private Stage primaryStage;
     private BorderPane root;
@@ -88,8 +93,9 @@ public class MapWindow extends Application {
         for(Team team: teams) {
             centerView.getChildren().add(team);
         }
+        nextUp = teams.get((turnCount % teams.size())).getFigures().iterator().next();
+        teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + nextUp.getName() + " do?");
 
-        teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn.");
         root.setBottom(teamLabel);
 
         drawing = new Scene(root, 800, 600);
@@ -101,9 +107,50 @@ public class MapWindow extends Application {
                         case NUMBER_SIGN:
                             cheatMode();
                             break;
-                        case SPACE:
+                        case SPACE: //Fire
+                            nextUp.getSelectedItem().shoot();
+
+                            centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                            centerView.getChildren().remove(nextUp.getSelectedItem());
+
                             endTurn();
                             break;
+                        case UP:
+                        case W:
+                            nextUp.getSelectedItem().angle_up(nextUp.getFacing_right());
+                            break;
+                        case LEFT:
+                        case A:
+                            nextUp.setFacing_right(false);
+                            nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            break;
+                        case DOWN:
+                        case S:
+                            nextUp.getSelectedItem().angle_down(nextUp.getFacing_right());
+                            break;
+                        case RIGHT:
+                        case D:
+                            nextUp.setFacing_right(true);
+                            nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            break;
+                        case DIGIT1:
+                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                            nextUp.setSelectedItem(w1);
+                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
+                            break;
+                      /*  case DIGIT2:
+                            Weapon w2 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                            nextUp.setSelectedItem(w2);
+                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
+                            break;
+                        case DIGIT3:
+                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                            nextUp.setSelectedItem(w3);
+                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
+                            break;*/
                     }
                 }
         );
@@ -126,6 +173,7 @@ public class MapWindow extends Application {
         output.put("turnCount", turnCount);
         return output;
     }
+
 
     public void cheatMode() {
         try {
@@ -150,8 +198,9 @@ public class MapWindow extends Application {
         //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
         turnCount++;
         int teamCount = turnCount % teams.size();
-        System.out.println("Turn " + turnCount + ", Team " + teamCount);
-        teamLabel.setText("Team" + teamCount + "s turn.");
+        nextUp = teams.get(teamCount).getFigures().iterator().next(); // ToDo add Loop so that last ist connected to first. Either by if here or changing ArrayList into a Ring
+        teamLabel.setText("Team" + teamCount + "s turn. What will " + nextUp.getName() + " do?");
+        System.out.println("Turn " + turnCount + ", Team " + teamCount + ", Worm \"" + nextUp.getName() + "\"");
     }
 
     @Override
