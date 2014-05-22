@@ -9,7 +9,9 @@ import de.hhu.propra.team61.Objects.Gun;
 import de.hhu.propra.team61.Objects.Terrain;
 import de.hhu.propra.team61.Objects.Weapon;
 import javafx.application.Application;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
@@ -151,6 +153,12 @@ public class MapWindow extends Application {
                             centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;*/
+                        case K: // Kollision test
+                            Figure f = teams.get(0).getFigures().get(0);
+                            Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
+                            Point2D v = new Point2D(0, 5);
+                            Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY()+1, 8, 8);
+                            terrain.getPositionForDirection(pos, v, hitr, false);
                     }
                 }
         );

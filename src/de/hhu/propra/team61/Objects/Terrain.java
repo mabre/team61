@@ -1,11 +1,14 @@
 package de.hhu.propra.team61.Objects;
 
+import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 /**
@@ -110,4 +113,50 @@ public class Terrain extends GridPane {
         }
         return spawnPoints;
     }
+
+    /**
+     * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
+     * When stopOnEveryCollision is true,  the movement is always stopped when hitting a object (used for munition);
+     * otherwise, the movement may also continue in diagonal direction (used for figures)
+     * @param oldPosition old position of the object
+     * @param direction direction vector of the object
+     * @param hitRegion
+     * @param stopOnEveryCollision when true, also stop on diagonal walls
+     * @return new position
+     * @throws CollisionWithFigureException TODO
+     * @throws CollisionWithTerrainException TODO
+     * TODO dummy implementation, randomly throws exceptions
+     */
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean stopOnEveryCollision) {
+        Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
+        Point2D preferredFinalPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
+        preferredFinalPosition.add(direction);
+        Point2D normalizedDirection = new Point2D(oldPosition.getX(), oldPosition.getY());
+        normalizedDirection.normalize();
+
+        //while(newPosition.distance(preferredFinalPosition) > 1) {
+            //System.out.println("norm vec " + normalizedDirection);
+            //newPosition.add(normalizedDirection);
+
+            int minY = (int) Math.floor(hitRegion.getMinY() / 8);
+            int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
+            int minX = (int) Math.floor(hitRegion.getMinX() / 8);
+            int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
+
+            if (minY < 0) minY = 0; // etc. TODO
+
+            for (int y = minY; y <= maxY; y++) {
+                for (int x = minX; x <= maxX; x++) {
+                    Rectangle2D rec = new Rectangle2D(x * 8, y * 8, 8, 8);
+                    System.out.println(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
+                    if (terrain.get(y).get(x) != ' ' && hitRegion.intersects(rec)) {
+                        System.out.println("intersection at " + x + " " + y);
+                    }
+                }
+            }
+
+//        }
+        return oldPosition;
+    }
+
 }
