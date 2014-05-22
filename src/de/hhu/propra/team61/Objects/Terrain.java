@@ -116,7 +116,7 @@ public class Terrain extends GridPane {
 
     /**
      * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
-     * When stopOnEveryCollision is true,  the movement is always stopped when hitting a object (used for munition);
+     * When stopOnEveryCollision is true, the movement is always stopped when hitting a object (used for munition); TODO update, parameters changed
      * otherwise, the movement may also continue in diagonal direction (used for figures)
      * @param oldPosition old position of the object
      * @param direction direction vector of the object
@@ -127,25 +127,34 @@ public class Terrain extends GridPane {
      * @throws CollisionWithTerrainException TODO
      * TODO dummy implementation, randomly throws exceptions
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean stopOnEveryCollision) {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonal) {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
-        Point2D preferredFinalPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
-        preferredFinalPosition.add(direction);
-        Point2D normalizedDirection = new Point2D(oldPosition.getX(), oldPosition.getY());
-        normalizedDirection.normalize();
+        Point2D preferredFinalPosition = oldPosition.add(direction);
+        Point2D normalizedDirection = direction.normalize();
 
-        //while(newPosition.distance(preferredFinalPosition) > 1) {
-            //System.out.println("norm vec " + normalizedDirection);
-            //newPosition.add(normalizedDirection);
+        System.out.println("normalized velocity: " + normalizedDirection);
 
+        final int runs = (int)direction.magnitude();
+
+        for(int i=0; i<runs; i++) {
+            // move position by 1px
+            newPosition = newPosition.add(normalizedDirection);
+            System.out.println("checking new position for collision: " + newPosition + " (" + (i+1) + "/" + runs +")");
+
+            // calculate moved hitRegion
+            hitRegion = new Rectangle2D(hitRegion.getMinX()+normalizedDirection.getX(), hitRegion.getMinY()+normalizedDirection.getY(), hitRegion.getHeight(), hitRegion.getWidth());
+
+            // calculate indices of fields which are touched by hitRegion
             int minY = (int) Math.floor(hitRegion.getMinY() / 8);
             int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
             int minX = (int) Math.floor(hitRegion.getMinX() / 8);
             int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
 
+            // make sure that we are not out of bounds
             if (minY < 0) minY = 0; // etc. TODO
 
-            for (int y = minY; y <= maxY; y++) {
+            // check if hitRegion intersects with non-walkable terrain
+            for (int y = minY; y <= maxY; y++) { // TODO recheck necessity of <=
                 for (int x = minX; x <= maxX; x++) {
                     Rectangle2D rec = new Rectangle2D(x * 8, y * 8, 8, 8);
                     System.out.println(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
@@ -155,8 +164,26 @@ public class Terrain extends GridPane {
                 }
             }
 
-//        }
-        return oldPosition;
+            // for each column which the hitRegion spans check where the next walkable terrain is
+            int groundY = -1;
+            for(int x = minX; x <= maxX; x++) {
+                for(int y=maxY; y>0; y++) { // TODO pixel-perfect
+                    System.out.print(terrain.get(y).get(x));
+                    if(terrain.get(y).get(x) != ' ') {
+                        if(y < groundY || groundY == -1) groundY = y;
+                        System.out.println("found ground at " + x + " " + y);
+                        break;
+                    }
+                }
+            }
+
+            // move newPosition and hitRegion to the ground
+            Point2D positionOnGround = new Point2D(newPosition.getX(), (groundY-1)*8);
+            hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY()+(newPosition.subtract(positionOnGround).getY()), hitRegion.getHeight(), hitRegion.getWidth());
+            newPosition = positionOnGround;
+
+        }
+        return newPosition;
     }
 
 }

@@ -153,12 +153,14 @@ public class MapWindow extends Application {
                             centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;*/
-                        case K: // Kollision test
+                        case K: // Kollision test // TODO remove, replace with real movement
                             Figure f = teams.get(0).getFigures().get(0);
                             Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
-                            Point2D v = new Point2D(0, 5);
-                            Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY()+1, 8, 8);
-                            terrain.getPositionForDirection(pos, v, hitr, false);
+                            Point2D v = new Point2D(4, 0);
+                            Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY(), 8, 8);
+                            Point2D newPos = terrain.getPositionForDirection(pos, v, hitr, true);
+                            // TODO rethink parameter of setPosition, /8 is bad!
+                            f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
                     }
                 }
         );
