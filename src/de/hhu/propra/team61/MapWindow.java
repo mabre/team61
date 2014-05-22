@@ -101,6 +101,7 @@ public class MapWindow extends Application {
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
+                    Point2D v = null;
                     switch (keyEvent.getCode()) {
                         case L:
                         case NUMBER_SIGN:
@@ -151,16 +152,18 @@ public class MapWindow extends Application {
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;*/
                         case K: // Kollision test // TODO remove, replace with real movement
+                            v = new Point2D(+10, 0);
+                        case J:
+                            if(v==null) v = new Point2D(-10, 0);
                             Figure f = teams.get(0).getFigures().get(0);
                             Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
-                            Point2D v = new Point2D(-10, 0);
                             Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY(), 8, 8);
                             Point2D newPos = null;
                             try {
                                 newPos = terrain.getPositionForDirection(pos, v, hitr, true);
                                 // TODO rethink parameters of setPosition(), /8 is bad!
                             } catch (CollisionWithTerrainException e) {
-                                System.out.println("collision with terrain");
+                                System.out.println("CollisionWithTerrainException, stopped movement");
                                 newPos = e.getLastGoodPosition();
                             }
                             f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
