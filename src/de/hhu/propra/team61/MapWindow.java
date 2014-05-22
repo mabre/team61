@@ -4,10 +4,7 @@ import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
-import de.hhu.propra.team61.Objects.Figure;
-import de.hhu.propra.team61.Objects.Gun;
-import de.hhu.propra.team61.Objects.Terrain;
-import de.hhu.propra.team61.Objects.Weapon;
+import de.hhu.propra.team61.Objects.*;
 import javafx.application.Application;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -156,10 +153,16 @@ public class MapWindow extends Application {
                         case K: // Kollision test // TODO remove, replace with real movement
                             Figure f = teams.get(0).getFigures().get(0);
                             Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
-                            Point2D v = new Point2D(4, 0);
+                            Point2D v = new Point2D(-10, 0);
                             Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY(), 8, 8);
-                            Point2D newPos = terrain.getPositionForDirection(pos, v, hitr, true);
-                            // TODO rethink parameter of setPosition, /8 is bad!
+                            Point2D newPos = null;
+                            try {
+                                newPos = terrain.getPositionForDirection(pos, v, hitr, true);
+                                // TODO rethink parameters of setPosition(), /8 is bad!
+                            } catch (CollisionWithTerrainException e) {
+                                System.out.println("collision with terrain");
+                                newPos = e.getLastGoodPosition();
+                            }
                             f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
                     }
                 }

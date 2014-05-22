@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.Objects;
 
+import com.sun.javafx.geom.Shape;
 import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -7,6 +8,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.shape.Polygon;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -114,6 +116,15 @@ public class Terrain extends GridPane {
         return spawnPoints;
     }
 
+    private Polygon getShapeForField(char c, int x, int y) {
+        Polygon p;
+        switch (c) {
+            default:
+                p = new Polygon(x, y,  x+8, y,  x+8, y+8,  x, y+8);
+        }
+        return p;
+    }
+
     /**
      * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
      * When stopOnEveryCollision is true, the movement is always stopped when hitting a object (used for munition); TODO update, parameters changed
@@ -127,7 +138,7 @@ public class Terrain extends GridPane {
      * @throws CollisionWithTerrainException TODO
      * TODO dummy implementation, randomly throws exceptions
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonal) {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonal) throws CollisionWithTerrainException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         Point2D preferredFinalPosition = oldPosition.add(direction);
         Point2D normalizedDirection = direction.normalize();
@@ -151,38 +162,58 @@ public class Terrain extends GridPane {
             int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
 
             // make sure that we are not out of bounds
-            if (minY < 0) minY = 0; // etc. TODO
+            if (minY < 0) minY = 0;
+            else if (minY >= terrain.size()) minY = terrain.size()-1;
+            if (minX < 0) minX = 0;
+            else if (minX >= terrain.get(0).size()) minX = terrain.get(0).size()-1;
 
             // check if hitRegion intersects with non-walkable terrain
-            for (int y = minY; y <= maxY; y++) { // TODO recheck necessity of <=
-                for (int x = minX; x <= maxX; x++) {
+            boolean hitSlope = false;
+            for (int y = minY; y <= maxY && !hitSlope; y++) { // TODO recheck necessity of <=
+                for (int x = minX; x <= maxX && !hitSlope; x++) {
                     Rectangle2D rec = new Rectangle2D(x * 8, y * 8, 8, 8);
-                    System.out.println(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
+                    //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
                     if (terrain.get(y).get(x) != ' ' && hitRegion.intersects(rec)) {
-                        System.out.println("intersection at " + x + " " + y);
+                        System.out.println("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
+                        if (terrain.get(y).get(x) == '/' && canWalkAlongDiagonal) {
+                            Point2D positionOnSlope = newPosition.subtract(normalizedDirection).add(.5, -.5);
+                            hitRegion = new Rectangle2D(hitRegion.getMinX()+(newPosition.subtract(positionOnSlope).getX()), hitRegion.getMinY()+(newPosition.subtract(positionOnSlope).getY()), hitRegion.getHeight(), hitRegion.getWidth());
+                            newPosition = positionOnSlope;
+                            hitSlope = true;
+                        } else if (terrain.get(y).get(x) == '\\' && canWalkAlongDiagonal) {
+                            Point2D positionOnSlope = newPosition.subtract(normalizedDirection).add(-.5, -.5);
+                            hitRegion = new Rectangle2D(hitRegion.getMinX()+(newPosition.subtract(positionOnSlope).getX()), hitRegion.getMinY()+(newPosition.subtract(positionOnSlope).getY()), hitRegion.getHeight(), hitRegion.getWidth());
+                            newPosition = positionOnSlope;
+                            hitSlope = true;
+                        } else {
+                            throw new CollisionWithTerrainException(newPosition.subtract(normalizedDirection));
+                        }
                     }
                 }
             }
 
-            // for each column which the hitRegion spans check where the next walkable terrain is
-            int groundY = -1;
-            for(int x = minX; x <= maxX; x++) {
-                for(int y=maxY; y>0; y++) { // TODO pixel-perfect
-                    System.out.print(terrain.get(y).get(x));
-                    if(terrain.get(y).get(x) != ' ') {
-                        if(y < groundY || groundY == -1) groundY = y;
-                        System.out.println("found ground at " + x + " " + y);
-                        break;
+            if(!hitSlope) {
+                // for each column which the hitRegion spans check where the next walkable terrain is
+                int groundY = -1;
+                for (int x = minX; x <= maxX; x++) {
+                    for (int y = maxY; y > 0; y++) { // TODO pixel-perfect
+                        System.out.print(terrain.get(y).get(x));
+                        if (terrain.get(y).get(x) != ' ') {
+                            if (y < groundY || groundY == -1) groundY = y;
+                            System.out.println("found ground at " + x + " " + y);
+                            break;
+                        }
                     }
                 }
+
+                // move newPosition and hitRegion to the ground
+                Point2D positionOnGround = new Point2D(newPosition.getX(), (groundY - 1) * 8);
+                hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY() + (newPosition.subtract(positionOnGround).getY()), hitRegion.getHeight(), hitRegion.getWidth());
+                newPosition = positionOnGround;
             }
 
-            // move newPosition and hitRegion to the ground
-            Point2D positionOnGround = new Point2D(newPosition.getX(), (groundY-1)*8);
-            hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY()+(newPosition.subtract(positionOnGround).getY()), hitRegion.getHeight(), hitRegion.getWidth());
-            newPosition = positionOnGround;
+        } // for i<runs
 
-        }
         return newPosition;
     }
 
