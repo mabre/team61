@@ -4,10 +4,7 @@ import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
-import de.hhu.propra.team61.Objects.Figure;
-import de.hhu.propra.team61.Objects.Gun;
-import de.hhu.propra.team61.Objects.Terrain;
-import de.hhu.propra.team61.Objects.Weapon;
+import de.hhu.propra.team61.Objects.*;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -108,12 +105,16 @@ public class MapWindow extends Application {
                             cheatMode();
                             break;
                         case SPACE: //Fire
-                            nextUp.getSelectedItem().shoot();
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().shoot();
 
-                            centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                            centerView.getChildren().remove(nextUp.getSelectedItem());
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
 
-                            endTurn();
+                                nextUp.setSelectedItem(null);
+
+                                endTurn();
+                            }
                             break;
                         case UP:
                         case W:
@@ -133,24 +134,36 @@ public class MapWindow extends Application {
                             nextUp.setFacing_right(true);
                             nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
                             break;
-                        case DIGIT1:
-                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                        case DIGIT1: // ToDo hardcoded, but sufficient for now
+                            if(nextUp.getSelectedItem() != null) {
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            }
+                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),50);
                             nextUp.setSelectedItem(w1);
-                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
-                      /*  case DIGIT2:
-                            Weapon w2 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                        case DIGIT2:
+                            if(nextUp.getSelectedItem() != null) {
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            }
+                            Weapon w2 = new Grenade(nextUp.getPosition(),nextUp.getFacing_right(),40);
                             nextUp.setSelectedItem(w2);
-                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
                         case DIGIT3:
-                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            }
+                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),25);
                             nextUp.setSelectedItem(w3);
-                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
-                            break;*/
+                            break;
                     }
                 }
         );

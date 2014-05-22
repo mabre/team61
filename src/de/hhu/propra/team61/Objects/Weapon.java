@@ -27,8 +27,9 @@ public abstract class Weapon extends Item {
     private ImageView crosshair;
     private int velocity;       // Power of shot, affects distance, flightspeed etc.
 
-    public Weapon(Point2D pos,boolean facing_right){
+    public Weapon(Point2D pos,boolean facing_right,int damage){ //ToDo Replace variables with something better?
         this.angle = 0;
+        this.damage = damage;
 
         this.setTranslateX(8 * pos.getX());
         this.setTranslateY(8 * pos.getY());
