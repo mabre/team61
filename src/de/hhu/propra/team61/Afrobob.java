@@ -71,7 +71,8 @@ public class Afrobob extends Application {
         mstartl.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0)); // TODO map is hardcoded
+                GameSettings gamesettings = new GameSettings();
+                gamesettings.do_settings();
             }
         });
         mstartsaved.setOnAction(new EventHandler<ActionEvent>() {
