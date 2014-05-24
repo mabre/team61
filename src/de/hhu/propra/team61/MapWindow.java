@@ -108,49 +108,73 @@ public class MapWindow extends Application {
                             cheatMode();
                             break;
                         case SPACE: //Fire
-                            nextUp.getSelectedItem().shoot();
+                            if(nextUp.getSelectedItem() != null) {
+                                Projectile projectile = nextUp.getSelectedItem().shoot(); // ToDo Do something with the projectile
 
-                            centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                            centerView.getChildren().remove(nextUp.getSelectedItem());
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
 
-                            endTurn();
+                                nextUp.setSelectedItem(null);
+
+                                endTurn();
+                            }
                             break;
                         case UP:
                         case W:
-                            nextUp.getSelectedItem().angle_up(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_up(nextUp.getFacing_right());
+                            }
                             break;
                         case LEFT:
                         case A:
                             nextUp.setFacing_right(false);
-                            nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            }
                             break;
                         case DOWN:
                         case S:
-                            nextUp.getSelectedItem().angle_down(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_down(nextUp.getFacing_right());
+                            }
                             break;
                         case RIGHT:
                         case D:
                             nextUp.setFacing_right(true);
-                            nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            }
                             break;
-                        case DIGIT1:
-                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                        case DIGIT1: // ToDo hardcoded, but sufficient for now
+                            if(nextUp.getSelectedItem() != null) {
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            }
+                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp1.png",50);
                             nextUp.setSelectedItem(w1);
-                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
-                      /*  case DIGIT2:
-                            Weapon w2 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                        case DIGIT2:
+                            if(nextUp.getSelectedItem() != null) {
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            }
+                            Weapon w2 = new Grenade(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp2.png",40);
                             nextUp.setSelectedItem(w2);
-                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
                         case DIGIT3:
-                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            }
+                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp3.png",25);
                             nextUp.setSelectedItem(w3);
-                            centerView.getChildren().add(nextUp.getSelectedItem()); // ToDo hardcoded, but sufficient for now
+                            centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
-                            break;*/
+                            break;
                         case K: // Kollision test // TODO remove, replace with real movement
                             v = new Point2D(+10, 0);
                         case J:
@@ -167,6 +191,7 @@ public class MapWindow extends Application {
                                 newPos = e.getLastGoodPosition();
                             }
                             f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
+                            break;
                     }
                 }
         );
