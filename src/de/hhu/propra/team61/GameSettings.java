@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
@@ -65,19 +66,19 @@ public class GameSettings extends Application {
                 System.out.println("GameSettings: saved settings");
             }
         });
-
         Text load = new Text("Load settings: ");
         sgrid.add(load, 0, 1);
         FileChooser loadChooser = new FileChooser();
         loadChooser.setTitle("Choose file to load");
         Button loadbtn = new Button("Choose file..");
-        loadbtn.setOnAction(
+        /*loadbtn.setOnAction(                                                  //Not working yet
                 new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(final ActionEvent e) {
-                        File file = loadChooser.showOpenDialog(settingstage);
+                        File loadfile = loadChooser.showOpenDialog(settingstage);     //Open file-window to open a file and save it in 'loadfile'
+                        fromJson(loadfile);
                     }
-                });
+                });*/
         sgrid.add(loadbtn, 1, 1);
 
         //Weapons, TextFields for entering a quantity
@@ -175,15 +176,64 @@ public class GameSettings extends Application {
         output.put("weapon1", weapon1.getText());
         output.put("weapon2", weapon2.getText());
         output.put("weapon3", weapon3.getText());
-        Team team1 = new Team(name1.getText(), colorPicker1);   //create an array for each team with the elements name and color
+        JSONArray team1 = formTeam(name1.getText(), colorPicker1);   //create an JSONArray for each team with the elements name and color
         output.put("team1", team1);
-        Team team2 = new Team(name2.getText(), colorPicker2);
+        JSONArray team2 = formTeam(name2.getText(), colorPicker2);
         output.put("team2", team2);
-        if (quantity > 2) { Team team3 = new Team(name3.getText(), colorPicker3);
+        if (quantity > 2) { JSONArray team3 = formTeam(name3.getText(), colorPicker3);
             output.put("team3", team3); }
-        if (quantity > 3) { Team team4 = new Team(name4.getText(), colorPicker4);
+        if (quantity > 3) { JSONArray team4 = formTeam(name4.getText(), colorPicker4);
             output.put("team4", team4); }
         return output;
+    }
+
+    /*public void fromJson(File loadfile) {
+
+        JSONObject savedSettings = Settings.getSavedSettings(loadfile);
+        if(savedSettings.has("teams")) {
+            quantity = savedSettings.getInt("quantity");            //TODO show all teams
+        }
+        if(savedSettings.has("team-size")) {
+            sizefield.setText(savedSettings.getString("team-size")); }
+        if(savedSettings.has("weapon1")) {
+            weapon1.setText(savedSettings.getString("weapon1")); }
+        if(savedSettings.has("weapon2")) {
+            weapon2.setText(savedSettings.getString("weapon2")); }
+        if(savedSettings.has("weapon3")) {
+            weapon3.setText(savedSettings.getString("weapon3")); }
+        if(savedSettings.has("team1")) {
+            JSONArray team1 = savedSettings.getJSONArray("team1");
+            JSONObject nameobject1 = team1.getJSONObject(0);
+            name1.setText(nameobject1.getString("name"));
+                                   //TODO load colors
+        }
+        if(savedSettings.has("team2")) {
+            JSONArray team2 = savedSettings.getJSONArray("team2");
+            JSONObject nameobject2 = team2.getJSONObject(0);
+            name2.setText(nameobject2.getString("name"));
+        }
+        if(savedSettings.has("team3")) {
+            JSONArray team3 = savedSettings.getJSONArray("team3");
+            JSONObject nameobject3 = team3.getJSONObject(0);
+            name3.setText(nameobject3.getString("name"));
+        }
+        if(savedSettings.has("team4")) {
+            JSONArray team4 = savedSettings.getJSONArray("team4");
+            JSONObject nameobject4 = team4.getJSONObject(0);
+            name4.setText(nameobject4.getString("name"));
+        }
+    }*/
+
+    public JSONArray formTeam(String name, ColorPicker color) {
+        JSONArray jarray = new JSONArray();
+        JSONObject nameobject = new JSONObject();                   //create JSONArray with 2 objects name and color, one JSONArray for each team
+        nameobject.put("name", name);
+        jarray.put(nameobject);
+        JSONObject colorobject = new JSONObject();
+        String colorstring = Integer.toHexString(color.getValue().hashCode()).substring(0, 6).toUpperCase();    //save color in HEXA, conversion to int and then String not possible
+        colorobject.put("color", colorstring);
+        jarray.put(colorobject);
+        return jarray;
     }
 
     @Override

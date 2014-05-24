@@ -44,13 +44,6 @@ public class Team extends StackPane {
         setAlignment(Pos.TOP_LEFT);
     }
 
-    public Team(String name, ColorPicker color) {
-        String[] team = new String[2];
-        team[0] = name;
-        String colorstring = Integer.toHexString(color.getValue().hashCode()).substring(0, 6).toUpperCase();  //convert chosen color to Hexa (conversion to int and then to String not possible)
-        team[1] = colorstring;
-    }
-
     /**
      * @return a JSONObject representing the state of this team, including its figures
      */
