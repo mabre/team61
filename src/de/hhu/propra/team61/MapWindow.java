@@ -4,15 +4,18 @@ import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Objects.Figure;
 import de.hhu.propra.team61.Objects.Terrain;
 import javafx.application.Application;
 import javafx.geometry.Pos;
+import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import java.awt.*;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
@@ -145,6 +148,14 @@ public class MapWindow extends Application {
             e.printStackTrace();
         }
     }
+
+
+    public void move (Figure figure, int vx, int vy) {     //simple move Methode
+        Point2D oldP = figure.getPosition();
+        Point2D newP = new Point2D(oldP.getX()+vx,oldP.getY()+vy);
+        figure.setPosition(newP);
+    }
+
 
     public void endTurn() {
         //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
