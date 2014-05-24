@@ -212,6 +212,7 @@ public class MapWindow extends Application {
 
         moveObjectsThread = new Thread(() -> { // TODO move this code to own class
             try {
+                long before = System.currentTimeMillis(), now, sleep;
                 while (true) {
                     //System.out.println("here");
                     if(flyingProjectile != null) {
@@ -238,7 +239,10 @@ public class MapWindow extends Application {
                             }); // TODO potential race condition
                         }
                     }
-                        sleep(1000); // TODO do it better for constant frame rate, see slides
+                    now = System.currentTimeMillis();
+                    sleep = Math.max(0, (1000/10)-(now-before)); // 10 fps
+                    Thread.sleep(sleep);
+                    before = System.currentTimeMillis();
                 }
             } catch (InterruptedException e) {
                 System.out.println("moveObjectsThread shut down");

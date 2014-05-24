@@ -12,7 +12,7 @@ public class Grenade extends Weapon { //ToDo rename to a more fitting one
     }
     public Projectile shoot(){// Overwrittes the function in Weapon
         //TODO do more?
-        Projectile shot = new Projectile(new Image("file:resources/weapons/temp1.png"),new Point2D(getTranslateX(),getTranslateY()),new Point2D(getCrosshair().getTranslateX(),getCrosshair().getTranslateY()),20,getDamage());
+        Projectile shot = new Projectile(new Image("file:resources/weapons/temp1.png"),new Point2D(getTranslateX(),getTranslateY()),new Point2D(getCrosshair().getTranslateX(),getCrosshair().getTranslateY()),4,getDamage());
         return shot;
     }
 

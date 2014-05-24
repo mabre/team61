@@ -204,7 +204,6 @@ public class Terrain extends GridPane {
             Point2D diagonalDirection = new Point2D(0, 0);
             do {
                 triedDiagonal = false;
-                System.out.println("try " + tries + " S");
 
                 // calculate indices of fields which are touched by hitRegion
                 int minY = (int) Math.floor(hitRegion.getMinY() / 8);
@@ -232,7 +231,7 @@ public class Terrain extends GridPane {
                             } catch(IndexOutOfBoundsException e) {
                                 System.out.println("intersection at " + x + " " + y + " out of bounds");
                             }
-                            if (canWalkAlongDiagonals && tries == 0) {
+                            if (canWalkAlongDiagonals && tries == 0 && intersectingFigure == null) {
                                 diagonalDirection = new Point2D(Math.signum(normalizedDirection.getX()), -2);
                                 Point2D positionOnSlope = newPosition.subtract(normalizedDirection).add(diagonalDirection);
                                 hitRegion = new Rectangle2D(hitRegion.getMinX()-normalizedDirection.getX()+diagonalDirection.getX(), hitRegion.getMinY()-normalizedDirection.getY()+diagonalDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
