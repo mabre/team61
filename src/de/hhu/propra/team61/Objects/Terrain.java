@@ -118,12 +118,19 @@ public class Terrain extends GridPane {
 
     /**
      * @param hitRegion of a figure or whatever
-     * @param c a terrain field code
      * @param x column of the field
      * @param y row of the field
      * @return true, when hitRegion intersects with the field
      */
-    private boolean intersects(Rectangle2D hitRegion, char c, int x, int y) {
+    private boolean intersects(Rectangle2D hitRegion, int x, int y) {
+        char c;
+        try {
+            c = terrain.get(y).get(x);
+        } catch(IndexOutOfBoundsException e) {
+            // this means we "collided" with the end of the terrain, pretend that it is stone
+            c = 'S';
+        }
+
         switch(c) {
             case ' ':
                 return false;
@@ -158,18 +165,18 @@ public class Terrain extends GridPane {
 
     /**
      * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
-     * When stopOnEveryCollision is true, the movement is always stopped when hitting a object (used for munition); TODO update, parameters changed
-     * otherwise, the movement may also continue in diagonal direction (used for figures)
+     * When canWalkAlongDiagonals is true, the movement continues at slopes in diagonal direction (used for figures);
+     * otherwise, the movement is stopped (used for projectiles)
      * @param oldPosition old position of the object
      * @param direction direction vector of the object
-     * @param hitRegion
-     * @param stopOnEveryCollision when true, also stop on diagonal walls
+     * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
+     * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
+     * @param hasMass when true, the object is moved down to the ground TODO temporary, till real physics is there
      * @return new position
      * @throws CollisionWithFigureException TODO
      * @throws CollisionWithTerrainException TODO
-     * TODO dummy implementation, randomly throws exceptions
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals) throws CollisionWithTerrainException {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean hasMass) throws CollisionWithTerrainException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         Point2D preferredFinalPosition = oldPosition.add(direction);
         Point2D normalizedDirection = direction.normalize();
@@ -202,17 +209,15 @@ public class Terrain extends GridPane {
                 int minX = (int) Math.floor(hitRegion.getMinX() / 8);
                 int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
 
-                // make sure that we are not out of bounds
-                if (minY < 0) minY = 0;
-                else if (maxY >= terrain.size()) maxY = terrain.size()-1;
-                if (minX < 0) minX = 0;
-                else if (maxX >= terrain.get(0).size()) maxX = terrain.get(0).size()-1;
-
                 for (int y = minY; y <= maxY && !triedDiagonal; y++) { // TODO recheck necessity of <=
                     for (int x = minX; x <= maxX && !triedDiagonal; x++) {
                         //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
-                        if (intersects(hitRegion, terrain.get(y).get(x), x, y)) {
-                            System.out.println("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
+                        if (intersects(hitRegion, x, y)) {
+                            try {
+                                System.out.println("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
+                            } catch(IndexOutOfBoundsException e) {
+                                System.out.println("intersection at " + x + " " + y + " out of bounds");
+                            }
                             if (canWalkAlongDiagonals && tries == 0) {
                                 diagonalDirection = new Point2D(Math.signum(normalizedDirection.getX()), -2);
                                 Point2D positionOnSlope = newPosition.subtract(normalizedDirection).add(diagonalDirection);
@@ -230,46 +235,42 @@ public class Terrain extends GridPane {
                 }
                 System.out.println("try " + tries + " E");
             } while(triedDiagonal && ++tries<2);
-            
-            System.out.println("beforehitground: "+newPosition + " " + hitRegion);
-            boolean hitGround = false;
-            tries = 0;
-            final double MOVING_GROUND_DELTA_Y = .1;
-            do { // while(!hitGround)
-                System.out.println("moving to ground ... " + (++tries));
-                newPosition = newPosition.add(0, MOVING_GROUND_DELTA_Y);
-                // calculate moved hitRegion
-                hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY()+MOVING_GROUND_DELTA_Y, hitRegion.getWidth(), hitRegion.getHeight());
-                System.out.println(newPosition + " " + hitRegion);
 
-                // calculate indices of fields which are touched by hitRegion // TODO code duplication
-                int minY = (int) Math.floor(hitRegion.getMinY() / 8);
-                int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
-                int minX = (int) Math.floor(hitRegion.getMinX() / 8);
-                int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
+            if(hasMass) {
+                System.out.println("beforehitground: " + newPosition + " " + hitRegion);
+                boolean hitGround = false;
+                tries = 0;
+                final double MOVING_GROUND_DELTA_Y = .1;
+                do { // while(!hitGround)
+                    System.out.println("moving to ground ... " + (++tries));
+                    newPosition = newPosition.add(0, MOVING_GROUND_DELTA_Y);
+                    // calculate moved hitRegion
+                    hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY() + MOVING_GROUND_DELTA_Y, hitRegion.getWidth(), hitRegion.getHeight());
+                    System.out.println(newPosition + " " + hitRegion);
 
-                // make sure that we are not out of bounds
-                if (minY < 0) minY = 0;
-                else if (maxY >= terrain.size()) maxY = terrain.size()-1;
-                if (minX < 0) minX = 0;
-                else if (maxX >= terrain.get(0).size()) maxX = terrain.get(0).size()-1;
+                    // calculate indices of fields which are touched by hitRegion // TODO code duplication
+                    int minY = (int) Math.floor(hitRegion.getMinY() / 8);
+                    int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
+                    int minX = (int) Math.floor(hitRegion.getMinX() / 8);
+                    int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
 
-                for (int y = minY; y <= maxY && !hitGround; y++) { // TODO recheck necessity of <=
-                    for (int x = minX; x <= maxX && !hitGround; x++) {
-                        //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " " + x + " " + y);
-                        if (intersects(hitRegion, terrain.get(y).get(x), x, y)) {
-                            newPosition = newPosition.subtract(0, MOVING_GROUND_DELTA_Y);
-                            // calculate moved hitRegion
-                            hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY()-MOVING_GROUND_DELTA_Y, hitRegion.getWidth(), hitRegion.getHeight());
-                            hitGround = true;
+                    for (int y = minY; y <= maxY && !hitGround; y++) { // TODO recheck necessity of <=
+                        for (int x = minX; x <= maxX && !hitGround; x++) {
+                            //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " " + x + " " + y);
+                            if (intersects(hitRegion, x, y)) {
+                                newPosition = newPosition.subtract(0, MOVING_GROUND_DELTA_Y);
+                                // calculate moved hitRegion
+                                hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY() - MOVING_GROUND_DELTA_Y, hitRegion.getWidth(), hitRegion.getHeight());
+                                hitGround = true;
+                            }
                         }
                     }
-                }
-                if(tries > 200) {
-                    System.out.println("WARNING stopped movement, probably an error");
-                    break;
-                }
-            } while(!hitGround);
+                    if (tries > 200) {
+                        System.out.println("WARNING stopped movement, probably an error");
+                        break;
+                    }
+                } while (!hitGround);
+            } // if hasMass
 
         } // for i<runs
 

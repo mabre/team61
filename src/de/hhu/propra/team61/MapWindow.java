@@ -6,6 +6,7 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Objects.*;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -18,6 +19,8 @@ import javafx.stage.Stage;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+
+import static java.lang.Thread.sleep;
 
 /**
  * Created by kegny on 08.05.14.
@@ -35,6 +38,8 @@ public class MapWindow extends Application {
     private Label teamLabel;
     private int turnCount = 0;
     private int levelCounter = 0;
+    private Projectile flyingProjectile = null;
+    private Thread moveObjectsThread;
 
     public MapWindow(String map) {
         try {
@@ -77,6 +82,8 @@ public class MapWindow extends Application {
     private void initialize() {
         primaryStage = new Stage();
         primaryStage.setOnCloseRequest(event -> {
+            moveObjectsThread.interrupt();
+
             GameState.save(this.toJson());
             TerrainManager.save(terrain.toArrayList());
             System.out.println("MapWindow: saved game state");
@@ -110,13 +117,13 @@ public class MapWindow extends Application {
                         case SPACE: //Fire
                             if(nextUp.getSelectedItem() != null) {
                                 Projectile projectile = nextUp.getSelectedItem().shoot(); // ToDo Do something with the projectile
+                                flyingProjectile = projectile;
+                                centerView.getChildren().add(flyingProjectile);
 
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
 
                                 nextUp.setSelectedItem(null);
-
-                                endTurn();
                             }
                             break;
                         case UP:
@@ -184,7 +191,7 @@ public class MapWindow extends Application {
                             Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY(), 8, 8);
                             Point2D newPos = null;
                             try {
-                                newPos = terrain.getPositionForDirection(pos, v, hitr, true);
+                                newPos = terrain.getPositionForDirection(pos, v, hitr, true, true);
                                 // TODO rethink parameters of setPosition(), /8 is bad!
                             } catch (CollisionWithTerrainException e) {
                                 System.out.println("CollisionWithTerrainException, stopped movement");
@@ -199,6 +206,34 @@ public class MapWindow extends Application {
         primaryStage.setTitle("The Playground");
         primaryStage.setScene(drawing);
         primaryStage.show();
+
+        moveObjectsThread = new Thread(() -> { // TODO move this code to own class
+            try {
+                while (true) {
+                    //System.out.println("here");
+                    if(flyingProjectile != null) {
+                        try {
+                            final Point2D newPos;
+                            newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false);
+                            Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
+                        } catch (CollisionWithTerrainException e) {
+                            System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
+                            final Point2D newPos = e.getLastGoodPosition();
+                            //Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
+                            Platform.runLater(() -> {
+                                centerView.getChildren().remove(flyingProjectile);
+                                flyingProjectile = null;
+                                endTurn();
+                            }); // TODO potential race condition
+                        }
+                    }
+                        sleep(1000); // TODO do it better for constant frame rate, see slides
+                }
+            } catch (InterruptedException e) {
+                System.out.println("moveObjectsThread shut down");
+            }
+        });
+        moveObjectsThread.start();
     }
 
     /**
