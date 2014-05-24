@@ -118,21 +118,29 @@ public class MapWindow extends Application {
                             break;
                         case UP:
                         case W:
-                            nextUp.getSelectedItem().angle_up(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_up(nextUp.getFacing_right());
+                            }
                             break;
                         case LEFT:
                         case A:
                             nextUp.setFacing_right(false);
-                            nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            }
                             break;
                         case DOWN:
                         case S:
-                            nextUp.getSelectedItem().angle_down(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_down(nextUp.getFacing_right());
+                            }
                             break;
                         case RIGHT:
                         case D:
                             nextUp.setFacing_right(true);
-                            nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            }
                             break;
                         case DIGIT1: // ToDo hardcoded, but sufficient for now
                             if(nextUp.getSelectedItem() != null) {
