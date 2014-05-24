@@ -106,7 +106,7 @@ public class MapWindow extends Application {
                             break;
                         case SPACE: //Fire
                             if(nextUp.getSelectedItem() != null) {
-                                nextUp.getSelectedItem().shoot();
+                                Projectile projectile = nextUp.getSelectedItem().shoot(); // ToDo Do something with the projectile
 
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
@@ -139,7 +139,7 @@ public class MapWindow extends Application {
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
                             }
-                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),50);
+                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp1.png",50);
                             nextUp.setSelectedItem(w1);
                             centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
@@ -149,7 +149,7 @@ public class MapWindow extends Application {
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
                             }
-                            Weapon w2 = new Grenade(nextUp.getPosition(),nextUp.getFacing_right(),40);
+                            Weapon w2 = new Grenade(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp2.png",40);
                             nextUp.setSelectedItem(w2);
                             centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
@@ -159,7 +159,7 @@ public class MapWindow extends Application {
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
                             }
-                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),25);
+                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp3.png",25);
                             nextUp.setSelectedItem(w3);
                             centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
