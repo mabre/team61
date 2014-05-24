@@ -3,25 +3,24 @@ package de.hhu.propra.team61.IO;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 
 /**
- * Created by jessy on 24.05.14.
+ * Created by markus on 13.05.14.
  */
-public class Settings {
+public class Options {
 
-    static String file;
+    private static final String OPTIONS_FILE = "Afrobob.conf";
 
     /**
      * @param json is saved to SETTINGS_FILE
      */
-    public static void save(JSONObject json, String file) {
-        file = file+".conf";
-        Json.save(json, file);
+    public static void save(JSONObject json) {
+        Json.save(json, OPTIONS_FILE);
     }
 
     /**
      * @return game state from SAVE_STATE_FILE
      */
     public static JSONObject getSavedSettings() {
-        return Json.getFromFile(file);
+        return Json.getFromFile(OPTIONS_FILE);
     }
 
 }

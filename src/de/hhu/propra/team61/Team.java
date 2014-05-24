@@ -5,8 +5,11 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.Objects.Figure;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.layout.StackPane;
 
+import java.awt.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -39,6 +42,13 @@ public class Team extends StackPane {
             getChildren().add(f);
         }
         setAlignment(Pos.TOP_LEFT);
+    }
+
+    public Team(String name, ColorPicker color) {
+        String[] team = new String[2];
+        team[0] = name;
+        String colorstring = Integer.toHexString(color.getValue().hashCode()).substring(0, 6).toUpperCase();  //convert chosen color to Hexa (conversion to int and then to String not possible)
+        team[1] = colorstring;
     }
 
     /**

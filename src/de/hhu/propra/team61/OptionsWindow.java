@@ -1,7 +1,7 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
-import de.hhu.propra.team61.IO.Settings;
+import de.hhu.propra.team61.IO.Options;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -36,7 +36,7 @@ public class OptionsWindow extends Application {
 		ostage.setHeight(500);
 		ostage.setResizable(false);
         ostage.setOnHiding(event -> {
-            Settings.save(this.toJson());
+            Options.save(this.toJson());
             System.out.println("OptionsWindow: saved settings");
         });
 		GridPane ogrid = new GridPane();
@@ -99,7 +99,7 @@ public class OptionsWindow extends Application {
 	}
 
     private void loadSavedSettings() {
-        JSONObject savedSettings = Settings.getSavedSettings();
+        JSONObject savedSettings = Options.getSavedSettings();
         if(savedSettings.has("sound1")) {
             sound1.setSelected(savedSettings.getBoolean("sound1"));
         }
