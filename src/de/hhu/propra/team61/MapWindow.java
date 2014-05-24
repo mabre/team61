@@ -12,7 +12,6 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -98,6 +97,7 @@ public class MapWindow extends Application {
         root.setCenter(centerView);
         for(Team team: teams) {
             centerView.getChildren().add(team);
+            terrain.addFigures(team.getFigures());
         }
         nextUp = teams.get((turnCount % teams.size())).getFigures().iterator().next();
         teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + nextUp.getName() + " do?");
@@ -191,11 +191,14 @@ public class MapWindow extends Application {
                             Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY(), 8, 8);
                             Point2D newPos = null;
                             try {
-                                newPos = terrain.getPositionForDirection(pos, v, hitr, true, true);
+                                newPos = terrain.getPositionForDirection(pos, v, hitr, true, true, true);
                                 // TODO rethink parameters of setPosition(), /8 is bad!
                             } catch (CollisionWithTerrainException e) {
                                 System.out.println("CollisionWithTerrainException, stopped movement");
                                 newPos = e.getLastGoodPosition();
+                            } catch (CollisionWithFigureException e) {
+                                // figures can walk through each other // TODO really?
+                                System.out.println("ERROR How did we get here?");
                             }
                             f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
                             break;
@@ -214,13 +217,21 @@ public class MapWindow extends Application {
                     if(flyingProjectile != null) {
                         try {
                             final Point2D newPos;
-                            newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false);
+                            newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
                             Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                         } catch (CollisionWithTerrainException e) {
                             System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
                             final Point2D newPos = e.getLastGoodPosition();
                             //Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                             Platform.runLater(() -> {
+                                centerView.getChildren().remove(flyingProjectile);
+                                flyingProjectile = null;
+                                endTurn();
+                            }); // TODO potential race condition
+                        } catch (CollisionWithFigureException e) {
+                            System.out.println("CollisionWithFigureException, let's harm somebody!");
+                            Platform.runLater(() -> {
+                                e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
                                 centerView.getChildren().remove(flyingProjectile);
                                 flyingProjectile = null;
                                 endTurn();

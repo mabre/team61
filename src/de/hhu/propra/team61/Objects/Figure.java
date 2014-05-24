@@ -2,6 +2,7 @@ package de.hhu.propra.team61.Objects;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
@@ -21,6 +22,7 @@ public class Figure extends ImageView {
     private boolean isStuck;
 
     private Weapon selectedItem; //TODO Change that to Item
+    private Rectangle2D hitRegion;
 
     // In and Out
     public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
@@ -36,6 +38,8 @@ public class Figure extends ImageView {
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
         setImage(image);
+
+        hitRegion = new Rectangle2D(-100,-100,8,8);
     }
 
     public Figure(JSONObject input){
@@ -54,6 +58,8 @@ public class Figure extends ImageView {
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
         setImage(image);
+
+        hitRegion = new Rectangle2D(getTranslateX(),getTranslateY(),8,8);
     }
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjusments after implementation of Options
@@ -112,6 +118,7 @@ public class Figure extends ImageView {
     public void setPosition(Point2D position) {
         this.setTranslateX(8 * position.getX());
         this.setTranslateY(8 * position.getY());
+        hitRegion = new Rectangle2D(getTranslateX(),getTranslateY(),8,8);
     }
     public Point2D getPosition() {
         return new Point2D(this.getTranslateX()/8, this.getTranslateY()/8);
@@ -126,6 +133,16 @@ public class Figure extends ImageView {
         this.facing_right = facing_right;
     }
     public boolean getFacing_right(){return facing_right;}
+
+    public void sufferDamage(int damage) {
+        health -= damage;
+        if(health <= 0) {
+            health = 0;
+            Image image = new Image("file:resources/spawn.png", 8, 8, true, true); // TODO
+            this.setImage(image);
+        }
+        System.out.println(name + " got damage " + damage + ", health at " + health);
+    }
 
     //For testing purposes only
     private static void printAllAttributes(Figure testwurm){
@@ -159,5 +176,9 @@ public class Figure extends ImageView {
         System.out.println("JSON: "+testwurmA.toJson().toString());
         Figure testwurmB = new Figure(testwurmA.toJson());
         printAllAttributes(testwurmB);
+    }
+
+    public Rectangle2D getHitRegion() {
+        return hitRegion;
     }
 }

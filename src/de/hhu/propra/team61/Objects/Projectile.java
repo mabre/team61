@@ -12,25 +12,26 @@ public class Projectile extends ImageView {
     boolean falls; // Gravitation on/off
 
     private Point2D velocity;
+
     private int damage;
 
     private Rectangle2D hitRegion;
 
     /**
-     * @param image
-     * @param position
-     * @param firedAt
-     * @param velocity
-     * @param damage
+     * @param image the image with which the projectile is drawn, hit region is extracted from its dimension
+     * @param position of the weapon (ie position of figure)
+     * @param firedAt direction (ie position of cross hair)
+     * @param velocity determines speed and direction
+     * @param damage health damage caused when hitting a figure
      */
-    public Projectile(Image image,Point2D position,Point2D firedAt,int velocity,int damage){
+    public Projectile(Image image, Point2D position, Point2D firedAt, int velocity, int damage){
         setImage(image);
-        setTranslateX(position.getX());
-        setTranslateY(position.getY());
+        setTranslateX(firedAt.getX());
+        setTranslateY(firedAt.getY());
         this.velocity = firedAt.subtract(position);
         this.velocity = this.velocity.normalize().multiply(velocity);
         this.damage = damage;
-        hitRegion = new Rectangle2D(position.getX(), position.getY(), image.getWidth(), image.getHeight());
+        hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), image.getWidth(), image.getHeight());
         System.out.println("created projectile, v=" + this.velocity);
     }
 
@@ -56,6 +57,10 @@ public class Projectile extends ImageView {
 
     public Point2D getVelocity() {
         return velocity;
+    }
+
+    public int getDamage() {
+        return damage;
     }
 
 }
