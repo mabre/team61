@@ -5,6 +5,7 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -36,9 +37,9 @@ public class GameSettings extends Application {
     ColorPicker colorPicker3 = new ColorPicker();
     ColorPicker colorPicker4 = new ColorPicker();
     TextField savefield = new TextField();
-    TextField weapon1 = new TextField();
-    TextField weapon2 = new TextField();
-    TextField weapon3 = new TextField();
+    TextField weapon1 = new TextField("50");
+    TextField weapon2 = new TextField("50");
+    TextField weapon3 = new TextField("5");
     TextField sizefield = new TextField();
     HBox hboxplus = new HBox(5);
     Button plus = new Button("+");                   //Button to add up to 2 more teams
@@ -82,7 +83,7 @@ public class GameSettings extends Application {
         sgrid.add(loadbtn, 1, 1);
 
         //Weapons, TextFields for entering a quantity
-        Text weapons = new Text("Weapons");
+        Label weapons = new Label("Weapons");
         weapons.setFont(Font.font("Verdana", 20));
         sgrid.add(weapons, 0, 3);
         Text enter = new Text ("Enter the quantity of projectiles for each weapon.");
@@ -99,7 +100,7 @@ public class GameSettings extends Application {
         Text empty2 = new Text ("An empty field will lead to a number of 0.");
         sgrid.add(empty2, 6, 4);
 
-        Text indi = new Text("Individual Team Settings");
+        Label indi = new Label("Individual Team Settings");
         indi.setFont(Font.font("Verdana", 20));
         sgrid.add(indi, 0, 6, 3, 1);
 
@@ -130,6 +131,7 @@ public class GameSettings extends Application {
         });
 
         Text sizetext = new Text("Team-Size:");
+        sizefield.setText("4");
         sgrid.add(sizetext, 0, 14);
         sgrid.add(sizefield, 1, 14);
         Button cont = new Button("Continue");
@@ -154,8 +156,10 @@ public class GameSettings extends Application {
 
         Scene sscene = new Scene(sgrid, 1000, 600);
         settingstage.setScene(sscene);
-        stageToClose.close();                               //close last stage (mainwindow)
+        sscene.getStylesheets().add("file:src/de/hhu/propra/team61/GUI/settings");
+        sgrid.getStyleClass().add("settingpane");
         settingstage.show();
+        stageToClose.close();                   //close last stage (mainwindow)
     }
 
     public JSONObject toJson() {

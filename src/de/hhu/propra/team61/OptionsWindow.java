@@ -96,6 +96,9 @@ public class OptionsWindow extends Application {
 
 		Scene oscene = new Scene(ogrid, 1000, 600);
 		ostage.setScene(oscene);
+        oscene.getStylesheets().add("file:src/de/hhu/propra/team61/GUI/options");
+        ogrid.getStyleClass().add("optionspane");
+        optionst.getStyleClass().add("optionstext");
         ostage.show();
         stageToClose.close();
 	}

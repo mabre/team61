@@ -1,7 +1,6 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.IO.GameState;
-import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.IO.GameState;;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -31,7 +30,7 @@ public class Afrobob extends Application {
         launch(args);
     }
 
-    public void start (Stage mainwindow) {
+    public void start (Stage mainwindow) throws NullPointerException {
         mainwindow.setTitle("Unicorns and Penguins! <3");
         mainwindow.setWidth(1000);
         mainwindow.setHeight(600);
@@ -49,6 +48,7 @@ public class Afrobob extends Application {
         grid.setHalignment(mstartsaved, HPos.CENTER);
         grid.add(mstartsaved, 0, 2);
         Button mstartn = new Button("Start network game");
+        grid.setHalignment(mstartn, HPos.CENTER);
         grid.add(mstartn, 0, 3);
         Button moptions = new Button("Options");
         grid.setHalignment(moptions, HPos.CENTER);
@@ -91,6 +91,8 @@ public class Afrobob extends Application {
 
         Scene scene = new Scene(grid, 1000, 600);
         mainwindow.setScene(scene);
+        scene.getStylesheets().add("file:src/de/hhu/propra/team61/GUI/menue");
+        grid.getStyleClass().add("menuepane");
         mainwindow.show();
     }
 }
