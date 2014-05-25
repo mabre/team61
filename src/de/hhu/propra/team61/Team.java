@@ -12,12 +12,16 @@ import java.util.ArrayList;
 /**
  * Created by markus on 17.05.14.
  */
+
+
 public class Team extends StackPane {
+    private int i = 0;
+    public int currentFigure = 0;
     private ArrayList<Figure> figures;
 
     public Team(ArrayList<Point2D> spawnPoints) {
         figures = new ArrayList<>();
-        for(Point2D sp: spawnPoints) {
+        for (Point2D sp : spawnPoints) {
             Figure f = new Figure("Max", 100, 100, false, false, false); // TODO @Kegny create sensible default constructor
             figures.add(f);
             f.setPosition(sp);
@@ -25,6 +29,28 @@ public class Team extends StackPane {
         }
         setAlignment(Pos.TOP_LEFT);
     }
+
+
+
+
+
+
+    public void endRound() {
+        i = 0;                                      //nonsense from Dinii
+        while (figures.get(currentFigure).getHealth() == 0) {
+            if (i == figures.size()) {
+                currentFigure = -1;
+                break;
+            }
+            currentFigure++;                        //till here <-
+            if (currentFigure == figures.size()) {
+                currentFigure = 0;
+            }
+            i++;
+        }
+    }
+
+    public int getCurrentPin() {return currentFigure;}
 
     /**
      * create a team from a given JSONObject
