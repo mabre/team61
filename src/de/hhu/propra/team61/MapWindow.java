@@ -11,6 +11,7 @@ import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.paint.Color;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -58,7 +59,7 @@ public class MapWindow extends Application {
             ArrayList<Weapon> weapons = new ArrayList<>();
             weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
             weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
-            teams.add(new Team(terrain.getRandomSpawnPoints(2), weapons));
+            teams.add(new Team(terrain.getRandomSpawnPoints(2), weapons, Color.WHITE));
         }
 
         initialize();
@@ -82,7 +83,7 @@ public class MapWindow extends Application {
             weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
             weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
             weapons.add(new Gun("file:resources/weapons/temp3.png", 30, settings.getInt("weapon3")));
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(settings.getJSONArray("team"+(i+1)).getJSONObject(1).getString("color")))); // TODO VERY ugl
         }
 
         initialize();
@@ -319,7 +320,7 @@ public class MapWindow extends Application {
                 ArrayList<Weapon> weapons = new ArrayList<>();
                 weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
                 weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
-                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons);
+                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE);
                 teams.add(team);
                 centerView.getChildren().add(team);
             }

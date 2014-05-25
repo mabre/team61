@@ -8,11 +8,9 @@ import de.hhu.propra.team61.Objects.Gun;
 import de.hhu.propra.team61.Objects.Weapon;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.control.ColorPicker;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 
-import java.awt.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -21,12 +19,15 @@ import java.util.ArrayList;
 public class Team extends StackPane {
     private ArrayList<Figure> figures;
     private ArrayList<Weapon> weapons;
+    private Color color;
 
-    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Weapon> weapons) {
+    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Weapon> weapons, Color color) {
         this.weapons = weapons;
+        this.color = color;
         figures = new ArrayList<>();
         for(Point2D sp: spawnPoints) {
             Figure f = new Figure("Max", 100, 100, false, false, false); // TODO @Kegny create sensible default constructor
+            f.setColor(this.color);
             figures.add(f);
             f.setPosition(sp);
             getChildren().add(f);
@@ -39,11 +40,13 @@ public class Team extends StackPane {
      * @param state the JSONObject representing the team state
      */
     public Team(JSONObject state) {
+        color = Color.web(state.getString("color"));
         figures = new ArrayList<>();
         JSONArray figuresArray = state.getJSONArray("figures");
         for(int i=0; i<figuresArray.length(); i++) {
             Figure f = new Figure(figuresArray.getJSONObject(i));
             figures.add(f);
+            f.setColor(color);
             getChildren().add(f);
         }
         weapons = new ArrayList<>();
@@ -75,6 +78,7 @@ public class Team extends StackPane {
             weaponsArray.put(w.toJson());
         }
         output.put("weapons", weaponsArray);
+        output.put("color", "#"+Integer.toHexString(color.hashCode()).substring(0, 6));
         return output;
     }
 

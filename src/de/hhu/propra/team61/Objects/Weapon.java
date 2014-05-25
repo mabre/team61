@@ -19,9 +19,9 @@ public abstract class Weapon extends Item {
     private String description; //
 
     private String damagetype;  // Firedamage etc.
-    protected int munition;       // weapon can only be used when munition > 0
+    protected int munition;     // weapon can only be used when munition > 0
     private int damage;         // Damage to Figures
-    private int explosionpower; // Damage to Enviroment
+    private int explosionpower; // Damage to environment
     private int delay;          // Timedelay, Explode in x seconds etc.
 
     private double angle;       // Angle it is aimed at; 0 <=> Horizontal; +90 <=> straight upwards

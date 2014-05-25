@@ -166,7 +166,7 @@ public class GameSettings extends Application {
         JSONObject output = new JSONObject();
         output.put("quantity", quantity);                   //save number of teams
         output.put("team-size", sizefield.getText());       //save size of teams
-        output.put("weapon1", weapon1.getText());
+        output.put("weapon1", weapon1.getText()); // TODO make array instead of using suffix (same for teams)
         output.put("weapon2", weapon2.getText());
         output.put("weapon3", weapon3.getText());
         JSONArray team1 = formTeam(name1.getText(), colorPicker1);   //create an JSONArray for each team with the elements name and color
@@ -224,7 +224,7 @@ public class GameSettings extends Application {
         nameobject.put("name", name);
         jarray.put(nameobject);
         JSONObject colorobject = new JSONObject();
-        String colorstring = Integer.toHexString(color.getValue().hashCode()).substring(0, 6).toUpperCase();    //save color in HEXA, conversion to int and then String not possible
+        String colorstring = "#"+Integer.toHexString(color.getValue().hashCode()).substring(0, 6);    //save color in HEXA, conversion to int and then String not possible
         colorobject.put("color", colorstring);
         jarray.put(colorobject);
         return jarray;
