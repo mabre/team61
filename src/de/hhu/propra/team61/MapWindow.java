@@ -99,7 +99,7 @@ public class MapWindow extends Application {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
-        currentTeam().getCurrentFigure() = teams.get((turnCount % teams.size())).getFigures().iterator().next();
+        //currentTeam().getCurrentFigure() = teams.get((turnCount % teams.size())).getFigures().iterator().next();
         teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + currentTeam().getCurrentFigure() .getName() + " do?");
 
         root.setBottom(teamLabel);
