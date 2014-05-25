@@ -35,6 +35,7 @@ public class MapWindow extends Application {
     private StackPane centerView;
     private Terrain terrain;
     private Label teamLabel;
+    private int currentTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
     private Projectile flyingProjectile = null;
@@ -71,6 +72,7 @@ public class MapWindow extends Application {
         }
 
         turnCount = input.getInt("turnCount");
+        currentTeam = input.getInt("currentTeam");
 
         initialize();
     }
@@ -100,7 +102,7 @@ public class MapWindow extends Application {
             terrain.addFigures(team.getFigures());
         }
         //currentTeam().getCurrentFigure() = teams.get((turnCount % teams.size())).getFigures().iterator().next();
-        teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + currentTeam().getCurrentFigure() .getName() + " do?");
+        teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + teams.get(currentTeam).getCurrentFigure() .getName() + " do?");
 
         root.setBottom(teamLabel);
 
@@ -115,72 +117,72 @@ public class MapWindow extends Application {
                             cheatMode();
                             break;
                         case SPACE: //Fire
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                Projectile projectile = currentTeam().getCurrentFigure().getSelectedItem().shoot(); // ToDo Do something with the projectile
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                Projectile projectile = teams.get(currentTeam).getCurrentFigure().getSelectedItem().shoot(); // ToDo Do something with the projectile
                                 flyingProjectile = projectile;
                                 centerView.getChildren().add(flyingProjectile);
 
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
 
-                                currentTeam().getCurrentFigure().setSelectedItem(null);
+                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                             }
                             break;
                         case UP:
                         case W:
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                currentTeam().getCurrentFigure().getSelectedItem().angle_up(currentTeam().getCurrentFigure() .getFacing_right());
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case LEFT:
                         case A:
-                            currentTeam().getCurrentFigure().setFacing_right(false);
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                currentTeam().getCurrentFigure().getSelectedItem().angle_draw(currentTeam().getCurrentFigure() .getFacing_right());
+                            teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case DOWN:
                         case S:
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                currentTeam().getCurrentFigure().getSelectedItem().angle_down(currentTeam().getCurrentFigure() .getFacing_right());
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_down(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case RIGHT:
                         case D:
-                            currentTeam().getCurrentFigure().setFacing_right(true);
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                currentTeam().getCurrentFigure().getSelectedItem().angle_draw(currentTeam().getCurrentFigure() .getFacing_right());
+                            teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case DIGIT1: // ToDo hardcoded, but sufficient for now
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                             }
-                            Weapon w1 = new Gun(currentTeam().getCurrentFigure().getPosition(),currentTeam().getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp1.png",50);
-                            currentTeam().getCurrentFigure().setSelectedItem(w1);
-                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem());
-                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
+                            Weapon w1 = new Gun(teams.get(currentTeam).getCurrentFigure().getPosition(),teams.get(currentTeam).getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp1.png",50);
+                            teams.get(currentTeam).getCurrentFigure().setSelectedItem(w1);
+                            centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                            centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                             break;
                         case DIGIT2:
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                             }
-                            Weapon w2 = new Grenade(currentTeam().getCurrentFigure().getPosition(),currentTeam().getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp2.png",40);
-                            currentTeam().getCurrentFigure().setSelectedItem(w2);
-                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem());
-                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
+                            Weapon w2 = new Grenade(teams.get(currentTeam).getCurrentFigure().getPosition(),teams.get(currentTeam).getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp2.png",40);
+                            teams.get(currentTeam).getCurrentFigure().setSelectedItem(w2);
+                            centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                            centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                             break;
                         case DIGIT3:
-                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
+                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                             }
-                            Weapon w3 = new Gun(currentTeam().getCurrentFigure().getPosition(),currentTeam().getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp3.png",25);
-                            currentTeam().getCurrentFigure() .setSelectedItem(w3);
-                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem());
-                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
+                            Weapon w3 = new Gun(teams.get(currentTeam).getCurrentFigure().getPosition(),teams.get(currentTeam).getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp3.png",25);
+                            teams.get(currentTeam).getCurrentFigure() .setSelectedItem(w3);
+                            centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                            centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                             break;
                         case K: // Kollision test // TODO remove, replace with real movement
                             v = new Point2D(+10, 0);
@@ -262,6 +264,7 @@ public class MapWindow extends Application {
         }
         output.put("teams", teamsArray);
         output.put("turnCount", turnCount);
+        output.put("currentTeam", currentTeam);
         return output;
     }
 
@@ -285,18 +288,37 @@ public class MapWindow extends Application {
         }
     }
 
+    
     public void endTurn() {
-        turnCount++;
-        int teamCount = turnCount % teams.size();
-        currentTeam().endRound();
-        teamLabel.setText("Team" + teamCount + "s turn. What will " + currentTeam().getCurrentFigure().getName() + " do?");
-        System.out.println("Turn " + turnCount + ", Team " + teamCount + ", Worm \"" + currentTeam().getCurrentFigure().getName() + "\"");
+        currentTeam++;
+        currentTeam = currentTeam % teams.size();
+
+        int i = 0;
+        do {
+            if (i == teams.size()) {
+                currentTeam = -1; break;
+            }
+            currentTeam++;//till here &lt;-
+            if (currentTeam == teams.size()) {
+                currentTeam = 0;
+            }
+            i++;
+        }
+        while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
+        if (currentTeam == teams.size()) {
+            currentTeam = 0;
+        }
+        i++;
+
+        teams.get(currentTeam).endRound();
+        teamLabel.setText("team" + currentTeam + "won");
+        System.out.println("Turn " + currentTeam + ", Team " + currentTeam + ", Worm \"" + teams.get(currentTeam).getCurrentFigure().getName() + "\"");
     }
 
-    private Team currentTeam(){
-        return teams.get(turnCount%teams.size());
+    //private Team teams.get(currentTeam){
+      //  return teams.get(currentTeam%teams.size());
 
-    }
+   // }
 
     @Override
     public void start(Stage ostage) {

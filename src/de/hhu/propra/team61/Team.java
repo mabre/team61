@@ -52,6 +52,16 @@ public class Team extends StackPane {
 
     public Figure getCurrentFigure() {return figures.get(currentFigure);}
 
+    public int getNumberOfLivingFigures() {
+        int livingFigures = 0;
+        for (Figure figure: figures){
+            if(figure.getHealth() > 0){
+                livingFigures++;
+            }
+        }
+        return livingFigures;
+    }
+
     /**
      * create a team from a given JSONObject
      * @param state the JSONObject representing the team state
