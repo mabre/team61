@@ -16,7 +16,11 @@ import java.util.ArrayList;
 /**
  * Created by markus on 17.05.14.
  */
+
+
 public class Team extends StackPane {
+    private int i = 0;
+    public int currentFigure = 0;
     private ArrayList<Figure> figures;
     private ArrayList<Weapon> weapons;
     private Color color;
@@ -25,7 +29,7 @@ public class Team extends StackPane {
         this.weapons = weapons;
         this.color = color;
         figures = new ArrayList<>();
-        for(Point2D sp: spawnPoints) {
+        for (Point2D sp : spawnPoints) {
             Figure f = new Figure("Max", 100, 100, false, false, false); // TODO @Kegny create sensible default constructor
             f.setColor(this.color);
             figures.add(f);
@@ -33,6 +37,36 @@ public class Team extends StackPane {
             getChildren().add(f);
         }
         setAlignment(Pos.TOP_LEFT);
+    }
+
+    public void endRound() {
+        i = 0;
+        do {
+            if (i == figures.size()) {
+                currentFigure = -1;
+                break;
+            }
+            currentFigure++;
+            if (currentFigure == figures.size()) {
+                currentFigure = 0;
+            }
+            i++;
+        }
+        while (figures.get(currentFigure).getHealth() == 0);
+    }
+
+    public Figure getCurrentFigure() {
+        return figures.get(currentFigure);
+    }
+
+    public int getNumberOfLivingFigures() {
+        int livingFigures = 0;
+        for (Figure figure: figures){
+            if(figure.getHealth() > 0){
+                livingFigures++;
+            }
+        }
+        return livingFigures;
     }
 
     /**

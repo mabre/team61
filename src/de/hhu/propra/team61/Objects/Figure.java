@@ -171,6 +171,7 @@ public class Figure extends StackPane {
             health = 0;
             Image image = new Image("file:resources/spawn.png", 8, 8, true, true); // TODO
             imageView.setImage(image);
+            setPosition(new Point2D(-1000, -1000));
         }
         hpLabel.setText(health+"");
         System.out.println(name + " got damage " + damage + ", health at " + health);
