@@ -50,7 +50,7 @@ public class Team extends StackPane {
         }
     }
 
-    public int getCurrentPin() {return currentFigure;}
+    public int getCurrentFigure() {return currentFigure;}
 
     /**
      * create a team from a given JSONObject

@@ -28,7 +28,7 @@ import static java.lang.Thread.sleep;
  */
 public class MapWindow extends Application {
     private ArrayList<Team> teams;
-    private Figure nextUp;
+//    private Figure currentTeam().getCurrentFigure() ;
     private Scene drawing;
     private Stage primaryStage;
     private BorderPane root;
@@ -99,8 +99,8 @@ public class MapWindow extends Application {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
-        nextUp = teams.get((turnCount % teams.size())).getFigures().iterator().next();
-        teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + nextUp.getName() + " do?");
+        currentTeam().getCurrentFigure() = teams.get((turnCount % teams.size())).getFigures().iterator().next();
+        teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + currentTeam().getCurrentFigure() .getName() + " do?");
 
         root.setBottom(teamLabel);
 
@@ -115,72 +115,72 @@ public class MapWindow extends Application {
                             cheatMode();
                             break;
                         case SPACE: //Fire
-                            if(nextUp.getSelectedItem() != null) {
-                                Projectile projectile = nextUp.getSelectedItem().shoot(); // ToDo Do something with the projectile
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                Projectile projectile = currentTeam().getCurrentFigure().getSelectedItem().shoot(); // ToDo Do something with the projectile
                                 flyingProjectile = projectile;
                                 centerView.getChildren().add(flyingProjectile);
 
-                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
 
-                                nextUp.setSelectedItem(null);
+                                currentTeam().getCurrentFigure().setSelectedItem(null);
                             }
                             break;
                         case UP:
                         case W:
-                            if(nextUp.getSelectedItem() != null) {
-                                nextUp.getSelectedItem().angle_up(nextUp.getFacing_right());
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                currentTeam().getCurrentFigure().getSelectedItem().angle_up(currentTeam().getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case LEFT:
                         case A:
-                            nextUp.setFacing_right(false);
-                            if(nextUp.getSelectedItem() != null) {
-                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            currentTeam().getCurrentFigure().setFacing_right(false);
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                currentTeam().getCurrentFigure().getSelectedItem().angle_draw(currentTeam().getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case DOWN:
                         case S:
-                            if(nextUp.getSelectedItem() != null) {
-                                nextUp.getSelectedItem().angle_down(nextUp.getFacing_right());
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                currentTeam().getCurrentFigure().getSelectedItem().angle_down(currentTeam().getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case RIGHT:
                         case D:
-                            nextUp.setFacing_right(true);
-                            if(nextUp.getSelectedItem() != null) {
-                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            currentTeam().getCurrentFigure().setFacing_right(true);
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                currentTeam().getCurrentFigure().getSelectedItem().angle_draw(currentTeam().getCurrentFigure() .getFacing_right());
                             }
                             break;
                         case DIGIT1: // ToDo hardcoded, but sufficient for now
-                            if(nextUp.getSelectedItem() != null) {
-                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
                             }
-                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp1.png",50);
-                            nextUp.setSelectedItem(w1);
-                            centerView.getChildren().add(nextUp.getSelectedItem());
-                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
+                            Weapon w1 = new Gun(currentTeam().getCurrentFigure().getPosition(),currentTeam().getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp1.png",50);
+                            currentTeam().getCurrentFigure().setSelectedItem(w1);
+                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem());
+                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
                             break;
                         case DIGIT2:
-                            if(nextUp.getSelectedItem() != null) {
-                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
                             }
-                            Weapon w2 = new Grenade(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp2.png",40);
-                            nextUp.setSelectedItem(w2);
-                            centerView.getChildren().add(nextUp.getSelectedItem());
-                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
+                            Weapon w2 = new Grenade(currentTeam().getCurrentFigure().getPosition(),currentTeam().getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp2.png",40);
+                            currentTeam().getCurrentFigure().setSelectedItem(w2);
+                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem());
+                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
                             break;
                         case DIGIT3:
-                            if(nextUp.getSelectedItem() != null) {
-                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            if(currentTeam().getCurrentFigure().getSelectedItem() != null) {
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
+                                centerView.getChildren().remove(currentTeam().getCurrentFigure().getSelectedItem());
                             }
-                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp3.png",25);
-                            nextUp.setSelectedItem(w3);
-                            centerView.getChildren().add(nextUp.getSelectedItem());
-                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
+                            Weapon w3 = new Gun(currentTeam().getCurrentFigure().getPosition(),currentTeam().getCurrentFigure() .getFacing_right(),"file:resources/weapons/temp3.png",25);
+                            currentTeam().getCurrentFigure() .setSelectedItem(w3);
+                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem());
+                            centerView.getChildren().add(currentTeam().getCurrentFigure().getSelectedItem().getCrosshair());
                             break;
                         case K: // Kollision test // TODO remove, replace with real movement
                             v = new Point2D(+10, 0);
@@ -293,9 +293,14 @@ public class MapWindow extends Application {
         for (Team team : teams){
             team.endRound();
         }
-//        nextUp = teams.get(teamCount).getFigures().iterator().next(); // ToDo add Loop so that last ist connected to first. Either by if here or changing ArrayList into a Ring
-        teamLabel.setText("Team" + teamCount + "s turn. What will " + nextUp.getName() + " do?");
-        System.out.println("Turn " + turnCount + ", Team " + teamCount + ", Worm \"" + nextUp.getName() + "\"");
+//        currentTeam().getCurrentFigure()  = teams.get(teamCount).getFigures().iterator().next(); // ToDo add Loop so that last ist connected to first. Either by if here or changing ArrayList into a Ring
+        teamLabel.setText("Team" + teamCount + "s turn. What will " + currentTeam().getCurrentFigure().getName() + " do?");
+        System.out.println("Turn " + turnCount + ", Team " + teamCount + ", Worm \"" + currentTeam().getCurrentFigure().getName() + "\"");
+    }
+
+    private Team currentTeam(){
+        return teams.get(turnCount%teams.size());
+
     }
 
     @Override
