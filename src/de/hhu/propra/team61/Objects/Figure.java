@@ -40,6 +40,8 @@ public class Figure extends ImageView {
         setImage(image);
 
         hitRegion = new Rectangle2D(-100,-100,8,8);
+
+        selectedItem = null;
     }
 
     public Figure(JSONObject input){
@@ -60,6 +62,8 @@ public class Figure extends ImageView {
         setImage(image);
 
         hitRegion = new Rectangle2D(getTranslateX(),getTranslateY(),8,8);
+
+        selectedItem = null;
     }
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjusments after implementation of Options
@@ -78,6 +82,8 @@ public class Figure extends ImageView {
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
         setImage(image);
+
+        selectedItem = null;
     }
 
     public JSONObject toJson(){
@@ -124,9 +130,19 @@ public class Figure extends ImageView {
         return new Point2D(this.getTranslateX()/8, this.getTranslateY()/8);
     }
 
-    public Weapon getSelectedItem(){return selectedItem;} //TODO Change that to Item
+    public Weapon getSelectedItem(){
+        return selectedItem;
+    } //TODO Change that to Item
+
     public void setSelectedItem(Weapon select){
-        this.selectedItem = select;
+        if(selectedItem != null) {
+            selectedItem.hide();
+        }
+        selectedItem = select;
+        if(selectedItem != null) {
+            select.setPosition(new Point2D(getTranslateX(), getTranslateY()));
+            selectedItem.angle_draw(facing_right);
+        }
     }
 
     public void setFacing_right(boolean facing_right) {
@@ -180,5 +196,10 @@ public class Figure extends ImageView {
 
     public Rectangle2D getHitRegion() {
         return hitRegion;
+    }
+
+    public Projectile shoot() throws NoMunitionException {
+        selectedItem.setPosition(new Point2D(getTranslateX(), getTranslateY()));
+        return selectedItem.shoot();
     }
 }

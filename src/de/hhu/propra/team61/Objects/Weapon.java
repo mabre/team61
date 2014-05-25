@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.Objects;
 
+import de.hhu.propra.team61.IO.JSON.JSONObject;
 import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -13,12 +14,12 @@ import javafx.scene.image.ImageView;
 public abstract class Weapon extends Item {
     private final int distance = 15; // Distance between Crosshair to Figure
 
-    //ToDo validate necesity of all of them
+    //ToDo validate necessity of all of them
     private String name;        //
     private String description; //
 
     private String damagetype;  // Firedamage etc.
-    private int munitions;      // ?
+    protected int munition;       // weapon can only be used when munition > 0
     private int damage;         // Damage to Figures
     private int explosionpower; // Damage to Enviroment
     private int delay;          // Timedelay, Explode in x seconds etc.
@@ -27,18 +28,30 @@ public abstract class Weapon extends Item {
     private ImageView crosshair;
     private int velocity;       // Power of shot, affects distance, flightspeed etc.
 
-    public Weapon(Point2D pos,boolean facing_right,String path,int damage){ //ToDo Replace variables with something better?
+    public Weapon(int damage, int munition){ //ToDo Replace variables with something better?
         this.angle = 0;
         this.damage = damage;
-
-        this.setTranslateX(8 * pos.getX());
-        this.setTranslateY(8 * pos.getY());
-        Image image = new Image(path, 8, 8, true, true); //ToDo Replace with an actual Weapon
-        setImage(image);
-
-        crosshair = new ImageView("file:resources/weapons/crosshair.png");
-        angle_draw(facing_right);
+        this.munition = munition;
+        initialize();
     };
+
+    public Weapon(JSONObject json) {
+        this.munition = json.getInt("munition");
+        this.damage = json.getInt("damage");
+        initialize();
+    }
+
+    private void initialize() {
+        crosshair = new ImageView("file:resources/weapons/crosshair.png");
+        angle_draw(true);
+    }
+
+    public JSONObject toJson() {
+        JSONObject json = new JSONObject();
+        json.put("munition", munition);
+        json.put("damage", damage);
+        return json;
+    }
 
     //Getter and Setter
     /*ToDo if necessary*/
@@ -47,16 +60,30 @@ public abstract class Weapon extends Item {
     }
     public ImageView getCrosshair() { return crosshair; }
     public int getDamage() { return damage; }
+    public int getMunition() {
+        return munition;
+    }
 
-    public Projectile shoot(){  // Overwritten in SubClasses, but creates specific projectile etc.
+    /**
+     * @param pos in px
+     */
+    public void setPosition(Point2D pos) {
+        this.setTranslateX(pos.getX());
+        this.setTranslateY(pos.getY());
+    }
+
+    public void hide() {
+        this.setTranslateX(-1000);
+        this.setTranslateY(-1000);
+    }
+
+    public Projectile shoot() throws NoMunitionException {  // Overwritten in SubClasses, but creates specific projectile etc.
         //TODO do more?
-        Projectile shot = new Projectile(new Image("file:resources/weapons/temp0.png"),new Point2D(getX(),getY()),new Point2D(crosshair.getX(),crosshair.getY()),20,damage);
+        Projectile shot = new Projectile(new Image("file:resources/weapons/temp0.png"), new Point2D(getTranslateX(),getTranslateY()), new Point2D(crosshair.getTranslateX(), crosshair.getTranslateY()), 20, damage);
         return shot;
     }
 
-
-
-    //----------------------------------Crosshair-Related Functions---------------------------------
+    //----------------------------------Crosshair-Related Functions--------------------------------- // TODO own class
     public double toRadian(double grad) { // This function transforms angles to rad which are needed for sin/cos etc.
         return grad * Math.PI / 180;
     }

@@ -50,7 +50,10 @@ public class MapWindow extends Application {
 
         teams = new ArrayList<>();
         for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
-            teams.add(new Team(terrain.getRandomSpawnPoints(2)));
+            ArrayList<Weapon> weapons = new ArrayList<>();
+            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
+            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
+            teams.add(new Team(terrain.getRandomSpawnPoints(2), weapons));
         }
 
         initialize();
@@ -116,9 +119,14 @@ public class MapWindow extends Application {
                             break;
                         case SPACE: //Fire
                             if(nextUp.getSelectedItem() != null) {
-                                Projectile projectile = nextUp.getSelectedItem().shoot(); // ToDo Do something with the projectile
-                                flyingProjectile = projectile;
-                                centerView.getChildren().add(flyingProjectile);
+                                try {
+                                    Projectile projectile = nextUp.shoot(); // ToDo Do something with the projectile
+                                    flyingProjectile = projectile;
+                                    centerView.getChildren().add(flyingProjectile);
+                                } catch (NoMunitionException e) {
+                                    System.out.println("no munition");
+                                    break;
+                                }
 
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
@@ -153,34 +161,37 @@ public class MapWindow extends Application {
                             }
                             break;
                         case DIGIT1: // ToDo hardcoded, but sufficient for now
-                            if(nextUp.getSelectedItem() != null) {
-                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            if(teams.get(turnCount%teams.size()).getNumberOfWeapons() >= 1) {
+                                if (nextUp.getSelectedItem() != null) {
+                                    centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                    centerView.getChildren().remove(nextUp.getSelectedItem());
+                                }
+                                nextUp.setSelectedItem(teams.get(turnCount % teams.size()).getWeapon(0));
+                                centerView.getChildren().add(nextUp.getSelectedItem());
+                                centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             }
-                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp1.png",50);
-                            nextUp.setSelectedItem(w1);
-                            centerView.getChildren().add(nextUp.getSelectedItem());
-                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
                         case DIGIT2:
-                            if(nextUp.getSelectedItem() != null) {
-                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            if(teams.get(turnCount%teams.size()).getNumberOfWeapons() >= 2) {
+                                if (nextUp.getSelectedItem() != null) {
+                                    centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                    centerView.getChildren().remove(nextUp.getSelectedItem());
+                                }
+                                nextUp.setSelectedItem(teams.get(turnCount % teams.size()).getWeapon(1));
+                                centerView.getChildren().add(nextUp.getSelectedItem());
+                                centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             }
-                            Weapon w2 = new Grenade(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp2.png",40);
-                            nextUp.setSelectedItem(w2);
-                            centerView.getChildren().add(nextUp.getSelectedItem());
-                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
                         case DIGIT3:
-                            if(nextUp.getSelectedItem() != null) {
-                                centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(nextUp.getSelectedItem());
+                            if(teams.get(turnCount%teams.size()).getNumberOfWeapons() >= 3) {
+                                if (nextUp.getSelectedItem() != null) {
+                                    centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
+                                    centerView.getChildren().remove(nextUp.getSelectedItem());
+                                }
+                                nextUp.setSelectedItem(teams.get(turnCount % teams.size()).getWeapon(2));
+                                centerView.getChildren().add(nextUp.getSelectedItem());
+                                centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             }
-                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp3.png",25);
-                            nextUp.setSelectedItem(w3);
-                            centerView.getChildren().add(nextUp.getSelectedItem());
-                            centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
                         case K: // Kollision test // TODO remove, replace with real movement
                             v = new Point2D(+10, 0);
@@ -276,7 +287,10 @@ public class MapWindow extends Application {
             }
             teams.clear();
             for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
-                Team team = new Team(terrain.getRandomSpawnPoints(2));
+                ArrayList<Weapon> weapons = new ArrayList<>();
+                weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
+                weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
+                Team team = new Team(terrain.getRandomSpawnPoints(2), weapons);
                 teams.add(team);
                 centerView.getChildren().add(team);
             }

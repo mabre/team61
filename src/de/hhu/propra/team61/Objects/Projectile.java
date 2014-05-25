@@ -32,7 +32,10 @@ public class Projectile extends ImageView {
         this.velocity = this.velocity.normalize().multiply(velocity);
         this.damage = damage;
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), image.getWidth(), image.getHeight());
-        System.out.println("created projectile, v=" + this.velocity);
+        System.out.println("created projectile at " + getTranslateX() + " " + getTranslateY() + ", v=" + this.velocity);
+        if(this.velocity.magnitude() == 0) {
+            throw new IllegalArgumentException("Projectile with no speed was requested; position: " + position + ", firedAt " + firedAt + ", velocity " + velocity);
+        }
     }
 
     /**
