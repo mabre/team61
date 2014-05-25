@@ -286,14 +286,9 @@ public class MapWindow extends Application {
     }
 
     public void endTurn() {
-        //activeTeam = (activeTeam == team.length()-1 ? 0 : activeTeam+1);
         turnCount++;
         int teamCount = turnCount % teams.size();
-
-        for (Team team : teams){
-            team.endRound();
-        }
-//        currentTeam().getCurrentFigure()  = teams.get(teamCount).getFigures().iterator().next(); // ToDo add Loop so that last ist connected to first. Either by if here or changing ArrayList into a Ring
+        currentTeam().endRound();
         teamLabel.setText("Team" + teamCount + "s turn. What will " + currentTeam().getCurrentFigure().getName() + " do?");
         System.out.println("Turn " + turnCount + ", Team " + teamCount + ", Worm \"" + currentTeam().getCurrentFigure().getName() + "\"");
     }

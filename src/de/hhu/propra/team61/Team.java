@@ -30,25 +30,25 @@ public class Team extends StackPane {
         setAlignment(Pos.TOP_LEFT);
     }
 
-
-
-
-
-
     public void endRound() {
-        i = 0;                                      //nonsense from Dinii
-        while (figures.get(currentFigure).getHealth() == 0) {
+        i = 0;
+        do {
             if (i == figures.size()) {
-                currentFigure = -1;
-                break;
+                currentFigure = -1; break;
             }
-            currentFigure++;                        //till here <-
+            currentFigure++;//till here &lt;-
             if (currentFigure == figures.size()) {
                 currentFigure = 0;
             }
             i++;
         }
+        while (figures.get(currentFigure).getHealth() == 0);
+            if (currentFigure == figures.size()) {
+                currentFigure = 0;
+            }
+            i++;
     }
+
 
     public Figure getCurrentFigure() {return figures.get(currentFigure);}
 
