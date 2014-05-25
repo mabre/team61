@@ -1,7 +1,7 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
-import de.hhu.propra.team61.IO.Settings;
+import de.hhu.propra.team61.IO.Options;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -29,14 +29,14 @@ public class OptionsWindow extends Application {
     ChoiceBox<String> resolution;
     Slider gamma;
 
-	public void do_options() {
+	public void do_options(Stage stageToClose) {
 		Stage ostage = new Stage();
 		ostage.setTitle("Options");
-		ostage.setWidth(800);
-		ostage.setHeight(500);
+		ostage.setWidth(1000);
+		ostage.setHeight(600);
 		ostage.setResizable(false);
         ostage.setOnHiding(event -> {
-            Settings.save(this.toJson());
+            Options.save(this.toJson());
             System.out.println("OptionsWindow: saved settings");
         });
 		GridPane ogrid = new GridPane();
@@ -87,19 +87,24 @@ public class OptionsWindow extends Application {
 		oexit.setOnAction(new EventHandler<ActionEvent>() {
 		@Override
 		public void handle(ActionEvent e) {
+            stageToClose.show();
 			ostage.close();
 			}
 		});
 
         loadSavedSettings();
 
-		Scene oscene = new Scene(ogrid, 800, 500);
+		Scene oscene = new Scene(ogrid, 1000, 600);
 		ostage.setScene(oscene);
-		ostage.show();
+        oscene.getStylesheets().add("file:src/de/hhu/propra/team61/GUI/options");
+        ogrid.getStyleClass().add("optionspane");
+        optionst.getStyleClass().add("optionstext");
+        ostage.show();
+        stageToClose.close();
 	}
 
     private void loadSavedSettings() {
-        JSONObject savedSettings = Settings.getSavedSettings();
+        JSONObject savedSettings = Options.getSavedSettings();
         if(savedSettings.has("sound1")) {
             sound1.setSelected(savedSettings.getBoolean("sound1"));
         }

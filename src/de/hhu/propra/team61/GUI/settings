@@ -1,0 +1,6 @@
+@CHARSET "ISO-8859-1";
+
+.settingpane{
+    -fx-background-image: url("file:resources/layout/back.png");
+    -fx-background-position: top left;
+}

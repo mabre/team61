@@ -3,6 +3,7 @@ package de.hhu.propra.team61;
 import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
+import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Objects.*;
 import javafx.application.Application;
@@ -39,7 +40,11 @@ public class MapWindow extends Application {
     private int levelCounter = 0;
     private Projectile flyingProjectile = null;
     private Thread moveObjectsThread;
+    private Stage stageToClose;
+    private int teamquantity;
+    private int teamsize;
 
+    @Deprecated
     public MapWindow(String map) {
         try {
             terrain = new Terrain(TerrainManager.load(map));
@@ -59,7 +64,31 @@ public class MapWindow extends Application {
         initialize();
     }
 
-    public MapWindow(JSONObject input) {
+    public MapWindow(String map, Stage stageToClose, String file) {
+        try {
+            terrain = new Terrain(TerrainManager.load(map));
+        } catch (FileNotFoundException e) {
+            // TODO do something sensible here
+            e.printStackTrace();
+        }
+
+        this.stageToClose = stageToClose;
+        JSONObject settings = Settings.getSavedSettings(file);
+        this.teamquantity = settings.getInt("quantity");
+        this.teamsize = Integer.parseInt(settings.getString("team-size"));
+        teams = new ArrayList<>();
+        for(int i=0; i<teamquantity; i++) {
+            ArrayList<Weapon> weapons = new ArrayList<>();
+            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
+            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
+            weapons.add(new Gun("file:resources/weapons/temp3.png", 30, settings.getInt("weapon3")));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons));
+        }
+
+        initialize();
+    }
+
+    public MapWindow(JSONObject input, Stage stageToClose) {
         try {
             this.terrain = new Terrain(TerrainManager.loadSavedLevel());
         } catch (FileNotFoundException e) {
@@ -74,7 +103,7 @@ public class MapWindow extends Application {
         }
 
         turnCount = input.getInt("turnCount");
-
+        this.stageToClose = stageToClose;
         initialize();
     }
 
@@ -89,6 +118,7 @@ public class MapWindow extends Application {
             GameState.save(this.toJson());
             TerrainManager.save(terrain.toArrayList());
             System.out.println("MapWindow: saved game state");
+            stageToClose.show();
         });
 
         // pane containing terrain, labels at the bottom etc.
@@ -260,6 +290,7 @@ public class MapWindow extends Application {
             }
         });
         moveObjectsThread.start();
+        stageToClose.close();
     }
 
     /**
@@ -286,11 +317,11 @@ public class MapWindow extends Application {
                 centerView.getChildren().remove(team);
             }
             teams.clear();
-            for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
+            for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
                 ArrayList<Weapon> weapons = new ArrayList<>();
                 weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
                 weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
-                Team team = new Team(terrain.getRandomSpawnPoints(2), weapons);
+                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons);
                 teams.add(team);
                 centerView.getChildren().add(team);
             }

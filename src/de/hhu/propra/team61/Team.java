@@ -8,8 +8,11 @@ import de.hhu.propra.team61.Objects.Gun;
 import de.hhu.propra.team61.Objects.Weapon;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.layout.StackPane;
 
+import java.awt.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
