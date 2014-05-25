@@ -72,20 +72,20 @@ public class Afrobob extends Application {
             @Override
             public void handle(ActionEvent e) {
                 GameSettings gamesettings = new GameSettings();
-                gamesettings.do_settings();
+                gamesettings.do_settings(mainwindow);                      //always pass 'mainwindow' to close it -> only one stage open at a time
             }
         });
         mstartsaved.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                MapWindow mapwindow = new MapWindow(GameState.getSavedGameState());
+                MapWindow mapwindow = new MapWindow(GameState.getSavedGameState(), mainwindow);
             }
         });
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options
             @Override
             public void handle(ActionEvent e) {
                 OptionsWindow optionwindow = new OptionsWindow();
-                optionwindow.do_options();
+                optionwindow.do_options(mainwindow);
             }
         });
 

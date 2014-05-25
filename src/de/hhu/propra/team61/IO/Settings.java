@@ -20,8 +20,8 @@ public class Settings {
     /**
      * @return game state from SAVE_STATE_FILE
      */
-    public static JSONObject getSavedSettings(String loadfile) {
-        return Json.getFromFile(loadfile);
+    public static JSONObject getSavedSettings(String loadfilestring) {
+        return Json.getFromFile(loadfilestring);
     }
 
 }

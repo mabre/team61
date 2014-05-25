@@ -29,11 +29,11 @@ public class OptionsWindow extends Application {
     ChoiceBox<String> resolution;
     Slider gamma;
 
-	public void do_options() {
+	public void do_options(Stage stageToClose) {
 		Stage ostage = new Stage();
 		ostage.setTitle("Options");
-		ostage.setWidth(800);
-		ostage.setHeight(500);
+		ostage.setWidth(1000);
+		ostage.setHeight(600);
 		ostage.setResizable(false);
         ostage.setOnHiding(event -> {
             Options.save(this.toJson());
@@ -87,15 +87,17 @@ public class OptionsWindow extends Application {
 		oexit.setOnAction(new EventHandler<ActionEvent>() {
 		@Override
 		public void handle(ActionEvent e) {
+            stageToClose.show();
 			ostage.close();
 			}
 		});
 
         loadSavedSettings();
 
-		Scene oscene = new Scene(ogrid, 800, 500);
+		Scene oscene = new Scene(ogrid, 1000, 600);
 		ostage.setScene(oscene);
-		ostage.show();
+        ostage.show();
+        stageToClose.close();
 	}
 
     private void loadSavedSettings() {

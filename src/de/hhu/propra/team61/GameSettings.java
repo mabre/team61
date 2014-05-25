@@ -17,7 +17,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
 import java.io.File;
 
 /**
@@ -27,6 +26,7 @@ import java.io.File;
 public class GameSettings extends Application {
 
     int quantity = 2;
+    GridPane sgrid = new GridPane();
     TextField name1 = new TextField();
     TextField name2 = new TextField();
     TextField name3 = new TextField();
@@ -41,11 +41,11 @@ public class GameSettings extends Application {
     TextField weapon3 = new TextField();
     TextField sizefield = new TextField();
     HBox hboxplus = new HBox(5);
+    Button plus = new Button("+");                   //Button to add up to 2 more teams
 
-    public void do_settings() throws IllegalArgumentException {
+    public void do_settings(Stage stageToClose) {
         Stage settingstage = new Stage();
         settingstage.setTitle("Game Settings");
-        GridPane sgrid = new GridPane();
         sgrid.setAlignment(Pos.TOP_LEFT);
         sgrid.setHgap(10);
         sgrid.setVgap(10);
@@ -71,14 +71,14 @@ public class GameSettings extends Application {
         FileChooser loadChooser = new FileChooser();
         loadChooser.setTitle("Choose file to load");
         Button loadbtn = new Button("Choose file..");
-        /*loadbtn.setOnAction(                                                  //Not working yet
-                new EventHandler<ActionEvent>() {
+        loadbtn.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(final ActionEvent e) {
                         File loadfile = loadChooser.showOpenDialog(settingstage);     //Open file-window to open a file and save it in 'loadfile'
-                        fromJson(loadfile);
+                        String loadfilestring = loadfile.getAbsolutePath();
+                        fromJson(loadfilestring);
                     }
-                });*/
+                });
         sgrid.add(loadbtn, 1, 1);
 
         //Weapons, TextFields for entering a quantity
@@ -119,32 +119,13 @@ public class GameSettings extends Application {
         sgrid.add(name2, 1, 9);
         sgrid.add(colorPicker2, 2, 9);
 
-        Button plus = new Button("+");                   //Button to add up to 2 more teams
-        hboxplus.getChildren().addAll(plus);
-        sgrid.add(hboxplus, 0, 10);
-
+        hboxplus.getChildren().addAll(plus);          //Add plus button
+        sgrid.add(hboxplus, 0, 11);
         plus.setOnAction(new EventHandler<ActionEvent>() {
             @Override
-            public void handle(ActionEvent e) throws IllegalArgumentException {
+            public void handle(ActionEvent e) {
                 quantity++;
-                if (quantity == 3) {
-                    //Team 3
-                    Text team3 = new Text("Team 3");
-                    sgrid.add(team3, 0, 10);
-                    sgrid.add(name3, 1, 10);
-                    sgrid.add(colorPicker3, 2, 10);
-                    sgrid.add(hboxplus, 0, 11);
-                }
-                if (quantity == 4) {
-                    //Team 4
-                    Text team4 = new Text("Team 4");
-                    sgrid.add(team4, 0, 11);
-                    sgrid.add(name4, 1, 11);
-                    sgrid.add(colorPicker4, 2, 11);
-                    hboxplus.getChildren().remove(plus);              //Maximum is 4, button is hidden now
-                    Text enough = new Text("Max. 4 teams");
-                    sgrid.add(enough, 1, 12);
-                }
+                addTeams(quantity);             //add another team, dependent on how many already are there
             }
         });
 
@@ -153,25 +134,33 @@ public class GameSettings extends Application {
         sgrid.add(sizefield, 1, 14);
         Button cont = new Button("Continue");
         sgrid.add(cont, 0, 16);
-
         cont.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
                 Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0));
+                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf");
+            }
+        });
+        Button back = new Button("Back");
+        sgrid.add(back, 1, 16);
+        back.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                stageToClose.show();                            //close settings and show mainwindow again
+                settingstage.close();
             }
         });
 
         Scene sscene = new Scene(sgrid, 1000, 600);
         settingstage.setScene(sscene);
+        stageToClose.close();                               //close last stage (mainwindow)
         settingstage.show();
     }
 
-
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
-        output.put("teams", quantity);                      //save number of teams
+        output.put("quantity", quantity);                   //save number of teams
         output.put("team-size", sizefield.getText());       //save size of teams
         output.put("weapon1", weapon1.getText());
         output.put("weapon2", weapon2.getText());
@@ -187,11 +176,12 @@ public class GameSettings extends Application {
         return output;
     }
 
-    /*public void fromJson(File loadfile) {
-
-        JSONObject savedSettings = Settings.getSavedSettings(loadfile);
-        if(savedSettings.has("teams")) {
-            quantity = savedSettings.getInt("quantity");            //TODO show all teams
+    public void fromJson(String loadfilestring) {
+        JSONObject savedSettings = Settings.getSavedSettings(loadfilestring);
+        if(savedSettings.has("quantity")) {
+            quantity = savedSettings.getInt("quantity");
+            if (quantity > 2) {  addTeams(3); }
+            if (quantity > 3) {  addTeams(4); }
         }
         if(savedSettings.has("team-size")) {
             sizefield.setText(savedSettings.getString("team-size")); }
@@ -222,7 +212,7 @@ public class GameSettings extends Application {
             JSONObject nameobject4 = team4.getJSONObject(0);
             name4.setText(nameobject4.getString("name"));
         }
-    }*/
+    }
 
     public JSONArray formTeam(String name, ColorPicker color) {
         JSONArray jarray = new JSONArray();
@@ -236,8 +226,24 @@ public class GameSettings extends Application {
         return jarray;
     }
 
-    @Override
-    public void start(Stage settingstage) {
-
+    public void addTeams(int number) {
+        if (number == 3) {
+            Text team3 = new Text("Team 3");
+            sgrid.add(team3, 0, 10);
+            sgrid.add(name3, 1, 10);
+            sgrid.add(colorPicker3, 2, 10);
+        }
+        if (number == 4) {
+            Text team4 = new Text("Team 4");
+            sgrid.add(team4, 0, 11);
+            sgrid.add(name4, 1, 11);
+            sgrid.add(colorPicker4, 2, 11);
+            hboxplus.getChildren().remove(plus);              //Maximum is 4, button is hidden now
+            Text enough = new Text("Max. 4 teams");
+            sgrid.add(enough, 1, 12);
+        }
     }
+
+    @Override
+    public void start(Stage settingstage) {}
 }
