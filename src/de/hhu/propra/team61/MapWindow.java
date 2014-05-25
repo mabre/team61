@@ -170,24 +170,42 @@ public class MapWindow extends Application {
                                 nextUp.getSelectedItem().angle_up(nextUp.getFacing_right());
                             }
                             break;
-                        case LEFT:
-                        case A:
-                            nextUp.setFacing_right(false);
-                            if(nextUp.getSelectedItem() != null) {
-                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
-                            }
-                            break;
                         case DOWN:
                         case S:
                             if(nextUp.getSelectedItem() != null) {
                                 nextUp.getSelectedItem().angle_down(nextUp.getFacing_right());
                             }
                             break;
+                        case LEFT:
+                        case A:
+                            nextUp.setFacing_right(false);
+                            if(nextUp.getSelectedItem() != null) {
+                                nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                                break;
+                            } else {
+                                v = new Point2D(-10, 0);
+                            }
                         case RIGHT:
                         case D:
                             nextUp.setFacing_right(true);
                             if(nextUp.getSelectedItem() != null) {
                                 nextUp.getSelectedItem().angle_draw(nextUp.getFacing_right());
+                            } else {
+                                if(v == null) v = new Point2D(+10, 0);
+                                Figure f = teams.get(turnCount%teams.size()).getFigures().get(0); // TODO waiting for #35
+                                Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
+                                Rectangle2D hitRegion = f.getHitRegion();
+                                Point2D newPos = null;
+                                try {
+                                    newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
+                                } catch (CollisionWithTerrainException e) {
+                                    System.out.println("CollisionWithTerrainException, stopped movement");
+                                    newPos = e.getLastGoodPosition();
+                                } catch (CollisionWithFigureException e) {
+                                    // figures can walk through each other // TODO really?
+                                    System.out.println("ERROR How did we get here?");
+                                }
+                                f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
                             }
                             break;
                         case DIGIT1: // ToDo hardcoded, but sufficient for now
@@ -222,26 +240,6 @@ public class MapWindow extends Application {
                                 centerView.getChildren().add(nextUp.getSelectedItem());
                                 centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             }
-                            break;
-                        case K: // Kollision test // TODO remove, replace with real movement
-                            v = new Point2D(+10, 0);
-                        case J:
-                            if(v==null) v = new Point2D(-10, 0);
-                            Figure f = teams.get(0).getFigures().get(0);
-                            Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
-                            Rectangle2D hitr = new Rectangle2D(pos.getX(), pos.getY(), 8, 8);
-                            Point2D newPos = null;
-                            try {
-                                newPos = terrain.getPositionForDirection(pos, v, hitr, true, true, true);
-                                // TODO rethink parameters of setPosition(), /8 is bad!
-                            } catch (CollisionWithTerrainException e) {
-                                System.out.println("CollisionWithTerrainException, stopped movement");
-                                newPos = e.getLastGoodPosition();
-                            } catch (CollisionWithFigureException e) {
-                                // figures can walk through each other // TODO really?
-                                System.out.println("ERROR How did we get here?");
-                            }
-                            f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
                             break;
                     }
                 }

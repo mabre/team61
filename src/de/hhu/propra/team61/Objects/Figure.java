@@ -121,6 +121,7 @@ public class Figure extends ImageView {
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
 
+    // TODO rethink parameter, /8 is bad!
     public void setPosition(Point2D position) {
         this.setTranslateX(8 * position.getX());
         this.setTranslateY(8 * position.getY());
