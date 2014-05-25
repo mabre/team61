@@ -44,7 +44,10 @@ public class MapWindow extends Application {
 
         teams = new ArrayList<>();
         for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
-            teams.add(new Team(terrain.getRandomSpawnPoints(2)));
+            ArrayList<Weapon> weapons = new ArrayList<>();
+            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
+            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
+            teams.add(new Team(terrain.getRandomSpawnPoints(2), weapons));
         }
 
         initialize();
@@ -106,7 +109,12 @@ public class MapWindow extends Application {
                             break;
                         case SPACE: //Fire
                             if(nextUp.getSelectedItem() != null) {
-                                Projectile projectile = nextUp.getSelectedItem().shoot(); // ToDo Do something with the projectile
+                                try {
+                                    Projectile projectile = nextUp.getSelectedItem().shoot(); // ToDo Do something with the projectile
+                                } catch (NoMunitionException e) {
+                                    System.out.println("no munition");
+                                    break;
+                                }
 
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
@@ -147,8 +155,7 @@ public class MapWindow extends Application {
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
                             }
-                            Weapon w1 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp1.png",50);
-                            nextUp.setSelectedItem(w1);
+                            nextUp.setSelectedItem(teams.get(turnCount%teams.size()).getWeapon(0));
                             centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
@@ -157,8 +164,7 @@ public class MapWindow extends Application {
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
                             }
-                            Weapon w2 = new Grenade(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp2.png",40);
-                            nextUp.setSelectedItem(w2);
+                            nextUp.setSelectedItem(teams.get(turnCount%teams.size()).getWeapon(1));
                             centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
@@ -167,8 +173,7 @@ public class MapWindow extends Application {
                                 centerView.getChildren().remove(nextUp.getSelectedItem().getCrosshair());
                                 centerView.getChildren().remove(nextUp.getSelectedItem());
                             }
-                            Weapon w3 = new Gun(nextUp.getPosition(),nextUp.getFacing_right(),"file:resources/weapons/temp3.png",25);
-                            nextUp.setSelectedItem(w3);
+                            nextUp.setSelectedItem(teams.get(turnCount%teams.size()).getWeapon(2));
                             centerView.getChildren().add(nextUp.getSelectedItem());
                             centerView.getChildren().add(nextUp.getSelectedItem().getCrosshair());
                             break;
@@ -206,7 +211,10 @@ public class MapWindow extends Application {
             }
             teams.clear();
             for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
-                Team team = new Team(terrain.getRandomSpawnPoints(2));
+                ArrayList<Weapon> weapons = new ArrayList<>();
+                weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
+                weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
+                Team team = new Team(terrain.getRandomSpawnPoints(2), weapons);
                 teams.add(team);
                 centerView.getChildren().add(team);
             }

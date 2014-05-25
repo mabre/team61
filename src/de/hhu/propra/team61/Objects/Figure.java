@@ -36,6 +36,8 @@ public class Figure extends ImageView {
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
         setImage(image);
+
+        selectedItem = null;
     }
 
     public Figure(JSONObject input){
@@ -54,6 +56,8 @@ public class Figure extends ImageView {
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
         setImage(image);
+
+        selectedItem = null;
     }
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjusments after implementation of Options
@@ -72,6 +76,8 @@ public class Figure extends ImageView {
 
         Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
         setImage(image);
+
+        selectedItem = null;
     }
 
     public JSONObject toJson(){
@@ -117,9 +123,18 @@ public class Figure extends ImageView {
         return new Point2D(this.getTranslateX()/8, this.getTranslateY()/8);
     }
 
-    public Weapon getSelectedItem(){return selectedItem;} //TODO Change that to Item
+    public Weapon getSelectedItem(){
+        return selectedItem;
+    } //TODO Change that to Item
+
     public void setSelectedItem(Weapon select){
+        if(selectedItem != null) {
+            selectedItem.hide();
+        }
         this.selectedItem = select;
+        if(selectedItem != null) {
+            select.setPosition(new Point2D(getTranslateX(), getTranslateY()));
+        }
     }
 
     public void setFacing_right(boolean facing_right) {
