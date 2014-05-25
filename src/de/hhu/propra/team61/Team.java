@@ -34,23 +34,21 @@ public class Team extends StackPane {
         i = 0;
         do {
             if (i == figures.size()) {
-                currentFigure = -1; break;
+                currentFigure = -1;
+                break;
             }
-            currentFigure++;//till here &lt;-
+            currentFigure++;
             if (currentFigure == figures.size()) {
                 currentFigure = 0;
             }
             i++;
         }
         while (figures.get(currentFigure).getHealth() == 0);
-            if (currentFigure == figures.size()) {
-                currentFigure = 0;
-            }
-            i++;
     }
 
-
-    public Figure getCurrentFigure() {return figures.get(currentFigure);}
+    public Figure getCurrentFigure() {
+        return figures.get(currentFigure);
+    }
 
     public int getNumberOfLivingFigures() {
         int livingFigures = 0;

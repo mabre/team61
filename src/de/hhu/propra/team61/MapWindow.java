@@ -101,7 +101,6 @@ public class MapWindow extends Application {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
-        //currentTeam().getCurrentFigure() = teams.get((turnCount % teams.size())).getFigures().iterator().next();
         teamLabel = new Label("Team" + (turnCount % teams.size()) + "s turn. What will " + teams.get(currentTeam).getCurrentFigure() .getName() + " do?");
 
         root.setBottom(teamLabel);
@@ -290,25 +289,22 @@ public class MapWindow extends Application {
 
     
     public void endTurn() {
-        currentTeam++;
-        currentTeam = currentTeam % teams.size();
-
         int i = 0;
         do {
             if (i == teams.size()) {
-                currentTeam = -1; break;
+                currentTeam = -1;
+                break;
             }
-            currentTeam++;//till here &lt;-
+            currentTeam++;
+            if (currentTeam == teams.size()) {
+                currentTeam = 0;
+            }
             if (currentTeam == teams.size()) {
                 currentTeam = 0;
             }
             i++;
         }
         while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
-        if (currentTeam == teams.size()) {
-            currentTeam = 0;
-        }
-        i++;
 
         teams.get(currentTeam).endRound();
         teamLabel.setText("team" + currentTeam + "won");
