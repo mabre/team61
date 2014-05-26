@@ -5,7 +5,6 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.application.Application;
-import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -14,11 +13,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.io.File;
+import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
@@ -28,12 +29,14 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 public class GameSettings extends Application {
 
-    int quantity = 2;
+    int numberOfTeams = 2;
     GridPane sgrid = new GridPane();
     TextField name1 = new TextField();
     TextField name2 = new TextField();
     TextField name3 = new TextField();
     TextField name4 = new TextField();
+    ArrayList<TextField> names;
+    ArrayList<ColorPicker> colorPickers;
     ColorPicker colorPicker1 = new ColorPicker();
     ColorPicker colorPicker2 = new ColorPicker();
     ColorPicker colorPicker3 = new ColorPicker();
@@ -44,7 +47,7 @@ public class GameSettings extends Application {
     TextField weapon3 = new TextField("5");
     TextField sizefield = new TextField();
     HBox hboxplus = new HBox(5);
-    Button plus = new Button("+");                   //Button to add up to 2 more teams
+    Button addTeam = new Button("+");
 
     public void do_settings(Stage stageToClose) {
         Stage settingstage = new Stage();
@@ -126,13 +129,13 @@ public class GameSettings extends Application {
         sgrid.add(name2, 1, 9);
         sgrid.add(colorPicker2, 2, 9);
 
-        hboxplus.getChildren().addAll(plus);          //Add plus button
+        hboxplus.getChildren().addAll(addTeam);          //Add plus button
         sgrid.add(hboxplus, 0, 11);
-        plus.setOnAction(new EventHandler<ActionEvent>() {
+        addTeam.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                quantity++;
-                addTeams(quantity);             //add another team, dependent on how many already are there
+                numberOfTeams++;
+                addTeams(numberOfTeams);             //add another team, dependent on how many already are there
             }
         });
 
@@ -170,70 +173,66 @@ public class GameSettings extends Application {
 
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
-        output.put("quantity", quantity);                   //save number of teams
-        output.put("team-size", sizefield.getText());       //save size of teams
-        output.put("weapon1", weapon1.getText()); // TODO make array instead of using suffix (same for teams)
+        output.put("numberOfTeams", numberOfTeams);   //save number of teams
+        output.put("team-size", sizefield.getText()); //save size of teams
+        output.put("weapon1", weapon1.getText()); // TODO make array instead of using suffix
         output.put("weapon2", weapon2.getText());
         output.put("weapon3", weapon3.getText());
-        JSONArray team1 = formTeam(name1.getText(), colorPicker1);   //create an JSONArray for each team with the elements name and color
-        output.put("team1", team1);
-        JSONArray team2 = formTeam(name2.getText(), colorPicker2);
-        output.put("team2", team2);
-        if (quantity > 2) { JSONArray team3 = formTeam(name3.getText(), colorPicker3);
-            output.put("team3", team3); }
-        if (quantity > 3) { JSONArray team4 = formTeam(name4.getText(), colorPicker4);
-            output.put("team4", team4); }
+        JSONArray teams = new JSONArray();
+        JSONObject team1 = getJsonForTeam(name1.getText(), colorPicker1);
+        teams.put(team1);
+        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2);
+        teams.put(team2);
+        if (numberOfTeams > 2) {
+            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3);
+            teams.put(team3);
+        }
+        if (numberOfTeams > 3) {
+            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4);
+            teams.put(team4);
+        }
+        output.put("teams", teams);
         return output;
     }
 
-    public void fromJson(String loadfilestring) {
-        JSONObject savedSettings = Settings.getSavedSettings(loadfilestring);
-        if(savedSettings.has("quantity")) {
-            quantity = savedSettings.getInt("quantity");
-            if (quantity > 2) {  addTeams(3); }
-            if (quantity > 3) {  addTeams(4); }
+    public void fromJson(String file) {
+        JSONObject savedSettings = Settings.getSavedSettings(file);
+        if(savedSettings.has("numberOfTeams")) {
+            numberOfTeams = savedSettings.getInt("numberOfTeams");
+            if (numberOfTeams > 2) {  addTeams(3); }
+            if (numberOfTeams > 3) {  addTeams(4); }
         }
         if(savedSettings.has("team-size")) {
-            sizefield.setText(savedSettings.getString("team-size")); }
+            sizefield.setText(savedSettings.getString("team-size"));
+        }
         if(savedSettings.has("weapon1")) {
-            weapon1.setText(savedSettings.getString("weapon1")); }
+            weapon1.setText(savedSettings.getString("weapon1"));
+        }
         if(savedSettings.has("weapon2")) {
-            weapon2.setText(savedSettings.getString("weapon2")); }
+            weapon2.setText(savedSettings.getString("weapon2"));
+        }
         if(savedSettings.has("weapon3")) {
-            weapon3.setText(savedSettings.getString("weapon3")); }
-        if(savedSettings.has("team1")) {
-            JSONArray team1 = savedSettings.getJSONArray("team1");
-            JSONObject nameobject1 = team1.getJSONObject(0);
-            name1.setText(nameobject1.getString("name"));
-                                   //TODO load colors
+            weapon3.setText(savedSettings.getString("weapon3"));
         }
-        if(savedSettings.has("team2")) {
-            JSONArray team2 = savedSettings.getJSONArray("team2");
-            JSONObject nameobject2 = team2.getJSONObject(0);
-            name2.setText(nameobject2.getString("name"));
-        }
-        if(savedSettings.has("team3")) {
-            JSONArray team3 = savedSettings.getJSONArray("team3");
-            JSONObject nameobject3 = team3.getJSONObject(0);
-            name3.setText(nameobject3.getString("name"));
-        }
-        if(savedSettings.has("team4")) {
-            JSONArray team4 = savedSettings.getJSONArray("team4");
-            JSONObject nameobject4 = team4.getJSONObject(0);
-            name4.setText(nameobject4.getString("name"));
+        if(savedSettings.has("teams")) {
+            JSONArray teamsArray = savedSettings.getJSONArray("teams");
+            for(int i=0; i<teamsArray.length(); i++) {
+                name1.setText(teamsArray.getJSONObject(i).getString("name"));
+                colorPicker1.setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
+            }
         }
     }
 
-    public JSONArray formTeam(String name, ColorPicker color) {
-        JSONArray jarray = new JSONArray();
-        JSONObject nameobject = new JSONObject(); //create JSONArray with 2 objects name and color, one JSONArray for each team
-        nameobject.put("name", name);
-        jarray.put(nameobject);
-        JSONObject colorobject = new JSONObject();
-        String colorstring = toHex(color.getValue());
-        colorobject.put("color", colorstring);
-        jarray.put(colorobject);
-        return jarray;
+    /**
+     * @param name of the team
+     * @param color of the team
+     * @return a JSONObject representing basic settings for a team
+     */
+    public JSONObject getJsonForTeam(String name, ColorPicker color) {
+        JSONObject team = new JSONObject(); //create JSONArray with 2 objects name and color, one JSONArray for each team
+        team.put("name", name);
+        team.put("color", toHex(color.getValue()));
+        return team;
     }
 
     public void addTeams(int number) {
@@ -248,7 +247,7 @@ public class GameSettings extends Application {
             sgrid.add(team4, 0, 11);
             sgrid.add(name4, 1, 11);
             sgrid.add(colorPicker4, 2, 11);
-            hboxplus.getChildren().remove(plus);              //Maximum is 4, button is hidden now
+            hboxplus.getChildren().remove(addTeam);              //Maximum is 4, button is hidden now
             Text enough = new Text("Max. 4 teams");
             sgrid.add(enough, 1, 12);
         }
