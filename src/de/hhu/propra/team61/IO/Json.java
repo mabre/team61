@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 
 /**
@@ -37,11 +38,14 @@ class Json {
         byte[] bytes = null;
         try {
             bytes = Files.readAllBytes(Paths.get(filename));
-        // TODO do something sensible here
-        } catch(FileNotFoundException e) {
-            e.printStackTrace();
+        } catch(FileNotFoundException | NoSuchFileException e) {
+            System.out.println("Json.getFromFile: " + filename + " not found, returning empty json object");
         } catch(IOException e) {
+            System.out.println("Json.getFromFile: problem loading " + filename + ", returning empty json object");
             e.printStackTrace();
+        }
+        if(bytes == null) {
+            bytes = new byte[]{'{', '}'}; // empty json string
         }
         return new JSONObject(new String(bytes));
     }

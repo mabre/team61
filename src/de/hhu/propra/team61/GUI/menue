@@ -1,0 +1,19 @@
+@CHARSET "ISO-8859-1";
+
+.menuepane{
+    -fx-background-image: url("file:resources/layout/menue.png");
+    -fx-background-position: top left;
+}
+
+.button {
+    -fx-font-size: 15px;
+    -fx-padding: 4 22 12 22;
+    -fx-text-fill: #FFFFFF;
+    -fx-background-image: url("file:resources/layout/menuebutton.png");
+    -fx-background-repeat: repeat-x;
+    -fx-focus-color: transparent;
+}
+
+.button:hover  {
+    -fx-background-image: url("file:resources/layout/menuebuttonhover.png");
+}
