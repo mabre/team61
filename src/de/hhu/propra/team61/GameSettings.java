@@ -20,6 +20,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.io.File;
 
+import static de.hhu.propra.team61.JavaFxUtils.toHex;
+
 /**
  * Created by Jessypet on 21.05.14.
  */
@@ -220,11 +222,11 @@ public class GameSettings extends Application {
 
     public JSONArray formTeam(String name, ColorPicker color) {
         JSONArray jarray = new JSONArray();
-        JSONObject nameobject = new JSONObject();                   //create JSONArray with 2 objects name and color, one JSONArray for each team
+        JSONObject nameobject = new JSONObject(); //create JSONArray with 2 objects name and color, one JSONArray for each team
         nameobject.put("name", name);
         jarray.put(nameobject);
         JSONObject colorobject = new JSONObject();
-        String colorstring = "#"+Integer.toHexString(color.getValue().hashCode()).substring(0, 6);    //save color in HEXA, conversion to int and then String not possible
+        String colorstring = toHex(color.getValue());
         colorobject.put("color", colorstring);
         jarray.put(colorobject);
         return jarray;

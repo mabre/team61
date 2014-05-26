@@ -13,6 +13,8 @@ import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 
+import static de.hhu.propra.team61.JavaFxUtils.toHex;
+
 /**
  * Created by markus on 17.05.14.
  */
@@ -83,7 +85,7 @@ public class Team extends StackPane {
             weaponsArray.put(w.toJson());
         }
         output.put("weapons", weaponsArray);
-        output.put("color", "#"+Integer.toHexString(color.hashCode()).substring(0, 6));
+        output.put("color", toHex(color));
         output.put("currentFigure", currentFigure);
         return output;
     }
