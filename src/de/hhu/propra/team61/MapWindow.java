@@ -15,6 +15,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -156,7 +157,6 @@ public class MapWindow extends Application {
                         case L:
                         case NUMBER_SIGN:
                             client.sendKeyEvent(keyEvent.getCode());
-                            cheatMode();
                             break;
                         case SPACE: //Fire
                             if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
@@ -177,9 +177,7 @@ public class MapWindow extends Application {
                             break;
                         case UP:
                         case W:
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
-                            }
+                            client.sendKeyEvent(keyEvent.getCode());
                             break;
                         case DOWN:
                         case S:
@@ -269,7 +267,6 @@ public class MapWindow extends Application {
             try {
                 long before = System.currentTimeMillis(), now, sleep;
                 while (true) {
-                    //System.out.println("here");
                     if(flyingProjectile != null) {
                         try {
                             final Point2D newPos;
@@ -368,6 +365,24 @@ public class MapWindow extends Application {
 
     @Override
     public void start(Stage ostage) {
+    }
+
+    public void handleKeyEvent(String keyCode) {
+        switch(keyCode) {
+            case "Up":
+            case "W":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "Number Sign":
+                cheatMode();
+                break;
+            case "Space":
+                break;
+            default:
+                System.out.println("handleKeyEvent no event for key " + keyCode);
+        }
     }
 
 }
