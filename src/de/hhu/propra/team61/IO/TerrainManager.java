@@ -90,13 +90,18 @@ public class TerrainManager {
     /**
      * @return an ArrayList containing the board saved in SAVE_LEVEL_FILE, or the first level when the file does not exist
      */
-    public static ArrayList<ArrayList<Character>> loadSavedLevel() throws FileNotFoundException {
+    public static ArrayList<ArrayList<Character>> loadSavedLevel() {
         try {
             return load(SAVE_LEVEL_FILE);
         } catch (FileNotFoundException e) {
-            return load(1);
+            try {
+                return load(0);
+            } catch (FileNotFoundException e1) {
+                System.out.println("No levels?");
+                e1.printStackTrace();
+                return new ArrayList<>();
+            }
         }
-
     }
 
 }

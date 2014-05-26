@@ -91,12 +91,7 @@ public class MapWindow extends Application {
     }
 
     public MapWindow(JSONObject input, Stage stageToClose) {
-        try {
-            this.terrain = new Terrain(TerrainManager.loadSavedLevel());
-        } catch (FileNotFoundException e) {
-            // TODO do something sensible here
-            e.printStackTrace();
-        }
+        this.terrain = new Terrain(TerrainManager.loadSavedLevel());
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
