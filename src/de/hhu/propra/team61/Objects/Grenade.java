@@ -11,7 +11,8 @@ public class Grenade extends Weapon { //ToDo rename to a more fitting one
     public Grenade(String path, int damage, int munition){
         super(damage, munition);
 
-        Image image = new Image(path, 8, 8, true, true); //ToDo Replace with an actual Weapon
+        imagePath = path;
+        Image image = new Image(imagePath, 8, 8, true, true); //ToDo Replace with an actual Weapon
         setImage(image);
     }
 

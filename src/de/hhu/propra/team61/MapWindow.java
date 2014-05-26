@@ -333,22 +333,21 @@ public class MapWindow extends Application {
     }
     
     public void endTurn() {
-        int i = 0;
+        int oldCurrentTeam = currentTeam;
         do {
-            if (i == teams.size()) {
-                currentTeam = -1;
-                break;
-            }
             currentTeam++;
             if (currentTeam == teams.size()) {
                 currentTeam = 0;
             }
-            i++;
+            if (currentTeam == oldCurrentTeam) {
+                teamLabel.setText("team" + currentTeam + "won");
+                return;
+            }
         }
         while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         teams.get(currentTeam).endRound();
-        teamLabel.setText("team" + currentTeam + "won");
+        teamLabel.setText("It's team " + currentTeam + " turn");
         System.out.println("Turn " + currentTeam + ", Team " + currentTeam + ", Worm \"" + teams.get(currentTeam).getCurrentFigure().getName() + "\"");
     }
 

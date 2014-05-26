@@ -17,6 +17,7 @@ public abstract class Weapon extends Item {
     //ToDo validate necessity of all of them
     private String name;        //
     private String description; //
+    protected String imagePath;
 
     private String damagetype;  // Firedamage etc.
     protected int munition;     // weapon can only be used when munition > 0
@@ -38,6 +39,9 @@ public abstract class Weapon extends Item {
     public Weapon(JSONObject json) {
         this.munition = json.getInt("munition");
         this.damage = json.getInt("damage");
+        this.imagePath = json.getString("imagePath");
+        Image image = new Image(imagePath, 8, 8, true, true);
+        setImage(image);
         initialize();
     }
 
@@ -50,6 +54,7 @@ public abstract class Weapon extends Item {
         JSONObject json = new JSONObject();
         json.put("munition", munition);
         json.put("damage", damage);
+        json.put("imagePath", imagePath);
         return json;
     }
 

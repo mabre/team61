@@ -39,36 +39,6 @@ public class Team extends StackPane {
         setAlignment(Pos.TOP_LEFT);
     }
 
-    public void endRound() {
-        i = 0;
-        do {
-            if (i == figures.size()) {
-                currentFigure = -1;
-                break;
-            }
-            currentFigure++;
-            if (currentFigure == figures.size()) {
-                currentFigure = 0;
-            }
-            i++;
-        }
-        while (figures.get(currentFigure).getHealth() == 0);
-    }
-
-    public Figure getCurrentFigure() {
-        return figures.get(currentFigure);
-    }
-
-    public int getNumberOfLivingFigures() {
-        int livingFigures = 0;
-        for (Figure figure: figures){
-            if(figure.getHealth() > 0){
-                livingFigures++;
-            }
-        }
-        return livingFigures;
-    }
-
     /**
      * create a team from a given JSONObject
      * @param state the JSONObject representing the team state
@@ -114,6 +84,36 @@ public class Team extends StackPane {
         output.put("weapons", weaponsArray);
         output.put("color", "#"+Integer.toHexString(color.hashCode()).substring(0, 6));
         return output;
+    }
+
+    public void endRound() {
+        i = 0;
+        do {
+            if (i == figures.size()) {
+                currentFigure = -1;
+                break;
+            }
+            currentFigure++;
+            if (currentFigure == figures.size()) {
+                currentFigure = 0;
+            }
+            i++;
+        }
+        while (figures.get(currentFigure).getHealth() == 0);
+    }
+
+    public Figure getCurrentFigure() {
+        return figures.get(currentFigure);
+    }
+
+    public int getNumberOfLivingFigures() {
+        int livingFigures = 0;
+        for (Figure figure: figures){
+            if(figure.getHealth() > 0){
+                livingFigures++;
+            }
+        }
+        return livingFigures;
     }
 
     public ArrayList<Figure> getFigures() {
