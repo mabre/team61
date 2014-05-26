@@ -72,16 +72,20 @@ public class GameSettings extends Application {
         Text load = new Text("Load settings: ");
         sgrid.add(load, 0, 1);
         FileChooser loadChooser = new FileChooser();
+        FileChooser.ExtensionFilter fileFilter = new FileChooser.ExtensionFilter("CONF", "*.conf");
+        loadChooser.getExtensionFilters().add(fileFilter);
         loadChooser.setTitle("Choose file to load");
         Button loadbtn = new Button("Choose file..");
         loadbtn.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(final ActionEvent e) {
-                        File loadfile = loadChooser.showOpenDialog(settingstage);     //Open file-window to open a file and save it in 'loadfile'
-                        String loadfilestring = loadfile.getAbsolutePath();
-                        fromJson(loadfilestring);
-                    }
-                });
+            @Override
+            public void handle(final ActionEvent e) {
+                File loadfile = loadChooser.showOpenDialog(settingstage);     //Open file-window to open a file and save it in 'loadfile'
+                if (loadfile != null) {
+                    String loadfilestring = loadfile.getAbsolutePath();
+                    fromJson(loadfilestring);
+                }
+            }
+        });
         sgrid.add(loadbtn, 1, 1);
 
         //Weapons, TextFields for entering a quantity
