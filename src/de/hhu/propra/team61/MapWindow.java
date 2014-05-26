@@ -328,6 +328,8 @@ public class MapWindow extends Application {
     }
     
     public void endTurn() {
+        turnCount++;
+
         int oldCurrentTeam = currentTeam;
         do {
             currentTeam++;

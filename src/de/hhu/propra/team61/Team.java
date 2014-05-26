@@ -64,6 +64,7 @@ public class Team extends StackPane {
             }
             weapons.add(w);
         }
+        currentFigure = state.getInt("currentFigure");
         setAlignment(Pos.TOP_LEFT);
     }
 
@@ -83,6 +84,7 @@ public class Team extends StackPane {
         }
         output.put("weapons", weaponsArray);
         output.put("color", "#"+Integer.toHexString(color.hashCode()).substring(0, 6));
+        output.put("currentFigure", currentFigure);
         return output;
     }
 
