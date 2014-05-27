@@ -113,7 +113,8 @@ public class Terrain extends GridPane {
     public ArrayList<Point2D> getRandomSpawnPoints(int n) {
         ArrayList<Point2D> spawnPoints = new ArrayList<>();
         for(int i=0; i<n; i++) {
-            spawnPoints.add(getRandomSpawnPoint());
+            Point2D sp = getRandomSpawnPoint();
+            if(sp != null) spawnPoints.add(sp);
         }
         return spawnPoints;
     }
