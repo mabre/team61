@@ -84,9 +84,9 @@ public class Figure extends StackPane {
     private void initialize() {
         setAlignment(Pos.TOP_LEFT);
 
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),8,8);
+        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),16,16);
 
-        Image image = new Image("file:resources/figures/pin.png", 8, 8, true, true);
+        Image image = new Image("file:resources/figures/pin.png", 16, 16, true, true);
         imageView.setImage(image);
         getChildren().add(imageView);
 
@@ -136,7 +136,7 @@ public class Figure extends StackPane {
     public void setPosition(Point2D position) {
         imageView.setTranslateX(8 * position.getX());
         imageView.setTranslateY(8 * position.getY());
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),8,8);
+        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
         hpLabel.setTranslateX(imageView.getTranslateX());
         hpLabel.setTranslateY(imageView.getTranslateY()-15);
     }

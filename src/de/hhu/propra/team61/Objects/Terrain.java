@@ -113,7 +113,8 @@ public class Terrain extends GridPane {
     public ArrayList<Point2D> getRandomSpawnPoints(int n) {
         ArrayList<Point2D> spawnPoints = new ArrayList<>();
         for(int i=0; i<n; i++) {
-            spawnPoints.add(getRandomSpawnPoint());
+            Point2D sp = getRandomSpawnPoint();
+            if(sp != null) spawnPoints.add(sp);
         }
         return spawnPoints;
     }
@@ -239,7 +240,11 @@ public class Terrain extends GridPane {
                                 triedDiagonal = true;
                                 System.out.println("trying to walk diagonal along " + diagonalDirection + " to " + newPosition + " " + hitRegion);
                             } else {
-                                newPosition = newPosition.subtract(normalizedDirection).subtract(diagonalDirection);
+                                if(diagonalDirection.magnitude() == 0) { // did not go diagonal
+                                    newPosition = newPosition.subtract(normalizedDirection);
+                                } else {
+                                    newPosition = newPosition.subtract(diagonalDirection);
+                                }
                                 newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
                                 if(intersectingFigure == null) {
                                     throw new CollisionWithTerrainException(newPosition);
