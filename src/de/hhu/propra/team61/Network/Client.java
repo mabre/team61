@@ -4,13 +4,14 @@ import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCode;
 
-import javax.xml.bind.SchemaOutputResolver;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+
+import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by markus on 15.05.14.
@@ -20,10 +21,6 @@ public class Client implements Runnable {
     Socket socket;
     PrintWriter out;
     MapWindow mapwindow;
-
-    public Client(MapWindow mapWindow) {
-        this.mapwindow = mapWindow;
-    }
 
     public void run() {
         try {
@@ -36,16 +33,16 @@ public class Client implements Runnable {
                 String line = in.readLine();
                 System.out.println("CLIENT RECEIVED: " + line);
                 if(line.startsWith("SUBMITNAME")) {
-                    out.println("MUSTERMANN");
+                    out.println("MUSTERMANN"+Math.random());
                 } else if(line.startsWith("NAMEACCEPTED")) {
                     System.out.println("CLIENT: connected");
-                } else if(line.contains("KEYEVENT ")) {
-                    // use runLater; otherwise, an exception will be thrown:
-                    // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
-                    Platform.runLater(() -> mapwindow.handleKeyEvent(line.substring(line.indexOf("KEYEVENT ")+9)));
                 } else if(line.startsWith("EXIT")) {
                     System.out.println("CLIENT: exit");
                     break;
+                } else {
+                    // use runLater; otherwise, an exception will be thrown:
+                    // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
+                    Platform.runLater(() -> mapwindow.handleOnClient(extractPart(line, "KEYEVENT ")));
                 }
             }
         } catch (SocketException e) {
@@ -73,5 +70,9 @@ public class Client implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void registerMapWindow(MapWindow mapWindow) {
+        this.mapwindow = mapWindow;
     }
 }

@@ -4,6 +4,8 @@ import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -148,9 +150,31 @@ public class GameSettings extends Application {
         cont.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
+                Client client;
+                Thread clientThread = new Thread(client = new Client());
+                clientThread.start();
+
                 Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf");
+                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf", client, clientThread);
+            }
+        });
+        // TODO temporary, till lobby is ready (just to test passing the server/client objects around)
+        Button contServer = new Button("Continue as Server");
+        sgrid.add(contServer, 2, 16);
+        contServer.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                Server server;
+                Thread serverThread = new Thread(server = new Server());
+                serverThread.start();
+                Client client;
+                Thread clientThread = new Thread(client = new Client()); // TODO race condition
+                clientThread.start();
+
+                Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
+                System.out.println("GameSettings: saved settings");
+                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
             }
         });
         Button back = new Button("Back");

@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Created by kegny on 08.05.14.
@@ -65,6 +66,69 @@ public class MapWindow extends Application {
             weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
             weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
             teams.add(new Team(terrain.getRandomSpawnPoints(2), weapons, Color.WHITE));
+        }
+
+        initialize();
+    }
+
+    public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerMapWindow(this);
+        this.server = server;
+        this.serverThread = serverThread;
+        server.registerMapWindow(this);
+
+        // TODO code duplication; we have to check what we actually need at the end of the week
+        try {
+            terrain = new Terrain(TerrainManager.load(map));
+        } catch (FileNotFoundException e) {
+            // TODO do something sensible here
+            e.printStackTrace();
+        }
+
+        this.stageToClose = stageToClose;
+        JSONObject settings = Settings.getSavedSettings(file);
+        this.teamquantity = settings.getInt("numberOfTeams");
+        this.teamsize = Integer.parseInt(settings.getString("team-size"));
+        teams = new ArrayList<>();
+        JSONArray teamsArray = settings.getJSONArray("teams");
+        for(int i=0; i<teamsArray.length(); i++) {
+            ArrayList<Weapon> weapons = new ArrayList<>();
+            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
+            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
+            weapons.add(new Gun("file:resources/weapons/temp3.png", 30, settings.getInt("weapon3")));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
+        }
+
+        initialize();
+    }
+
+    public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread) {
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerMapWindow(this);
+
+        // TODO code duplication; we have to check what we actually need at the end of the week
+        try {
+            terrain = new Terrain(TerrainManager.load(map));
+        } catch (FileNotFoundException e) {
+            // TODO do something sensible here
+            e.printStackTrace();
+        }
+
+        this.stageToClose = stageToClose;
+        JSONObject settings = Settings.getSavedSettings(file);
+        this.teamquantity = settings.getInt("numberOfTeams");
+        this.teamsize = Integer.parseInt(settings.getString("team-size"));
+        teams = new ArrayList<>();
+        JSONArray teamsArray = settings.getJSONArray("teams");
+        for(int i=0; i<teamsArray.length(); i++) {
+            ArrayList<Weapon> weapons = new ArrayList<>();
+            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
+            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
+            weapons.add(new Gun("file:resources/weapons/temp3.png", 30, settings.getInt("weapon3")));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
         }
 
         initialize();
@@ -124,11 +188,11 @@ public class MapWindow extends Application {
             System.out.println("MapWindow: saved game state");
 
             clientThread.interrupt();
-            serverThread.interrupt();
+            if(serverThread != null) serverThread.interrupt();
             System.out.println("MapWindow threads interrupted");
             client.stop();
-            server.stop();
-            System.out.println("MapWindow client/server stopped");
+            if(server != null) server.stop();
+            System.out.println("MapWindow client/server (if any) stopped");
 
             stageToClose.show();
         });
@@ -152,7 +216,6 @@ public class MapWindow extends Application {
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
-                    Point2D v = null;
                     switch (keyEvent.getCode()) {
                         case L:
                         case NUMBER_SIGN:
@@ -187,35 +250,10 @@ public class MapWindow extends Application {
                             break;
                         case LEFT:
                         case A:
-                            teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                                break;
-                            } else {
-                                v = new Point2D(-10, 0);
-                            }
+                            client.sendKeyEvent(keyEvent.getCode());
                         case RIGHT:
                         case D:
-                            teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                            } else {
-                                if(v == null) v = new Point2D(+10, 0);
-                                Figure f = teams.get(currentTeam).getCurrentFigure();
-                                Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
-                                Rectangle2D hitRegion = f.getHitRegion();
-                                Point2D newPos = null;
-                                try {
-                                    newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
-                                } catch (CollisionWithTerrainException e) {
-                                    System.out.println("CollisionWithTerrainException, stopped movement");
-                                    newPos = e.getLastGoodPosition();
-                                } catch (CollisionWithFigureException e) {
-                                    // figures can walk through each other // TODO really?
-                                    System.out.println("ERROR How did we get here?");
-                                }
-                                f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
-                            }
+                            client.sendKeyEvent(keyEvent.getCode());
                             break;
                         case DIGIT1: // ToDo hardcoded, but sufficient for now
                             if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
@@ -258,11 +296,6 @@ public class MapWindow extends Application {
         primaryStage.setScene(drawing);
         primaryStage.show();
 
-        serverThread = new Thread(server = new Server());
-        serverThread.start();
-        clientThread = new Thread(client = new Client(this)); // TODO race condition
-        clientThread.start();
-
         moveObjectsThread = new Thread(() -> { // TODO move this code to own class
             try {
                 long before = System.currentTimeMillis(), now, sleep;
@@ -301,6 +334,7 @@ public class MapWindow extends Application {
             }
         });
         moveObjectsThread.start();
+
         stageToClose.close();
     }
 
@@ -367,21 +401,78 @@ public class MapWindow extends Application {
     public void start(Stage ostage) {
     }
 
-    public void handleKeyEvent(String keyCode) {
-        switch(keyCode) {
-            case "Up":
-            case "W":
+    public void handleOnClient(String command) {
+        String[] cmd = command.split(" ");
+
+        switch(cmd[0]) {
+            case "CURRENT_FIGURE_ANGLE_UP":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
-            case "Number Sign":
-                cheatMode();
+            case "CURRENT_FIGURE_FACE_LEFT":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
                 break;
-            case "Space":
+            case "CURRENT_FIGURE_FACE_RIGHT":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
                 break;
+            case "CURRENT_FIGURE_SET_POSITION":
+                Figure f = teams.get(currentTeam).getCurrentFigure();
+                f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
+//            case "Number Sign": // TODO really? this is broken and deprecated
+//                cheatMode();
+//                break;
             default:
-                System.out.println("handleKeyEvent no event for key " + keyCode);
+                System.out.println("handleKeyEventOnClient: no event for key " + command);
+        }
+    }
+
+    public void handleKeyEventOnServer(String keyCode) {
+        Point2D v = null;
+
+        switch(keyCode) {
+            // these codes always result in optical changes only, so nothing to do on server side
+            case "Up":
+            case "W":
+                server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
+                break;
+            case "Left":
+            case "A":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                   server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
+                   break;
+                } else {
+                    v = new Point2D(-10, 0);
+                }
+            case "Right":
+            case "D":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
+                } else {
+                    if (v == null) v = new Point2D(+10, 0);
+                    Figure f = teams.get(currentTeam).getCurrentFigure();
+                    Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
+                    Rectangle2D hitRegion = f.getHitRegion();
+                    Point2D newPos = null;
+                    try {
+                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
+                    } catch (CollisionWithTerrainException e) {
+                        System.out.println("CollisionWithTerrainException, stopped movement");
+                        newPos = e.getLastGoodPosition();
+                    } catch (CollisionWithFigureException e) {
+                        // figures can walk through each other // TODO really?
+                        System.out.println("ERROR How did we get here?");
+                    }
+                    server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                }
+            default:
+                System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
     }
 

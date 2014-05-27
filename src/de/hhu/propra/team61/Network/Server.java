@@ -1,5 +1,8 @@
 package de.hhu.propra.team61.Network;
 
+import de.hhu.propra.team61.MapWindow;
+import javafx.application.Platform;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,6 +11,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashSet;
+
+import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by markus on 15.05.14.
@@ -19,6 +24,8 @@ public class Server implements Runnable {
     private static HashSet<PrintWriter> writers = new HashSet<>();
 
     ServerSocket listener;
+
+    private static MapWindow mapWindow;
 
     public void run() {
         try {
@@ -44,6 +51,20 @@ public class Server implements Runnable {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void registerMapWindow(MapWindow mapWindow) {
+        this.mapWindow = mapWindow;
+    }
+
+    public void sendCommand(String command) {
+        synchronized (writers) {
+            for (PrintWriter writer : writers) {
+                String message = "COMMAND " + command;
+                writer.println(message);
+                System.out.println("SERVER sent command: " + message);
+            }
         }
     }
 
@@ -107,17 +128,22 @@ public class Server implements Runnable {
 
         private void broadcast() throws IOException {
             while(true) {
-                String input = in.readLine();
-                if(input == null) {
+                String line = in.readLine();
+                if (line == null) {
                     return;
                 }
-                synchronized (writers) {
-                    for(PrintWriter writer: writers) {
-                        String message = "MESSAGE " + name + ": " + input;
-                        System.out.println("SERVER send received message: " + message);
-                        writer.println(message);
-                    }
+                if (line.contains("KEYEVENT ")) {
+                    Platform.runLater(() -> mapWindow.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
+                } else {
+                    System.out.println("SERVER: unhandled message: " + line);
                 }
+//                synchronized (writers) {
+//                    for (PrintWriter writer : writers) {
+//                        String message = "MESSAGE " + name + ": " + line;
+//                        System.out.println("SERVER send received message: " + message);
+//                        writer.println(message);
+//                    }
+//                }
             }
         }
 
