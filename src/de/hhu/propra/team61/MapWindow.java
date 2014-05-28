@@ -6,6 +6,7 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Networkable;
 import de.hhu.propra.team61.Network.Server;
 import de.hhu.propra.team61.Objects.*;
 import javafx.application.Application;
@@ -30,7 +31,7 @@ import java.util.Arrays;
  * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
-public class MapWindow extends Application {
+public class MapWindow extends Application implements Networkable {
     private ArrayList<Team> teams;
     private Scene drawing;
     private Stage primaryStage;
@@ -77,7 +78,7 @@ public class MapWindow extends Application {
         client.registerMapWindow(this);
         this.server = server;
         this.serverThread = serverThread;
-        server.registerMapWindow(this);
+        server.registerCurrentNetworkable(this);
 
         // TODO code duplication; we have to check what we actually need at the end of the week
         try {
@@ -401,6 +402,7 @@ public class MapWindow extends Application {
     public void start(Stage ostage) {
     }
 
+    @Override
     public void handleOnClient(String command) {
         String[] cmd = command.split(" ");
 
@@ -433,6 +435,7 @@ public class MapWindow extends Application {
         }
     }
 
+    @Override
     public void handleKeyEventOnServer(String keyCode) {
         Point2D v = null;
 

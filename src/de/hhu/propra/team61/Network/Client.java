@@ -20,7 +20,8 @@ public class Client implements Runnable {
     BufferedReader in;
     Socket socket;
     PrintWriter out;
-    MapWindow mapwindow;
+
+    Networkable currentNetworkable;
 
     public void run() {
         try {
@@ -42,7 +43,7 @@ public class Client implements Runnable {
                 } else {
                     // use runLater; otherwise, an exception will be thrown:
                     // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
-                    Platform.runLater(() -> mapwindow.handleOnClient(extractPart(line, "KEYEVENT ")));
+                    Platform.runLater(() -> currentNetworkable.handleOnClient(extractPart(line, "KEYEVENT ")));
                 }
             }
         } catch (SocketException e) {
@@ -72,7 +73,7 @@ public class Client implements Runnable {
         }
     }
 
-    public void registerMapWindow(MapWindow mapWindow) {
-        this.mapwindow = mapWindow;
+    public void registerMapWindow(Networkable networkable) {
+        this.currentNetworkable = networkable;
     }
 }

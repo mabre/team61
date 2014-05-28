@@ -24,8 +24,7 @@ public class Server implements Runnable {
     private static HashSet<PrintWriter> writers = new HashSet<>();
 
     ServerSocket listener;
-
-    private static MapWindow mapWindow;
+    private static Networkable currentNetworkable;
 
     public void run() {
         try {
@@ -54,8 +53,8 @@ public class Server implements Runnable {
         }
     }
 
-    public void registerMapWindow(MapWindow mapWindow) {
-        this.mapWindow = mapWindow;
+    public void registerCurrentNetworkable(Networkable networkable) {
+        this.currentNetworkable = networkable;
     }
 
     public void sendCommand(String command) {
@@ -133,7 +132,7 @@ public class Server implements Runnable {
                     return;
                 }
                 if (line.contains("KEYEVENT ")) {
-                    Platform.runLater(() -> mapWindow.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
+                    Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
                 } else {
                     System.out.println("SERVER: unhandled message: " + line);
                 }
