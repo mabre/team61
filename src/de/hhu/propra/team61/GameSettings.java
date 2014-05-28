@@ -156,7 +156,7 @@ public class GameSettings extends Application {
 
                 Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf", client, clientThread);
+                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf", client, clientThread, null, null);
             }
         });
         // TODO temporary, till lobby is ready (just to test passing the server/client objects around)
