@@ -187,55 +187,7 @@ public class MapWindow extends Application implements Networkable {
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
-                    switch (keyEvent.getCode()) {
-                        case L:
-                        case NUMBER_SIGN:
-                            client.sendKeyEvent(keyEvent.getCode());
-                            break;
-                        case SPACE:
-                        case UP:
-                        case W:
-                            client.sendKeyEvent(keyEvent.getCode());
-                            break;
-                        case DOWN:
-                        case S:
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_down(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
-                            }
-                            break;
-                        case LEFT:
-                        case A:
-                            client.sendKeyEvent(keyEvent.getCode());
-                        case RIGHT:
-                        case D:
-                            client.sendKeyEvent(keyEvent.getCode());
-                            break;
-                        case DIGIT1:
-                            client.sendKeyEvent(keyEvent.getCode());
-                            break;
-                        case DIGIT2:
-                            if(teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                }
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            }
-                            break;
-                        case DIGIT3:
-                            if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                }
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            }
-                            break;
-                    }
+                    client.sendKeyEvent(keyEvent.getCode());
                 }
         );
 
@@ -370,6 +322,11 @@ public class MapWindow extends Application implements Networkable {
             case "CURRENT_TEAM_END_ROUND":
                 teams.get(currentTeam).endRound();
                 break;
+            case "CURRENT_FIGURE_ANGLE_DOWN":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_down(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
+                }
+                break;
             case "CURRENT_FIGURE_ANGLE_UP":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure().getFacing_right());
@@ -383,6 +340,26 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
                 centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                }
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    }
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                }
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
@@ -416,7 +393,7 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
-            case "PROJECTILE_SET_POSITION":
+            case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
                 break;
             case "REMOVE_FLYING_PROJECTILE":
@@ -453,6 +430,10 @@ public class MapWindow extends Application implements Networkable {
             case "W":
                 server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
                 break;
+            case "Down":
+            case "S":
+                server.sendCommand("CURRENT_FIGURE_ANGLE_DOWN");
+                break;
             case "Left":
             case "A":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
@@ -486,6 +467,16 @@ public class MapWindow extends Application implements Networkable {
             case "1":
                 if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                     server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_1");
+                }
+                break;
+            case "2":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 2) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_2");
+                }
+                break;
+            case "3":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_3");
                 }
                 break;
             default:
