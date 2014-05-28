@@ -152,7 +152,7 @@ public class MapWindow extends Application implements Networkable {
     private void initialize() {
         primaryStage = new Stage();
         primaryStage.setOnCloseRequest(event -> {
-            moveObjectsThread.interrupt();
+            if(moveObjectsThread != null) moveObjectsThread.interrupt();
 
             GameState.save(this.toJson());
             TerrainManager.save(terrain.toArrayList());
@@ -192,23 +192,7 @@ public class MapWindow extends Application implements Networkable {
                         case NUMBER_SIGN:
                             client.sendKeyEvent(keyEvent.getCode());
                             break;
-                        case SPACE: //Fire
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                try {
-                                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(); // ToDo Do something with the projectile
-                                    flyingProjectile = projectile;
-                                    centerView.getChildren().add(flyingProjectile);
-                                } catch (NoMunitionException e) {
-                                    System.out.println("no munition");
-                                    break;
-                                }
-
-                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
-                            }
-                            break;
+                        case SPACE:
                         case UP:
                         case W:
                             client.sendKeyEvent(keyEvent.getCode());
@@ -226,16 +210,8 @@ public class MapWindow extends Application implements Networkable {
                         case D:
                             client.sendKeyEvent(keyEvent.getCode());
                             break;
-                        case DIGIT1: // ToDo hardcoded, but sufficient for now
-                            if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                }
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            }
+                        case DIGIT1:
+                            client.sendKeyEvent(keyEvent.getCode());
                             break;
                         case DIGIT2:
                             if(teams.get(currentTeam).getNumberOfWeapons() >= 2) {
@@ -267,44 +243,39 @@ public class MapWindow extends Application implements Networkable {
         primaryStage.setScene(drawing);
         primaryStage.show();
 
-        moveObjectsThread = new Thread(() -> { // TODO move this code to own class
-            try {
-                long before = System.currentTimeMillis(), now, sleep;
-                while (true) {
-                    if(flyingProjectile != null) {
-                        try {
-                            final Point2D newPos;
-                            newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
-                            Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
-                        } catch (CollisionWithTerrainException e) {
-                            System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
-                            final Point2D newPos = e.getLastGoodPosition();
-                            //Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
-                            Platform.runLater(() -> {
-                                centerView.getChildren().remove(flyingProjectile);
-                                flyingProjectile = null;
+        if(server != null) { // only the server should do calculations
+            moveObjectsThread = new Thread(() -> { // TODO move this code to own class
+                try {
+                    long before = System.currentTimeMillis(), now, sleep;
+                    while (true) {
+                        if (flyingProjectile != null) {
+                            try {
+                                final Point2D newPos;
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
+                                Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
+                                server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                            } catch (CollisionWithTerrainException e) {
+                                System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
+                                server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition (might still be !=null in next iteration)
                                 endTurn();
-                            }); // TODO potential race condition
-                        } catch (CollisionWithFigureException e) {
-                            System.out.println("CollisionWithFigureException, let's harm somebody!");
-                            Platform.runLater(() -> {
-                                e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
-                                centerView.getChildren().remove(flyingProjectile);
-                                flyingProjectile = null;
+                            } catch (CollisionWithFigureException e) {
+                                System.out.println("CollisionWithFigureException, let's harm somebody!");
+                                server.sendCommand("SUFFER_DAMAGE " + getFigureId(e.getCollisionPartner()) + " " + flyingProjectile.getDamage());
+                                server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
                                 endTurn();
-                            }); // TODO potential race condition
+                            }
                         }
+                        now = System.currentTimeMillis();
+                        sleep = Math.max(0, (1000 / 10) - (now - before)); // 10 fps
+                        Thread.sleep(sleep);
+                        before = System.currentTimeMillis();
                     }
-                    now = System.currentTimeMillis();
-                    sleep = Math.max(0, (1000/10)-(now-before)); // 10 fps
-                    Thread.sleep(sleep);
-                    before = System.currentTimeMillis();
+                } catch (InterruptedException e) {
+                    System.out.println("moveObjectsThread shut down");
                 }
-            } catch (InterruptedException e) {
-                System.out.println("moveObjectsThread shut down");
-            }
-        });
-        moveObjectsThread.start();
+            });
+            moveObjectsThread.start();
+        }
 
         stageToClose.close();
     }
@@ -322,6 +293,23 @@ public class MapWindow extends Application implements Networkable {
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
         return output;
+    }
+
+    /**
+     *
+     * @param figure
+     * @return
+     */
+    private String getFigureId(Figure figure) {
+        String id = "";
+        for(int i=0; i<teams.size(); i++) {
+            for(int j=0; j<teams.get(i).getFigures().size(); j++) {
+                if(teams.get(i).getFigures().get(j) == figure) {
+                    id = i+" "+j;
+                }
+            }
+        }
+        return id;
     }
 
     @Deprecated
@@ -349,6 +337,7 @@ public class MapWindow extends Application implements Networkable {
     
     public void endTurn() {
         turnCount++;
+        server.sendCommand("SET_TURN_COUNT " + turnCount);
 
         int oldCurrentTeam = currentTeam;
         do {
@@ -357,14 +346,15 @@ public class MapWindow extends Application implements Networkable {
                 currentTeam = 0;
             }
             if (currentTeam == oldCurrentTeam) {
-                teamLabel.setText("team" + currentTeam + "won");
+                server.sendCommand("TEAM_LABEL_SET_TEXT " + "team " + currentTeam + " won");
                 return;
             }
         }
         while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
-        teams.get(currentTeam).endRound();
-        teamLabel.setText("It's team " + currentTeam + " turn");
+        server.sendCommand("CURRENT_TEAM_END_ROUND");
+        server.sendCommand("TEAM_LABEL_SET_TEXT " + "It's team " + currentTeam + "'s turn");
+
         System.out.println("Turn " + currentTeam + ", Team " + currentTeam + ", Worm \"" + teams.get(currentTeam).getCurrentFigure().getName() + "\"");
     }
 
@@ -377,10 +367,22 @@ public class MapWindow extends Application implements Networkable {
         String[] cmd = command.split(" ");
 
         switch(cmd[0]) {
+            case "CURRENT_TEAM_END_ROUND":
+                teams.get(currentTeam).endRound();
+                break;
             case "CURRENT_FIGURE_ANGLE_UP":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                }
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
@@ -397,9 +399,40 @@ public class MapWindow extends Application implements Networkable {
             case "CURRENT_FIGURE_SET_POSITION":
                 Figure f = teams.get(currentTeam).getCurrentFigure();
                 f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
+                break;
 //            case "Number Sign": // TODO really? this is broken and deprecated
 //                cheatMode();
 //                break;
+            case "CURRENT_FIGURE_SHOOT":
+                try {
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                    flyingProjectile = projectile;
+                    centerView.getChildren().add(flyingProjectile);
+                } catch (NoMunitionException e) {
+                    System.out.println("no munition");
+                    break;
+                }
+                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "PROJECTILE_SET_POSITION":
+                flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
+                break;
+            case "REMOVE_FLYING_PROJECTILE":
+                centerView.getChildren().remove(flyingProjectile);
+                flyingProjectile = null;
+                break;
+            case "SET_TURN_COUNT":
+                turnCount = Integer.parseInt(cmd[1]);
+                break;
+            case "SUFFER_DAMAGE":
+                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).sufferDamage(Integer.parseInt(cmd[3]));
+            case "TEAM_LABEL_SET_TEXT":
+                StringBuilder builder = new StringBuilder();
+                for(int i=2; i<cmd.length; i++) builder.append(cmd[i]);
+                teamLabel.setText(builder.toString());
+                break;
             default:
                 System.out.println("handleKeyEventOnClient: no event for key " + command);
         }
@@ -410,6 +443,11 @@ public class MapWindow extends Application implements Networkable {
         Point2D v = null;
 
         switch(keyCode) {
+            case "Space":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    server.sendCommand("CURRENT_FIGURE_SHOOT");
+                }
+                break;
             // these codes always result in optical changes only, so nothing to do on server side
             case "Up":
             case "W":
@@ -444,6 +482,12 @@ public class MapWindow extends Application implements Networkable {
                     }
                     server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                 }
+                break;
+            case "1":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_1");
+                }
+                break;
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
