@@ -51,6 +51,7 @@ public class MapWindow extends Application implements Networkable {
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
+    private String map;
 
     @Deprecated
     public MapWindow(String map) {
@@ -73,6 +74,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.map = map;
         this.client = client;
         this.clientThread = clientThread;
         client.registerMapWindow(this);
@@ -166,6 +168,7 @@ public class MapWindow extends Application implements Networkable {
             System.out.println("MapWindow client/server (if any) stopped");
 
             stageToClose.show();
+            primaryStage.close();
         });
 
         // pane containing terrain, labels at the bottom etc.
@@ -357,7 +360,9 @@ public class MapWindow extends Application implements Networkable {
                 currentTeam = 0;
             }
             if (currentTeam == oldCurrentTeam) {
-                teamLabel.setText("team" + currentTeam + "won");
+                primaryStage.close();
+                GameOverWindow gameOverWindow = new GameOverWindow();
+                gameOverWindow.showWinner(currentTeam, stageToClose, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 return;
             }
         }
