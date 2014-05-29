@@ -184,7 +184,7 @@ public class GameSettings extends Application {
 
                 Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
             }
         });
         Button back = new Button("Back");
