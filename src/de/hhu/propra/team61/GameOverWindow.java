@@ -44,15 +44,15 @@ public class GameOverWindow extends Application {
                 overStage.close();
             }
         });
-        Button back = new Button("Back");
-        back.setOnAction(new EventHandler<ActionEvent>() {
+        Button end = new Button("End");
+        end.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
                 stageToGoBack.show();
                 overStage.close();
             }
         });
-        overGrid.add(back, 0, 4);
+        overGrid.add(end, 0, 4);
         Scene overScene = new Scene(overGrid);
         overStage.setScene(overScene);
         overStage.show();

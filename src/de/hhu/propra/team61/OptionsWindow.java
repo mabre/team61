@@ -8,13 +8,10 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
+import javafx.scene.text.*;
 import javafx.stage.Stage;
 
 /*
@@ -25,7 +22,6 @@ import javafx.stage.Stage;
 
 public class OptionsWindow extends Application {
 
-    RadioButton sound1, sound2;
     Slider volume;
     CheckBox fullscreen;
     ChoiceBox<String> resolution;
@@ -43,17 +39,6 @@ public class OptionsWindow extends Application {
         Text optionst = new Text("Options");
 		optionst.setFont(Font.font ("Verdana", 20));
 		optionGrid.add(optionst, 0, 0, 3, 1);
-			
-		Text soundt = new Text("Music: ");
-		optionGrid.add(soundt, 0, 2);
-		ToggleGroup sound = new ToggleGroup();
-		sound1 = new RadioButton("On"); // TODO can be removed? (set volume to 0 has same effect)
-		sound1.setToggleGroup(sound);
-		sound1.setSelected(true);
-		sound2 = new RadioButton("Off");
-		sound2.setToggleGroup(sound);
-		optionGrid.add(sound1, 1, 2);
-		optionGrid.add(sound2, 2, 2);
 			
 		Text volt = new Text("Volume: ");
 		optionGrid.add(volt, 0, 3);
@@ -100,12 +85,6 @@ public class OptionsWindow extends Application {
 
     private void loadSavedSettings() {
         JSONObject savedSettings = Options.getSavedSettings();
-        if(savedSettings.has("sound1")) {
-            sound1.setSelected(savedSettings.getBoolean("sound1"));
-        }
-        if(savedSettings.has("sound2")) {
-            sound2.setSelected(savedSettings.getBoolean("sound2"));
-        }
         if(savedSettings.has("volume")) {
             volume.setValue(savedSettings.getDouble("volume"));
         }
@@ -122,8 +101,6 @@ public class OptionsWindow extends Application {
 
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
-        output.put("sound1", sound1.isSelected());
-        output.put("sound2", sound2.isSelected());
         output.put("volume", volume.getValue());
         output.put("fullscreen", fullscreen.isSelected());
         output.put("resolution", resolution.getValue());

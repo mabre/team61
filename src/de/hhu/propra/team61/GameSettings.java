@@ -9,13 +9,12 @@ import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Network.Client;
 import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -23,6 +22,7 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.io.File;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
@@ -39,8 +39,8 @@ public class GameSettings extends Application {
     TextField name2 = new TextField();
     TextField name3 = new TextField();
     TextField name4 = new TextField();
-    ArrayList<TextField> names;
-    ArrayList<ColorPicker> colorPickers;
+    ArrayList<TextField> names = new ArrayList<TextField>();
+    ArrayList<ColorPicker> colorPickers = new ArrayList<ColorPicker>();
     ColorPicker colorPicker1 = new ColorPicker();
     ColorPicker colorPicker2 = new ColorPicker();
     ColorPicker colorPicker3 = new ColorPicker();
@@ -52,10 +52,12 @@ public class GameSettings extends Application {
     TextField sizefield = new TextField();
     HBox hboxplus = new HBox(5);
     Button addTeam = new Button("+");
+    ChoiceBox<String> mapChooser = new ChoiceBox<>();
 
     public void doSettings(Stage stageToClose) {
         BigStage settingStage = new BigStage("Game Settings");
         settingGrid.setAlignment(Pos.TOP_LEFT);
+        initializeArrayLists();
 
         //Save/load settings
         Text savetext = new Text("Save settings in ");
@@ -143,6 +145,16 @@ public class GameSettings extends Application {
         sizefield.setText("4");
         settingGrid.add(sizetext, 0, 14);
         settingGrid.add(sizefield, 1, 14);
+        Text chooseMapText = new Text("Choose map:");
+        settingGrid.add(chooseMapText, 2, 14);
+        ArrayList<String> availableLevels = getLevels();
+        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
+        for (int i=0; i<numberOfLevels; i++) {
+            mapChooser.getItems().add(availableLevels.get(i));
+        }
+        mapChooser.getSelectionModel().selectFirst();
+        settingGrid.add(mapChooser, 3, 14);
+
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 16);
         cont.setOnAction(new EventHandler<ActionEvent>() {
@@ -154,7 +166,7 @@ public class GameSettings extends Application {
 
                 Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingStage, "SETTINGS_FILE.conf", client, clientThread, null, null);
+                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, null, null);
             }
         });
         // TODO temporary, till lobby is ready (just to test passing the server/client objects around)
@@ -197,6 +209,7 @@ public class GameSettings extends Application {
         JSONObject output = new JSONObject();
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
         output.put("team-size", sizefield.getText()); //save size of teams
+        output.put("map", mapChooser.getValue());
         output.put("weapon1", weapon1.getText()); // TODO make array instead of using suffix
         output.put("weapon2", weapon2.getText());
         output.put("weapon3", weapon3.getText());
@@ -227,6 +240,9 @@ public class GameSettings extends Application {
         if(savedSettings.has("team-size")) {
             sizefield.setText(savedSettings.getString("team-size"));
         }
+        if(savedSettings.has("map")) {
+            mapChooser.setValue(savedSettings.getString("map"));
+        }
         if(savedSettings.has("weapon1")) {
             weapon1.setText(savedSettings.getString("weapon1"));
         }
@@ -239,8 +255,8 @@ public class GameSettings extends Application {
         if(savedSettings.has("teams")) {
             JSONArray teamsArray = savedSettings.getJSONArray("teams");
             for(int i=0; i<teamsArray.length(); i++) {
-                name1.setText(teamsArray.getJSONObject(i).getString("name"));
-                colorPicker1.setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
+                names.get(i).setText(teamsArray.getJSONObject(i).getString("name"));
+                colorPickers.get(i).setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
             }
         }
     }
@@ -273,6 +289,22 @@ public class GameSettings extends Application {
             Text enough = new Text("Max. 4 teams");
             settingGrid.add(enough, 1, 12);
         }
+    }
+
+    public void initializeArrayLists() {
+        names.add(name1);
+        names.add(name2);
+        names.add(name3);
+        names.add(name4);
+        colorPickers.add(colorPicker1);
+        colorPickers.add(colorPicker2);
+        colorPickers.add(colorPicker3);
+        colorPickers.add(colorPicker4);
+    }
+
+    public ArrayList<String> getLevels() {
+        ArrayList<String> levels = TerrainManager.getAvailableTerrains();
+        return levels;
     }
 
     @Override

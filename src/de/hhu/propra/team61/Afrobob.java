@@ -1,16 +1,15 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.CustomGrid;
 import de.hhu.propra.team61.IO.GameState;;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 /*
@@ -31,11 +30,8 @@ public class Afrobob extends Application {
         launch(args);
     }
 
-    public void start (Stage mainwindow) throws NullPointerException {
-        mainwindow.setTitle("Unicorns and Penguins! <3");
-        mainwindow.setWidth(1000);
-        mainwindow.setHeight(600);
-        mainwindow.setResizable(false);
+    public void start (Stage filler) throws NullPointerException {
+        BigStage mainwindow = new BigStage("Unicorns and Penguins! <3");
         CustomGrid grid = new CustomGrid();
         grid.setAlignment(Pos.CENTER);
 
