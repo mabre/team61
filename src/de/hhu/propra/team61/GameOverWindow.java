@@ -28,7 +28,7 @@ public class GameOverWindow extends Application {
         BigStage overStage = new BigStage("Game over");
         CustomGrid overGrid = new CustomGrid();
         overGrid.setAlignment(Pos.CENTER);
-        Text winner = new Text("The winner is team " + currentTeam + ".");
+        Text winner = new Text("The winner is team " + (currentTeam+1) + ".");
         winner.setFont(Font.font("Verdana", 20));
         overGrid.add(winner, 0, 0, 2, 1);
         Text whatNext = new Text("What do you want to do next?");

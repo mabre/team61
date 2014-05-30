@@ -41,7 +41,6 @@ public class Terrain extends GridPane {
         spawnPoints = new ArrayList<Point2D>();
 
         //Draw Terrain
-        setGridLinesVisible(true); //Gridlines on/off
         setAlignment(Pos.TOP_LEFT);
 
         String img;

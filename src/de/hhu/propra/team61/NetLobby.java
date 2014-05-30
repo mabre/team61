@@ -2,7 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.CustomGrid;
-import de.hhu.propra.team61.IO.JSON.JSONObject;
+import de.hhu.propra.team61.IO.TerrainManager;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -12,7 +12,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
 
@@ -23,27 +22,29 @@ import java.util.ArrayList;
  */
 public class NetLobby extends Application {
 
-    TextField nameHost = new TextField();
+    TextField hostName = new TextField();
     TextField name2 = new TextField();
     TextField name3 = new TextField();
     TextField name4 = new TextField();
-    ColorPicker colorPickerHost = new ColorPicker();
+    ColorPicker hostColorPicker = new ColorPicker();
     ColorPicker colorPicker2 = new ColorPicker();
     ColorPicker colorPicker3 = new ColorPicker();
     ColorPicker colorPicker4 = new ColorPicker();
     ArrayList<String> players;
-    ArrayList<String> spectators;
-    int numberOfTeams;
+    ArrayList<String> spectators = new ArrayList<>();
+    TextField weapon1 = new TextField("50");
+    TextField weapon2 = new TextField("50");
+    TextField weapon3 = new TextField("5");
+    TextField sizefield = new TextField("4");
+    TextField numberOfTeams = new TextField("2");
+    ChoiceBox<String> mapChooser = new ChoiceBox<>();
 
-    public NetLobby(JSONObject settings, String map, BigStage stageToClose) {        //Constructor for host
-        this.numberOfTeams = Integer.parseInt(settings.getString("numberOfTeams"));
-        JSONObject host = settings.getJSONObject("teamhost");
-        this.nameHost.setText(host.getString("name"));
-        this.colorPickerHost.setValue(Color.web(host.getString("color")));
+    public NetLobby(String hostName, BigStage stageToClose) {        //Constructor for host
+        this.hostName.setText(hostName);
         buildGUI(stageToClose);
     }
 
-    public NetLobby(String ipAdress, Boolean spectator, BigStage stageToClose) {        //Constructor for player
+    public NetLobby(String ipAdress, Boolean spectator, String name, BigStage stageToClose) {        //Constructor for player
         //TODO use ipAdress
         buildGUI(stageToClose);
     }
@@ -70,8 +71,8 @@ public class NetLobby extends Application {
 
         Text team1 = new Text("Team 1");
         overviewGrid.add(team1, 0, 3);
-        overviewGrid.add(nameHost, 1, 3);
-        overviewGrid.add(colorPickerHost, 2, 3);
+        overviewGrid.add(hostName, 1, 3);
+        overviewGrid.add(hostColorPicker, 2, 3);
 
         Text team2 = new Text("Team 2");
         overviewGrid.add(team2, 0, 4);
@@ -88,10 +89,40 @@ public class NetLobby extends Application {
         });
         //TODO show more teams
 
+        Text generalSettings = new Text("Choose general settings:");
+        generalSettings.setFont(Font.font(16));
+        overviewGrid.add(generalSettings, 0, 6, 2, 1);
+        Text teamSize = new Text("Size of teams: ");
+        overviewGrid.add(teamSize, 0, 7);
+        overviewGrid.add(sizefield, 1, 7);
+        Text teamNumber = new Text("Max. number of teams: ");
+        overviewGrid.add(teamNumber, 2, 7);
+        overviewGrid.add(numberOfTeams, 3, 7);
+        Text chooseMapText = new Text("Choose map:");
+        overviewGrid.add(chooseMapText, 0, 8);
+        ArrayList<String> availableLevels = getLevels();
+        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
+        for (int i=0; i<numberOfLevels; i++) {
+            mapChooser.getItems().add(availableLevels.get(i));
+        }
+        mapChooser.getSelectionModel().selectFirst();
+        overviewGrid.add(mapChooser, 1, 8);
+
+        Text enter = new Text ("Enter the quantity of projectiles for each weapon:");
+        enter.setFont(Font.font(14));
+        overviewGrid.add(enter, 0, 9, 3, 1);
+        Text w1 = new Text("Weapon 1: ");
+        overviewGrid.add(w1, 0, 10);
+        overviewGrid.add(weapon1, 1, 10);
+        Text w2 = new Text("Weapon 2: ");
+        overviewGrid.add(w2, 0, 11);
+        overviewGrid.add(weapon2, 1, 11);
+        Text w3 = new Text("Weapon 3: ");
+        overviewGrid.add(w3, 0, 12);
+        overviewGrid.add(weapon3, 1, 12);
+
         VBox rightBox = new VBox();
         CustomGrid listGrid = new CustomGrid();
-        VBox players = addPlayerList();
-        listGrid.add(players, 0, 0);
         VBox spectators = addSpectatorList();
         listGrid.add(spectators, 2, 0);
         VBox chatBox = doChat();
@@ -135,21 +166,14 @@ public class NetLobby extends Application {
     }
 
     public VBox addSpectatorList() {
-        VBox spectatorBox = new VBox();
+        VBox spectatorBox = new VBox();                     //TODO get names of spectators
         Text spectatorText = new Text("Spectators:");
-        Text player1 = new Text("Bobby");                               //TODO get names of players and spectators
-        spectatorBox.getChildren().addAll(spectatorText, player1);
-        spectatorBox.setId("vbox");
+        spectatorBox.getChildren().add(spectatorText);
+        for (int i=0; i<spectators.size(); i++) {
+            Text newSpectator = new Text(spectators.get(i));
+            spectatorBox.getChildren().add(newSpectator);
+        }
         return spectatorBox;
-    }
-
-    public VBox addPlayerList() {
-        VBox playerBox = new VBox();
-        Text playerText = new Text("Players:");
-        Text player1 = new Text("Jeff");
-        playerBox.getChildren().addAll(playerText, player1);
-        playerBox.setId("vbox");
-        return playerBox;
     }
 
     public VBox doChat() {
@@ -185,6 +209,11 @@ public class NetLobby extends Application {
         Scene removeScene = new Scene(removeGrid);
         popUp.setScene(removeScene);
         popUp.show();
+    }
+
+    public ArrayList<String> getLevels() {
+        ArrayList<String> levels = TerrainManager.getAvailableTerrains();
+        return levels;
     }
 
     @Override
