@@ -51,6 +51,7 @@ public class MapWindow extends Application implements Networkable {
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
+    private String map;
 
     @Deprecated
     public MapWindow(String map) {
@@ -73,6 +74,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.map = map;
         this.client = client;
         this.clientThread = clientThread;
         client.registerMapWindow(this);
@@ -166,6 +168,7 @@ public class MapWindow extends Application implements Networkable {
             System.out.println("MapWindow client/server (if any) stopped");
 
             stageToClose.show();
+            primaryStage.close();
         });
 
         // pane containing terrain, labels at the bottom etc.
@@ -183,7 +186,7 @@ public class MapWindow extends Application implements Networkable {
 
         root.setBottom(teamLabel);
 
-        drawing = new Scene(root, 800, 600);
+        drawing = new Scene(root, 1600, 300);
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
@@ -288,7 +291,7 @@ public class MapWindow extends Application implements Networkable {
     }
     
     public void endTurn() {
-        turnCount++;
+        turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
         int oldCurrentTeam = currentTeam;
@@ -298,11 +301,10 @@ public class MapWindow extends Application implements Networkable {
                 currentTeam = 0;
             }
             if (currentTeam == oldCurrentTeam) {
-                server.sendCommand("TEAM_LABEL_SET_TEXT " + "team " + currentTeam + " won");
+                server.sendCommand("GAME_OVER " + currentTeam);
                 return;
             }
-        }
-        while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
+        } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         server.sendCommand("CURRENT_TEAM_END_ROUND");
         server.sendCommand("TEAM_LABEL_SET_TEXT " + "It's team " + currentTeam + "'s turn");
@@ -392,6 +394,11 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "GAME_OVER":
+                primaryStage.close();
+                GameOverWindow gameOverWindow = new GameOverWindow();
+                gameOverWindow.showWinner(Integer.parseInt(cmd[1]), stageToClose, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));

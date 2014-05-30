@@ -1,15 +1,15 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.GUI.BigStage;
+import de.hhu.propra.team61.GUI.CustomGrid;
 import de.hhu.propra.team61.IO.GameState;;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 /*
@@ -30,16 +30,10 @@ public class Afrobob extends Application {
         launch(args);
     }
 
-    public void start (Stage mainwindow) throws NullPointerException {
-        mainwindow.setTitle("Unicorns and Penguins! <3");
-        mainwindow.setWidth(1000);
-        mainwindow.setHeight(600);
-        mainwindow.setResizable(false);
-        GridPane grid = new GridPane();
+    public void start (Stage filler) throws NullPointerException {
+        BigStage mainwindow = new BigStage("Unicorns and Penguins! <3");
+        CustomGrid grid = new CustomGrid();
         grid.setAlignment(Pos.CENTER);
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(25, 25, 25, 25));
 
         Button mstartl = new Button("Start local game");  //menue-start-local, menue-start-network, menue-options, menue-exit
         grid.setHalignment(mstartl, HPos.CENTER);  //centers the buttons, not needed for mstartn as the biggest button
@@ -57,22 +51,11 @@ public class Afrobob extends Application {
         grid.setHalignment(mexit, HPos.CENTER);
         grid.add(mexit, 0, 5);
 
-        mstartl.setOnAction(new EventHandler<ActionEvent>() {  //Click on button starts game.. well not yet
-            @Override
-            public void handle(ActionEvent e) {
-            }
-        });
-        mexit.setOnAction(new EventHandler<ActionEvent>() {  //Click on Button 'mexit' closes window
-            @Override
-            public void handle(ActionEvent e) {
-                mainwindow.close();
-            }
-        });
         mstartl.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
                 GameSettings gamesettings = new GameSettings();
-                gamesettings.do_settings(mainwindow);                      //always pass 'mainwindow' to close it -> only one stage open at a time
+                gamesettings.doSettings(mainwindow);                      //always pass 'mainwindow' to close it -> only one stage open at a time
             }
         });
         mstartsaved.setOnAction(new EventHandler<ActionEvent>() {
@@ -81,17 +64,30 @@ public class Afrobob extends Application {
                 MapWindow mapwindow = new MapWindow(GameState.getSavedGameState(), mainwindow);
             }
         });
+        mstartn.setOnAction(new EventHandler<ActionEvent>() {  //Click on button starts game.. well not yet
+            @Override
+            public void handle(ActionEvent e) {
+                NetSettings netSettings = new NetSettings();
+                netSettings.openPopUp(mainwindow);
+            }
+        });
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options
             @Override
             public void handle(ActionEvent e) {
                 OptionsWindow optionwindow = new OptionsWindow();
-                optionwindow.do_options(mainwindow);
+                optionwindow.doOptions(mainwindow);
+            }
+        });
+        mexit.setOnAction(new EventHandler<ActionEvent>() {  //Click on Button 'mexit' closes window
+            @Override
+            public void handle(ActionEvent e) {
+                mainwindow.close();
             }
         });
 
         Scene scene = new Scene(grid, 1000, 600);
         mainwindow.setScene(scene);
-        scene.getStylesheets().add("file:src/de/hhu/propra/team61/GUI/menue");
+        scene.getStylesheets().add("file:resources/layout/css/menue.css");
         grid.getStyleClass().add("menuepane");
         mainwindow.show();
     }

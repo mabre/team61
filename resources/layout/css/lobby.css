@@ -1,0 +1,44 @@
+@CHARSET "ISO-8859-1";
+
+.root {
+    -fx-background-image: url("file:resources/layout/back.png");
+    -fx-background-position: top left;
+    -fx-fill: #FFFFFF;
+}
+
+.overviewGrid{
+    -fx-background-color: rgba(0, 100, 100, 0.2);
+    -fx-background-radius: 10;
+    -fx-padding: 10 40 10 10;
+}
+
+#topBox {
+    -fx-background-color: rgba(255, 94, 48, 0.8);
+    -fx-background-radius: 10;
+    -fx-padding: 10 10 10 10;
+}
+
+#chatBox {
+    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-radius: 10;
+    -fx-padding: 20 200 190 10;
+}
+
+.listGrid {
+    -fx-background-color: rgba(255, 119, 48, 0.5);
+    -fx-background-radius: 10;
+    -fx-padding: 20 200 150 10;
+}
+
+#bottomBox {
+    -fx-background-color: rgba(255, 94, 48, 0.8);
+    -fx-background-radius: 10;
+    -fx-padding: 10 10 10 10;
+}
+
+.removeButton {
+    -fx-background-color: linear-gradient(#ff5400, #be1d00);
+    -fx-background-radius: 30;
+    -fx-background-insets: 50;
+    -fx-text-fill: #cc0100;
+}
