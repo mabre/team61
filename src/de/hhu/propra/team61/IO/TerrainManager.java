@@ -63,6 +63,20 @@ public class TerrainManager {
         return load(getAvailableTerrains().get(levelnumber));
     }
 
+    public static ArrayList<ArrayList<Character>> loadFromString(String levelstring) {
+        ArrayList<ArrayList<Character>> level = new ArrayList<>();
+        ArrayList<String> rows = new ArrayList<>(Arrays.asList(levelstring.split(",,")));
+        for(String row: rows) {
+            ArrayList<String> fields = new ArrayList<>(Arrays.asList(row.split(",")));
+            ArrayList<Character> f = new ArrayList<>();
+            for(String field: fields) {
+                f.add(field.charAt(0));
+            }
+            level.add(f);
+        }
+        return level;
+    }
+
     /**
      * @param level is saved as ordinary level file to SAVE_LEVEL_FILE
      */
@@ -85,6 +99,22 @@ public class TerrainManager {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * @param level 2-D list representing a level
+     * @return a string without newline representing the level
+     */
+    public static String toString(ArrayList<ArrayList<Character>> level) {
+        StringBuilder levelString = new StringBuilder();
+
+        for(ArrayList<Character> row : level) {
+            for(Character field : row) {
+                levelString.append(field+",");
+            }
+            levelString.append(",");
+        }
+        return levelString.toString().substring(0, levelString.length()-1);
     }
 
     /**

@@ -5,6 +5,7 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Networkable;
 import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -29,7 +30,7 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
  * Created by Jessypet on 21.05.14.
  */
 
-public class GameSettings extends Application {
+public class GameSettings extends Application implements Networkable {
 
     int numberOfTeams = 2;
     GridPane sgrid = new GridPane();
@@ -50,9 +51,15 @@ public class GameSettings extends Application {
     TextField sizefield = new TextField();
     HBox hboxplus = new HBox(5);
     Button addTeam = new Button("+");
+    Stage settingstage = new Stage();
+
+    Client client;
+    Thread clientThread;
+
+    GameSettings me;
 
     public void do_settings(Stage stageToClose) {
-        Stage settingstage = new Stage();
+        me = this;
         settingstage.setTitle("Game Settings");
         sgrid.setAlignment(Pos.TOP_LEFT);
         sgrid.setHgap(10);
@@ -154,9 +161,8 @@ public class GameSettings extends Application {
                 Thread clientThread = new Thread(client = new Client());
                 clientThread.start();
 
-                Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
-                System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf", client, clientThread, null, null);
+                client.send("GET_STATE");
+//                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf", client, clientThread);
             }
         });
         // TODO temporary, till lobby is ready (just to test passing the server/client objects around)
@@ -168,13 +174,16 @@ public class GameSettings extends Application {
                 Server server;
                 Thread serverThread = new Thread(server = new Server());
                 serverThread.start();
-                Client client;
-                Thread clientThread = new Thread(client = new Client()); // TODO race condition
-                clientThread.start();
 
                 Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), settingstage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                server.createMapWindow(server, serverThread);
+
+                clientThread = new Thread(client = new Client()); // TODO race condition
+                clientThread.start();
+//                client.send("START_GAME");
+                client.registerCurrentNetworkable(me);
+//                client.send("GET_STATE");
             }
         });
         Button back = new Button("Back");
@@ -279,4 +288,28 @@ public class GameSettings extends Application {
 
     @Override
     public void start(Stage settingstage) {}
+
+    @Override
+    public void handleOnClient(String command) {
+        System.out.println("GameSettings command: " + command);
+        if(command.contains("START_GAME")) {
+            String[] cmd = command.split(" ", 2);
+            MapWindow mapwindow = new MapWindow(new JSONObject(cmd[1]), settingstage, client, clientThread);
+        }
+    }
+
+    @Override
+    public void handleKeyEventOnServer(String keyCode) {
+
+    }
+
+    @Override
+    public String getStateForNewClient() {
+        return "";
+    }
+
+    @Override
+    public boolean isReady() {
+        return true;
+    }
 }

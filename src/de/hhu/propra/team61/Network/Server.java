@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.Network;
 
+import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
 
@@ -25,6 +26,8 @@ public class Server implements Runnable {
 
     ServerSocket listener;
     private static Networkable currentNetworkable;
+    private static MapWindow mapWindow;
+    private static Thread mapWindowThread;
 
     public void run() {
         try {
@@ -57,7 +60,9 @@ public class Server implements Runnable {
         this.currentNetworkable = networkable;
     }
 
-    public void sendCommand(String command) {
+    public static void sendCommand(String command) {
+        System.out.println("SERVER about to send " + command);
+        if(mapWindow != null) mapWindow.handleOnClient(command);
         synchronized (writers) {
             for (PrintWriter writer : writers) {
                 String message = "COMMAND " + command;
@@ -67,6 +72,10 @@ public class Server implements Runnable {
         }
     }
 
+    public void createMapWindow(Server server, Thread serverThread) {
+        Platform.runLater(mapWindow = new MapWindow(TerrainManager.getAvailableTerrains().get(0), "SETTINGS_FILE.conf", server, serverThread));
+//        mapWindowThread = new Thread());
+    }
 
     private static class ConnectionHandler implements Runnable {
         private Socket socket;
@@ -105,6 +114,17 @@ public class Server implements Runnable {
             out.println("NAMEACCEPTED");
             System.out.println("SERVER: connection accepted");
             writers.add(out);
+            if(currentNetworkable != null) {
+                try {
+                    while (!currentNetworkable.isReady()) {
+                        System.out.println("Waiting for " + currentNetworkable.getClass() + " being ready ...");
+                        Thread.sleep(100);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                out.println(currentNetworkable.getStateForNewClient());
+            }
             broadcast();
         }
 
@@ -133,6 +153,20 @@ public class Server implements Runnable {
                 }
                 if (line.contains("KEYEVENT ")) {
                     Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
+                } else if(line.contains("GET_STATE")) {
+                    try {
+                        while(currentNetworkable == null) {
+                            System.out.println("Waiting for currentNetworkable being set ...");
+                            Thread.sleep(100);
+                        }
+                        while (!currentNetworkable.isReady()) {
+                            System.out.println("Waiting for " + currentNetworkable.getClass() + " being ready ...");
+                            Thread.sleep(100);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    out.println(currentNetworkable.getStateForNewClient());
                 } else {
                     System.out.println("SERVER: unhandled message: " + line);
                 }

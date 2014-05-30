@@ -16,7 +16,6 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -24,14 +23,13 @@ import javafx.stage.Stage;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Created by kegny on 08.05.14.
  * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
-public class MapWindow extends Application implements Networkable {
+public class MapWindow extends Application implements Networkable, Runnable {
     private ArrayList<Team> teams;
     private Scene drawing;
     private Stage primaryStage;
@@ -72,13 +70,13 @@ public class MapWindow extends Application implements Networkable {
         initialize();
     }
 
-    public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
-        this.client = client;
-        this.clientThread = clientThread;
-        client.registerMapWindow(this);
+    public MapWindow(String map, String file, Server server, Thread serverThread) {
+//        this.client = client;
+//        this.clientThread = clientThread;
+//        client.registerCurrentNetworkable(this);
         this.server = server;
         this.serverThread = serverThread;
-        if(server != null) server.registerCurrentNetworkable(this);
+        server.registerCurrentNetworkable(this);
 
         // TODO code duplication; we have to check what we actually need at the end of the week
         try {
@@ -103,6 +101,15 @@ public class MapWindow extends Application implements Networkable {
         }
 
         initialize();
+
+        try {
+            Thread.sleep(1000); // TODO temporary, till client is created earlier in the game
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Server.sendCommand("START_GAME " + getStateForNewClient());
+
+        primaryStage.setTitle("SERVER DEBUG WINDOW");
     }
 
     public MapWindow(String map, Stage stageToClose, String file) {
@@ -131,7 +138,29 @@ public class MapWindow extends Application implements Networkable {
     }
 
     public MapWindow(JSONObject input, Stage stageToClose) {
-        this.terrain = new Terrain(TerrainManager.loadSavedLevel());
+        initializeFromJson(input);
+
+        this.stageToClose = stageToClose;
+        initialize();
+    }
+
+    public MapWindow(JSONObject input, Stage stageToClose, Client client, Thread clientThread) {
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerCurrentNetworkable(this);
+
+        initializeFromJson(input);
+
+        this.stageToClose = stageToClose;
+        initialize();
+    }
+
+    private void initializeFromJson(JSONObject input) {
+        if(input.has("level")) {
+            this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("level")));
+        } else {
+            this.terrain = new Terrain(TerrainManager.loadSavedLevel());
+        }
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
@@ -142,8 +171,15 @@ public class MapWindow extends Application implements Networkable {
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
 
-        this.stageToClose = stageToClose;
-        initialize();
+        if(centerView != null && teamLabel != null) { // TODO ugly code duplication
+            centerView.getChildren().removeAll();
+            centerView.getChildren().add(terrain);
+            for (Team team : teams) {
+                centerView.getChildren().add(team);
+                terrain.addFigures(team.getFigures());
+            }
+            teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        }
     }
 
     /**
@@ -165,7 +201,7 @@ public class MapWindow extends Application implements Networkable {
             if(server != null) server.stop();
             System.out.println("MapWindow client/server (if any) stopped");
 
-            stageToClose.show();
+            if(stageToClose != null) stageToClose.show();
         });
 
         // pane containing terrain, labels at the bottom etc.
@@ -183,7 +219,7 @@ public class MapWindow extends Application implements Networkable {
 
         root.setBottom(teamLabel);
 
-        drawing = new Scene(root, 800, 600);
+        drawing = new Scene(root, 1600, 300);
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
@@ -229,7 +265,7 @@ public class MapWindow extends Application implements Networkable {
             moveObjectsThread.start();
         }
 
-        stageToClose.close();
+        if(stageToClose != null) stageToClose.close();
     }
 
     /**
@@ -244,6 +280,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("teams", teamsArray);
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
+        output.put("level", TerrainManager.toString(terrain.toArrayList()));
         return output;
     }
 
@@ -319,6 +356,9 @@ public class MapWindow extends Application implements Networkable {
         String[] cmd = command.split(" ");
 
         switch(cmd[0]) {
+            case "MAPWINDOW":
+                initializeFromJson(new JSONObject(command.split(" ", 2)[1]));
+                break;
             case "CURRENT_TEAM_END_ROUND":
                 teams.get(currentTeam).endRound();
                 break;
@@ -411,14 +451,14 @@ public class MapWindow extends Application implements Networkable {
                 teamLabel.setText(builder.toString());
                 break;
             default:
-                System.out.println("handleKeyEventOnClient: no event for key " + command);
+                System.out.println("handleOnClient: unknown command " + command);
         }
     }
 
     @Override
     public void handleKeyEventOnServer(String keyCode) {
         Point2D v = null;
-
+        // TODO IMPORTANT SERVER MUST ALSO PERFORM ACTIONS (call handle on client)
         switch(keyCode) {
             case "Space":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
@@ -484,4 +524,19 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
+    @Override
+    public String getStateForNewClient() {
+        return "START_GAME " + toJson().toString() + "\nSTATE MAPWINDOW " + toJson().toString();
+    }
+
+    @Override
+    public boolean isReady() {
+        if(primaryStage == null) return false;
+        return primaryStage.isShowing();
+    }
+
+    @Override
+    public void run() {
+
+    }
 }

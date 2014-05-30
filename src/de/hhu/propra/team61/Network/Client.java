@@ -37,9 +37,14 @@ public class Client implements Runnable {
                     out.println("MUSTERMANN"+Math.random());
                 } else if(line.startsWith("NAMEACCEPTED")) {
                     System.out.println("CLIENT: connected");
+//                    send("GET_STATE");
                 } else if(line.startsWith("EXIT")) {
                     System.out.println("CLIENT: exit");
                     break;
+                } else if(line.contains("START_GAME")) {
+                    Platform.runLater(() -> currentNetworkable.handleOnClient(line));
+                } else if(line.contains("STATE")) {
+                    Platform.runLater(() -> currentNetworkable.handleOnClient(extractPart(line, "STATE ")));
                 } else {
                     // use runLater; otherwise, an exception will be thrown:
                     // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
@@ -57,7 +62,7 @@ public class Client implements Runnable {
         send("KEYEVENT " + code.getName());
     }
 
-    private void send(String message) {
+    public void send(String message) {
         System.out.println("CLIENT send: " + message);
         out.println(message);
     }
@@ -73,7 +78,7 @@ public class Client implements Runnable {
         }
     }
 
-    public void registerMapWindow(Networkable networkable) {
+    public void registerCurrentNetworkable(Networkable networkable) {
         this.currentNetworkable = networkable;
     }
 }

@@ -20,4 +20,10 @@ public interface Networkable {
      */
     public void handleKeyEventOnServer(String keyCode);
 
+    /**
+     * @return a string representing the overall state of this class, so that a new client can load this state
+     */
+    public String getStateForNewClient();
+
+    boolean isReady();
 }

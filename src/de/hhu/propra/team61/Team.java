@@ -68,6 +68,7 @@ public class Team extends StackPane {
         }
         currentFigure = state.getInt("currentFigure");
         setAlignment(Pos.TOP_LEFT);
+        System.out.println("NNNNN " + getCurrentFigure().getPosition());
     }
 
     /**
@@ -87,6 +88,7 @@ public class Team extends StackPane {
         output.put("weapons", weaponsArray);
         output.put("color", toHex(color));
         output.put("currentFigure", currentFigure);
+        System.out.println("MMMMMM " + getCurrentFigure().getPosition());
         return output;
     }
 
