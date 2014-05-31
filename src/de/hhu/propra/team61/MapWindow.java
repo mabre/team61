@@ -16,7 +16,6 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -24,7 +23,8 @@ import javafx.stage.Stage;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
+
+import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 
 /**
  * Created by kegny on 08.05.14.
@@ -77,7 +77,7 @@ public class MapWindow extends Application implements Networkable {
         this.map = map;
         this.client = client;
         this.clientThread = clientThread;
-        client.registerMapWindow(this);
+        client.registerCurrentNetworkable(this);
         this.server = server;
         this.serverThread = serverThread;
         if(server != null) server.registerCurrentNetworkable(this);
@@ -107,6 +107,27 @@ public class MapWindow extends Application implements Networkable {
         initialize();
     }
 
+    public MapWindow(JSONObject input, Stage stageToClose, Client client, Thread clientThread) {
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerCurrentNetworkable(this);
+
+        // TODO implement fromJson (code duplication)
+        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
+
+        teams = new ArrayList<>();
+        JSONArray teamsArray = input.getJSONArray("teams");
+        for(int i=0; i<teamsArray.length(); i++) {
+            teams.add(new Team(teamsArray.getJSONObject(i)));
+        }
+
+        turnCount = input.getInt("turnCount");
+        currentTeam = input.getInt("currentTeam");
+
+        this.stageToClose = stageToClose;
+        initialize();
+    }
+
     public MapWindow(String map, Stage stageToClose, String file) {
         try {
             terrain = new Terrain(TerrainManager.load(map));
@@ -132,6 +153,7 @@ public class MapWindow extends Application implements Networkable {
         initialize();
     }
 
+    // TODO start server/client
     public MapWindow(JSONObject input, Stage stageToClose) {
         this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
 
@@ -309,10 +331,12 @@ public class MapWindow extends Application implements Networkable {
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
+        server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         server.sendCommand("CURRENT_TEAM_END_ROUND");
-        server.sendCommand("TEAM_LABEL_SET_TEXT " + "It's team " + currentTeam + "'s turn");
 
-        System.out.println("Turn " + currentTeam + ", Team " + currentTeam + ", Worm \"" + teams.get(currentTeam).getCurrentFigure().getName() + "\"");
+        String teamLabelText = "Turn: " + turnCount + " It’s Team " + currentTeam + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
+        System.out.println(teamLabelText);
     }
 
     @Override
@@ -410,15 +434,16 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(flyingProjectile);
                 flyingProjectile = null;
                 break;
+            case "SET_CURRENT_TEAM":
+                currentTeam = Integer.parseInt(cmd[1]);
+                break;
             case "SET_HP":
                 teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHp(Integer.parseInt(cmd[3]));
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
             case "TEAM_LABEL_SET_TEXT":
-                StringBuilder builder = new StringBuilder();
-                for(int i=2; i<cmd.length; i++) builder.append(cmd[i]);
-                teamLabel.setText(builder.toString());
+                teamLabel.setText(arrayToString(cmd, 1));
                 break;
             default:
                 System.out.println("handleKeyEventOnClient: no event for key " + command);
@@ -492,6 +517,11 @@ public class MapWindow extends Application implements Networkable {
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
+    }
+
+    @Override
+    public String getStateForNewClient() {
+        return "STATUS MAPWINDOW " + this.toJson().toString();
     }
 
 }

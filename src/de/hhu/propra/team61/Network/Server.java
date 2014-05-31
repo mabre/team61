@@ -131,8 +131,16 @@ public class Server implements Runnable {
                 if (line == null) {
                     return;
                 }
-                if (line.contains("KEYEVENT ")) {
-                    Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
+                String clientName = line.split(" ", 2)[0];
+                if (line.contains("GET_STATUS")) {
+                    out.println(currentNetworkable.getStateForNewClient());
+                } else if (line.contains("KEYEVENT ")) {
+                    if(clientName.equals(Client.name)) { // TODO hardcoded spectator mode
+                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
+                    } else {
+                        System.out.println("SERVER: operation not allowed for " + clientName + ": " + line);
+                        System.out.println("    only allowed for " + Client.name);
+                    }
                 } else {
                     System.out.println("SERVER: unhandled message: " + line);
                 }

@@ -9,6 +9,7 @@ import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Network.Client;
 import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -53,6 +54,11 @@ public class GameSettings extends Application {
     HBox hboxplus = new HBox(5);
     Button addTeam = new Button("+");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
+
+    Server server;
+    Thread serverThread;
+    Client client;
+    Thread clientThread;
 
     public void doSettings(Stage stageToClose) {
         BigStage settingStage = new BigStage("Game Settings");
@@ -130,6 +136,7 @@ public class GameSettings extends Application {
         settingGrid.add(team2, 0, 9);
         settingGrid.add(name2, 1, 9);
         settingGrid.add(colorPicker2, 2, 9);
+        colorPicker2.setValue(Color.web("#000000"));
 
         hboxplus.getChildren().addAll(addTeam);          //Add plus button
         settingGrid.add(hboxplus, 0, 11);
@@ -160,32 +167,26 @@ public class GameSettings extends Application {
         cont.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                Client client;
-                Thread clientThread = new Thread(client = new Client());
+                clientThread = new Thread(client = new Client(() -> {
+                    Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
+                    System.out.println("GameSettings: saved settings");
+//                    MapWindow mapwindow = new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, null, null);
+                }));
                 clientThread.start();
-
-                Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
-                System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, null, null);
             }
         });
         // TODO temporary, till lobby is ready (just to test passing the server/client objects around)
         Button contServer = new Button("Continue as Server");
         settingGrid.add(contServer, 2, 16, 2, 1);
-        contServer.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                Server server;
-                Thread serverThread = new Thread(server = new Server());
-                serverThread.start();
-                Client client;
-                Thread clientThread = new Thread(client = new Client()); // TODO race condition
-                clientThread.start();
-
+        contServer.setOnAction(e -> {
+            serverThread = new Thread(server = new Server());
+            serverThread.start();
+            clientThread = new Thread(client = new Client(() -> {
                 Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
-            }
+                Platform.runLater(() -> new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread));
+            })); // TODO race condition
+            clientThread.start();
         });
         Button back = new Button("Back");
         settingGrid.add(back, 1, 16);
