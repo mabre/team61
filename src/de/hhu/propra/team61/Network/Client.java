@@ -20,12 +20,26 @@ public class Client implements Runnable {
     BufferedReader in;
     Socket socket;
     PrintWriter out;
+    String serverAddress;
 
     Networkable currentNetworkable;
 
+    /**
+     * @param ipAddress the ip address of the server
+     */
+    public Client(String ipAddress) {
+        serverAddress = ipAddress;
+    }
+
+    /**
+     * constructor for a client connecting with localhost
+     */
+    public Client() {
+        this("127.0.0.1");
+    }
+
     public void run() {
         try {
-            String serverAddress = "127.0.0.1"; // TODO
             socket = new Socket(serverAddress, 9042);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);

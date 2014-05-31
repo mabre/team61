@@ -3,6 +3,8 @@ package de.hhu.propra.team61;
 import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.CustomGrid;
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -39,25 +41,33 @@ public class NetLobby extends Application {
     TextField numberOfTeams = new TextField("2");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
 
+    Server server;
+    Client client;
+
     /**
      * constructor for the host
      * @param hostName the name of the first team (ie the first team on the host system)
      * @param stageToClose stage to close when opening the window
      */
     public NetLobby(String hostName, BigStage stageToClose) {
+        Thread serverThread = new Thread(server = new Server());
+        serverThread.start();
+
         this.hostName.setText(hostName);
         buildGUI(stageToClose);
     }
 
     /**
      * constructor for players wanting to join a game
-     * @param ipAdress ip address of the server
-     * @param spectator true when player wants to be a spectator
+     * @param ipAddress ip address of the server
+     * @param spectator true when player wants to be a spectator // TODO hardcoded to true atm
      * @param name name of the player/team
      * @param stageToClose stage to close when opening the window
      */
-    public NetLobby(String ipAdress, Boolean spectator, String name, BigStage stageToClose) {
-        //TODO use ipAdress
+    public NetLobby(String ipAddress, Boolean spectator, String name, BigStage stageToClose) {
+        Thread clientThread = new Thread(client = new Client(ipAddress));
+        clientThread.start();
+
         buildGUI(stageToClose);
     }
 
