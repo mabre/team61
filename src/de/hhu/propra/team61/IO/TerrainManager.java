@@ -64,6 +64,23 @@ public class TerrainManager {
     }
 
     /**
+     * @param levelstring string representation of a level
+     * @return 2-D ArrayList representing the given level
+     */
+    public static ArrayList<ArrayList<Character>> loadFromString(String levelstring) {
+        ArrayList<ArrayList<Character>> level = new ArrayList<>();
+        ArrayList<String> rows = new ArrayList<>(Arrays.asList(levelstring.split("0xA")));
+        for(String row: rows) {
+            ArrayList<Character> fields = new ArrayList<>();
+            for(int i=0; i<row.length(); i++) {
+                fields.add(row.charAt(i));
+            }
+            level.add(fields);
+        }
+        return level;
+    }
+
+    /**
      * @param level is saved as ordinary level file to SAVE_LEVEL_FILE
      */
     public static void save(ArrayList<ArrayList<Character>> level) {
@@ -88,6 +105,21 @@ public class TerrainManager {
     }
 
     /**
+     * @param level 2-D list representing a level
+     * @return a string without newline representing the level, literal "0xA" separates lines
+     */
+    public static String toString(ArrayList<ArrayList<Character>> level) {
+        StringBuilder levelString = new StringBuilder();
+
+        for(ArrayList<Character> row : level) {
+            row.forEach(levelString::append);
+            levelString.append("0xA");
+        }
+
+        return levelString.toString().substring(0, levelString.length()-3); // remove final "0xA"
+    }
+
+    /**
      * @return an ArrayList containing the board saved in SAVE_LEVEL_FILE, or the first level when the file does not exist
      */
     public static ArrayList<ArrayList<Character>> loadSavedLevel() {
@@ -101,6 +133,16 @@ public class TerrainManager {
                 e1.printStackTrace();
                 return new ArrayList<>();
             }
+        }
+    }
+
+    // TODO move to unit tests
+    public static void main(String[] args) {
+        try {
+            ArrayList<ArrayList<Character>> t = TerrainManager.load(0);
+            System.out.println(toString(t));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 

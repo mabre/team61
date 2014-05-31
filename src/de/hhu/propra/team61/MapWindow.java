@@ -133,7 +133,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     public MapWindow(JSONObject input, Stage stageToClose) {
-        this.terrain = new Terrain(TerrainManager.loadSavedLevel());
+        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
@@ -157,7 +157,6 @@ public class MapWindow extends Application implements Networkable {
             if(moveObjectsThread != null) moveObjectsThread.interrupt();
 
             GameState.save(this.toJson());
-            TerrainManager.save(terrain.toArrayList());
             System.out.println("MapWindow: saved game state");
 
             clientThread.interrupt();
@@ -250,6 +249,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("teams", teamsArray);
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
+        output.put("terrain", TerrainManager.toString(terrain.toArrayList()));
         return output;
     }
 
