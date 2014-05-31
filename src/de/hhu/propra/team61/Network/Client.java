@@ -21,21 +21,26 @@ public class Client implements Runnable {
     Socket socket;
     PrintWriter out;
     String serverAddress;
+    static String name; //! must not contain spaces!
+
+    Runnable readyListener;
 
     Networkable currentNetworkable;
 
     /**
      * @param ipAddress the ip address of the server
      */
-    public Client(String ipAddress) {
+    public Client(String ipAddress, Runnable listener) {
         serverAddress = ipAddress;
+        readyListener = listener;
+        name = "MUSTERMANNclient"+(int)(Math.random()*100);
     }
 
     /**
      * constructor for a client connecting with localhost
      */
-    public Client() {
-        this("127.0.0.1");
+    public Client(Runnable listener) {
+        this("127.0.0.1", listener);
     }
 
     public void run() {
@@ -48,16 +53,17 @@ public class Client implements Runnable {
                 String line = in.readLine();
                 System.out.println("CLIENT RECEIVED: " + line);
                 if(line.startsWith("SUBMITNAME")) {
-                    out.println("MUSTERMANN"+Math.random());
+                    out.println(name);
                 } else if(line.startsWith("NAMEACCEPTED")) {
                     System.out.println("CLIENT: connected");
+                    readyListener.run();
                 } else if(line.startsWith("EXIT")) {
                     System.out.println("CLIENT: exit");
                     break;
                 } else {
                     // use runLater; otherwise, an exception will be thrown:
                     // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
-                    Platform.runLater(() -> currentNetworkable.handleOnClient(extractPart(line, "KEYEVENT ")));
+                    Platform.runLater(() -> currentNetworkable.handleOnClient(extractPart(line, "COMMAND ")));
                 }
             }
         } catch (SocketException e) {
@@ -71,9 +77,9 @@ public class Client implements Runnable {
         send("KEYEVENT " + code.getName());
     }
 
-    private void send(String message) {
-        System.out.println("CLIENT send: " + message);
-        out.println(message);
+    public void send(String message) {
+        System.out.println("CLIENT send: " + name + " " + message);
+        out.println(name + " " + message);
     }
 
     public void stop() {
@@ -87,7 +93,7 @@ public class Client implements Runnable {
         }
     }
 
-    public void registerMapWindow(Networkable networkable) {
+    public void registerCurrentNetworkable(Networkable networkable) {
         this.currentNetworkable = networkable;
     }
 }

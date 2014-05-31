@@ -7,8 +7,10 @@ import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
 import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Networkable;
 import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -21,13 +23,13 @@ import javafx.scene.text.*;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
-
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
+import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by Jessypet on 27.05.14.
  */
-public class NetLobby extends Application {
+public class NetLobby extends Application implements Networkable {
 
     TextField hostName = new TextField();
     TextField name2 = new TextField();
@@ -47,11 +49,12 @@ public class NetLobby extends Application {
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     CustomGrid overviewGrid;
     Boolean team3Shown = false;
-
-    BigStage lobby;
+    BigStage lobby = new BigStage("Lobby");
 
     Server server;
+    Thread serverThread;
     Client client;
+    Thread clientThread;
 
     /**
      * constructor for the host
@@ -59,7 +62,7 @@ public class NetLobby extends Application {
      * @param stageToClose stage to close when opening the window
      */
     public NetLobby(String hostName, BigStage stageToClose) {
-        Thread serverThread = new Thread(server = new Server());
+        serverThread = new Thread(server = new Server());
         serverThread.start();
 
         this.hostName.setText(hostName);
@@ -74,15 +77,16 @@ public class NetLobby extends Application {
      * @param stageToClose stage to close when opening the window
      */
     public NetLobby(String ipAddress, Boolean spectator, String name, BigStage stageToClose) {
-        Thread clientThread = new Thread(client = new Client(ipAddress));
+        clientThread = new Thread(client = new Client(ipAddress, () -> {
+            client.send("GET_STATUS");
+            Platform.runLater(() -> buildGUI(stageToClose));
+        }));
         clientThread.start();
-
-        buildGUI(stageToClose);
+        client.registerCurrentNetworkable(this);
     }
 
 
     public void buildGUI(BigStage stageToClose) {
-        lobby = new BigStage("Lobby");
         lobby.setOnCloseRequest(event -> {
             lobby.close();
             stageToClose.show();
@@ -320,4 +324,24 @@ public class NetLobby extends Application {
 
     @Override
     public void start(Stage filler) {}
+
+    @Override
+    public void handleOnClient(String command) {
+        if(command.startsWith("STATUS MAPWINDOW")) {
+            JSONObject state = new JSONObject(extractPart(command, "STATUS MAPWINDOW "));
+            new MapWindow(state, lobby, client, clientThread);
+        } else {
+            System.out.println("NetLobby: unknown command " + command);
+        }
+    }
+
+    @Override
+    public void handleKeyEventOnServer(String keyCode) {
+
+    }
+
+    @Override
+    public String getStateForNewClient() {
+        return null;
+    }
 }

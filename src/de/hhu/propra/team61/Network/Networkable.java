@@ -1,5 +1,7 @@
 package de.hhu.propra.team61.Network;
 
+import de.hhu.propra.team61.IO.JSON.JSONObject;
+
 /**
  * Implement this interface to allow Server and Client to trigger actions in the class.
  * The implementing class is usually responsible for handling user input.
@@ -20,4 +22,5 @@ public interface Networkable {
      */
     public void handleKeyEventOnServer(String keyCode);
 
+    String getStateForNewClient();
 }
