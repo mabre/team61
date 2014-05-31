@@ -267,7 +267,7 @@ public class GameSettings extends Application {
      * @return a JSONObject representing basic settings for a team
      */
     public JSONObject getJsonForTeam(String name, ColorPicker color) {
-        JSONObject team = new JSONObject(); //create JSONArray with 2 objects name and color, one JSONArray for each team
+        JSONObject team = new JSONObject();
         team.put("name", name);
         team.put("color", toHex(color.getValue()));
         return team;

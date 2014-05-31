@@ -20,7 +20,7 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
  * Shows a modal dialog for hosting/joining a team and entering team name and ip address
  * Created by Jessypet on 27.05.14.
  */
-public class NetSettings extends Application {
+public class NetPopUp extends Application {
 
     TextField ipField = new TextField();
     BigStage stageToClose;

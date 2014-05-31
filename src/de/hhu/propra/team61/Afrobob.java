@@ -67,8 +67,8 @@ public class Afrobob extends Application {
         mstartn.setOnAction(new EventHandler<ActionEvent>() {  //Click on button starts game.. well not yet
             @Override
             public void handle(ActionEvent e) {
-                NetSettings netSettings = new NetSettings();
-                netSettings.openPopUp(mainwindow);
+                NetPopUp netPopUp = new NetPopUp();
+                netPopUp.openPopUp(mainwindow);
             }
         });
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options
