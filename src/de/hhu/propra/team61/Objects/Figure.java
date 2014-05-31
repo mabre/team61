@@ -177,6 +177,15 @@ public class Figure extends StackPane {
         System.out.println(name + " got damage " + damage + ", health at " + health);
     }
 
+    public void setHp(int hp) {
+        this.health = hp;
+        sufferDamage(0); // redraws the label and validated new hp
+    }
+
+    public int getHp() {
+        return health;
+    }
+
     public Rectangle2D getHitRegion() {
         return hitRegion;
     }

@@ -215,9 +215,12 @@ public class MapWindow extends Application implements Networkable {
                                 endTurn();
                             } catch (CollisionWithFigureException e) {
                                 System.out.println("CollisionWithFigureException, let's harm somebody!");
-                                server.sendCommand("SUFFER_DAMAGE " + getFigureId(e.getCollisionPartner()) + " " + flyingProjectile.getDamage());
-                                server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
-                                endTurn();
+                                Platform.runLater(() -> {
+                                    e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
+                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHp());
+                                    server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
+                                    endTurn();
+                                });
                             }
                         }
                         now = System.currentTimeMillis();
@@ -407,11 +410,11 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(flyingProjectile);
                 flyingProjectile = null;
                 break;
+            case "SET_HP":
+                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHp(Integer.parseInt(cmd[3]));
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
-            case "SUFFER_DAMAGE":
-                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).sufferDamage(Integer.parseInt(cmd[3]));
             case "TEAM_LABEL_SET_TEXT":
                 StringBuilder builder = new StringBuilder();
                 for(int i=2; i<cmd.length; i++) builder.append(cmd[i]);
