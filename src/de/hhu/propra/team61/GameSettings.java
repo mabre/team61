@@ -138,7 +138,7 @@ public class GameSettings extends Application {
         settingGrid.add(colorPicker2, 2, 9);
         colorPicker2.setValue(Color.web("#000000"));
 
-        hboxplus.getChildren().addAll(addTeam);          //Add plus button
+        hboxplus.getChildren().add(addTeam);          //Add plus button
         settingGrid.add(hboxplus, 0, 11);
         addTeam.setOnAction(new EventHandler<ActionEvent>() {
             @Override

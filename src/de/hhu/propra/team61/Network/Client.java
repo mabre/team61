@@ -77,6 +77,10 @@ public class Client implements Runnable {
         send("KEYEVENT " + code.getName());
     }
 
+    public void sendChatMessage(String msg) {
+        send("CHAT " + msg);
+    }
+
     public void send(String message) {
         System.out.println("CLIENT send: " + name + " " + message);
         out.println(name + " " + message);

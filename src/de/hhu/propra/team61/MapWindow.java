@@ -276,9 +276,8 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     *
-     * @param figure
-     * @return
+     * @param figure a figure object reference
+     * @return team index + " " + figure index of the given figure
      */
     private String getFigureId(Figure figure) {
         String id = "";

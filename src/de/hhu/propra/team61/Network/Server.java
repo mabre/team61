@@ -57,7 +57,7 @@ public class Server implements Runnable {
         this.currentNetworkable = networkable;
     }
 
-    public void sendCommand(String command) {
+    public static void sendCommand(String command) {
         synchronized (writers) {
             for (PrintWriter writer : writers) {
                 String message = "COMMAND " + command;
@@ -132,10 +132,12 @@ public class Server implements Runnable {
                     return;
                 }
                 String clientName = line.split(" ", 2)[0];
-                if (line.contains("GET_STATUS")) {
+                if (line.contains("CHAT ")) {
+                    sendCommand(line);
+                } if (line.contains("GET_STATUS")) {
                     out.println(currentNetworkable.getStateForNewClient());
                 } else if (line.contains("KEYEVENT ")) {
-                    if(clientName.equals(Client.name)) { // TODO hardcoded spectator mode
+                    if (clientName.equals(Client.name)) { // TODO hardcoded spectator mode
                         Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
                     } else {
                         System.out.println("SERVER: operation not allowed for " + clientName + ": " + line);

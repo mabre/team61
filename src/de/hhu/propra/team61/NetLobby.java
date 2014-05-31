@@ -1,6 +1,7 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.GUI.BigStage;
+import de.hhu.propra.team61.GUI.Chat;
 import de.hhu.propra.team61.GUI.CustomGrid;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
@@ -24,6 +25,7 @@ import javafx.scene.text.*;
 import javafx.stage.Stage;
 import java.util.ArrayList;
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
+import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
@@ -51,6 +53,7 @@ public class NetLobby extends Application implements Networkable {
     CustomGrid overviewGrid;
     Boolean team3Shown = false;
     BigStage lobby = new BigStage("Lobby");
+    Chat chatBox;
 
     Server server;
     Thread serverThread;
@@ -65,9 +68,16 @@ public class NetLobby extends Application implements Networkable {
     public NetLobby(String hostName, BigStage stageToClose) {
         serverThread = new Thread(server = new Server());
         serverThread.start();
+        server.registerCurrentNetworkable(this);
 
         this.hostName.setText(hostName);
-        buildGUI(stageToClose);
+
+        clientThread = new Thread(client = new Client(() -> {
+            client.send("GET_STATUS"); // TODO race condition
+            Platform.runLater(() -> buildGUI(stageToClose));
+        }));
+        clientThread.start();
+        client.registerCurrentNetworkable(this);
     }
 
     /**
@@ -77,7 +87,7 @@ public class NetLobby extends Application implements Networkable {
      * @param name name of the player/team
      * @param stageToClose stage to close when opening the window
      */
-    public NetLobby(String ipAddress, Boolean spectator, String name, BigStage stageToClose) {
+    public NetLobby(String ipAddress, boolean spectator, String name, BigStage stageToClose) {
         clientThread = new Thread(client = new Client(ipAddress, () -> {
             client.send("GET_STATUS");
             Platform.runLater(() -> buildGUI(stageToClose));
@@ -166,7 +176,7 @@ public class NetLobby extends Application implements Networkable {
         CustomGrid listGrid = new CustomGrid();
         VBox spectators = addSpectatorList();
         listGrid.add(spectators, 2, 0);
-        VBox chatBox = doChat();
+        chatBox = new Chat(client);
         rightBox.getChildren().addAll(listGrid, chatBox);
         root.setRight(rightBox);
 
@@ -222,15 +232,6 @@ public class NetLobby extends Application implements Networkable {
         return spectatorBox;
     }
 
-    public VBox doChat() {
-        VBox chatBox = new VBox();
-        chatBox.setId("chatBox");
-        Text chatHere = new Text("Chat will be here.");
-        chatBox.getChildren().add(chatHere);
-        //TODO chat
-        return chatBox;
-    }
-
     public ArrayList<String> getLevels() {
         ArrayList<String> levels = TerrainManager.getAvailableTerrains();
         return levels;
@@ -266,6 +267,37 @@ public class NetLobby extends Application implements Networkable {
         team.put("name", name);
         team.put("color", toHex(color.getValue()));
         return team;
+    }
+
+    public void fromJson() {
+        JSONObject savedSettings = Settings.getSavedSettings("NET_SETTINGS_FILE.conf");
+        if(savedSettings.has("numberOfTeams")) {
+            numberOfTeams.setText(savedSettings.getString("numberOfTeams"));
+            if (Integer.parseInt(numberOfTeams.getText()) > 2) {  addTeams(3); }
+            if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeams(4); }
+        }
+        if(savedSettings.has("team-size")) {
+            sizeField.setText(savedSettings.getString("team-size"));
+        }
+        if(savedSettings.has("map")) {
+            mapChooser.setValue(savedSettings.getString("map"));
+        }
+        if(savedSettings.has("weapon1")) {
+            weapon1.setText(savedSettings.getString("weapon1"));
+        }
+        if(savedSettings.has("weapon2")) {
+            weapon2.setText(savedSettings.getString("weapon2"));
+        }
+        if(savedSettings.has("weapon3")) {
+            weapon3.setText(savedSettings.getString("weapon3"));
+        }
+        if(savedSettings.has("teams")) {
+            JSONArray teamsArray = savedSettings.getJSONArray("teams");
+            for(int i=0; i<teamsArray.length(); i++) {
+                names.get(i).setText(teamsArray.getJSONObject(i).getString("name"));
+                colorPickers.get(i).setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
+            }
+        }
     }
 
     public void addTeams(int number) {
@@ -344,6 +376,10 @@ public class NetLobby extends Application implements Networkable {
         if(command.startsWith("STATUS MAPWINDOW")) {
             JSONObject state = new JSONObject(extractPart(command, "STATUS MAPWINDOW "));
             new MapWindow(state, lobby, client, clientThread);
+        } else if(command.contains("CHAT ")) {
+            String name = command.split(" ")[0];
+            String msg = command.split("CHAT ")[1];
+            chatBox.appendMessage(name, msg);
         } else {
             System.out.println("NetLobby: unknown command " + command);
         }
