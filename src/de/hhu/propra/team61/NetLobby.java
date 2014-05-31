@@ -19,9 +19,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
-
 import java.util.ArrayList;
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
@@ -39,7 +39,8 @@ public class NetLobby extends Application implements Networkable {
     ColorPicker colorPicker2 = new ColorPicker();
     ColorPicker colorPicker3 = new ColorPicker();
     ColorPicker colorPicker4 = new ColorPicker();
-    ArrayList<String> players;
+    ArrayList<TextField> names = new ArrayList<TextField>();
+    ArrayList<ColorPicker> colorPickers = new ArrayList<ColorPicker>();
     ArrayList<String> spectators = new ArrayList<>();
     TextField weapon1 = new TextField("50");
     TextField weapon2 = new TextField("50");
@@ -87,6 +88,7 @@ public class NetLobby extends Application implements Networkable {
 
 
     public void buildGUI(BigStage stageToClose) {
+        initializeArrayLists();
         lobby.setOnCloseRequest(event -> {
             lobby.close();
             stageToClose.show();
@@ -118,7 +120,7 @@ public class NetLobby extends Application implements Networkable {
         rmTeam2.getStyleClass().add("removeButton");
         overviewGrid.add(rmTeam2, 3, 11);
         rmTeam2.setOnAction(e -> {
-            removePlayer(name2.getText());
+            removePlayer(name2.getText(), 1);
         });
 
 
@@ -201,8 +203,6 @@ public class NetLobby extends Application implements Networkable {
                 MapWindow mapwindow = new MapWindow(mapChooser.getValue(), lobby, "NET_SETTINGS_FILE.conf", null, null, null, null);
             }
         });
-
-
         startBox.setAlignment(Pos.CENTER_RIGHT);
         startBox.getChildren().add(start);
         topBox.setAlignment(Pos.CENTER_LEFT);
@@ -229,32 +229,6 @@ public class NetLobby extends Application implements Networkable {
         chatBox.getChildren().add(chatHere);
         //TODO chat
         return chatBox;
-    }
-
-    public void removePlayer(String name) {
-        Stage popUp = new Stage();
-        Text wantToRemove = new Text("Do you really want to remove player " + name + "?");
-        Button yes = new Button("Yes");
-        yes.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                //TODO remove player
-            }
-        });
-        Button no = new Button("No");
-        no.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                popUp.close();
-            }
-        });
-        CustomGrid removeGrid = new CustomGrid();
-        removeGrid.add(wantToRemove, 0, 0, 2, 1);
-        removeGrid.add(yes, 0, 1);
-        removeGrid.add(no, 1, 1);
-        Scene removeScene = new Scene(removeGrid);
-        popUp.setScene(removeScene);
-        popUp.show();
     }
 
     public ArrayList<String> getLevels() {
@@ -304,7 +278,7 @@ public class NetLobby extends Application implements Networkable {
             rmTeam3.getStyleClass().add("removeButton");
             overviewGrid.add(rmTeam3, 3, 12);
             rmTeam3.setOnAction(e -> {
-                removePlayer(name3.getText());
+                removePlayer(name3.getText(), 2);
             });
             team3Shown = true;
         }
@@ -317,9 +291,49 @@ public class NetLobby extends Application implements Networkable {
             rmTeam4.getStyleClass().add("removeButton");
             overviewGrid.add(rmTeam4, 3, 13);
             rmTeam4.setOnAction(e -> {
-                removePlayer(name4.getText());
+                removePlayer(name4.getText(), 3);
             });
         }
+    }
+
+    public void removePlayer(String name, int i) {
+        Stage popUp = new Stage();
+        Text wantToRemove = new Text("Do you really want to remove player " + name + "?");
+        Button yes = new Button("Yes");
+        yes.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                popUp.close();
+                names.get(i).setText("");
+                colorPickers.get(i).setValue(Color.WHITE);
+                //TODO disconnect player
+            }
+        });
+        Button no = new Button("No");
+        no.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                popUp.close();
+            }
+        });
+        CustomGrid removeGrid = new CustomGrid();
+        removeGrid.add(wantToRemove, 0, 0, 2, 1);
+        removeGrid.add(yes, 0, 1);
+        removeGrid.add(no, 1, 1);
+        Scene removeScene = new Scene(removeGrid);
+        popUp.setScene(removeScene);
+        popUp.show();
+    }
+
+    public void initializeArrayLists() {
+        names.add(hostName);
+        names.add(name2);
+        names.add(name3);
+        names.add(name4);
+        colorPickers.add(hostColorPicker);
+        colorPickers.add(colorPicker2);
+        colorPickers.add(colorPicker3);
+        colorPickers.add(colorPicker4);
     }
 
     @Override
