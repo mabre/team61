@@ -39,12 +39,24 @@ public class NetLobby extends Application {
     TextField numberOfTeams = new TextField("2");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
 
-    public NetLobby(String hostName, BigStage stageToClose) {        //Constructor for host
+    /**
+     * constructor for the host
+     * @param hostName the name of the first team (ie the first team on the host system)
+     * @param stageToClose stage to close when opening the window
+     */
+    public NetLobby(String hostName, BigStage stageToClose) {
         this.hostName.setText(hostName);
         buildGUI(stageToClose);
     }
 
-    public NetLobby(String ipAdress, Boolean spectator, String name, BigStage stageToClose) {        //Constructor for player
+    /**
+     * constructor for players wanting to join a game
+     * @param ipAdress ip address of the server
+     * @param spectator true when player wants to be a spectator
+     * @param name name of the player/team
+     * @param stageToClose stage to close when opening the window
+     */
+    public NetLobby(String ipAdress, Boolean spectator, String name, BigStage stageToClose) {
         //TODO use ipAdress
         buildGUI(stageToClose);
     }
@@ -81,11 +93,8 @@ public class NetLobby extends Application {
         Button rmTeam2 = new Button("X");
         rmTeam2.getStyleClass().add("removeButton");
         overviewGrid.add(rmTeam2, 3, 4);
-        rmTeam2.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                removePlayer(name2.getText());
-            }
+        rmTeam2.setOnAction(e -> {
+            removePlayer(name2.getText());
         });
         //TODO show more teams
 
@@ -132,12 +141,9 @@ public class NetLobby extends Application {
         HBox bottomBox = new HBox();
         Button back = new Button("Back");
         bottomBox.getChildren().add(back);
-        back.setOnAction(new EventHandler<ActionEvent>() {  //Click on Button 'mexit' closes window
-            @Override
-            public void handle(ActionEvent e) {
-                stageToClose.show();
-                lobby.close();
-            }
+        back.setOnAction(e -> {
+            stageToClose.show();
+            lobby.close();
         });
         bottomBox.setId("bottomBox");
         root.setBottom(bottomBox);
