@@ -66,18 +66,18 @@ public class NetLobby extends Application implements Networkable {
      * @param stageToClose stage to close when opening the window
      */
     public NetLobby(String hostName, BigStage stageToClose) {
-        serverThread = new Thread(server = new Server());
+        serverThread = new Thread(server = new Server(() -> {
+            this.hostName.setText(hostName);
+
+            clientThread = new Thread(client = new Client(() -> {
+                client.send("GET_STATUS"); // TODO race condition
+                Platform.runLater(() -> buildGUI(stageToClose));
+            }));
+            clientThread.start();
+            client.registerCurrentNetworkable(this);
+        }));
         serverThread.start();
         server.registerCurrentNetworkable(this);
-
-        this.hostName.setText(hostName);
-
-        clientThread = new Thread(client = new Client(() -> {
-            client.send("GET_STATUS"); // TODO race condition
-            Platform.runLater(() -> buildGUI(stageToClose));
-        }));
-        clientThread.start();
-        client.registerCurrentNetworkable(this);
     }
 
     /**

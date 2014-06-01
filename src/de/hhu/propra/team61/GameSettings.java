@@ -164,38 +164,24 @@ public class GameSettings extends Application {
 
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 16);
-        cont.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
+        cont.setOnAction(e -> {
+            // our local game is also client/server based, with server running on localhost
+            serverThread = new Thread(server = new Server(() -> {
                 clientThread = new Thread(client = new Client(() -> {
-                    Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
+                    Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
                     System.out.println("GameSettings: saved settings");
-//                    MapWindow mapwindow = new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, null, null);
+                    Platform.runLater(() -> new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread));
                 }));
                 clientThread.start();
-            }
-        });
-        // TODO temporary, till lobby is ready (just to test passing the server/client objects around)
-        Button contServer = new Button("Continue as Server");
-        settingGrid.add(contServer, 2, 16, 2, 1);
-        contServer.setOnAction(e -> {
-            serverThread = new Thread(server = new Server());
+            }));
             serverThread.start();
-            clientThread = new Thread(client = new Client(() -> {
-                Settings.save(toJson(), "SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
-                System.out.println("GameSettings: saved settings");
-                Platform.runLater(() -> new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread));
-            })); // TODO race condition
-            clientThread.start();
         });
+
         Button back = new Button("Back");
         settingGrid.add(back, 1, 16);
-        back.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                stageToClose.show();                            //close settings and show mainwindow again
-                settingStage.close();
-            }
+        back.setOnAction(e -> {
+            stageToClose.show(); // close settings and show mainwindow again
+            settingStage.close();
         });
 
         Scene sscene = new Scene(settingGrid, 1000, 600);

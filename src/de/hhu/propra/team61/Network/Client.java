@@ -29,6 +29,7 @@ public class Client implements Runnable {
 
     /**
      * @param ipAddress the ip address of the server
+     * @param listener function which is called when the client successfully established a connection with the server
      */
     public Client(String ipAddress, Runnable listener) {
         serverAddress = ipAddress;

@@ -51,27 +51,7 @@ public class MapWindow extends Application implements Networkable {
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
-    private String map;
-
-    @Deprecated
-    public MapWindow(String map) {
-        try {
-            terrain = new Terrain(TerrainManager.load(map));
-        } catch (FileNotFoundException e) {
-            // TODO do something sensible here
-            e.printStackTrace();
-        }
-
-        teams = new ArrayList<>();
-        for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
-            ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
-            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
-            teams.add(new Team(terrain.getRandomSpawnPoints(2), weapons, Color.WHITE));
-        }
-
-        initialize();
-    }
+    private String map; // TODO do we need this?
 
     public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         this.map = map;
@@ -114,7 +94,7 @@ public class MapWindow extends Application implements Networkable {
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
 
-        // TODO implement fromJson (code duplication)
+        // TODO implement fromJson (code duplication) -> bring the two json formats into line (weapons are team properties)
         this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
 
         teams = new ArrayList<>();
@@ -130,35 +110,20 @@ public class MapWindow extends Application implements Networkable {
         initialize();
     }
 
-    public MapWindow(String map, Stage stageToClose, String file) {
-        try {
-            terrain = new Terrain(TerrainManager.load(map));
-        } catch (FileNotFoundException e) {
-            // TODO do something sensible here
-            e.printStackTrace();
-        }
+    public MapWindow(JSONObject input, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.map = map;
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerCurrentNetworkable(this);
+        this.server = server;
+        this.serverThread = serverThread;
+        if(server != null) server.registerCurrentNetworkable(this);
+
+        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
 
         this.stageToClose = stageToClose;
+
         JSONObject settings = Settings.getSavedSettings(file);
-        this.teamquantity = settings.getInt("numberOfTeams");
-        this.teamsize = Integer.parseInt(settings.getString("team-size"));
-        teams = new ArrayList<>();
-        JSONArray teamsArray = settings.getJSONArray("teams");
-        for(int i=0; i<teamsArray.length(); i++) {
-            ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
-            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
-            weapons.add(new Gun("file:resources/weapons/temp3.png", 30, settings.getInt("weapon3")));
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
-        }
-
-        initialize();
-    }
-
-    // TODO start server/client
-    public MapWindow(JSONObject input, Stage stageToClose) {
-        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
-
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
@@ -168,8 +133,9 @@ public class MapWindow extends Application implements Networkable {
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
 
-        this.stageToClose = stageToClose;
         initialize();
+
+        if(server != null) server.sendCommand(getStateForNewClient());
     }
 
     /**
@@ -178,17 +144,7 @@ public class MapWindow extends Application implements Networkable {
     private void initialize() {
         primaryStage = new Stage();
         primaryStage.setOnCloseRequest(event -> {
-            if(moveObjectsThread != null) moveObjectsThread.interrupt();
-
-            GameState.save(this.toJson());
-            System.out.println("MapWindow: saved game state");
-
-            clientThread.interrupt();
-            if(serverThread != null) serverThread.interrupt();
-            System.out.println("MapWindow threads interrupted");
-            client.stop();
-            if(server != null) server.stop();
-            System.out.println("MapWindow client/server (if any) stopped");
+            shutdown();
 
             stageToClose.show();
             primaryStage.close();
@@ -340,6 +296,23 @@ public class MapWindow extends Application implements Networkable {
         System.out.println(teamLabelText);
     }
 
+    /**
+     * stops all map window threads and saves game state
+     */
+    private void shutdown() {
+        if(moveObjectsThread != null) moveObjectsThread.interrupt();
+
+        GameState.save(this.toJson());
+        System.out.println("MapWindow: saved game state");
+
+        clientThread.interrupt();
+        if(serverThread != null) serverThread.interrupt();
+        System.out.println("MapWindow threads interrupted");
+        client.stop();
+        if(server != null) server.stop();
+        System.out.println("MapWindow client/server (if any) stopped");
+    }
+
     @Override
     public void start(Stage ostage) {
     }
@@ -425,6 +398,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "GAME_OVER":
                 primaryStage.close();
+                if(moveObjectsThread != null) moveObjectsThread.interrupt();
                 GameOverWindow gameOverWindow = new GameOverWindow();
                 gameOverWindow.showWinner(Integer.parseInt(cmd[1]), stageToClose, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;

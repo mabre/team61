@@ -23,12 +23,22 @@ public class Server implements Runnable {
     private static HashSet<String> names = new HashSet<>();
     private static HashSet<PrintWriter> writers = new HashSet<>();
 
+    Runnable readyListener;
+
     ServerSocket listener;
     private static Networkable currentNetworkable;
+
+    /**
+     * @param listener function which is called when server is set up, thus ready to accept connections
+     */
+    public Server(Runnable listener) {
+        this.readyListener = listener;
+    }
 
     public void run() {
         try {
             listener = new ServerSocket(PORT);
+            readyListener.run();
             try {
                 while (true) {
                     new Thread(new ConnectionHandler(listener.accept())).start();

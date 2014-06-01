@@ -20,12 +20,24 @@ import javafx.stage.Stage;
 
 public class GameOverWindow extends Application {
 
+    Server server;
+    Client client;
+    Thread clientThread, serverThread;
+
     public static void main(String[] args) {
         launch(args);
     }
 
     public void showWinner(int currentTeam, Stage stageToGoBack, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.server = server;
+        this.serverThread = serverThread;
+        this.client = client;
+        this.clientThread = clientThread;
+
         BigStage overStage = new BigStage("Game over");
+        overStage.setOnCloseRequest((e) -> {
+            shutdown();
+        });
         CustomGrid overGrid = new CustomGrid();
         overGrid.setAlignment(Pos.CENTER);
         Text winner = new Text("The winner is team " + (currentTeam+1) + ".");
@@ -48,6 +60,7 @@ public class GameOverWindow extends Application {
         end.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
+                shutdown();
                 stageToGoBack.show();
                 overStage.close();
             }
@@ -60,4 +73,14 @@ public class GameOverWindow extends Application {
 
     @Override
     public void start(Stage filler) { }
+
+
+    private void shutdown() {
+        clientThread.interrupt();
+        if(serverThread != null) serverThread.interrupt();
+        System.out.println("GameOverWindow: threads interrupted");
+        client.stop();
+        if(server != null) server.stop();
+        System.out.println("GameOverWindow: client/server (if any) stopped");
+    }
 }

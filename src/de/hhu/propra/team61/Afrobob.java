@@ -3,7 +3,11 @@ package de.hhu.propra.team61;
 import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.CustomGrid;
 import de.hhu.propra.team61.IO.GameState;;
+import de.hhu.propra.team61.IO.Settings;
+import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.HPos;
@@ -25,6 +29,11 @@ import javafx.stage.Stage;
  */
 
 public class Afrobob extends Application {
+
+    Server server;
+    Thread serverThread;
+    Client client;
+    Thread clientThread;
 
     public static void main(String[] args) {
         launch(args);
@@ -61,7 +70,14 @@ public class Afrobob extends Application {
         mstartsaved.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                MapWindow mapwindow = new MapWindow(GameState.getSavedGameState(), mainwindow);
+                // our local game is also client/server based, with server running on localhost
+                serverThread = new Thread(server = new Server(() -> {
+                    clientThread = new Thread(client = new Client(() -> {
+                        Platform.runLater(() -> new MapWindow(GameState.getSavedGameState(), mainwindow, "SETTINGS_FILE.conf", client, clientThread, server, serverThread));
+                    }));
+                    clientThread.start();
+                }));
+                serverThread.start();
             }
         });
         mstartn.setOnAction(new EventHandler<ActionEvent>() {  //Click on button starts game.. well not yet
