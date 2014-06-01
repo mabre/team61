@@ -82,7 +82,7 @@ public class Client implements Runnable {
                 }
             }
         } catch (SocketException e) {
-            System.out.println("CLIENT readLine() interrupted by SocketException");
+            System.out.println("CLIENT readLine() interrupted by SocketException: " + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }

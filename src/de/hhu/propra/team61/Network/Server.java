@@ -20,7 +20,7 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  * Created by markus on 15.05.14.
  */
 public class Server implements Runnable {
-    static final int PORT = 9042;
+    static final int PORT = 61421;
 
     private static ArrayList<ClientConnection> clients = new ArrayList<>();
 
@@ -271,15 +271,15 @@ public class Server implements Runnable {
                             String names[] = msg.split(" ", 3);
                             if(names.length == 3) {
                                 if(clientId.equals(Client.id) || clientId.equals(getIdFromName(names[1]))) {
+                                    sendCommand("SERVER CHAT command executed. cmd: " + names[1] + ": " + msg);
                                     renameByName(names[1], names[2]);
-                                    sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
                                     sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
                                 } else {
                                     sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
                                 }
                             } else {
+                                sendCommand("SERVER CHAT command executed. cmd: " + name + ": " + msg);
                                 renameByName(name, names[1]);
-                                sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
                                 sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
                             }
                         } else {
