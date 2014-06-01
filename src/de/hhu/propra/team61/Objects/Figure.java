@@ -15,20 +15,21 @@ import javafx.scene.paint.Color;
  */
 
 public class Figure extends StackPane {
-    private boolean facing_right = true; //Needed for Weapon class, e.g. making crosshair or gun point in correct direction
+    private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
     private int health;
-    private Label hpLabel;
     private int armor;
 
     private boolean isBurning;
     private boolean isPoisoned;
     private boolean isStuck;
 
-    private Weapon selectedItem; //TODO Change that to Item
+    private Item selectedItem;
+
     private Rectangle2D hitRegion;
     private ImageView imageView;
+    private Label hpLabel;
 
     // In and Out
     public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
@@ -47,12 +48,12 @@ public class Figure extends StackPane {
 
     public Figure(JSONObject input){
         imageView = new ImageView();
+        imageView.setTranslateX(input.getDouble("position.x"));
+        imageView.setTranslateY(input.getDouble("position.y"));
 
         this.name = input.getString("name");
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -65,12 +66,12 @@ public class Figure extends StackPane {
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
         imageView = new ImageView();
+        imageView.setTranslateX(input.getDouble("position.x"));
+        imageView.setTranslateY(input.getDouble("position.y"));
 
         this.name = name;
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -145,10 +146,9 @@ public class Figure extends StackPane {
         return new Point2D(imageView.getTranslateX()/8, imageView.getTranslateY()/8);
     }
 
-    public Weapon getSelectedItem(){
+    public Item getSelectedItem(){
         return selectedItem;
-    } //TODO Change that to Item
-
+    }
     public void setSelectedItem(Weapon select){
         if(selectedItem != null) {
             selectedItem.hide();
@@ -156,7 +156,7 @@ public class Figure extends StackPane {
         selectedItem = select;
         if(selectedItem != null) {
             select.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY()));
-            selectedItem.angle_draw(facing_right);
+            selectedItem.angleDraw(facing_right);
         }
     }
 
@@ -182,7 +182,7 @@ public class Figure extends StackPane {
     }
 
     public Projectile shoot() throws NoMunitionException {
-        selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY()));
+       // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
         return selectedItem.shoot();
     }
 
@@ -194,29 +194,8 @@ public class Figure extends StackPane {
         System.out.println("Burning : " + testwurm.getIsBurning());
         System.out.println("Poisoned: " + testwurm.getIsPoisoned());
         System.out.println("Stuck   : " + testwurm.getIsStuck());
+
         System.out.println("Position: " + testwurm.getPosition());
         System.out.println();
-    }
-    public static void main(String[] args){
-        System.out.println("Var-Constructor-Test");
-        System.out.println("-------------------------");
-        Figure testwurmA = new Figure("Stig",100,36,false,false,true);
-        printAllAttributes(testwurmA);
-
-        System.out.println("Getter-Setter-Test");
-        System.out.println("-------------------------");
-        testwurmA.setName("The " + testwurmA.getName());
-        testwurmA.setArmor(testwurmA.getArmor() - 8);
-        testwurmA.setHealth(testwurmA.getHealth() - 50);
-        testwurmA.setIsBurning(!testwurmA.getIsBurning());
-        testwurmA.setIsPoisoned(!testwurmA.getIsPoisoned());
-        testwurmA.setIsStuck(!testwurmA.getIsStuck());
-        printAllAttributes(testwurmA);
-
-        System.out.println("JSON-Constructor-IO-Test");
-        System.out.println("-------------------------");
-        System.out.println("JSON: "+testwurmA.toJson().toString());
-        Figure testwurmB = new Figure(testwurmA.toJson());
-        printAllAttributes(testwurmB);
     }
 }

@@ -165,20 +165,20 @@ public class MapWindow extends Application {
                         case UP:
                         case W:
                             if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                             }
                             break;
                         case DOWN:
                         case S:
                             if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_down(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                             }
                             break;
                         case LEFT:
                         case A:
                             teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
                             if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                                 break;
                             } else {
                                 v = new Point2D(-10, 0);
@@ -187,7 +187,7 @@ public class MapWindow extends Application {
                         case D:
                             teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
                             if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                             } else {
                                 if(v == null) v = new Point2D(+10, 0);
                                 Figure f = teams.get(currentTeam).getCurrentFigure();
