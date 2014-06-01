@@ -1,6 +1,5 @@
 package de.hhu.propra.team61.Network;
 
-import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCode;
 
@@ -21,7 +20,8 @@ public class Client implements Runnable {
     Socket socket;
     PrintWriter out;
     String serverAddress;
-    static String name; //! must not contain spaces!
+    static String id; //! must not contain spaces!
+    private String name;
 
     Runnable readyListener;
 
@@ -31,22 +31,30 @@ public class Client implements Runnable {
      * @param ipAddress the ip address of the server
      * @param listener function which is called when the client successfully established a connection with the server
      */
-    public Client(String ipAddress, Runnable listener) {
+    public Client(String ipAddress, String name, Runnable listener) {
         serverAddress = ipAddress;
         readyListener = listener;
-        name = "MUSTERMANNclient"+(int)(Math.random()*100);
+        id = "uninitializedClient";
+        this.name = name;
     }
 
     /**
      * constructor for a client connecting with localhost
      */
+    public Client(String name, Runnable listener) {
+        this("127.0.0.1", name, listener);
+    }
+
+    /**
+     * constructor for a client connecting with localhost in local mode
+     */
     public Client(Runnable listener) {
-        this("127.0.0.1", listener);
+        this("127.0.0.1", "HOST", listener);
     }
 
     public void run() {
         try {
-            socket = new Socket(serverAddress, 9042);
+            socket = new Socket(serverAddress, Server.PORT);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -54,11 +62,13 @@ public class Client implements Runnable {
                 String line = in.readLine();
                 if(line == null) {
                     System.out.println("CLIENT RECEIVED NULL!?");
-                    continue;
+                    return;
                 }
                 System.out.println("CLIENT RECEIVED: " + line);
                 if(line.startsWith("SUBMITNAME")) {
-                    out.println(name);
+                    id = "client"+(int)(Math.random()*1000)+(int)(System.currentTimeMillis()%100000/100);
+                    System.out.println("CLIENT id: " + id + " / " + name);
+                    out.println(id + " " + name);
                 } else if(line.startsWith("NAMEACCEPTED")) {
                     System.out.println("CLIENT: connected");
                     readyListener.run();
@@ -72,7 +82,7 @@ public class Client implements Runnable {
                 }
             }
         } catch (SocketException e) {
-            System.out.println("CLIENT readLine() interrupted by SocketException");
+            System.out.println("CLIENT readLine() interrupted by SocketException: " + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -87,8 +97,8 @@ public class Client implements Runnable {
     }
 
     public void send(String message) {
-        System.out.println("CLIENT send: " + name + " " + message);
-        out.println(name + " " + message);
+        System.out.println("CLIENT send: " + id + " " + message);
+        out.println(id + " " + message);
     }
 
     public void stop() {

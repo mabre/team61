@@ -1,8 +1,10 @@
 package de.hhu.propra.team61.GUI;
 
 import de.hhu.propra.team61.Network.Client;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 
 /**
@@ -15,6 +17,11 @@ public class Chat extends VBox {
 
     Client client;
 
+    boolean unobtrusive = false;
+
+    private static final double OPACITY_UNOBTRUSIVE = .8;
+    private static final double OPACITY_UNOBTRUSIVE_HOVER = .3;
+
     public Chat(Client client) {
         this.setId("chatBox");
 
@@ -25,22 +32,54 @@ public class Chat extends VBox {
         output.setPrefSize(300, 200);
         output.setMinHeight(200);
         output.setWrapText(true);
+        output.setOnKeyPressed((keyEvent) -> {
+            if(keyEvent.getCode() == KeyCode.C) {
+                setVisible(false);
+            }
+        });
         this.getChildren().add(output);
 
         input = new TextField("/help");
         input.setOnAction((e) -> {
             if(input.getText().startsWith(("/help"))) {
                 printHelp();
-            } else {
+            } else if(input.getText().equals(("c")) && unobtrusive) {
+                this.setVisible(false);
+            } else if(!input.getText().equals((""))) {
                 client.sendChatMessage(input.getText());
             }
             input.clear();
         });
+        input.focusedProperty().addListener((observedValue, oldValue, newValue) -> {
+            if (newValue) {
+                if (input.getText().equals("c")) input.clear(); // TODO not working as expected
+                input.selectAll();
+            }
+        });
         this.getChildren().add(input);
+
+        this.visibleProperty().addListener((observedValue, oldValue, newValue) -> {
+            if(newValue) {
+                input.requestFocus();
+                if(input.getText().equals("c")) input.clear(); // TODO not working as expected
+                input.selectAll();
+            }
+        });
+
+        setOnMouseEntered((e) -> {
+            this.setOpacity(unobtrusive ? OPACITY_UNOBTRUSIVE_HOVER : 1);
+        });
+        setOnMouseExited((e) -> {
+            this.setOpacity(unobtrusive ? OPACITY_UNOBTRUSIVE : 1);
+        });
     }
 
     public void appendMessage(String name, String msg) {
         output.appendText(name + "ː " + msg + "\n");
+        if(!isVisible()) {
+            setVisible(true);
+            setOpacity(OPACITY_UNOBTRUSIVE_HOVER);
+        }
     }
 
     private void printHelp() {
@@ -49,10 +88,25 @@ public class Chat extends VBox {
                 "Available commands:\n" +
                 "/help\n" +
                 "    Shows this help\n" +
-                "/kick <team name>\n" +
-                "/kick <team number>\n" +
+                "/kick <user name>\n" +
+                "    Disconnects the given user\n" +
+                "    Only the user themselves and the host are allowed to kick a user.\n" +
+//                "/kickteam <team name>\n" + // TODO
+                "/kickteam <team number>\n" +
                 "    Removes the given team (sudden death)\n" +
-                "    Only a member of that team and the host are allowed to kick a team.");
+                "    Only a member of that team and the host are allowed to kick a team.\n" +
+                "/kick <new name>\n" +
+                "    Changes your name\n" +
+                "/rename <old name> <new name>\n" +
+                "    Changes a name\n" +
+                "    Only the user themselves and the host are allowed to rename a user.\n" +
+                "c\n" +
+                "    Toggle chat (in game)\n");
+    }
+
+    public void setUnobtrusive(boolean unobtrusive) {
+        this.unobtrusive = unobtrusive;
+        this.setOpacity(unobtrusive ? OPACITY_UNOBTRUSIVE : 1);
     }
 
 }

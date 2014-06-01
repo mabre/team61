@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.GUI.Chat;
 import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
@@ -25,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
+import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by kegny on 08.05.14.
@@ -43,6 +45,7 @@ public class MapWindow extends Application implements Networkable {
     private int levelCounter = 0;
     private Projectile flyingProjectile = null;
     private Thread moveObjectsThread;
+    private Stage stageToClose;
     private int teamquantity;
     private int teamsize;
     private Server server;
@@ -50,6 +53,7 @@ public class MapWindow extends Application implements Networkable {
     private Thread serverThread;
     private Thread clientThread;
     private String map; // TODO do we need this?
+    private Chat chat;
     SceneController sceneController;
 
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
@@ -111,7 +115,6 @@ public class MapWindow extends Application implements Networkable {
 
     public MapWindow(JSONObject input, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
-        this.map = map;
         this.client = client;
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
@@ -120,7 +123,6 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) server.registerCurrentNetworkable(this);
 
         this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
-
 
         JSONObject settings = Settings.getSavedSettings(file);
         teams = new ArrayList<>();
@@ -138,15 +140,13 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * creates the scene, so that everything is visible
+     * creates the stage, so that everything is visible
      */
     private void initialize() {
-
         sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
             sceneController.switchToMenue();
         });
-
         // pane containing terrain, labels at the bottom etc.
         root = new BorderPane();
         // contains the terrain with figures
@@ -154,21 +154,34 @@ public class MapWindow extends Application implements Networkable {
         centerView.setAlignment(Pos.TOP_LEFT);
         centerView.getChildren().add(terrain);
         root.setCenter(centerView);
+
         for(Team team: teams) {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
-
         root.setBottom(teamLabel);
 
         drawing = new Scene(root, 1600, 300);
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
-                    client.sendKeyEvent(keyEvent.getCode());
+                    switch(keyEvent.getCode()) {
+                        case C:
+                            System.out.println("toggle chat");
+                            chat.setVisible(!chat.isVisible());
+                            break;
+                        default:
+                            client.sendKeyEvent(keyEvent.getCode());
+                    }
                 }
         );
+
+        chat = new Chat(client);
+        chat.setMaxWidth(300);
+        chat.setUnobtrusive(true);
+        centerView.getChildren().add(chat);
+        chat.setVisible(false);
 
         sceneController.setGameScene(drawing);
         sceneController.switchToMapwindow();
@@ -192,7 +205,7 @@ public class MapWindow extends Application implements Networkable {
                                 System.out.println("CollisionWithFigureException, let's harm somebody!");
                                 Platform.runLater(() -> {
                                     e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
-                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHp());
+                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHealth());
                                     server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
                                     endTurn();
                                 });
@@ -210,7 +223,7 @@ public class MapWindow extends Application implements Networkable {
             moveObjectsThread.start();
         }
 
-
+        stageToClose.close();
     }
 
     /**
@@ -310,11 +323,18 @@ public class MapWindow extends Application implements Networkable {
     }
 
     @Override
-    public void start(Stage filler) {
+    public void start(Stage ostage) {
     }
 
     @Override
     public void handleOnClient(String command) {
+        if(command.contains("CHAT ")) {
+            String name = command.split(" ")[0];
+            String msg = command.split("CHAT ")[1];
+            chat.appendMessage(name, msg);
+            return;
+        }
+
         String[] cmd = command.split(" ");
 
         switch(cmd[0]) {
@@ -408,10 +428,12 @@ public class MapWindow extends Application implements Networkable {
                 currentTeam = Integer.parseInt(cmd[1]);
                 break;
             case "SET_HP":
-                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHp(Integer.parseInt(cmd[3]));
+                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
+            case "SUDDEN_DEATH":
+                    teams.get(Integer.parseInt(cmd[1])).suddenDeath();
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
                 break;
@@ -422,6 +444,19 @@ public class MapWindow extends Application implements Networkable {
 
     @Override
     public void handleKeyEventOnServer(String keyCode) {
+        if (keyCode.startsWith("/kickteam ")) {
+            try {
+                int teamNumber = Integer.parseInt(extractPart(keyCode, "/kickteam "))-1;
+                if(teamNumber >= teams.size()) throw new IndexOutOfBoundsException();
+                server.sendCommand("SUDDEN_DEATH " + teamNumber);
+                if(currentTeam == teamNumber) {
+                    endTurn();
+                }
+            } catch(NumberFormatException | IndexOutOfBoundsException e) {
+                    System.out.println("malformed command " + keyCode);
+            }
+        }
+
         Point2D v = null;
 
         switch(keyCode) {

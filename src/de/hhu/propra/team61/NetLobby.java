@@ -25,7 +25,6 @@ import javafx.scene.text.*;
 import javafx.stage.Stage;
 import java.util.ArrayList;
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
-import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
@@ -53,6 +52,8 @@ public class NetLobby extends Application implements Networkable {
     CustomGrid overviewGrid;
     Boolean team3Shown = false;
     Chat chatBox;
+    private VBox spectatorBox;
+    private CustomGrid listGrid;
 
     SceneController sceneController = new SceneController();
 
@@ -70,7 +71,7 @@ public class NetLobby extends Application implements Networkable {
         serverThread = new Thread(server = new Server(() -> {
             this.hostName.setText(hostName);
 
-            clientThread = new Thread(client = new Client(() -> {
+            clientThread = new Thread(client = new Client(hostName, () -> {
                 client.send("GET_STATUS"); // TODO race condition
                 Platform.runLater(() -> buildGUI());
             }));
@@ -89,7 +90,7 @@ public class NetLobby extends Application implements Networkable {
      */
     public NetLobby(String ipAddress, boolean spectator, String name, SceneController sceneController) {
         this.sceneController = sceneController;
-        clientThread = new Thread(client = new Client(ipAddress, () -> {
+        clientThread = new Thread(client = new Client(ipAddress, name, () -> {
             client.send("GET_STATUS");
             Platform.runLater(() -> buildGUI());
         }));
@@ -123,13 +124,13 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(team2, 0, 11);
         overviewGrid.add(name2, 1, 11);
         overviewGrid.add(colorPicker2, 2, 11);
-        colorPicker2.setValue(Color.web("#000000"));
         Button rmTeam2 = new Button("X");
         rmTeam2.getStyleClass().add("removeButton");
         overviewGrid.add(rmTeam2, 3, 11);
         rmTeam2.setOnAction(e -> {
             removePlayer(name2.getText(), 1);
         });
+
 
         Text generalSettings = new Text("Choose general settings:");
         generalSettings.setFont(Font.font(16));
@@ -175,11 +176,12 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(weapon3, 1, 6);
 
         VBox rightBox = new VBox();
-        rightBox.setPrefWidth(400);
-        CustomGrid listGrid = new CustomGrid();
-        VBox spectators = addSpectatorList();
-        listGrid.add(spectators, 2, 0);
+        rightBox.setPrefWidth(355);
+        listGrid = new CustomGrid();
+        listGrid.setPrefHeight(200);
+        generateSpectatorsBox();
         chatBox = new Chat(client);
+        chatBox.setPrefHeight(350);
         rightBox.getChildren().addAll(listGrid, chatBox);
         root.setRight(rightBox);
 
@@ -222,15 +224,25 @@ public class NetLobby extends Application implements Networkable {
         return topBox;
     }
 
-    public VBox addSpectatorList() {
-        VBox spectatorBox = new VBox();                     //TODO get names of spectators
+    private void generateSpectatorsBox() {
+        if(spectatorBox != null) listGrid.getChildren().removeAll(spectatorBox);
+        spectatorBox = new VBox();
         Text spectatorText = new Text("Spectators:");
         spectatorBox.getChildren().add(spectatorText);
         for (int i=0; i<spectators.size(); i++) {
             Text newSpectator = new Text(spectators.get(i));
             spectatorBox.getChildren().add(newSpectator);
         }
-        return spectatorBox;
+        listGrid.add(spectatorBox, 2, 0);
+    }
+
+    private void updateSpectators(JSONObject spectators) {
+        this.spectators.clear();
+        JSONArray spectatorList = spectators.getJSONArray("spectators");
+        for(int i=0; i<spectatorList.length(); i++) {
+            this.spectators.add(spectatorList.getString(i));
+        }
+        generateSpectatorsBox();
     }
 
     public ArrayList<String> getLevels() {
@@ -379,6 +391,9 @@ public class NetLobby extends Application implements Networkable {
         } else if(command.startsWith("STATUS LOBBY")) {
             JSONObject state = new JSONObject(extractPart(command, "STATUS LOBBY "));
             fromJson(state);
+        } else if(command.startsWith("SPECTATOR_LIST")) {
+            JSONObject spectators = new JSONObject(extractPart(command, "SPECTATOR_LIST "));
+            updateSpectators(spectators);
         } else if(command.contains("CHAT ")) {
             String name = command.split(" ")[0];
             String msg = command.split("CHAT ")[1];

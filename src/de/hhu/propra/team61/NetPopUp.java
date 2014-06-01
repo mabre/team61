@@ -67,7 +67,7 @@ public class NetPopUp extends Application {
         ipField.setText("localhost");
         popGrid.add(ipField, 1, 2);
         popGrid.add(spectator, 2, 2);
-        Text note = new Text("Note: If you're on the same computer as the host,\ntype in “localhost”.");
+        Text note = new Text("Note: If you’re on the same computer as the host,\ntype in “localhost”.");
         popGrid.add(note, 1, 3, 2, 1);
         Scene popScene = new Scene(popGrid);
         netpopup.setScene(popScene);

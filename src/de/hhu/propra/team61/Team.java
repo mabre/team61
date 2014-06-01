@@ -131,4 +131,10 @@ public class Team extends StackPane {
     public int getNumberOfWeapons() {
         return weapons.size();
     }
+
+    public void suddenDeath() {
+        for (Figure figure: figures){
+            figure.setHealth(0);
+        }
+    }
 }
