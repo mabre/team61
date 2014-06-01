@@ -26,13 +26,13 @@ public class OptionsWindow extends Application {
     CheckBox fullscreen;
     ChoiceBox<String> resolution;
     Slider gamma;
+    SceneController sceneController = new SceneController();
 
-	public void doOptions(Stage stageToClose) {
-		BigStage optionStage = new BigStage("Options");
-        optionStage.setOnHiding(event -> {
-            Options.save(this.toJson());
-            System.out.println("OptionsWindow: saved settings");
-        });
+    public OptionsWindow(SceneController sceneController) {
+        this.sceneController = sceneController;
+    }
+
+	public void doOptions() {
 		CustomGrid optionGrid = new CustomGrid();
 		optionGrid.setAlignment(Pos.CENTER);
 
@@ -67,20 +67,22 @@ public class OptionsWindow extends Application {
 		oexit.setOnAction(new EventHandler<ActionEvent>() {
 		@Override
 		public void handle(ActionEvent e) {
-            stageToClose.show();
-			optionStage.close();
+            Options.save(toJson());
+            System.out.println("OptionsWindow: saved settings");
+			sceneController.switchToMenue();
 			}
 		});
 
         loadSavedSettings();
 
 		Scene oscene = new Scene(optionGrid, 1000, 600);
-		optionStage.setScene(oscene);
         oscene.getStylesheets().add("file:resources/layout/css/options.css");
         optionGrid.getStyleClass().add("optionspane");
         optionst.getStyleClass().add("optionstext");
-        optionStage.show();
-        stageToClose.close();
+
+        //Controller
+        sceneController.setOptionsScene(oscene);
+        sceneController.switchToOptions();
 	}
 
     private void loadSavedSettings() {

@@ -23,19 +23,20 @@ public class GameOverWindow extends Application {
     Server server;
     Client client;
     Thread clientThread, serverThread;
+    SceneController sceneController;
 
     public static void main(String[] args) {
         launch(args);
     }
 
-    public void showWinner(int currentTeam, Stage stageToGoBack, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public void showWinner(SceneController sceneController, int currentTeam, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.sceneController = sceneController;
         this.server = server;
         this.serverThread = serverThread;
         this.client = client;
         this.clientThread = clientThread;
 
-        BigStage overStage = new BigStage("Game over");
-        overStage.setOnCloseRequest((e) -> {
+        sceneController.getStage().setOnCloseRequest((e) -> {
             shutdown();
         });
         CustomGrid overGrid = new CustomGrid();
@@ -52,8 +53,7 @@ public class GameOverWindow extends Application {
         revenge.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                MapWindow mapwindow = new MapWindow(map, stageToGoBack, file, client, clientThread, server, serverThread);
-                overStage.close();
+                MapWindow mapwindow = new MapWindow(map, file, client, clientThread, server, serverThread, sceneController);
             }
         });
         Button end = new Button("End");
@@ -61,14 +61,13 @@ public class GameOverWindow extends Application {
             @Override
             public void handle(ActionEvent e) {
                 shutdown();
-                stageToGoBack.show();
-                overStage.close();
+                sceneController.switchToMenue();
             }
         });
         overGrid.add(end, 0, 4);
         Scene overScene = new Scene(overGrid);
-        overStage.setScene(overScene);
-        overStage.show();
+        sceneController.setGameOverScene(overScene);
+        sceneController.switchToGameOver();
     }
 
     @Override

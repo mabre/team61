@@ -55,13 +55,18 @@ public class GameSettings extends Application {
     Button addTeam = new Button("+");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
 
+    SceneController sceneController = new SceneController();
+
     Server server;
     Thread serverThread;
     Client client;
     Thread clientThread;
 
-    public void doSettings(Stage stageToClose) {
-        BigStage settingStage = new BigStage("Game Settings");
+    public GameSettings(SceneController sceneController) {
+        this.sceneController = sceneController;
+    }
+
+    public void doSettings() {
         settingGrid.setAlignment(Pos.TOP_LEFT);
         initializeArrayLists();
 
@@ -90,7 +95,7 @@ public class GameSettings extends Application {
         loadbtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(final ActionEvent e) {
-                File loadfile = loadChooser.showOpenDialog(settingStage);     //Open file-window to open a file and save it in 'loadfile'
+                File loadfile = loadChooser.showOpenDialog(sceneController.getStage());     //Open file-window to open a file and save it in 'loadfile'
                 if (loadfile != null) {
                     String loadfilestring = loadfile.getAbsolutePath();
                     fromJson(loadfilestring);
@@ -170,7 +175,7 @@ public class GameSettings extends Application {
                 clientThread = new Thread(client = new Client(() -> {
                     Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
                     System.out.println("GameSettings: saved settings");
-                    Platform.runLater(() -> new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread));
+                    Platform.runLater(() -> new MapWindow(mapChooser.getValue(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
                 }));
                 clientThread.start();
             }));
@@ -180,16 +185,14 @@ public class GameSettings extends Application {
         Button back = new Button("Back");
         settingGrid.add(back, 1, 16);
         back.setOnAction(e -> {
-            stageToClose.show(); // close settings and show mainwindow again
-            settingStage.close();
+            sceneController.switchToMenue();
         });
 
         Scene sscene = new Scene(settingGrid, 1000, 600);
-        settingStage.setScene(sscene);
         sscene.getStylesheets().add("file:resources/layout/css/settings.css");
         settingGrid.getStyleClass().add("settingpane");
-        settingStage.show();
-        stageToClose.close();                   //close last stage (mainwindow)
+        sceneController.setSettingsScene(sscene);
+        sceneController.switchToGameSettings();
     }
 
     public JSONObject toJson() {

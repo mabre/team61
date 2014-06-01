@@ -52,8 +52,9 @@ public class NetLobby extends Application implements Networkable {
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     CustomGrid overviewGrid;
     Boolean team3Shown = false;
-    BigStage lobby = new BigStage("Lobby");
     Chat chatBox;
+
+    SceneController sceneController = new SceneController();
 
     Server server;
     Thread serverThread;
@@ -63,15 +64,15 @@ public class NetLobby extends Application implements Networkable {
     /**
      * constructor for the host
      * @param hostName the name of the first team (ie the first team on the host system)
-     * @param stageToClose stage to close when opening the window
      */
-    public NetLobby(String hostName, BigStage stageToClose) {
+    public NetLobby(String hostName, SceneController sceneController) {
+        this.sceneController = sceneController;
         serverThread = new Thread(server = new Server(() -> {
             this.hostName.setText(hostName);
 
             clientThread = new Thread(client = new Client(() -> {
                 client.send("GET_STATUS"); // TODO race condition
-                Platform.runLater(() -> buildGUI(stageToClose));
+                Platform.runLater(() -> buildGUI());
             }));
             clientThread.start();
             client.registerCurrentNetworkable(this);
@@ -85,24 +86,20 @@ public class NetLobby extends Application implements Networkable {
      * @param ipAddress ip address of the server
      * @param spectator true when player wants to be a spectator // TODO hardcoded to true atm
      * @param name name of the player/team
-     * @param stageToClose stage to close when opening the window
      */
-    public NetLobby(String ipAddress, boolean spectator, String name, BigStage stageToClose) {
+    public NetLobby(String ipAddress, boolean spectator, String name, SceneController sceneController) {
+        this.sceneController = sceneController;
         clientThread = new Thread(client = new Client(ipAddress, () -> {
             client.send("GET_STATUS");
-            Platform.runLater(() -> buildGUI(stageToClose));
+            Platform.runLater(() -> buildGUI());
         }));
         clientThread.start();
         client.registerCurrentNetworkable(this);
     }
 
 
-    public void buildGUI(BigStage stageToClose) {
+    public void buildGUI() {
         initializeArrayLists();
-        lobby.setOnCloseRequest(event -> {
-            lobby.close();
-            stageToClose.show();
-        });
         BorderPane root = new BorderPane();
         HBox topBox = addTopHBox();
         root.setTop(topBox);
@@ -126,13 +123,13 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(team2, 0, 11);
         overviewGrid.add(name2, 1, 11);
         overviewGrid.add(colorPicker2, 2, 11);
+        colorPicker2.setValue(Color.web("#000000"));
         Button rmTeam2 = new Button("X");
         rmTeam2.getStyleClass().add("removeButton");
         overviewGrid.add(rmTeam2, 3, 11);
         rmTeam2.setOnAction(e -> {
             removePlayer(name2.getText(), 1);
         });
-
 
         Text generalSettings = new Text("Choose general settings:");
         generalSettings.setFont(Font.font(16));
@@ -189,8 +186,7 @@ public class NetLobby extends Application implements Networkable {
         Button back = new Button("Back");
         bottomBox.getChildren().add(back);
         back.setOnAction(e -> {
-            stageToClose.show();
-            lobby.close();
+            sceneController.switchToMenue();
         });
         bottomBox.setId("bottomBox");
         root.setBottom(bottomBox);
@@ -199,9 +195,8 @@ public class NetLobby extends Application implements Networkable {
         lobbyScene.getStylesheets().add("file:resources/layout/css/lobby.css");
         overviewGrid.getStyleClass().add("overviewGrid");
         listGrid.getStyleClass().add("listGrid");
-        lobby.setScene(lobbyScene);
-        lobby.show();
-        stageToClose.close();
+        sceneController.setLobbyScene(lobbyScene);
+        sceneController.switchToLobby();
     }
 
     public HBox addTopHBox() {
@@ -215,7 +210,7 @@ public class NetLobby extends Application implements Networkable {
             public void handle(ActionEvent e) {
                 Settings.save(toJson(), "NET_SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("Network-GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), lobby, "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
             }
         });
         startBox.setAlignment(Pos.CENTER_RIGHT);
@@ -379,7 +374,7 @@ public class NetLobby extends Application implements Networkable {
     public void handleOnClient(String command) {
         if(command.startsWith("STATUS MAPWINDOW")) {
             JSONObject state = new JSONObject(extractPart(command, "STATUS MAPWINDOW "));
-            new MapWindow(state, lobby, client, clientThread);
+            new MapWindow(state, client, clientThread, sceneController);
         } else if(command.startsWith("STATUS LOBBY")) {
             JSONObject state = new JSONObject(extractPart(command, "STATUS LOBBY "));
             fromJson(state);

@@ -23,12 +23,10 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
 public class NetPopUp extends Application {
 
     TextField ipField = new TextField();
-    BigStage stageToClose;
     TextField nameField = new TextField();
     CheckBox spectator = new CheckBox("Spectator");
 
-    public void openPopUp(BigStage stageToClose) {
-        this.stageToClose = stageToClose;
+    public void openPopUp(SceneController sceneController) {
         Stage netpopup = new Stage();
         netpopup.setTitle("Start network game");
         netpopup.setWidth(500);
@@ -49,7 +47,7 @@ public class NetPopUp extends Application {
         hostGame.setOnAction(e -> {
             if (nameField.getText().length() > 0) {
                 netpopup.close();
-                NetLobby netlobby = new NetLobby(nameField.getText(), stageToClose);
+                NetLobby netlobby = new NetLobby(nameField.getText(), sceneController);
             } else {
                 ipError.setText("Error: No name entered.");
             }
@@ -60,7 +58,7 @@ public class NetPopUp extends Application {
             if (ipField.getText().length() > 0 && nameField.getText().length() > 0) {
                 netpopup.close();
                 //TODO check if max. number of teams reached
-                NetLobby netlobby = new NetLobby(ipField.getText(), spectator.isSelected(), nameField.getText(), stageToClose);
+                NetLobby netlobby = new NetLobby(ipField.getText(), spectator.isSelected(), nameField.getText(), sceneController);
             } else {
                 ipError.setText("Error: No IP-Address or name entered.");
             }

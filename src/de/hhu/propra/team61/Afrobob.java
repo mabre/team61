@@ -34,13 +34,14 @@ public class Afrobob extends Application {
     Thread serverThread;
     Client client;
     Thread clientThread;
+    SceneController sceneController = new SceneController();
 
     public static void main(String[] args) {
         launch(args);
     }
 
     public void start (Stage filler) throws NullPointerException {
-        BigStage mainwindow = new BigStage("Unicorns and Penguins! <3");
+        BigStage mainwindow = new BigStage("Unicorns and Penguins <3");
         CustomGrid grid = new CustomGrid();
         grid.setAlignment(Pos.CENTER);
 
@@ -63,8 +64,8 @@ public class Afrobob extends Application {
         mstartl.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                GameSettings gamesettings = new GameSettings();
-                gamesettings.doSettings(mainwindow);                      //always pass 'mainwindow' to close it -> only one stage open at a time
+                GameSettings gamesettings = new GameSettings(sceneController);
+                gamesettings.doSettings();
             }
         });
         mstartsaved.setOnAction(new EventHandler<ActionEvent>() {
@@ -73,7 +74,7 @@ public class Afrobob extends Application {
                 // our local game is also client/server based, with server running on localhost
                 serverThread = new Thread(server = new Server(() -> {
                     clientThread = new Thread(client = new Client(() -> {
-                        Platform.runLater(() -> new MapWindow(GameState.getSavedGameState(), mainwindow, "SETTINGS_FILE.conf", client, clientThread, server, serverThread));
+                        Platform.runLater(() -> new MapWindow(GameState.getSavedGameState(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
                     }));
                     clientThread.start();
                 }));
@@ -84,14 +85,14 @@ public class Afrobob extends Application {
             @Override
             public void handle(ActionEvent e) {
                 NetPopUp netPopUp = new NetPopUp();
-                netPopUp.openPopUp(mainwindow);
+                netPopUp.openPopUp(sceneController);
             }
         });
         moptions.setOnAction(new EventHandler<ActionEvent>() {  //Click on button 'moptions' opens new window for options
             @Override
             public void handle(ActionEvent e) {
-                OptionsWindow optionwindow = new OptionsWindow();
-                optionwindow.doOptions(mainwindow);
+                OptionsWindow optionwindow = new OptionsWindow(sceneController);
+                optionwindow.doOptions();
             }
         });
         mexit.setOnAction(new EventHandler<ActionEvent>() {  //Click on Button 'mexit' closes window
@@ -105,6 +106,10 @@ public class Afrobob extends Application {
         mainwindow.setScene(scene);
         scene.getStylesheets().add("file:resources/layout/css/menue.css");
         grid.getStyleClass().add("menuepane");
+
+        //Controller
+        sceneController.setStage(mainwindow);
+        sceneController.setMenueScene(scene);
         mainwindow.show();
     }
 }

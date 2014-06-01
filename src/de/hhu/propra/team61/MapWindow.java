@@ -34,7 +34,6 @@ import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 public class MapWindow extends Application implements Networkable {
     private ArrayList<Team> teams;
     private Scene drawing;
-    private Stage primaryStage;
     private BorderPane root;
     private StackPane centerView;
     private Terrain terrain;
@@ -44,7 +43,6 @@ public class MapWindow extends Application implements Networkable {
     private int levelCounter = 0;
     private Projectile flyingProjectile = null;
     private Thread moveObjectsThread;
-    private Stage stageToClose;
     private int teamquantity;
     private int teamsize;
     private Server server;
@@ -52,8 +50,10 @@ public class MapWindow extends Application implements Networkable {
     private Thread serverThread;
     private Thread clientThread;
     private String map; // TODO do we need this?
+    SceneController sceneController;
 
-    public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
+        this.sceneController = sceneController;
         this.map = map;
         this.client = client;
         this.clientThread = clientThread;
@@ -70,7 +70,6 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
 
-        this.stageToClose = stageToClose;
         JSONObject settings = Settings.getSavedSettings(file);
         this.teamquantity = settings.getInt("numberOfTeams");
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
@@ -89,7 +88,8 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) server.sendCommand(getStateForNewClient());
     }
 
-    public MapWindow(JSONObject input, Stage stageToClose, Client client, Thread clientThread) {
+    public MapWindow(JSONObject input, Client client, Thread clientThread, SceneController sceneController) {
+        this.sceneController = sceneController;
         this.client = client;
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
@@ -106,11 +106,11 @@ public class MapWindow extends Application implements Networkable {
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
 
-        this.stageToClose = stageToClose;
         initialize();
     }
 
-    public MapWindow(JSONObject input, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public MapWindow(JSONObject input, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
+        this.sceneController = sceneController;
         this.map = map;
         this.client = client;
         this.clientThread = clientThread;
@@ -121,7 +121,6 @@ public class MapWindow extends Application implements Networkable {
 
         this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
 
-        this.stageToClose = stageToClose;
 
         JSONObject settings = Settings.getSavedSettings(file);
         teams = new ArrayList<>();
@@ -139,15 +138,13 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * creates the stage, so that everything is visible
+     * creates the scene, so that everything is visible
      */
     private void initialize() {
-        primaryStage = new Stage();
-        primaryStage.setOnCloseRequest(event -> {
-            shutdown();
 
-            stageToClose.show();
-            primaryStage.close();
+        sceneController.getStage().setOnCloseRequest(event -> {
+            shutdown();
+            sceneController.switchToMenue();
         });
 
         // pane containing terrain, labels at the bottom etc.
@@ -173,9 +170,8 @@ public class MapWindow extends Application implements Networkable {
                 }
         );
 
-        primaryStage.setTitle("The Playground");
-        primaryStage.setScene(drawing);
-        primaryStage.show();
+        sceneController.setGameScene(drawing);
+        sceneController.switchToMapwindow();
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
@@ -214,7 +210,7 @@ public class MapWindow extends Application implements Networkable {
             moveObjectsThread.start();
         }
 
-        stageToClose.close();
+
     }
 
     /**
@@ -314,7 +310,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     @Override
-    public void start(Stage ostage) {
+    public void start(Stage filler) {
     }
 
     @Override
@@ -397,10 +393,9 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
             case "GAME_OVER":
-                primaryStage.close();
                 if(moveObjectsThread != null) moveObjectsThread.interrupt();
                 GameOverWindow gameOverWindow = new GameOverWindow();
-                gameOverWindow.showWinner(Integer.parseInt(cmd[1]), stageToClose, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
