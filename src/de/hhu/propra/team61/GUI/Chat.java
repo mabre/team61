@@ -76,6 +76,10 @@ public class Chat extends VBox {
 
     public void appendMessage(String name, String msg) {
         output.appendText(name + "ː " + msg + "\n");
+        if(!isVisible()) {
+            setVisible(true);
+            setOpacity(OPACITY_UNOBTRUSIVE_HOVER);
+        }
     }
 
     private void printHelp() {
