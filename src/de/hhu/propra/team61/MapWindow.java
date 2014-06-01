@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.GUI.Chat;
 import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
@@ -52,6 +53,7 @@ public class MapWindow extends Application implements Networkable {
     private Thread serverThread;
     private Thread clientThread;
     private String map; // TODO do we need this?
+    private Chat chat;
 
     public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         this.map = map;
@@ -111,7 +113,6 @@ public class MapWindow extends Application implements Networkable {
     }
 
     public MapWindow(JSONObject input, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
-        this.map = map;
         this.client = client;
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
@@ -157,21 +158,34 @@ public class MapWindow extends Application implements Networkable {
         centerView.setAlignment(Pos.TOP_LEFT);
         centerView.getChildren().add(terrain);
         root.setCenter(centerView);
+
         for(Team team: teams) {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
-
         root.setBottom(teamLabel);
 
         drawing = new Scene(root, 1600, 300);
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
-                    client.sendKeyEvent(keyEvent.getCode());
+                    switch(keyEvent.getCode()) {
+                        case C:
+                            System.out.println("toggle chat");
+                            chat.setVisible(!chat.isVisible());
+                            break;
+                        default:
+                            client.sendKeyEvent(keyEvent.getCode());
+                    }
                 }
         );
+
+        chat = new Chat(client);
+        chat.setMaxWidth(300);
+        chat.setUnobtrusive(true);
+        centerView.getChildren().add(chat);
+        chat.setVisible(false);
 
         primaryStage.setTitle("The Playground");
         primaryStage.setScene(drawing);
@@ -319,6 +333,13 @@ public class MapWindow extends Application implements Networkable {
 
     @Override
     public void handleOnClient(String command) {
+        if(command.contains("CHAT ")) {
+            String name = command.split(" ")[0];
+            String msg = command.split("CHAT ")[1];
+            chat.appendMessage(name, msg);
+            return;
+        }
+
         String[] cmd = command.split(" ");
 
         switch(cmd[0]) {
