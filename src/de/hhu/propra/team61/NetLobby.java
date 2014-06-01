@@ -25,7 +25,6 @@ import javafx.scene.text.*;
 import javafx.stage.Stage;
 import java.util.ArrayList;
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
-import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
@@ -54,6 +53,8 @@ public class NetLobby extends Application implements Networkable {
     Boolean team3Shown = false;
     BigStage lobby = new BigStage("Lobby");
     Chat chatBox;
+    private VBox spectatorBox;
+    private CustomGrid listGrid;
 
     Server server;
     Thread serverThread;
@@ -69,7 +70,7 @@ public class NetLobby extends Application implements Networkable {
         serverThread = new Thread(server = new Server(() -> {
             this.hostName.setText(hostName);
 
-            clientThread = new Thread(client = new Client(() -> {
+            clientThread = new Thread(client = new Client(hostName, () -> {
                 client.send("GET_STATUS"); // TODO race condition
                 Platform.runLater(() -> buildGUI(stageToClose));
             }));
@@ -88,7 +89,7 @@ public class NetLobby extends Application implements Networkable {
      * @param stageToClose stage to close when opening the window
      */
     public NetLobby(String ipAddress, boolean spectator, String name, BigStage stageToClose) {
-        clientThread = new Thread(client = new Client(ipAddress, () -> {
+        clientThread = new Thread(client = new Client(ipAddress, name, () -> {
             client.send("GET_STATUS");
             Platform.runLater(() -> buildGUI(stageToClose));
         }));
@@ -178,9 +179,8 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(weapon3, 1, 6);
 
         VBox rightBox = new VBox();
-        CustomGrid listGrid = new CustomGrid();
-        VBox spectators = addSpectatorList();
-        listGrid.add(spectators, 2, 0);
+        listGrid = new CustomGrid();
+        generateSpectatorsBox();
         chatBox = new Chat(client);
         rightBox.getChildren().addAll(listGrid, chatBox);
         root.setRight(rightBox);
@@ -226,15 +226,25 @@ public class NetLobby extends Application implements Networkable {
         return topBox;
     }
 
-    public VBox addSpectatorList() {
-        VBox spectatorBox = new VBox();                     //TODO get names of spectators
+    private void generateSpectatorsBox() {
+        if(spectatorBox != null) listGrid.getChildren().removeAll(spectatorBox);
+        spectatorBox = new VBox();
         Text spectatorText = new Text("Spectators:");
         spectatorBox.getChildren().add(spectatorText);
         for (int i=0; i<spectators.size(); i++) {
             Text newSpectator = new Text(spectators.get(i));
             spectatorBox.getChildren().add(newSpectator);
         }
-        return spectatorBox;
+        listGrid.add(spectatorBox, 2, 0);
+    }
+
+    private void updateSpectators(JSONObject spectators) {
+        this.spectators.clear();
+        JSONArray spectatorList = spectators.getJSONArray("spectators");
+        for(int i=0; i<spectatorList.length(); i++) {
+            this.spectators.add(spectatorList.getString(i));
+        }
+        generateSpectatorsBox();
     }
 
     public ArrayList<String> getLevels() {
@@ -383,6 +393,9 @@ public class NetLobby extends Application implements Networkable {
         } else if(command.startsWith("STATUS LOBBY")) {
             JSONObject state = new JSONObject(extractPart(command, "STATUS LOBBY "));
             fromJson(state);
+        } else if(command.startsWith("SPECTATOR_LIST")) {
+            JSONObject spectators = new JSONObject(extractPart(command, "SPECTATOR_LIST "));
+            updateSpectators(spectators);
         } else if(command.contains("CHAT ")) {
             String name = command.split(" ")[0];
             String msg = command.split("CHAT ")[1];

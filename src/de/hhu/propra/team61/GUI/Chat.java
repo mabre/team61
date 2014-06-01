@@ -86,7 +86,8 @@ public class Chat extends VBox {
                 "    Shows this help\n" +
                 "/kick <team name>\n" +
                 "/kick <team number>\n" +
-                "    Removes the given team (sudden death)\n" +
+                "/kick <user name>\n" +
+                "    Removes the given team/user (sudden death)\n" +
                 "    Only a member of that team and the host are allowed to kick a team.\n" +
                 "c\n" +
                 "    Toggle chat (in game)\n");

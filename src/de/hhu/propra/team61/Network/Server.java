@@ -1,5 +1,7 @@
 package de.hhu.propra.team61.Network;
 
+import de.hhu.propra.team61.IO.JSON.JSONArray;
+import de.hhu.propra.team61.IO.JSON.JSONObject;
 import javafx.application.Platform;
 
 import java.io.BufferedReader;
@@ -10,7 +12,7 @@ import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.HashSet;
+import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
@@ -18,10 +20,9 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  * Created by markus on 15.05.14.
  */
 public class Server implements Runnable {
-    private static final int PORT = 9042;
+    static final int PORT = 9042;
 
-    private static HashSet<String> names = new HashSet<>();
-    private static HashSet<PrintWriter> writers = new HashSet<>();
+    private static ArrayList<Connection> connections = new ArrayList<>();
 
     Runnable readyListener;
 
@@ -70,13 +71,96 @@ public class Server implements Runnable {
     }
 
     public static void sendCommand(String command) {
-        synchronized (writers) {
-            for (PrintWriter writer : writers) {
+        synchronized (connections) {
+            for (int i=0; i<connections.size(); i++) {
                 String message = "COMMAND " + command;
-                writer.println(message);
-                System.out.println("SERVER sent command: " + message);
+                connections.get(i).out.println(message);
+                System.out.println("SERVER sent command to " + connections.get(i).id+"/"+connections.get(i).name + ": " + message);
             }
         }
+    }
+
+    private static boolean clientIdExists(String id) {
+        boolean found = false;
+        synchronized (connections) {
+            for (int i = 0; i < connections.size(); i++) {
+                if (connections.get(i).id.equals(id)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        return found;
+    }
+
+    private static boolean clientNameExists(String name) {
+        boolean found = false;
+        synchronized (connections) {
+            for (int i = 0; i < connections.size(); i++) {
+                if (connections.get(i).name.equals(name)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        return found;
+    }
+
+    private static String getIdFromName(String name) {
+        String id = "";
+        synchronized (connections) {
+            for (int i = 0; i < connections.size(); i++) {
+                if (connections.get(i).name.equals(name)) {
+                    id = connections.get(i).id;
+                    break;
+                }
+            }
+        }
+        return id;
+    }
+
+    private static String getNameFromId(String id) {
+        String name = "";
+        synchronized (connections) {
+            for (int i = 0; i < connections.size(); i++) {
+                if (connections.get(i).id.equals(id)) {
+                    name = connections.get(i).name;
+                    break;
+                }
+            }
+        }
+        return name;
+    }
+
+    private static void disconnect(String name) {
+        synchronized (connections) {
+            try {
+                for (int i = 0; i < connections.size(); i++) {
+                    if (connections.get(i).name.equals(name)) {
+                        connections.get(i).out.close();
+                        connections.get(i).in.close();
+                        System.out.println("SERVER: removed connection to " + connections.get(i).id + "/" + connections.get(i).name);
+                        connections.remove(i);
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static String getSpectatorsAsJson() {
+        JSONObject json = new JSONObject();
+        JSONArray spectatorsArray = new JSONArray();
+        synchronized (connections) {
+            for (int i = 0; i < connections.size(); i++) {
+                if(!connections.get(i).id.equals(Client.id)) { // TODO hardcoded spectator mode
+                    spectatorsArray.put(connections.get(i).name);
+                }
+            }
+        }
+        return json.put("spectators", spectatorsArray).toString();
     }
 
 
@@ -104,6 +188,7 @@ public class Server implements Runnable {
         private final BufferedReader in;
         private final PrintWriter out;
         private final Socket socket;
+        private String id;
         private String name;
 
         public ClientConnection(Socket socket) throws IOException {
@@ -116,77 +201,128 @@ public class Server implements Runnable {
             getName();
             out.println("NAMEACCEPTED");
             System.out.println("SERVER: connection accepted");
-            writers.add(out);
-            broadcast();
+            if(name != null) {
+                synchronized (connections) {
+                    connections.add(new Connection(in, out, id, name));
+                }
+                sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                broadcast();
+            }
         }
 
         private void getName() throws IOException {
             while(true) {
                 out.println("SUBMITNAME");
-                System.out.println("SERVER: asked for name");
-                name = in.readLine();
-                if(name == null) {
+                System.out.println("SERVER: asked for id and name");
+                String identifier = in.readLine();
+                if(identifier == null) {
+                    System.out.println("SERVER: read null identifier");
                     return;
                 }
-                synchronized (names) {
-                    if(!names.contains(name)) {
-                        names.add(name);
-                        break;
-                    }
+                if(!clientIdExists(id)) {
+                    id = identifier.split(" ")[0];
+                    name = identifier.split(" ")[1];
+                    break;
                 }
             }
         }
 
         private void broadcast() throws IOException {
-            while(true) {
-                String line = in.readLine();
-                if (line == null) {
-                    return;
-                }
-                String clientName = line.split(" ", 2)[0];
-                if (line.contains("CHAT ")) {
-                    sendCommand(line);
-                } else if (line.contains("GET_STATUS")) {
-                    out.println(currentNetworkable.getStateForNewClient());
-                } else if (line.contains("KEYEVENT ")) {
-                    if (clientName.equals(Client.name)) { // TODO hardcoded spectator mode (remember the first client connecting as host)
-                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
-                    } else {
-                        System.out.println("SERVER: operation not allowed for " + clientName + ": " + line);
-                        System.out.println("    only allowed for " + Client.name);
+            try {
+                while(true) {
+                    String line = in.readLine();
+                    if (line == null) {
+                        return;
                     }
-                } else if (line.contains("STATUS ")) {
-                    if (clientName.equals(Client.name)) {
-                        sendCommand(extractPart(line, clientName+" "));
+                    String clientId = line.split(" ", 2)[0]; // TODO equals this.id?
+                    if (line.contains("CHAT ")) {
+                        String msg = line.split(" ", 3)[2];
+                        System.out.println(">");
+                        if (msg.startsWith("/kick ")) {
+                            System.out.println(">>");
+                            String userToKick = msg.split(" ", 2)[1];
+                            if(clientNameExists(userToKick)) {
+                                System.out.println(">>>");
+                                if(clientId.equals(Client.id) || clientId.equals(getIdFromName(userToKick))) {
+                                    System.out.println(">>>>");
+                                    disconnect(userToKick);
+                                    sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
+                                    sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                                } else {
+                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
+                                }
+                            } else {
+                                sendCommand("SERVER CHAT command failed: No such user. cmd: " + getNameFromId(clientId) + " " + msg);
+                            }
+                        } else {
+                            sendCommand(getNameFromId(clientId) + " CHAT " + msg);
+                        }
+                    } else if (line.contains("GET_STATUS")) {
+                        out.println(currentNetworkable.getStateForNewClient());
+                    } else if (line.contains("KEYEVENT ")) {
+                        if (clientId.equals(Client.id)) { // TODO hardcoded spectator mode (remember the first client connecting as host)
+                            Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
+                        } else {
+                            System.out.println("SERVER: operation not allowed for " + clientId + ": " + line);
+                            System.out.println("    only allowed for " + Client.id);
+                        }
+                    } else if (line.contains("STATUS ")) {
+                        if (clientId.equals(Client.id)) {
+                            sendCommand(extractPart(line, clientId+" "));
+                        } else {
+                            System.out.println("SERVER: operation not allowed for " + clientId + ": " + line);
+                            System.out.println("    only allowed for " + Client.id);
+                        }
                     } else {
-                        System.out.println("SERVER: operation not allowed for " + clientName + ": " + line);
-                        System.out.println("    only allowed for " + Client.name);
+                        System.out.println("SERVER: unhandled message: " + line);
                     }
-                } else {
-                    System.out.println("SERVER: unhandled message: " + line);
                 }
-//                synchronized (writers) {
-//                    for (PrintWriter writer : writers) {
-//                        String message = "MESSAGE " + name + ": " + line;
-//                        System.out.println("SERVER send received message: " + message);
-//                        writer.println(message);
-//                    }
-//                }
+            } catch(SocketException e) {
+                System.out.println("SERVER: SocketException at " + id+"/"+name + " " + e.getMessage());
+            } catch(IOException e) {
+                System.out.println("SERVER: IOException at " + id+"/"+name + " " + e.getMessage());
             }
         }
 
         @Override
         public void close() throws Exception {
-            if(name != null) {
-                names.remove(name);
+            synchronized (connections) {
+                if (connections != null) {
+                    for (int i = 0; i < connections.size(); i++) {
+                        if (connections.get(i).id.equals(id)) {
+                            connections.remove(i);
+                            break;
+                        }
+                    }
+                }
+                if (out != null) {
+                    for (int i = 0; i < connections.size(); i++) {
+                        if (connections.get(i).out == out) {
+                            connections.remove(i);
+                            break;
+                        }
+                    }
+                }
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                }
             }
-            if(out != null) {
-                writers.remove(out);
-            }
-            try {
-                socket.close();
-            } catch (IOException e) {
-            }
+        }
+    }
+
+
+    private static class Connection {
+        public BufferedReader in;
+        public PrintWriter out;
+        public String id;
+        public String name;
+
+        private Connection(BufferedReader in, PrintWriter out, String id, String name) {
+            this.in = in;
+            this.out = out;
+            this.id = id;
+            this.name = name;
         }
     }
 }
