@@ -22,7 +22,7 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 public class Server implements Runnable {
     static final int PORT = 9042;
 
-    private static ArrayList<Connection> connections = new ArrayList<>();
+    private static ArrayList<ClientConnection> clients = new ArrayList<>();
 
     Runnable readyListener;
 
@@ -71,20 +71,20 @@ public class Server implements Runnable {
     }
 
     public static void sendCommand(String command) {
-        synchronized (connections) {
-            for (int i=0; i<connections.size(); i++) {
+        synchronized (clients) {
+            for (int i=0; i< clients.size(); i++) {
                 String message = "COMMAND " + command;
-                connections.get(i).out.println(message);
-                System.out.println("SERVER sent command to " + connections.get(i).id+"/"+connections.get(i).name + ": " + message);
+                clients.get(i).out.println(message);
+                System.out.println("SERVER sent command to " + clients.get(i).id+"/"+ clients.get(i).name + ": " + message);
             }
         }
     }
 
     private static boolean clientIdExists(String id) {
         boolean found = false;
-        synchronized (connections) {
-            for (int i = 0; i < connections.size(); i++) {
-                if (connections.get(i).id.equals(id)) {
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).id.equals(id)) {
                     found = true;
                     break;
                 }
@@ -95,9 +95,9 @@ public class Server implements Runnable {
 
     private static boolean clientNameExists(String name) {
         boolean found = false;
-        synchronized (connections) {
-            for (int i = 0; i < connections.size(); i++) {
-                if (connections.get(i).name.equals(name)) {
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).name.equals(name)) {
                     found = true;
                     break;
                 }
@@ -108,10 +108,10 @@ public class Server implements Runnable {
 
     private static String getIdFromName(String name) {
         String id = "";
-        synchronized (connections) {
-            for (int i = 0; i < connections.size(); i++) {
-                if (connections.get(i).name.equals(name)) {
-                    id = connections.get(i).id;
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).name.equals(name)) {
+                    id = clients.get(i).id;
                     break;
                 }
             }
@@ -121,10 +121,10 @@ public class Server implements Runnable {
 
     private static String getNameFromId(String id) {
         String name = "";
-        synchronized (connections) {
-            for (int i = 0; i < connections.size(); i++) {
-                if (connections.get(i).id.equals(id)) {
-                    name = connections.get(i).name;
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).id.equals(id)) {
+                    name = clients.get(i).name;
                     break;
                 }
             }
@@ -133,14 +133,14 @@ public class Server implements Runnable {
     }
 
     private static void disconnect(String name) {
-        synchronized (connections) {
+        synchronized (clients) {
             try {
-                for (int i = 0; i < connections.size(); i++) {
-                    if (connections.get(i).name.equals(name)) {
-                        connections.get(i).out.close();
-                        connections.get(i).in.close();
-                        System.out.println("SERVER: removed connection to " + connections.get(i).id + "/" + connections.get(i).name);
-                        connections.remove(i);
+                for (int i = 0; i < clients.size(); i++) {
+                    if (clients.get(i).name.equals(name)) {
+                        clients.get(i).out.close();
+                        clients.get(i).in.close();
+                        System.out.println("SERVER: removed connection to " + clients.get(i).id + "/" + clients.get(i).name);
+                        clients.remove(i);
                         break;
                     }
                 }
@@ -153,14 +153,24 @@ public class Server implements Runnable {
     private static String getSpectatorsAsJson() {
         JSONObject json = new JSONObject();
         JSONArray spectatorsArray = new JSONArray();
-        synchronized (connections) {
-            for (int i = 0; i < connections.size(); i++) {
-                if(!connections.get(i).id.equals(Client.id)) { // TODO hardcoded spectator mode
-                    spectatorsArray.put(connections.get(i).name);
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if(!clients.get(i).id.equals(Client.id)) { // TODO hardcoded spectator mode
+                    spectatorsArray.put(clients.get(i).name);
                 }
             }
         }
         return json.put("spectators", spectatorsArray).toString();
+    }
+
+    private static void renameByName(String oldName, String newName) {
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).name.equals(oldName)) {
+                    clients.get(i).name = newName;
+                }
+            }
+        }
     }
 
 
@@ -202,8 +212,8 @@ public class Server implements Runnable {
             out.println("NAMEACCEPTED");
             System.out.println("SERVER: connection accepted");
             if(name != null) {
-                synchronized (connections) {
-                    connections.add(new Connection(in, out, id, name));
+                synchronized (clients) {
+                    clients.add(this);
                 }
                 sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
                 broadcast();
@@ -250,15 +260,30 @@ public class Server implements Runnable {
                             } else {
                                 sendCommand("SERVER CHAT command failed: No such user. cmd: " + getNameFromId(clientId) + " " + msg);
                             }
-                        } else {
-                            sendCommand(getNameFromId(clientId) + " CHAT " + msg);
-                        }
-                        if (msg.startsWith("/kickteam ")) {
+                        } else if (msg.startsWith("/kickteam ")) {
                             if(clientId.equals(Client.id)) { // TODO hardcoded spectator mode
                                 currentNetworkable.handleKeyEventOnServer(msg);
+                                sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
                             } else {
                                 sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
                             }
+                        } else if (msg.startsWith("/rename ")) {
+                            String names[] = msg.split(" ", 3);
+                            if(names.length == 3) {
+                                if(clientId.equals(Client.id) || clientId.equals(getIdFromName(names[1]))) {
+                                    renameByName(names[1], names[2]);
+                                    sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
+                                    sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                                } else {
+                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
+                                }
+                            } else {
+                                renameByName(name, names[1]);
+                                sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
+                                sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                            }
+                        } else {
+                            sendCommand(getNameFromId(clientId) + " CHAT " + msg);
                         }
                     } else if (line.contains("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());
@@ -289,19 +314,19 @@ public class Server implements Runnable {
 
         @Override
         public void close() throws Exception {
-            synchronized (connections) {
-                if (connections != null) {
-                    for (int i = 0; i < connections.size(); i++) {
-                        if (connections.get(i).id.equals(id)) {
-                            connections.remove(i);
+            synchronized (clients) {
+                if (clients != null) {
+                    for (int i = 0; i < clients.size(); i++) {
+                        if (clients.get(i).id.equals(id)) {
+                            clients.remove(i);
                             break;
                         }
                     }
                 }
                 if (out != null) {
-                    for (int i = 0; i < connections.size(); i++) {
-                        if (connections.get(i).out == out) {
-                            connections.remove(i);
+                    for (int i = 0; i < clients.size(); i++) {
+                        if (clients.get(i).out == out) {
+                            clients.remove(i);
                             break;
                         }
                     }
@@ -312,20 +337,10 @@ public class Server implements Runnable {
                 }
             }
         }
-    }
 
-
-    private static class Connection {
-        public BufferedReader in;
-        public PrintWriter out;
-        public String id;
-        public String name;
-
-        private Connection(BufferedReader in, PrintWriter out, String id, String name) {
-            this.in = in;
-            this.out = out;
-            this.id = id;
+        public void setName(String name) {
             this.name = name;
         }
     }
+
 }
