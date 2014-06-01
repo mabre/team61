@@ -26,5 +26,4 @@
 2. Enter your name and the ip address of the host. (NB: “Spectator” checkbox has no effect atm.)
 3. Click on “Join a game”.
 4. Depending on the game status, you see the lobby (and you have to wait till the host starts the game) or the running game. (NB: Changing settings in the lobby has no effect. Do NOT try to click on “start”. ([#56](https://github.com/ProPra14/team61/issues/56)))
-5. Click on “Start”.
-6. Do NOT try to play a revenge after a network game. ([#55](https://github.com/ProPra14/team61/issues/55))
+5. Do NOT try to play a revenge after a network game. ([#55](https://github.com/ProPra14/team61/issues/55))
