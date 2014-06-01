@@ -2,8 +2,6 @@ package de.hhu.propra.team61;
 
 import javafx.scene.paint.Color;
 
-import java.util.ArrayList;
-
 /**
  * This class provides static convenience methods which can be applied to JavaFX objects.
  * Created by markus on 26.05.14.

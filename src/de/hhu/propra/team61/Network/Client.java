@@ -51,6 +51,10 @@ public class Client implements Runnable {
 
             while (true) {
                 String line = in.readLine();
+                if(line == null) {
+                    System.out.println("CLIENT RECEIVED NULL!?");
+                    continue;
+                }
                 System.out.println("CLIENT RECEIVED: " + line);
                 if(line.startsWith("SUBMITNAME")) {
                     out.println(name);

@@ -1,12 +1,12 @@
 package de.hhu.propra.team61.Network;
 
-import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -36,6 +36,8 @@ public class Server implements Runnable {
             } catch (SocketException e) {
                 listener.close();
             }
+        } catch(BindException e) {
+            System.out.println("ERROR " + e.getLocalizedMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -134,11 +136,18 @@ public class Server implements Runnable {
                 String clientName = line.split(" ", 2)[0];
                 if (line.contains("CHAT ")) {
                     sendCommand(line);
-                } if (line.contains("GET_STATUS")) {
+                } else if (line.contains("GET_STATUS")) {
                     out.println(currentNetworkable.getStateForNewClient());
                 } else if (line.contains("KEYEVENT ")) {
-                    if (clientName.equals(Client.name)) { // TODO hardcoded spectator mode
+                    if (clientName.equals(Client.name)) { // TODO hardcoded spectator mode (remember the first client connecting as host)
                         Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
+                    } else {
+                        System.out.println("SERVER: operation not allowed for " + clientName + ": " + line);
+                        System.out.println("    only allowed for " + Client.name);
+                    }
+                } else if (line.contains("STATUS ")) {
+                    if (clientName.equals(Client.name)) {
+                        sendCommand(extractPart(line, clientName+" "));
                     } else {
                         System.out.println("SERVER: operation not allowed for " + clientName + ": " + line);
                         System.out.println("    only allowed for " + Client.name);

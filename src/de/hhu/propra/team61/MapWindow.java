@@ -105,6 +105,8 @@ public class MapWindow extends Application implements Networkable {
         }
 
         initialize();
+
+        if(server != null) server.sendCommand(getStateForNewClient());
     }
 
     public MapWindow(JSONObject input, Stage stageToClose, Client client, Thread clientThread) {

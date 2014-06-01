@@ -143,13 +143,18 @@ public class NetLobby extends Application implements Networkable {
         Text teamNumber = new Text("Max. number of teams: ");
         overviewGrid.add(teamNumber, 2, 1);
         overviewGrid.add(numberOfTeams, 3, 1);
-        Button update = new Button("Update");
-        overviewGrid.add(update, 3, 2);
-        update.setOnAction(e -> {
-            if (Integer.parseInt(numberOfTeams.getText()) > 2 && team3Shown == false) {  addTeams(3); }
-            if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeams(4); }
+        Button applyButton = new Button("Apply Settings");
+        overviewGrid.add(applyButton, 3, 2);
+        applyButton.setOnAction(e -> {
+            if (Integer.parseInt(numberOfTeams.getText()) > 2 && team3Shown == false) {
+                addTeams(3);
+            }
+            if (Integer.parseInt(numberOfTeams.getText()) > 3) {
+                addTeams(4);
+            }
+            client.send(getStateForNewClient());
         });
-        Text chooseMapText = new Text("Choose map:");
+        Text chooseMapText = new Text("Map:");
         overviewGrid.add(chooseMapText, 0, 2);
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
@@ -210,7 +215,7 @@ public class NetLobby extends Application implements Networkable {
             public void handle(ActionEvent e) {
                 Settings.save(toJson(), "NET_SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                 System.out.println("Network-GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), lobby, "NET_SETTINGS_FILE.conf", null, null, null, null);
+                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), lobby, "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread);
             }
         });
         startBox.setAlignment(Pos.CENTER_RIGHT);
@@ -269,30 +274,29 @@ public class NetLobby extends Application implements Networkable {
         return team;
     }
 
-    public void fromJson() {
-        JSONObject savedSettings = Settings.getSavedSettings("NET_SETTINGS_FILE.conf");
-        if(savedSettings.has("numberOfTeams")) {
-            numberOfTeams.setText(savedSettings.getString("numberOfTeams"));
+    public void fromJson(JSONObject json) {
+        if(json.has("numberOfTeams")) {
+            numberOfTeams.setText(json.getString("numberOfTeams"));
             if (Integer.parseInt(numberOfTeams.getText()) > 2) {  addTeams(3); }
             if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeams(4); }
         }
-        if(savedSettings.has("team-size")) {
-            sizeField.setText(savedSettings.getString("team-size"));
+        if(json.has("team-size")) {
+            sizeField.setText(json.getString("team-size"));
         }
-        if(savedSettings.has("map")) {
-            mapChooser.setValue(savedSettings.getString("map"));
+        if(json.has("map")) {
+            mapChooser.setValue(json.getString("map"));
         }
-        if(savedSettings.has("weapon1")) {
-            weapon1.setText(savedSettings.getString("weapon1"));
+        if(json.has("weapon1")) {
+            weapon1.setText(json.getString("weapon1"));
         }
-        if(savedSettings.has("weapon2")) {
-            weapon2.setText(savedSettings.getString("weapon2"));
+        if(json.has("weapon2")) {
+            weapon2.setText(json.getString("weapon2"));
         }
-        if(savedSettings.has("weapon3")) {
-            weapon3.setText(savedSettings.getString("weapon3"));
+        if(json.has("weapon3")) {
+            weapon3.setText(json.getString("weapon3"));
         }
-        if(savedSettings.has("teams")) {
-            JSONArray teamsArray = savedSettings.getJSONArray("teams");
+        if(json.has("teams")) {
+            JSONArray teamsArray = json.getJSONArray("teams");
             for(int i=0; i<teamsArray.length(); i++) {
                 names.get(i).setText(teamsArray.getJSONObject(i).getString("name"));
                 colorPickers.get(i).setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
@@ -301,7 +305,7 @@ public class NetLobby extends Application implements Networkable {
     }
 
     public void addTeams(int number) {
-        if (number == 3) {
+        if (number == 3 && !overviewGrid.getChildren().contains(colorPicker3)) {
             Text team3 = new Text("Team 3");
             overviewGrid.add(team3, 0, 12);
             overviewGrid.add(name3, 1, 12);
@@ -314,7 +318,7 @@ public class NetLobby extends Application implements Networkable {
             });
             team3Shown = true;
         }
-        if (number == 4) {
+        if (number == 4 && !overviewGrid.getChildren().contains(colorPicker4)) {
             Text team4 = new Text("Team 4");
             overviewGrid.add(team4, 0, 13);
             overviewGrid.add(name4, 1, 13);
@@ -376,6 +380,9 @@ public class NetLobby extends Application implements Networkable {
         if(command.startsWith("STATUS MAPWINDOW")) {
             JSONObject state = new JSONObject(extractPart(command, "STATUS MAPWINDOW "));
             new MapWindow(state, lobby, client, clientThread);
+        } else if(command.startsWith("STATUS LOBBY")) {
+            JSONObject state = new JSONObject(extractPart(command, "STATUS LOBBY "));
+            fromJson(state);
         } else if(command.contains("CHAT ")) {
             String name = command.split(" ")[0];
             String msg = command.split("CHAT ")[1];
@@ -387,11 +394,10 @@ public class NetLobby extends Application implements Networkable {
 
     @Override
     public void handleKeyEventOnServer(String keyCode) {
-
     }
 
     @Override
     public String getStateForNewClient() {
-        return null;
+        return "STATUS LOBBY " + this.toJson().toString();
     }
 }
