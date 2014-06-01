@@ -10,6 +10,8 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -30,6 +32,7 @@ public class GameOverWindow extends Application {
     }
 
     public void showWinner(SceneController sceneController, int currentTeam, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        BorderPane root = new BorderPane();
         this.sceneController = sceneController;
         this.server = server;
         this.serverThread = serverThread;
@@ -40,7 +43,12 @@ public class GameOverWindow extends Application {
             shutdown();
         });
         CustomGrid overGrid = new CustomGrid();
-        overGrid.setAlignment(Pos.CENTER);
+        overGrid.setId("overGrid");
+        overGrid.setAlignment(Pos.CENTER_RIGHT);
+        VBox gridBox = new VBox();
+        gridBox.setId("gridBox");
+        gridBox.getChildren().add(overGrid);
+        root.setRight(gridBox);
         Text winner = new Text("The winner is team " + (currentTeam+1) + ".");
         winner.setFont(Font.font("Verdana", 20));
         overGrid.add(winner, 0, 0, 2, 1);
@@ -65,7 +73,8 @@ public class GameOverWindow extends Application {
             }
         });
         overGrid.add(end, 0, 4);
-        Scene overScene = new Scene(overGrid);
+        Scene overScene = new Scene(root);
+        overScene.getStylesheets().add("file:resources/layout/css/gameover.css");
         sceneController.setGameOverScene(overScene);
         sceneController.switchToGameOver();
     }

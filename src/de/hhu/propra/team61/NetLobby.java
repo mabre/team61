@@ -175,6 +175,7 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(weapon3, 1, 6);
 
         VBox rightBox = new VBox();
+        rightBox.setPrefWidth(400);
         CustomGrid listGrid = new CustomGrid();
         VBox spectators = addSpectatorList();
         listGrid.add(spectators, 2, 0);
