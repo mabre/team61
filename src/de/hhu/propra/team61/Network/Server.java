@@ -237,14 +237,10 @@ public class Server implements Runnable {
                     String clientId = line.split(" ", 2)[0]; // TODO equals this.id?
                     if (line.contains("CHAT ")) {
                         String msg = line.split(" ", 3)[2];
-                        System.out.println(">");
                         if (msg.startsWith("/kick ")) {
-                            System.out.println(">>");
                             String userToKick = msg.split(" ", 2)[1];
                             if(clientNameExists(userToKick)) {
-                                System.out.println(">>>");
                                 if(clientId.equals(Client.id) || clientId.equals(getIdFromName(userToKick))) {
-                                    System.out.println(">>>>");
                                     disconnect(userToKick);
                                     sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
                                     sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
@@ -256,6 +252,13 @@ public class Server implements Runnable {
                             }
                         } else {
                             sendCommand(getNameFromId(clientId) + " CHAT " + msg);
+                        }
+                        if (msg.startsWith("/kickteam ")) {
+                            if(clientId.equals(Client.id)) { // TODO hardcoded spectator mode
+                                currentNetworkable.handleKeyEventOnServer(msg);
+                            } else {
+                                sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
+                            }
                         }
                     } else if (line.contains("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());

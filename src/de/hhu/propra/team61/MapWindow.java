@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
+import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by kegny on 08.05.14.
@@ -210,7 +211,7 @@ public class MapWindow extends Application implements Networkable {
                                 System.out.println("CollisionWithFigureException, let's harm somebody!");
                                 Platform.runLater(() -> {
                                     e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
-                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHp());
+                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHealth());
                                     server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
                                     endTurn();
                                 });
@@ -434,10 +435,12 @@ public class MapWindow extends Application implements Networkable {
                 currentTeam = Integer.parseInt(cmd[1]);
                 break;
             case "SET_HP":
-                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHp(Integer.parseInt(cmd[3]));
+                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
+            case "SUDDEN_DEATH":
+                    teams.get(Integer.parseInt(cmd[1])).suddenDeath();
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
                 break;
@@ -448,6 +451,19 @@ public class MapWindow extends Application implements Networkable {
 
     @Override
     public void handleKeyEventOnServer(String keyCode) {
+        if (keyCode.startsWith("/kickteam ")) {
+            try {
+                int teamNumber = Integer.parseInt(extractPart(keyCode, "/kickteam "))-1;
+                if(teamNumber >= teams.size()) throw new IndexOutOfBoundsException();
+                server.sendCommand("SUDDEN_DEATH " + teamNumber);
+                if(currentTeam == teamNumber) {
+                    endTurn();
+                }
+            } catch(NumberFormatException | IndexOutOfBoundsException e) {
+                    System.out.println("malformed command " + keyCode);
+            }
+        }
+
         Point2D v = null;
 
         switch(keyCode) {
