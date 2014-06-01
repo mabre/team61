@@ -330,7 +330,11 @@ public class MapWindow extends Application {
     public void endTurn() {
         turnCount++;
 
+        int NumberOfLivingTeams = 0;
+        int tempCurrentTeam = currentTeam;
+
         int oldCurrentTeam = currentTeam;
+
         do {
             currentTeam++;
             if (currentTeam == teams.size()) {
@@ -340,13 +344,24 @@ public class MapWindow extends Application {
                 teamLabel.setText("team" + currentTeam + "won");
                 return;
             }
+
         }
         while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         teams.get(currentTeam).endRound();
         teamLabel.setText("It's team " + currentTeam + " turn");
         System.out.println("Turn " + currentTeam + ", Team " + currentTeam + ", Worm \"" + teams.get(currentTeam).getCurrentFigure().getName() + "\"");
+
+
+        for (; tempCurrentTeam != teams.size() ; tempCurrentTeam++ ){
+            NumberOfLivingTeams++;
+        }
+        if (NumberOfLivingTeams < 2) {
+            teamLabel.setText("team" + currentTeam + "won");
+        }
+
     }
+
 
     @Override
     public void start(Stage ostage) {
