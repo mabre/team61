@@ -118,9 +118,6 @@ public class Figure extends StackPane {
     public String getName(){return name;}
     public void setName(String name){this.name = name;}
 
-    public int getHealth() {return health;}
-    public void setHealth(int health) {this.health = health;}
-
     public int getArmor() {return armor;}
     public void setArmor(int armor) {this.armor = armor;}
 
@@ -175,6 +172,15 @@ public class Figure extends StackPane {
         }
         hpLabel.setText(health+"");
         System.out.println(name + " got damage " + damage + ", health at " + health);
+    }
+
+    public void setHealth(int hp) {
+        this.health = hp;
+        sufferDamage(0); // redraws the label and validated new hp
+    }
+
+    public int getHealth() {
+        return health;
     }
 
     public Rectangle2D getHitRegion() {

@@ -1,34 +1,39 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.GUI.Chat;
 import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.Network.Client;
+import de.hhu.propra.team61.Network.Networkable;
+import de.hhu.propra.team61.Network.Server;
 import de.hhu.propra.team61.Objects.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.paint.Color;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
-import static java.lang.Thread.sleep;
+import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
+import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by kegny on 08.05.14.
  * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
-public class MapWindow extends Application {
+public class MapWindow extends Application implements Networkable {
     private ArrayList<Team> teams;
     private Scene drawing;
     private Stage primaryStage;
@@ -44,28 +49,23 @@ public class MapWindow extends Application {
     private Stage stageToClose;
     private int teamquantity;
     private int teamsize;
+    private Server server;
+    private Client client;
+    private Thread serverThread;
+    private Thread clientThread;
+    private String map; // TODO do we need this?
+    private Chat chat;
 
-    @Deprecated
-    public MapWindow(String map) {
-        try {
-            terrain = new Terrain(TerrainManager.load(map));
-        } catch (FileNotFoundException e) {
-            // TODO do something sensible here
-            e.printStackTrace();
-        }
+    public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.map = map;
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerCurrentNetworkable(this);
+        this.server = server;
+        this.serverThread = serverThread;
+        if(server != null) server.registerCurrentNetworkable(this);
 
-        teams = new ArrayList<>();
-        for(int i=0; i<2; i++) { // TODO hard coded 2 teams, 2 figures
-            ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
-            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
-            teams.add(new Team(terrain.getRandomSpawnPoints(2), weapons, Color.WHITE));
-        }
-
-        initialize();
-    }
-
-    public MapWindow(String map, Stage stageToClose, String file) {
+        // TODO code duplication; we have to check what we actually need at the end of the week
         try {
             terrain = new Terrain(TerrainManager.load(map));
         } catch (FileNotFoundException e) {
@@ -88,10 +88,17 @@ public class MapWindow extends Application {
         }
 
         initialize();
+
+        if(server != null) server.sendCommand(getStateForNewClient());
     }
 
-    public MapWindow(JSONObject input, Stage stageToClose) {
-        this.terrain = new Terrain(TerrainManager.loadSavedLevel());
+    public MapWindow(JSONObject input, Stage stageToClose, Client client, Thread clientThread) {
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerCurrentNetworkable(this);
+
+        // TODO implement fromJson (code duplication) -> bring the two json formats into line (weapons are team properties)
+        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
@@ -106,18 +113,43 @@ public class MapWindow extends Application {
         initialize();
     }
 
+    public MapWindow(JSONObject input, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+        this.client = client;
+        this.clientThread = clientThread;
+        client.registerCurrentNetworkable(this);
+        this.server = server;
+        this.serverThread = serverThread;
+        if(server != null) server.registerCurrentNetworkable(this);
+
+        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
+
+        this.stageToClose = stageToClose;
+
+        JSONObject settings = Settings.getSavedSettings(file);
+        teams = new ArrayList<>();
+        JSONArray teamsArray = input.getJSONArray("teams");
+        for(int i=0; i<teamsArray.length(); i++) {
+            teams.add(new Team(teamsArray.getJSONObject(i)));
+        }
+
+        turnCount = input.getInt("turnCount");
+        currentTeam = input.getInt("currentTeam");
+
+        initialize();
+
+        if(server != null) server.sendCommand(getStateForNewClient());
+    }
+
     /**
      * creates the stage, so that everything is visible
      */
     private void initialize() {
         primaryStage = new Stage();
         primaryStage.setOnCloseRequest(event -> {
-            moveObjectsThread.interrupt();
+            shutdown();
 
-            GameState.save(this.toJson());
-            TerrainManager.save(terrain.toArrayList());
-            System.out.println("MapWindow: saved game state");
             stageToClose.show();
+            primaryStage.close();
         });
 
         // pane containing terrain, labels at the bottom etc.
@@ -127,165 +159,76 @@ public class MapWindow extends Application {
         centerView.setAlignment(Pos.TOP_LEFT);
         centerView.getChildren().add(terrain);
         root.setCenter(centerView);
+
         for(Team team: teams) {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
-
         root.setBottom(teamLabel);
 
-        drawing = new Scene(root, 800, 600);
+        drawing = new Scene(root, 1600, 300);
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
-                    Point2D v = null;
-                    switch (keyEvent.getCode()) {
-                        case L:
-                        case NUMBER_SIGN:
-                            cheatMode();
+                    switch(keyEvent.getCode()) {
+                        case C:
+                            System.out.println("toggle chat");
+                            chat.setVisible(!chat.isVisible());
                             break;
-                        case SPACE: //Fire
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                try {
-                                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(); // ToDo Do something with the projectile
-                                    flyingProjectile = projectile;
-                                    centerView.getChildren().add(flyingProjectile);
-                                } catch (NoMunitionException e) {
-                                    System.out.println("no munition");
-                                    break;
-                                }
-
-                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
-                            }
-                            break;
-                        case UP:
-                        case W:
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                            }
-                            break;
-                        case DOWN:
-                        case S:
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                            }
-                            break;
-                        case LEFT:
-                        case A:
-                            teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                                break;
-                            } else {
-                                v = new Point2D(-10, 0);
-                            }
-                        case RIGHT:
-                        case D:
-                            teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
-                            if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                            } else {
-                                if(v == null) v = new Point2D(+10, 0);
-                                Figure f = teams.get(currentTeam).getCurrentFigure();
-                                Point2D pos = new Point2D(f.getPosition().getX()*8, f.getPosition().getY()*8);
-                                Rectangle2D hitRegion = f.getHitRegion();
-                                Point2D newPos = null;
-                                try {
-                                    newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
-                                } catch (CollisionWithTerrainException e) {
-                                    System.out.println("CollisionWithTerrainException, stopped movement");
-                                    newPos = e.getLastGoodPosition();
-                                } catch (CollisionWithFigureException e) {
-                                    // figures can walk through each other // TODO really?
-                                    System.out.println("ERROR How did we get here?");
-                                }
-                                f.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
-                            }
-                            break;
-                        case DIGIT1: // ToDo hardcoded, but sufficient for now
-                            if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                }
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            }
-                            break;
-                        case DIGIT2:
-                            if(teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                }
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            }
-                            break;
-                        case DIGIT3:
-                            if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                }
-                                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            }
-                            break;
+                        default:
+                            client.sendKeyEvent(keyEvent.getCode());
                     }
                 }
         );
+
+        chat = new Chat(client);
+        chat.setMaxWidth(300);
+        chat.setUnobtrusive(true);
+        centerView.getChildren().add(chat);
+        chat.setVisible(false);
 
         primaryStage.setTitle("The Playground");
         primaryStage.setScene(drawing);
         primaryStage.show();
 
-        moveObjectsThread = new Thread(() -> { // TODO move this code to own class
-            try {
-                long before = System.currentTimeMillis(), now, sleep;
-                while (true) {
-                    //System.out.println("here");
-                    if(flyingProjectile != null) {
-                        try {
-                            final Point2D newPos;
-                            newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
-                            Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
-                        } catch (CollisionWithTerrainException e) {
-                            System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
-                            final Point2D newPos = e.getLastGoodPosition();
-                            //Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
-                            Platform.runLater(() -> {
-                                centerView.getChildren().remove(flyingProjectile);
-                                flyingProjectile = null;
+        if(server != null) { // only the server should do calculations
+            moveObjectsThread = new Thread(() -> { // TODO move this code to own class
+                try {
+                    long before = System.currentTimeMillis(), now, sleep;
+                    while (true) {
+                        if (flyingProjectile != null) {
+                            try {
+                                final Point2D newPos;
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
+                                Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
+                                server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                            } catch (CollisionWithTerrainException e) {
+                                System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
+                                server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition (might still be !=null in next iteration)
                                 endTurn();
-                            }); // TODO potential race condition
-                        } catch (CollisionWithFigureException e) {
-                            System.out.println("CollisionWithFigureException, let's harm somebody!");
-                            Platform.runLater(() -> {
-                                e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
-                                centerView.getChildren().remove(flyingProjectile);
-                                flyingProjectile = null;
-                                endTurn();
-                            }); // TODO potential race condition
+                            } catch (CollisionWithFigureException e) {
+                                System.out.println("CollisionWithFigureException, let's harm somebody!");
+                                Platform.runLater(() -> {
+                                    e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
+                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHealth());
+                                    server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
+                                    endTurn();
+                                });
+                            }
                         }
+                        now = System.currentTimeMillis();
+                        sleep = Math.max(0, (1000 / 10) - (now - before)); // 10 fps
+                        Thread.sleep(sleep);
+                        before = System.currentTimeMillis();
                     }
-                    now = System.currentTimeMillis();
-                    sleep = Math.max(0, (1000/10)-(now-before)); // 10 fps
-                    Thread.sleep(sleep);
-                    before = System.currentTimeMillis();
+                } catch (InterruptedException e) {
+                    System.out.println("moveObjectsThread shut down");
                 }
-            } catch (InterruptedException e) {
-                System.out.println("moveObjectsThread shut down");
-            }
-        });
-        moveObjectsThread.start();
+            });
+            moveObjectsThread.start();
+        }
+
         stageToClose.close();
     }
 
@@ -301,7 +244,24 @@ public class MapWindow extends Application {
         output.put("teams", teamsArray);
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
+        output.put("terrain", TerrainManager.toString(terrain.toArrayList()));
         return output;
+    }
+
+    /**
+     * @param figure a figure object reference
+     * @return team index + " " + figure index of the given figure
+     */
+    private String getFigureId(Figure figure) {
+        String id = "";
+        for(int i=0; i<teams.size(); i++) {
+            for(int j=0; j<teams.get(i).getFigures().size(); j++) {
+                if(teams.get(i).getFigures().get(j) == figure) {
+                    id = i+" "+j;
+                }
+            }
+        }
+        return id;
     }
 
     @Deprecated
@@ -328,7 +288,8 @@ public class MapWindow extends Application {
     }
     
     public void endTurn() {
-        turnCount++;
+        turnCount++; // TODO timing issue
+        server.sendCommand("SET_TURN_COUNT " + turnCount);
 
         int oldCurrentTeam = currentTeam;
         do {
@@ -337,19 +298,242 @@ public class MapWindow extends Application {
                 currentTeam = 0;
             }
             if (currentTeam == oldCurrentTeam) {
-                teamLabel.setText("team" + currentTeam + "won");
+                server.sendCommand("GAME_OVER " + currentTeam);
                 return;
             }
-        }
-        while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
+        } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
-        teams.get(currentTeam).endRound();
-        teamLabel.setText("It's team " + currentTeam + " turn");
-        System.out.println("Turn " + currentTeam + ", Team " + currentTeam + ", Worm \"" + teams.get(currentTeam).getCurrentFigure().getName() + "\"");
+        server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
+        server.sendCommand("CURRENT_TEAM_END_ROUND");
+
+        String teamLabelText = "Turn: " + turnCount + " It’s Team " + currentTeam + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
+        System.out.println(teamLabelText);
+    }
+
+    /**
+     * stops all map window threads and saves game state
+     */
+    private void shutdown() {
+        if(moveObjectsThread != null) moveObjectsThread.interrupt();
+
+        GameState.save(this.toJson());
+        System.out.println("MapWindow: saved game state");
+
+        clientThread.interrupt();
+        if(serverThread != null) serverThread.interrupt();
+        System.out.println("MapWindow threads interrupted");
+        client.stop();
+        if(server != null) server.stop();
+        System.out.println("MapWindow client/server (if any) stopped");
     }
 
     @Override
     public void start(Stage ostage) {
+    }
+
+    @Override
+    public void handleOnClient(String command) {
+        if(command.contains("CHAT ")) {
+            String name = command.split(" ")[0];
+            String msg = command.split("CHAT ")[1];
+            chat.appendMessage(name, msg);
+            return;
+        }
+
+        String[] cmd = command.split(" ");
+
+        switch(cmd[0]) {
+            case "CURRENT_TEAM_END_ROUND":
+                teams.get(currentTeam).endRound();
+                break;
+            case "CURRENT_FIGURE_ANGLE_DOWN":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_ANGLE_UP":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                }
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                }
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    }
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                }
+                break;
+            case "CURRENT_FIGURE_FACE_LEFT":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_FACE_RIGHT":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_SET_POSITION":
+                Figure f = teams.get(currentTeam).getCurrentFigure();
+                f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
+                break;
+//            case "Number Sign": // TODO really? this is broken and deprecated
+//                cheatMode();
+//                break;
+            case "CURRENT_FIGURE_SHOOT":
+                try {
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                    flyingProjectile = projectile;
+                    centerView.getChildren().add(flyingProjectile);
+                } catch (NoMunitionException e) {
+                    System.out.println("no munition");
+                    break;
+                }
+                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "GAME_OVER":
+                primaryStage.close();
+                if(moveObjectsThread != null) moveObjectsThread.interrupt();
+                GameOverWindow gameOverWindow = new GameOverWindow();
+                gameOverWindow.showWinner(Integer.parseInt(cmd[1]), stageToClose, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                break;
+            case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
+                flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
+                break;
+            case "REMOVE_FLYING_PROJECTILE":
+                centerView.getChildren().remove(flyingProjectile);
+                flyingProjectile = null;
+                break;
+            case "SET_CURRENT_TEAM":
+                currentTeam = Integer.parseInt(cmd[1]);
+                break;
+            case "SET_HP":
+                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+            case "SET_TURN_COUNT":
+                turnCount = Integer.parseInt(cmd[1]);
+                break;
+            case "SUDDEN_DEATH":
+                    teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+            case "TEAM_LABEL_SET_TEXT":
+                teamLabel.setText(arrayToString(cmd, 1));
+                break;
+            default:
+                System.out.println("handleKeyEventOnClient: no event for key " + command);
+        }
+    }
+
+    @Override
+    public void handleKeyEventOnServer(String keyCode) {
+        if (keyCode.startsWith("/kickteam ")) {
+            try {
+                int teamNumber = Integer.parseInt(extractPart(keyCode, "/kickteam "))-1;
+                if(teamNumber >= teams.size()) throw new IndexOutOfBoundsException();
+                server.sendCommand("SUDDEN_DEATH " + teamNumber);
+                if(currentTeam == teamNumber) {
+                    endTurn();
+                }
+            } catch(NumberFormatException | IndexOutOfBoundsException e) {
+                    System.out.println("malformed command " + keyCode);
+            }
+        }
+
+        Point2D v = null;
+
+        switch(keyCode) {
+            case "Space":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    server.sendCommand("CURRENT_FIGURE_SHOOT");
+                }
+                break;
+            // these codes always result in optical changes only, so nothing to do on server side
+            case "Up":
+            case "W":
+                server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
+                break;
+            case "Down":
+            case "S":
+                server.sendCommand("CURRENT_FIGURE_ANGLE_DOWN");
+                break;
+            case "Left":
+            case "A":
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                   server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
+                   break;
+                } else {
+                    v = new Point2D(-10, 0);
+                }
+            case "Right":
+            case "D":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
+                } else {
+                    if (v == null) v = new Point2D(+10, 0);
+                    Figure f = teams.get(currentTeam).getCurrentFigure();
+                    Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
+                    Rectangle2D hitRegion = f.getHitRegion();
+                    Point2D newPos = null;
+                    try {
+                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
+                    } catch (CollisionWithTerrainException e) {
+                        System.out.println("CollisionWithTerrainException, stopped movement");
+                        newPos = e.getLastGoodPosition();
+                    } catch (CollisionWithFigureException e) {
+                        // figures can walk through each other // TODO really?
+                        System.out.println("ERROR How did we get here?");
+                    }
+                    server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                }
+                break;
+            case "1":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_1");
+                }
+                break;
+            case "2":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 2) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_2");
+                }
+                break;
+            case "3":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_3");
+                }
+                break;
+            default:
+                System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
+        }
+    }
+
+    @Override
+    public String getStateForNewClient() {
+        return "STATUS MAPWINDOW " + this.toJson().toString();
     }
 
 }
