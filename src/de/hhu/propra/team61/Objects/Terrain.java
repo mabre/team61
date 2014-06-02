@@ -203,7 +203,7 @@ public class Terrain extends GridPane {
             boolean triedDiagonal = false;
             int tries = 0;
             Point2D diagonalDirection = new Point2D(0, 0);
-            do {
+            do { // while(triedDiagonal && ++tries<2)
                 triedDiagonal = false;
 
                 // calculate indices of fields which are touched by hitRegion

@@ -30,7 +30,7 @@ public class Gun extends Weapon { //ToDo rename to a more fitting one
         if(munition > 0) {
             Image image = new Image("file:resources/weapons/temp0.png",4,4,true,true);
             int offset = (int)(16-image.getHeight())/2;
-            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+offset, getTranslateY()+offset), new Point2D(getCrosshair().getTranslateX()+offset, getCrosshair().getTranslateY()+offset), 4, getDamage());
+            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+offset, getTranslateY()+offset), new Point2D(getCrosshair().getTranslateX()+offset, getCrosshair().getTranslateY()+offset), 10, getDamage());
             munition--;
             System.out.println("munition left: " + munition);
             resetAngle();

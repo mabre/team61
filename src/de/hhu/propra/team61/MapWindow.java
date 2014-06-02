@@ -56,6 +56,8 @@ public class MapWindow extends Application implements Networkable {
     private String map; // TODO do we need this?
     private Chat chat;
 
+    private final static int FIGURE_SPEED = 5;
+
     public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         this.map = map;
         this.client = client;
@@ -487,14 +489,14 @@ public class MapWindow extends Application implements Networkable {
                    server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
                    break;
                 } else {
-                    v = new Point2D(-10, 0);
+                    v = new Point2D(-FIGURE_SPEED, 0);
                 }
             case "Right":
             case "D":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
                 } else {
-                    if (v == null) v = new Point2D(+10, 0);
+                    if (v == null) v = new Point2D(FIGURE_SPEED, 0);
                     Figure f = teams.get(currentTeam).getCurrentFigure();
                     Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
                     Rectangle2D hitRegion = f.getHitRegion();
