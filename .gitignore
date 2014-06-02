@@ -4,6 +4,15 @@
 *.iws
 out/
 doc/
+# Eclipse
+.classpath
+.metadata/
+.project
+bin/
+core
+src/META-INF/
+*.eml
+*.userlibraries
 # Java
 *.class
 hs_err_pid*
