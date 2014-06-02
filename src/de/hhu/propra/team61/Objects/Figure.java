@@ -5,10 +5,14 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+
+import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 /**
  * Created by kevgny on 14.05.14.
@@ -25,11 +29,14 @@ public class Figure extends StackPane {
     private boolean isPoisoned;
     private boolean isStuck;
 
+    private boolean isActive;
+
     private Item selectedItem;
 
     private Rectangle2D hitRegion;
     private ImageView imageView;
     private Label hpLabel;
+    private Color color;
 
     // In and Out
     public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
@@ -85,16 +92,18 @@ public class Figure extends StackPane {
     private void initialize() {
         setAlignment(Pos.TOP_LEFT);
 
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),16,16);
+        hitRegion = new Rectangle2D(imageView.getTranslateX(), imageView.getTranslateY(), 16, 16);
+
+        selectedItem = null;
+        hpLabel = new Label(health + "");
+        hpLabel.setStyle("-fx-font-weight:bold;");
+        hpLabel.setEffect(generateHpShadow());
+        setPosition(getPosition()); // updates label position
+        getChildren().add(hpLabel);
 
         Image image = new Image("file:resources/figures/pin.png", 16, 16, true, true);
         imageView.setImage(image);
         getChildren().add(imageView);
-
-        selectedItem = null;
-        hpLabel = new Label(health+"");
-        setPosition(getPosition()); // updates label position
-        getChildren().add(hpLabel);
     }
 
     public JSONObject toJson(){
@@ -107,12 +116,29 @@ public class Figure extends StackPane {
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
-        output.put("isStuck",isStuck);
+        output.put("isStuck", isStuck);
         return output;
     }
 
+    public Effect generateHpShadow() {
+        if(color == null) return  new DropShadow();
+
+        DropShadow ds = new DropShadow();
+        ds.setOffsetY(0);
+
+        if(color.getBrightness() > .5) {
+            ds.setColor(Color.GRAY);
+        } else {
+            ds.setColor(Color.LIGHTGRAY);
+        }
+
+        return ds;
+    }
+
     public void setColor(Color color) {
+        this.color = color;
         hpLabel.setTextFill(color);
+        hpLabel.setEffect(generateHpShadow());
     }
 
     public String getName(){return name;}
@@ -129,6 +155,16 @@ public class Figure extends StackPane {
 
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+        hpLabel.setEffect(generateHpShadow());
+        if(isActive) {
+            hpLabel.setStyle("-fx-font-weight:bold; -fx-border-color: rgba(255,0,0,.2); -fx-border-style: solid; -fx-border-width: 1px; -fx-border-radius: 5px;");
+        } else {
+            hpLabel.setStyle("-fx-font-weight:bold;");
+        }
+    }
 
     // TODO rethink parameter, /8 is bad!
     public void setPosition(Point2D position) {

@@ -292,7 +292,7 @@ public class MapWindow extends Application implements Networkable {
     public void endTurn() {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
-
+        server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
         int oldCurrentTeam = currentTeam;
         do {
             currentTeam++;
@@ -306,7 +306,8 @@ public class MapWindow extends Application implements Networkable {
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
-        server.sendCommand("CURRENT_TEAM_END_ROUND");
+        server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
+        server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
 
         String teamLabelText = "Turn: " + turnCount + " It’s Team " + currentTeam + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
@@ -346,8 +347,12 @@ public class MapWindow extends Application implements Networkable {
         String[] cmd = command.split(" ");
 
         switch(cmd[0]) {
+            case "ACTIVATE_FIGURE":
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
+                break;
             case "CURRENT_TEAM_END_ROUND":
-                teams.get(currentTeam).endRound();
+                teams.get(Integer.parseInt(cmd[1])).endRound();
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
@@ -420,6 +425,9 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
+            case "DEACTIVATE_FIGURE":
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
+                break;
             case "GAME_OVER":
                 primaryStage.close();
                 if(moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -434,6 +442,7 @@ public class MapWindow extends Application implements Networkable {
                 flyingProjectile = null;
                 break;
             case "SET_CURRENT_TEAM":
+                teams.get(currentTeam).getCurrentFigure().setActive(false);
                 currentTeam = Integer.parseInt(cmd[1]);
                 break;
             case "SET_HP":
@@ -442,7 +451,7 @@ public class MapWindow extends Application implements Networkable {
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
             case "SUDDEN_DEATH":
-                    teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+                teams.get(Integer.parseInt(cmd[1])).suddenDeath();
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
                 break;
