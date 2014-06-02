@@ -200,7 +200,7 @@ public class MapWindow extends Application implements Networkable {
                         if (flyingProjectile != null) {
                             try {
                                 final Point2D newPos;
-                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, false);
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                             } catch (CollisionWithTerrainException e) {
@@ -500,7 +500,7 @@ public class MapWindow extends Application implements Networkable {
                     Rectangle2D hitRegion = f.getHitRegion();
                     Point2D newPos = null;
                     try {
-                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
+                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
                     } catch (CollisionWithTerrainException e) {
                         System.out.println("CollisionWithTerrainException, stopped movement");
                         newPos = e.getLastGoodPosition();

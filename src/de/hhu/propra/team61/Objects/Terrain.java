@@ -173,13 +173,14 @@ public class Terrain extends GridPane {
      * @param direction direction vector of the object
      * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
-     * @param canWalkThroughFigures
+     * @param canWalkThroughFigures when true, the object is able to walk through figures (no CollisionWithFigureException will be thrown) TODO therefore, have a wrapper function which does not throw this exception
      * @param hasMass when true, the object is moved down to the ground TODO temporary, till real physics is there
-     * @return new position
-     * @throws CollisionWithFigureException TODO
-     * @throws CollisionWithTerrainException TODO
+     * @param snapToPx when true, the positions returned are rounded to whole px
+     * @return new position of the object
+     * @throws CollisionWithFigureException thrown when hitting a figure
+     * @throws CollisionWithTerrainException thrown when hitting terrain
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean hasMass) throws CollisionWithTerrainException, CollisionWithFigureException {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean hasMass, boolean snapToPx) throws CollisionWithTerrainException, CollisionWithFigureException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         Point2D preferredFinalPosition = oldPosition.add(direction);
         Point2D normalizedDirection = direction.normalize();
@@ -244,7 +245,9 @@ public class Terrain extends GridPane {
                                 } else {
                                     newPosition = newPosition.subtract(diagonalDirection);
                                 }
-                                newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
+                                if(snapToPx) {
+                                    newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
+                                }
                                 if(intersectingFigure == null) {
                                     throw new CollisionWithTerrainException(newPosition);
                                 } else {
@@ -295,7 +298,9 @@ public class Terrain extends GridPane {
 
         } // for i<runs
 
-        newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
+        if(snapToPx) {
+            newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
+        }
         return newPosition;
     }
 
