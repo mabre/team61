@@ -1,6 +1,5 @@
 package de.hhu.propra.team61.GUI;
 
-import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.Chat;
 import de.hhu.propra.team61.GUI.CustomGrid;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
@@ -14,6 +13,8 @@ import de.hhu.propra.team61.Network.Server;
 import de.hhu.propra.team61.SceneController;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -56,17 +57,15 @@ public class NetLobby extends Application implements Networkable {
     Chat chatBox;
     private VBox spectatorBox;
     private CustomGrid listGrid;
-    CheckBox spectator2 = new CheckBox("Spectator");
-    CheckBox spectator3 = new CheckBox("Spectator");
-    CheckBox spectator4 = new CheckBox("Spectator");
-    /*Boolean ready1 = false;
-    Boolean ready2 = false;
-    Boolean ready3 = false;*/
-    Text ready2 = new Text();
+    CheckBox spectator = new CheckBox("Spectator");
+    Text readyHost = new Text("ready");
+    Text ready2 = new Text("not ready");
     Text ready3 = new Text("ready");
     Text ready4 = new Text("ready");
     Text notReady = new Text();
     SceneController sceneController = new SceneController();
+
+    Boolean isHost;
 
     Server server;
     Thread serverThread;
@@ -78,6 +77,7 @@ public class NetLobby extends Application implements Networkable {
      * @param hostName the name of the first team (ie the first team on the host system)
      */
     public NetLobby(String hostName, SceneController sceneController) {
+        this.isHost = true;
         this.sceneController = sceneController;
         serverThread = new Thread(server = new Server(() -> {
             this.hostName.setText(hostName);
@@ -99,6 +99,7 @@ public class NetLobby extends Application implements Networkable {
      * @param name name of the player/team
      */
     public NetLobby(String ipAddress, String name, SceneController sceneController) {
+        this.isHost = false;
         this.sceneController = sceneController;
         clientThread = new Thread(client = new Client(ipAddress, name, () -> {
             client.send("GET_STATUS");
@@ -132,15 +133,15 @@ public class NetLobby extends Application implements Networkable {
         Text team2 = new Text("Team 2");
         overviewGrid.add(team2, 0, 11);
         overviewGrid.add(name2, 1, 11);
+        colorPicker2.setValue(Color.web("#000000"));
         overviewGrid.add(colorPicker2, 2, 11);
         Button rmTeam2 = new Button("X");
         rmTeam2.getStyleClass().add("removeButton");
-        overviewGrid.add(rmTeam2, 6, 11);
+        overviewGrid.add(rmTeam2, 5, 11);
         rmTeam2.setOnAction(e -> {
             removePlayer(name2.getText(), 1);
         });
-        overviewGrid.add(ready2, 5, 11);
-        overviewGrid.add(spectator2, 3, 11, 2, 1);
+        overviewGrid.add(ready2, 4, 11);
 
         Text generalSettings = new Text("Choose general settings:");
         generalSettings.setFont(Font.font(16));
@@ -186,7 +187,7 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(weapon3, 1, 6);
 
         VBox rightBox = new VBox();
-        rightBox.setPrefWidth(320);
+        rightBox.setPrefWidth(355);
         listGrid = new CustomGrid();
         listGrid.setPrefHeight(200);
         generateSpectatorsBox();
@@ -237,12 +238,16 @@ public class NetLobby extends Application implements Networkable {
         ready.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                ready2.setText("Ready"); //TODO setText of Client who clicked
+                ready2.setText("Ready"); //TODO setText of Client who clicked and send information to server
             }
         });
         startBox.setAlignment(Pos.CENTER_RIGHT);
-        //TODO Abfrage, ob Host oder Player, je nachdem Start oder Ready anzeigen
-        startBox.getChildren().add(start);
+        startBox.setPrefWidth(400);
+        if (isHost) {
+            startBox.getChildren().add(start);
+        } else {
+            startBox.getChildren().add(ready);
+        }
         topBox.setAlignment(Pos.CENTER_LEFT);
         topBox.getChildren().addAll(lobbyText, startBox);
         topBox.setId("topBox");
@@ -250,6 +255,13 @@ public class NetLobby extends Application implements Networkable {
     }
 
     private void generateSpectatorsBox() {
+        listGrid.add(spectator, 0, 0);
+        spectator.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                spectatorCheck(newValue);
+            }
+        });
         if(spectatorBox != null) listGrid.getChildren().removeAll(spectatorBox);
         spectatorBox = new VBox();
         Text spectatorText = new Text("Spectators:");
@@ -258,7 +270,7 @@ public class NetLobby extends Application implements Networkable {
             Text newSpectator = new Text(spectators.get(i));
             spectatorBox.getChildren().add(newSpectator);
         }
-        listGrid.add(spectatorBox, 2, 0);
+        listGrid.add(spectatorBox, 0, 1);
     }
 
     private void updateSpectators(JSONObject spectators) {
@@ -284,26 +296,31 @@ public class NetLobby extends Application implements Networkable {
         output.put("weapon2", weapon2.getText());
         output.put("weapon3", weapon3.getText());
         JSONArray teams = new JSONArray();
-        JSONObject team1 = getJsonForTeam(hostName.getText(), hostColorPicker);
+        JSONObject team1 = getJsonForTeam(hostName.getText(), hostColorPicker, readyHost);
         teams.put(team1);
-        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2);
+        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2, ready2);
         teams.put(team2);
         if (Integer.parseInt(numberOfTeams.getText()) > 2) {
-            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3);
+            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3, ready3);
             teams.put(team3);
         }
         if (Integer.parseInt(numberOfTeams.getText()) > 3) {
-            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4);
+            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4, ready4);
             teams.put(team4);
         }
         output.put("teams", teams);
         return output;
     }
 
-    public JSONObject getJsonForTeam(String name, ColorPicker color) {
+    public JSONObject getJsonForTeam(String name, ColorPicker color, Text ready) {
+        Boolean ifReady = false;
         JSONObject team = new JSONObject();
         team.put("name", name);
         team.put("color", toHex(color.getValue()));
+        if (ready.getText() == "ready") {
+            ifReady = true;
+        }
+        team.put("ready", ifReady);
         return team;
     }
 
@@ -342,6 +359,7 @@ public class NetLobby extends Application implements Networkable {
             Text team3 = new Text("Team 3");
             overviewGrid.add(team3, 0, 12);
             overviewGrid.add(name3, 1, 12);
+            colorPicker3.setValue(Color.web("#123456"));
             overviewGrid.add(colorPicker3, 2, 12);
             Button rmTeam3 = new Button("X");
             rmTeam3.getStyleClass().add("removeButton");
@@ -349,15 +367,15 @@ public class NetLobby extends Application implements Networkable {
             rmTeam3.setOnAction(e -> {
                 removePlayer(name3.getText(), 2);
             });
-            overviewGrid.add(spectator3, 3, 12, 2, 1);
-            ready3.setText("");
-            overviewGrid.add(ready3, 6, 12);
+            ready3.setText("not ready");
+            overviewGrid.add(ready3, 4, 12);
             team3Shown = true;
         }
         if (number == 4 && !overviewGrid.getChildren().contains(colorPicker4)) {
             Text team4 = new Text("Team 4");
             overviewGrid.add(team4, 0, 13);
             overviewGrid.add(name4, 1, 13);
+            colorPicker4.setValue(Color.web("#654321"));
             overviewGrid.add(colorPicker4, 2, 13);
             Button rmTeam4 = new Button("X");
             rmTeam4.getStyleClass().add("removeButton");
@@ -365,9 +383,8 @@ public class NetLobby extends Application implements Networkable {
             rmTeam4.setOnAction(e -> {
                 removePlayer(name4.getText(), 3);
             });
-            overviewGrid.add(spectator4, 3, 13, 2, 1);
-            ready4.setText("");
-            overviewGrid.add(ready4, 6, 13);
+            ready4.setText("not ready");
+            overviewGrid.add(ready4, 4, 13);
         }
     }
 
@@ -431,6 +448,14 @@ public class NetLobby extends Application implements Networkable {
             chatBox.appendMessage(name, msg);
         } else {
             System.out.println("NetLobby: unknown command " + command);
+        }
+    }
+
+    public void spectatorCheck(Boolean ifChecked) {
+        if (ifChecked == true) {
+            System.out.println("Spectator is checked");
+        } else {
+            System.out.println("Spectator is unchecked");
         }
     }
 
