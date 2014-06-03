@@ -45,7 +45,6 @@ public class MapWindow extends Application implements Networkable {
     private int levelCounter = 0;
     private Projectile flyingProjectile = null;
     private Thread moveObjectsThread;
-    private Stage stageToClose;
     private int teamquantity;
     private int teamsize;
     private Server server;
@@ -224,8 +223,6 @@ public class MapWindow extends Application implements Networkable {
             });
             moveObjectsThread.start();
         }
-
-        stageToClose.close();
     }
 
     /**
