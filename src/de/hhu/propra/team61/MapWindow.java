@@ -56,6 +56,8 @@ public class MapWindow extends Application implements Networkable {
     private Chat chat;
     SceneController sceneController;
 
+    private final static int FIGURE_SPEED = 5;
+
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.map = map;
@@ -194,7 +196,7 @@ public class MapWindow extends Application implements Networkable {
                         if (flyingProjectile != null) {
                             try {
                                 final Point2D newPos;
-                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, false);
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                             } catch (CollisionWithTerrainException e) {
@@ -343,12 +345,12 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_down(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
                 }
                 break;
             case "CURRENT_FIGURE_ANGLE_UP":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_up(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
@@ -383,13 +385,13 @@ public class MapWindow extends Application implements Networkable {
             case "CURRENT_FIGURE_FACE_LEFT":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
             case "CURRENT_FIGURE_FACE_RIGHT":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angle_draw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
             case "CURRENT_FIGURE_SET_POSITION":
@@ -480,20 +482,20 @@ public class MapWindow extends Application implements Networkable {
                    server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
                    break;
                 } else {
-                    v = new Point2D(-10, 0);
+                    v = new Point2D(-FIGURE_SPEED, 0);
                 }
             case "Right":
             case "D":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
                 } else {
-                    if (v == null) v = new Point2D(+10, 0);
+                    if (v == null) v = new Point2D(FIGURE_SPEED, 0);
                     Figure f = teams.get(currentTeam).getCurrentFigure();
                     Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
                     Rectangle2D hitRegion = f.getHitRegion();
                     Point2D newPos = null;
                     try {
-                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
+                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
                     } catch (CollisionWithTerrainException e) {
                         System.out.println("CollisionWithTerrainException, stopped movement");
                         newPos = e.getLastGoodPosition();

@@ -10,6 +10,7 @@ import javafx.scene.image.ImageView;
  */
 public class Projectile extends ImageView {
     boolean falls; // Gravitation on/off
+    double angle;
 
     private Point2D velocity;
 
