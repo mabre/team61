@@ -1,9 +1,11 @@
-package de.hhu.propra.team61;
+package de.hhu.propra.team61.GUI;
 
 import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.CustomGrid;
+import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.Network.Client;
 import de.hhu.propra.team61.Network.Server;
+import de.hhu.propra.team61.SceneController;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;

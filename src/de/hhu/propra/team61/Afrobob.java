@@ -2,8 +2,8 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.CustomGrid;
+import de.hhu.propra.team61.GUI.NetPopUp;
 import de.hhu.propra.team61.IO.GameState;;
-import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.Network.Client;
 import de.hhu.propra.team61.Network.Server;
 import javafx.application.Application;

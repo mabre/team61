@@ -1,6 +1,7 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.GUI.Chat;
+import de.hhu.propra.team61.GUI.GameOverWindow;
 import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
@@ -342,7 +343,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
             case "CURRENT_FIGURE_ANGLE_UP":

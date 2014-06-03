@@ -1,4 +1,4 @@
-package de.hhu.propra.team61;
+package de.hhu.propra.team61.GUI;
 
 import de.hhu.propra.team61.GUI.BigStage;
 import de.hhu.propra.team61.GUI.Chat;
@@ -7,9 +7,11 @@ import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
 import de.hhu.propra.team61.IO.TerrainManager;
+import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.Network.Client;
 import de.hhu.propra.team61.Network.Networkable;
 import de.hhu.propra.team61.Network.Server;
+import de.hhu.propra.team61.SceneController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -54,7 +56,16 @@ public class NetLobby extends Application implements Networkable {
     Chat chatBox;
     private VBox spectatorBox;
     private CustomGrid listGrid;
-
+    CheckBox spectator2 = new CheckBox("Spectator");
+    CheckBox spectator3 = new CheckBox("Spectator");
+    CheckBox spectator4 = new CheckBox("Spectator");
+    /*Boolean ready1 = false;
+    Boolean ready2 = false;
+    Boolean ready3 = false;*/
+    Text ready2 = new Text();
+    Text ready3 = new Text("ready");
+    Text ready4 = new Text("ready");
+    Text notReady = new Text();
     SceneController sceneController = new SceneController();
 
     Server server;
@@ -85,10 +96,9 @@ public class NetLobby extends Application implements Networkable {
     /**
      * constructor for players wanting to join a game
      * @param ipAddress ip address of the server
-     * @param spectator true when player wants to be a spectator // TODO hardcoded to true atm
      * @param name name of the player/team
      */
-    public NetLobby(String ipAddress, boolean spectator, String name, SceneController sceneController) {
+    public NetLobby(String ipAddress, String name, SceneController sceneController) {
         this.sceneController = sceneController;
         clientThread = new Thread(client = new Client(ipAddress, name, () -> {
             client.send("GET_STATUS");
@@ -97,7 +107,6 @@ public class NetLobby extends Application implements Networkable {
         clientThread.start();
         client.registerCurrentNetworkable(this);
     }
-
 
     public void buildGUI() {
         initializeArrayLists();
@@ -126,11 +135,12 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(colorPicker2, 2, 11);
         Button rmTeam2 = new Button("X");
         rmTeam2.getStyleClass().add("removeButton");
-        overviewGrid.add(rmTeam2, 3, 11);
+        overviewGrid.add(rmTeam2, 6, 11);
         rmTeam2.setOnAction(e -> {
             removePlayer(name2.getText(), 1);
         });
-
+        overviewGrid.add(ready2, 5, 11);
+        overviewGrid.add(spectator2, 3, 11, 2, 1);
 
         Text generalSettings = new Text("Choose general settings:");
         generalSettings.setFont(Font.font(16));
@@ -139,10 +149,10 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(teamSize, 0, 1);
         overviewGrid.add(sizeField, 1, 1);
         Text teamNumber = new Text("Max. number of teams: ");
-        overviewGrid.add(teamNumber, 2, 1);
-        overviewGrid.add(numberOfTeams, 3, 1);
+        overviewGrid.add(teamNumber, 2, 1, 2, 1);
+        overviewGrid.add(numberOfTeams, 4, 1, 2, 1);
         Button applyButton = new Button("Apply Settings");
-        overviewGrid.add(applyButton, 3, 2);
+        overviewGrid.add(applyButton, 4, 2);
         applyButton.setOnAction(e -> {
             if (Integer.parseInt(numberOfTeams.getText()) > 2 && team3Shown == false) {
                 addTeams(3);
@@ -176,7 +186,7 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(weapon3, 1, 6);
 
         VBox rightBox = new VBox();
-        rightBox.setPrefWidth(355);
+        rightBox.setPrefWidth(320);
         listGrid = new CustomGrid();
         listGrid.setPrefHeight(200);
         generateSpectatorsBox();
@@ -187,7 +197,10 @@ public class NetLobby extends Application implements Networkable {
 
         HBox bottomBox = new HBox();
         Button back = new Button("Back");
-        bottomBox.getChildren().add(back);
+        HBox readyBox = new HBox();
+        readyBox.setAlignment(Pos.CENTER_LEFT);
+        readyBox.getChildren().add(notReady);
+        bottomBox.getChildren().addAll(back, readyBox);
         back.setOnAction(e -> {
             sceneController.switchToMenue();
         });
@@ -211,12 +224,24 @@ public class NetLobby extends Application implements Networkable {
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                Settings.save(toJson(), "NET_SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
-                System.out.println("Network-GameSettings: saved settings");
-                MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                if (ready2.getText() != "" && ready3.getText() != "" && ready4.getText() != "") {
+                    Settings.save(toJson(), "NET_SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
+                    System.out.println("Network-GameSettings: saved settings");
+                    MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                } else {
+                    notReady.setText("    Not all players ready yet.");
+                }
+             }
+        });
+        Button ready = new Button("Ready");
+        ready.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                ready2.setText("Ready"); //TODO setText of Client who clicked
             }
         });
         startBox.setAlignment(Pos.CENTER_RIGHT);
+        //TODO Abfrage, ob Host oder Player, je nachdem Start oder Ready anzeigen
         startBox.getChildren().add(start);
         topBox.setAlignment(Pos.CENTER_LEFT);
         topBox.getChildren().addAll(lobbyText, startBox);
@@ -320,10 +345,13 @@ public class NetLobby extends Application implements Networkable {
             overviewGrid.add(colorPicker3, 2, 12);
             Button rmTeam3 = new Button("X");
             rmTeam3.getStyleClass().add("removeButton");
-            overviewGrid.add(rmTeam3, 3, 12);
+            overviewGrid.add(rmTeam3, 5, 12);
             rmTeam3.setOnAction(e -> {
                 removePlayer(name3.getText(), 2);
             });
+            overviewGrid.add(spectator3, 3, 12, 2, 1);
+            ready3.setText("");
+            overviewGrid.add(ready3, 6, 12);
             team3Shown = true;
         }
         if (number == 4 && !overviewGrid.getChildren().contains(colorPicker4)) {
@@ -333,10 +361,13 @@ public class NetLobby extends Application implements Networkable {
             overviewGrid.add(colorPicker4, 2, 13);
             Button rmTeam4 = new Button("X");
             rmTeam4.getStyleClass().add("removeButton");
-            overviewGrid.add(rmTeam4, 3, 13);
+            overviewGrid.add(rmTeam4, 5, 13);
             rmTeam4.setOnAction(e -> {
                 removePlayer(name4.getText(), 3);
             });
+            overviewGrid.add(spectator4, 3, 13, 2, 1);
+            ready4.setText("");
+            overviewGrid.add(ready4, 6, 13);
         }
     }
 
