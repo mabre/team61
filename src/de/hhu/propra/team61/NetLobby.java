@@ -397,9 +397,7 @@ public class NetLobby extends Application implements Networkable {
             JSONObject spectators = new JSONObject(extractPart(command, "SPECTATOR_LIST "));
             updateSpectators(spectators);
         } else if(command.contains("CHAT ")) {
-            String name = command.split(" ")[0];
-            String msg = command.split("CHAT ")[1];
-            chatBox.appendMessage(name, msg);
+            chatBox.processChatCommand(command);
         } else {
             System.out.println("NetLobby: unknown command " + command);
         }

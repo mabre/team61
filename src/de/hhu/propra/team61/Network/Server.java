@@ -230,8 +230,8 @@ public class Server implements Runnable {
                     return;
                 }
                 if(!clientIdExists(id)) {
-                    id = identifier.split(" ")[0];
-                    name = identifier.split(" ")[1];
+                    id = identifier.split(" ", 2)[0];
+                    name = identifier.split(" ", 2)[1];
                     break;
                 }
             }

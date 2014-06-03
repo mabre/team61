@@ -82,6 +82,12 @@ public class Chat extends VBox {
         }
     }
 
+    public void processChatCommand(String command) {
+        String name = command.split(" CHAT ", 2)[0];
+        String msg = command.split(" CHAT ", 2)[1];
+        appendMessage(name, msg);
+    }
+
     private void printHelp() {
         appendMessage("ːCHATHELP", "Type in your message and press enter. When you see your own message, delivery was successful.\n" +
                 "\n" +

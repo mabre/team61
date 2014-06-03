@@ -337,9 +337,7 @@ public class MapWindow extends Application implements Networkable {
     @Override
     public void handleOnClient(String command) {
         if(command.contains("CHAT ")) {
-            String name = command.split(" ")[0];
-            String msg = command.split("CHAT ")[1];
-            chat.appendMessage(name, msg);
+            chat.processChatCommand(command);
             return;
         }
 
