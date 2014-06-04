@@ -288,7 +288,18 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
     }
-    
+
+    public int getNumberOfLivingTeams(){
+        int a = 0;
+        for (int i = teamsize ; i>0 ;i-- ){
+            currentTeam++;
+            if(teams.size()!= 0 ) {
+                a++;
+            }
+        }
+        return a;
+    }
+
     public void endTurn() {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
