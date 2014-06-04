@@ -1,28 +1,33 @@
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                            
-                                                                                          P 
-P                                                                                           
-                                                                                         /SS
-SS\                                                                                     /SSS
-SSS\  P    P          P    P      P      P    P       P         P     P      P    P    /SSSS
-SSSS\                                                                                 /SSSSS
-SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+{
+    "backgrounds": "flat.png",
+    "music": "like_flat.ogg",
+    "terrain": [                                                                                            
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                            ",
+		"                                                                                          P ",
+		"P                                                                                           ",
+		"                                                                                         /SS",
+		"SS\\                                                                                     /SSS",
+		"SSS\\  P    P          P    P      P      P    P       P         P     P      P    P    /SSSS",
+		"SSSS\\                                                                                 /SSSSS",
+		"SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+		]
+{
