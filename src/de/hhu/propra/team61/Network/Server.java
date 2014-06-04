@@ -173,6 +173,24 @@ public class Server implements Runnable {
         }
     }
 
+    /**
+     * changes the team number associated with a client
+     * @param id the id associated with the client
+     * @param newTeam the new team number of the client (counting starts from 0=host, -1 means spectator)
+     */
+    public void changeTeamById(String id, int newTeam) {
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).id.equals(id)) {
+                    clients.get(i).associatedTeam = newTeam;
+                    System.out.println(clients.get(i).id + "/" + clients.get(i).name + " associated with team " + newTeam);
+                    return;
+                }
+            }
+            System.out.println("WARNING Did not find " + id);
+        }
+    }
+
 
     private static class ConnectionHandler implements Runnable {
         private Socket socket;
@@ -200,6 +218,7 @@ public class Server implements Runnable {
         private final Socket socket;
         private String id;
         private String name;
+        private int associatedTeam = -1;
 
         public ClientConnection(Socket socket) throws IOException {
             this.socket = socket;
@@ -232,6 +251,9 @@ public class Server implements Runnable {
                 if(!clientIdExists(id)) {
                     id = identifier.split(" ")[0];
                     name = identifier.split(" ")[1];
+                    if(Client.id.equals(id)) { // we are host
+                        associatedTeam = 0;
+                    }
                     break;
                 }
             }
@@ -287,13 +309,10 @@ public class Server implements Runnable {
                         }
                     } else if (line.contains("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());
+                    } else if (line.contains("SPECTATOR ")) {
+                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(line + " " + associatedTeam));
                     } else if (line.contains("KEYEVENT ")) {
-                        if (clientId.equals(Client.id)) { // TODO hardcoded spectator mode (remember the first client connecting as host)
-                            Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(extractPart(line, "KEYEVENT ")));
-                        } else {
-                            System.out.println("SERVER: operation not allowed for " + clientId + ": " + line);
-                            System.out.println("    only allowed for " + Client.id);
-                        }
+                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(associatedTeam + " " + extractPart(line, "KEYEVENT ")));
                     } else if (line.contains("STATUS ")) {
                         if (clientId.equals(Client.id)) {
                             sendCommand(extractPart(line, clientId+" "));

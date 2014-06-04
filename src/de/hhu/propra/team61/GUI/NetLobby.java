@@ -454,13 +454,49 @@ public class NetLobby extends Application implements Networkable {
     public void spectatorCheck(Boolean ifChecked) {
         if (ifChecked == true) {
             System.out.println("Spectator is checked");
+            client.send("SPECTATOR CHECKED");
         } else {
             System.out.println("Spectator is unchecked");
+            client.send("SPECTATOR UNCHECKED");
         }
     }
 
+    /**********************************************************************************************/
+    /*********************************** SERVER CODE **********************************************/
+    /**********************************************************************************************/
+
     @Override
     public void handleKeyEventOnServer(String keyCode) {
+        if (keyCode.contains("SPECTATOR")) {
+            boolean checked = !(keyCode.contains("UNCHECKED"));
+            int currentTeam = Integer.parseInt(extractPart(keyCode, "CHECKED "));
+            String clientId = keyCode.split(" ",2)[0];
+            handleSpectatorBoxChanged(checked, currentTeam, clientId);
+        } else {
+            System.out.println("Lobby handleKeyEventOnServer: unknown command " + keyCode);
+        }
+    }
+
+    private void handleSpectatorBoxChanged(boolean isSpectating, int currentTeam, String clientId) {
+        int teamsCreated = 1;// TODO dummy variable; waiting for dynamically adding/removing teams
+
+        if(isSpectating) {
+            if (currentTeam < 1)
+                throw new IllegalArgumentException("Cannot remove team " + currentTeam);
+
+//            removeTeam(currentTeam); // TODO
+
+            server.changeTeamById(clientId, -1);
+        } else {
+            if (currentTeam != -1)
+                throw new IllegalArgumentException("Team requested, but already in team " + currentTeam);
+            if(teamsCreated < Integer.parseInt(sizeField.getText())) {
+                addTeams(3); // TODO method name suggests that 3 teams are created
+                server.changeTeamById(clientId, (teamsCreated+1)-1); // TODO +1 dummy
+            }
+        }
+
+        server.sendCommand(getStateForNewClient());
     }
 
     @Override
