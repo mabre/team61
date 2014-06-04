@@ -53,7 +53,7 @@ public class NetLobby extends Application implements Networkable {
     TextField numberOfTeams = new TextField("2");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     CustomGrid overviewGrid;
-    Boolean team3Shown = false;
+    boolean team3Shown = false;
     Chat chatBox;
     private VBox spectatorBox;
     private CustomGrid listGrid;
@@ -65,7 +65,7 @@ public class NetLobby extends Application implements Networkable {
     Text notReady = new Text();
     SceneController sceneController = new SceneController();
 
-    Boolean isHost;
+    boolean isHost;
 
     Server server;
     Thread serverThread;
@@ -190,6 +190,9 @@ public class NetLobby extends Application implements Networkable {
         rightBox.setPrefWidth(355);
         listGrid = new CustomGrid();
         listGrid.setPrefHeight(200);
+        if (!isHost) {
+            listGrid.add(spectator, 0, 0);
+        }
         generateSpectatorsBox();
         chatBox = new Chat(client);
         chatBox.setPrefHeight(350);
@@ -225,7 +228,7 @@ public class NetLobby extends Application implements Networkable {
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                if (ready2.getText() != "" && ready3.getText() != "" && ready4.getText() != "") {
+                if (ready2.getText().equals("ready") && ready3.getText().equals("ready") && ready4.getText().equals("ready")) {
                     Settings.save(toJson(), "NET_SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
                     System.out.println("Network-GameSettings: saved settings");
                     MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
@@ -255,11 +258,10 @@ public class NetLobby extends Application implements Networkable {
     }
 
     private void generateSpectatorsBox() {
-        listGrid.add(spectator, 0, 0);
         spectator.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                spectatorCheck(newValue);
+                spectatorBoxChanged(newValue);
             }
         });
         if(spectatorBox != null) listGrid.getChildren().removeAll(spectatorBox);
@@ -451,7 +453,7 @@ public class NetLobby extends Application implements Networkable {
         }
     }
 
-    public void spectatorCheck(Boolean ifChecked) {
+    public void spectatorBoxChanged(boolean ifChecked) {
         if (ifChecked == true) {
             System.out.println("Spectator is checked");
         } else {

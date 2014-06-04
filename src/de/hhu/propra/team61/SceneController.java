@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.GUI.BigStage;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -9,7 +10,7 @@ import javafx.stage.Stage;
 
 public class SceneController {
 
-    public Stage mainwindow;
+    public BigStage mainwindow;
     public Scene menueScene;
     public Scene optionsScene;
     public Scene settingsScene;
@@ -17,11 +18,11 @@ public class SceneController {
     public Scene gameScene;
     public Scene gameOverScene;
 
-    public void setStage(Stage mainwindow) {
+    public void setStage(BigStage mainwindow) {
         this.mainwindow = mainwindow;
     }
 
-    public Stage getStage() {
+    public BigStage getStage() {
         return mainwindow;
     }
 

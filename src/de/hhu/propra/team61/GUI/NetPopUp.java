@@ -1,7 +1,5 @@
 package de.hhu.propra.team61.GUI;
 
-import de.hhu.propra.team61.GUI.CustomGrid;
-import de.hhu.propra.team61.GUI.NetLobby;
 import de.hhu.propra.team61.SceneController;
 import javafx.application.Application;
 import javafx.geometry.Pos;
