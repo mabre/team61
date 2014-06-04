@@ -18,7 +18,10 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -154,6 +157,8 @@ public class MapWindow extends Application implements Networkable {
         // contains the terrain with figures
         centerView = new StackPane();
         centerView.setAlignment(Pos.TOP_LEFT);
+        /*Pane backgroundImage = drawBackgroundImage();
+        centerView.getChildren().add(backgroundImage);*/
         centerView.getChildren().add(terrain);
         root.setCenter(centerView);
 
@@ -165,6 +170,7 @@ public class MapWindow extends Application implements Networkable {
         root.setBottom(teamLabel);
 
         drawing = new Scene(root, 1600, 300);
+        drawing.getStylesheets().add("file:resources/layout/css/board.css");
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
@@ -522,6 +528,16 @@ public class MapWindow extends Application implements Networkable {
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
+    }
+
+    public Pane drawBackgroundImage() {
+        Pane backgroundPane = new Pane();
+        String img = "file:resources/levelback1.png";
+        Image image = new Image(img);
+        ImageView background = new ImageView();
+        background.setImage(image);
+        backgroundPane.getChildren().add(background);
+        return backgroundPane;
     }
 
     @Override
