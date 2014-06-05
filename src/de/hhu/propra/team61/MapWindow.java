@@ -463,6 +463,14 @@ public class MapWindow extends Application implements Networkable {
 
         Point2D v = null;
 
+        int team = Integer.parseInt(keyCode.split(" ", 2)[0]);
+        keyCode = keyCode.split(" ", 2)[1];
+
+        if (team != currentTeam) {
+            System.out.println("The key event " + keyCode + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
+            return;
+        }
+
         switch(keyCode) {
             case "Space":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
