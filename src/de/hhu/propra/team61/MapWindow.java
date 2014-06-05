@@ -160,14 +160,14 @@ public class MapWindow extends Application implements Networkable {
         /*Pane backgroundImage = drawBackgroundImage();
         centerView.getChildren().add(backgroundImage);*/
         centerView.getChildren().add(terrain);
-        root.setCenter(centerView);
+        root.setBottom(centerView);
 
         for(Team team: teams) {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
-        root.setBottom(teamLabel);
+        root.setTop(teamLabel);
 
         drawing = new Scene(root, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/board.css");
