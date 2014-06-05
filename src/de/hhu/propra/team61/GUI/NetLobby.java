@@ -45,6 +45,7 @@ public class NetLobby extends Application implements Networkable {
     ColorPicker colorPicker4 = new ColorPicker();
     ArrayList<TextField> names = new ArrayList<TextField>();
     ArrayList<ColorPicker> colorPickers = new ArrayList<ColorPicker>();
+    ArrayList<Text> readys = new ArrayList<>();
     ArrayList<String> spectators = new ArrayList<>();
     TextField weapon1 = new TextField("50");
     TextField weapon2 = new TextField("50");
@@ -315,14 +316,10 @@ public class NetLobby extends Application implements Networkable {
     }
 
     public JSONObject getJsonForTeam(String name, ColorPicker color, Text ready) {
-        Boolean ifReady = false;
         JSONObject team = new JSONObject();
         team.put("name", name);
         team.put("color", toHex(color.getValue()));
-        if (ready.getText() == "ready") {
-            ifReady = true;
-        }
-        team.put("ready", ifReady);
+        team.put("ready", ready.getText());
         return team;
     }
 
@@ -352,6 +349,7 @@ public class NetLobby extends Application implements Networkable {
             for(int i=0; i<teamsArray.length(); i++) {
                 names.get(i).setText(teamsArray.getJSONObject(i).getString("name"));
                 colorPickers.get(i).setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
+                readys.get(i).setText(teamsArray.getJSONObject(i).getString("ready"));
             }
         }
     }
@@ -432,6 +430,10 @@ public class NetLobby extends Application implements Networkable {
         colorPickers.add(colorPicker2);
         colorPickers.add(colorPicker3);
         colorPickers.add(colorPicker4);
+        readys.add(readyHost);
+        readys.add(ready2);
+        readys.add(ready3);
+        readys.add(ready4);
     }
 
     @Override
