@@ -219,6 +219,7 @@ public class Server implements Runnable {
         private String id;
         private String name;
         private int associatedTeam = -1;
+        private boolean isReady = false;
 
         public ClientConnection(Socket socket) throws IOException {
             this.socket = socket;
@@ -309,6 +310,9 @@ public class Server implements Runnable {
                         }
                     } else if (line.contains("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());
+                    } else if (line.contains("CLIENT_READY")) {
+                        isReady = true;
+                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer("READY " + associatedTeam));
                     } else if (line.contains("SPECTATOR ")) {
                         Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(line + " " + associatedTeam));
                     } else if (line.contains("KEYEVENT ")) {

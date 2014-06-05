@@ -64,6 +64,8 @@ public class NetLobby extends Application implements Networkable {
     Text ready4 = new Text("ready");
     Text notReady = new Text();
     SceneController sceneController = new SceneController();
+    Button start;
+    Button ready;
 
     Boolean isHost;
 
@@ -190,6 +192,7 @@ public class NetLobby extends Application implements Networkable {
         rightBox.setPrefWidth(355);
         listGrid = new CustomGrid();
         listGrid.setPrefHeight(200);
+        spectator.setSelected(!isHost);
         generateSpectatorsBox();
         chatBox = new Chat(client);
         chatBox.setPrefHeight(350);
@@ -221,7 +224,8 @@ public class NetLobby extends Application implements Networkable {
         HBox startBox = new HBox();
         Text lobbyText = new Text("Lobby");
         lobbyText.setFont(Font.font("Sans", 20));
-        Button start = new Button("Start");
+        start = new Button("Start");
+        start.setDisable(true); // enabled when clients are ready
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
@@ -234,11 +238,15 @@ public class NetLobby extends Application implements Networkable {
                 }
              }
         });
-        Button ready = new Button("Ready");
+        ready = new Button("Ready");
+        ready.setDisable(true); // enabled when disabling spectator mode
         ready.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                ready2.setText("Ready"); //TODO setText of Client who clicked and send information to server
+                ready.setText("Waiting …");
+                ready.setDisable(true);
+                client.send("CLIENT_READY");
+//                ready2.setText("Ready"); //TODO to/fromJson must contain ready status
             }
         });
         startBox.setAlignment(Pos.CENTER_RIGHT);
@@ -454,9 +462,11 @@ public class NetLobby extends Application implements Networkable {
     public void spectatorCheck(Boolean ifChecked) {
         if (ifChecked == true) {
             System.out.println("Spectator is checked");
+            ready.setDisable(true);
             client.send("SPECTATOR CHECKED");
         } else {
             System.out.println("Spectator is unchecked");
+            ready.setDisable(false);
             client.send("SPECTATOR UNCHECKED");
         }
     }
@@ -470,15 +480,18 @@ public class NetLobby extends Application implements Networkable {
         if (keyCode.contains("SPECTATOR")) {
             boolean checked = !(keyCode.contains("UNCHECKED"));
             int currentTeam = Integer.parseInt(extractPart(keyCode, "CHECKED "));
-            String clientId = keyCode.split(" ",2)[0];
+            String clientId = keyCode.split(" ", 2)[0];
             handleSpectatorBoxChanged(checked, currentTeam, clientId);
+        } else if (keyCode.startsWith("READY")) {
+            int team = Integer.parseInt(extractPart(keyCode, "READY "));
+            setTeamReady(team);
         } else {
             System.out.println("Lobby handleKeyEventOnServer: unknown command " + keyCode);
         }
     }
 
     private void handleSpectatorBoxChanged(boolean isSpectating, int currentTeam, String clientId) {
-        int teamsCreated = 1;// TODO dummy variable; waiting for dynamically adding/removing teams
+        int teamsCreated = 1;// TODO dummy variable; waiting for dynamically adding/removing teams @jessypet
 
         if(isSpectating) {
             if (currentTeam < 1)
@@ -491,12 +504,35 @@ public class NetLobby extends Application implements Networkable {
             if (currentTeam != -1)
                 throw new IllegalArgumentException("Team requested, but already in team " + currentTeam);
             if(teamsCreated < Integer.parseInt(sizeField.getText())) {
-                addTeams(3); // TODO method name suggests that 3 teams are created
+                addTeams(3); // TODO method name suggests that 3 teams are created @jessypet
                 server.changeTeamById(clientId, (teamsCreated+1)-1); // TODO +1 dummy
             }
         }
 
         server.sendCommand(getStateForNewClient());
+    }
+
+    /**
+     * marks the given team as ready, informs all clients about the change, and enables the Start button if everyone is ready
+     * @param team the team which is ready
+     */
+    private void setTeamReady(int team) {
+        if(team < 1) throw new IllegalArgumentException("Team " + team + " cannot change to ready state.");
+
+        System.out.println("Team #" + team + "is ready");
+        // TODO @jessypet
+
+        server.sendCommand(getStateForNewClient());
+
+        if(teamsAreReady()) start.setDisable(false);
+    }
+
+    /**
+     * @return true when all teams are ready
+     */
+    private boolean teamsAreReady() {
+        // TODO @jessypet
+        return true;
     }
 
     @Override
