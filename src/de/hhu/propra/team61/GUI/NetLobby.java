@@ -398,8 +398,12 @@ public class NetLobby extends Application implements Networkable {
             @Override
             public void handle(ActionEvent e) {
                 popUp.close();
-                names.get(i).setText("");
-                colorPickers.get(i).setValue(Color.WHITE);
+                for (int h=i; h < Integer.parseInt(numberOfTeams.getText())-1; h++) {      //go through every player after the one to remove and move names and colors
+                    names.get(h).setText(names.get(h + 1).getText());
+                    names.get(h+1).setText("");                                            //do that so that the last team will be empty afterwards
+                    colorPickers.get(h).setValue(colorPickers.get(h+1).getValue());
+                    colorPickers.get(h+1).setValue(Color.web("#000000"));
+                }
                 //TODO disconnect player
             }
         });

@@ -36,10 +36,10 @@ public class GameSettings extends Application {
 
     int numberOfTeams = 2;
     CustomGrid settingGrid = new CustomGrid();
-    TextField name1 = new TextField();
-    TextField name2 = new TextField();
-    TextField name3 = new TextField();
-    TextField name4 = new TextField();
+    TextField name1 = new TextField("player1");
+    TextField name2 = new TextField("player2");
+    TextField name3 = new TextField("player3");
+    TextField name4 = new TextField("player4");
     ArrayList<TextField> names = new ArrayList<TextField>();
     ArrayList<ColorPicker> colorPickers = new ArrayList<ColorPicker>();
     ColorPicker colorPicker1 = new ColorPicker();
@@ -136,12 +136,13 @@ public class GameSettings extends Application {
         settingGrid.add(team1, 0, 8);
         settingGrid.add(name1, 1, 8);
         settingGrid.add(colorPicker1, 2, 8);
+        colorPicker1.setValue(Color.web("#003300"));
         //Team 2
         Text team2 = new Text("Team 2");
         settingGrid.add(team2, 0, 9);
         settingGrid.add(name2, 1, 9);
         settingGrid.add(colorPicker2, 2, 9);
-        colorPicker2.setValue(Color.web("#000000"));
+        colorPicker2.setValue(Color.web("#123456"));
 
         hboxplus.getChildren().add(addTeam);          //Add plus button
         settingGrid.add(hboxplus, 0, 11);
@@ -269,12 +270,14 @@ public class GameSettings extends Application {
             settingGrid.add(team3, 0, 10);
             settingGrid.add(name3, 1, 10);
             settingGrid.add(colorPicker3, 2, 10);
+            colorPicker3.setValue(Color.web("#e6804d"));
         }
         if (number == 4) {
             Text team4 = new Text("Team 4");
             settingGrid.add(team4, 0, 11);
             settingGrid.add(name4, 1, 11);
             settingGrid.add(colorPicker4, 2, 11);
+            colorPicker4.setValue(Color.web("#990000"));
             hboxplus.getChildren().remove(addTeam);              //Maximum is 4, button is hidden now
             Text enough = new Text("Max. 4 teams");
             settingGrid.add(enough, 1, 12);

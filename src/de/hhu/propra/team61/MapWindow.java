@@ -157,8 +157,6 @@ public class MapWindow extends Application implements Networkable {
         // contains the terrain with figures
         centerView = new StackPane();
         centerView.setAlignment(Pos.TOP_LEFT);
-        /*Pane backgroundImage = drawBackgroundImage();
-        centerView.getChildren().add(backgroundImage);*/
         centerView.getChildren().add(terrain);
         root.setBottom(centerView);
 
