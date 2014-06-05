@@ -505,7 +505,7 @@ public class MapWindow extends Application implements Networkable {
                         System.out.println("CollisionWithTerrainException, stopped movement");
                         newPos = e.getLastGoodPosition();
                     } catch (CollisionWithFigureException e) {
-                        // figures can walk through each other // TODO really?
+                        // figures can walk through each other // TODO really? // Yes, please
                         System.out.println("ERROR How did we get here?");
                     }
                     server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());

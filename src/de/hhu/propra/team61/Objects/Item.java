@@ -5,6 +5,7 @@ import javafx.scene.image.ImageView;
 
 /**
  * Created by kevgny on 21.05.14.
+ * Abstract class implementing all methods which Items have in common
  */
 public abstract class Item extends ImageView{
     private String name;

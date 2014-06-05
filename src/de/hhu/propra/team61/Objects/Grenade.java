@@ -12,7 +12,7 @@ public class Grenade extends Weapon { //ToDo rename to a more fitting one
         super(damage, munition);
 
         imagePath = path;
-        Image image = new Image(imagePath, 16, 16, true, true); //ToDo Replace with an actual Weapon
+        Image image = new Image(imagePath, 16, 16, true, true);
         setImage(image);
     }
 
@@ -28,7 +28,7 @@ public class Grenade extends Weapon { //ToDo rename to a more fitting one
         if(munition > 0) {
             Image image = new Image("file:resources/weapons/temp0.png",4,4,true,true);
             int offset = (int)(16-image.getHeight())/2;
-            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+offset, getTranslateY()+offset), new Point2D(getCrosshair().getTranslateX()+offset, getCrosshair().getTranslateY()+offset), 4, getDamage());
+            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+offset, getTranslateY()+offset), new Point2D(getCrosshair().getTranslateX()+offset, getCrosshair().getTranslateY()+offset), 4, this);
             munition--;
             System.out.println("munition left: " + munition);
             resetAngle();

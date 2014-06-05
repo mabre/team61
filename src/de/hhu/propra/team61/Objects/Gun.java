@@ -8,12 +8,13 @@ import javafx.scene.image.Image;
  * Created by kevgny on 21.05.14.
  */
 public class Gun extends Weapon { //ToDo rename to a more fitting one
+    private final int NORMED_OBJECT_SIZE = 16;
 
     public Gun(String path, int damage, int munition){
         super(damage, munition);
 
         imagePath = path;
-        Image image = new Image(imagePath, 16, 16, true, true); //ToDo Replace with an actual Weapon
+        Image image = new Image(imagePath, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         setImage(image);
     }
 
@@ -28,9 +29,9 @@ public class Gun extends Weapon { //ToDo rename to a more fitting one
             throw new NullPointerException("weapon is not in use, is at " + getTranslateX() + " " + getTranslateY());
         }
         if(munition > 0) {
-            Image image = new Image("file:resources/weapons/temp0.png",4,4,true,true);
-            int offset = (int)(16-image.getHeight())/2;
-            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+offset, getTranslateY()+offset), new Point2D(getCrosshair().getTranslateX()+offset, getCrosshair().getTranslateY()+offset), 10, getDamage());
+            Image image = new Image("file:resources/weapons/temp0.png",NORMED_OBJECT_SIZE / 4, NORMED_OBJECT_SIZE / 4,true,true);
+            int offset = (int)(NORMED_OBJECT_SIZE-image.getHeight())/2;
+            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+offset, getTranslateY()+offset), new Point2D(getCrosshair().getTranslateX()+offset, getCrosshair().getTranslateY()+offset), 10, this);
             munition--;
             System.out.println("munition left: " + munition);
             resetAngle();

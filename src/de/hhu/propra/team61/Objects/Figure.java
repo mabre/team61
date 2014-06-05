@@ -28,7 +28,8 @@ public class Figure extends StackPane {
     private Item selectedItem;
 
     private Rectangle2D hitRegion;
-    private ImageView imageView;
+    private ImageView figureImage;
+    private Label nameTag;
     private Label hpLabel;
 
     // In and Out
@@ -41,15 +42,15 @@ public class Figure extends StackPane {
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
 
-        imageView = new ImageView();
+        figureImage = new ImageView();
 
         initialize();
     }
 
     public Figure(JSONObject input){
-        imageView = new ImageView();
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
+        figureImage = new ImageView();
+        figureImage.setTranslateX(input.getDouble("position.x"));
+        figureImage.setTranslateY(input.getDouble("position.y"));
 
         this.name = input.getString("name");
         this.health = input.getInt("health");
@@ -65,9 +66,9 @@ public class Figure extends StackPane {
     }
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
-        imageView = new ImageView();
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
+        figureImage = new ImageView();
+        figureImage.setTranslateX(input.getDouble("position.x"));
+        figureImage.setTranslateY(input.getDouble("position.y"));
 
         this.name = name;
         this.health = input.getInt("health");
@@ -83,15 +84,20 @@ public class Figure extends StackPane {
     }
 
     private void initialize() {
+        selectedItem = null;
+
         setAlignment(Pos.TOP_LEFT);
 
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),16,16);
+        hitRegion = new Rectangle2D(figureImage.getTranslateX(), figureImage.getTranslateY(),16,16);
 
         Image image = new Image("file:resources/figures/pin.png", 16, 16, true, true);
-        imageView.setImage(image);
-        getChildren().add(imageView);
+        figureImage.setImage(image);
+        getChildren().add(figureImage);
 
-        selectedItem = null;
+
+        nameTag = new Label(name);
+        getChildren().add(nameTag);
+
         hpLabel = new Label(health+"");
         setPosition(getPosition()); // updates label position
         getChildren().add(hpLabel);
@@ -102,8 +108,8 @@ public class Figure extends StackPane {
         output.put("name", name);
         output.put("health", health);
         output.put("armor", armor);
-        output.put("position.x", imageView.getTranslateX()); // TODO save as array
-        output.put("position.y", imageView.getTranslateY());
+        output.put("position.x", figureImage.getTranslateX()); // TODO save as array
+        output.put("position.y", figureImage.getTranslateY());
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
@@ -112,6 +118,7 @@ public class Figure extends StackPane {
     }
 
     public void setColor(Color color) {
+        nameTag.setTextFill(color);
         hpLabel.setTextFill(color);
     }
 
@@ -132,15 +139,17 @@ public class Figure extends StackPane {
 
     // TODO rethink parameter, /8 is bad!
     public void setPosition(Point2D position) {
-        imageView.setTranslateX(8 * position.getX());
-        imageView.setTranslateY(8 * position.getY());
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
-        hpLabel.setTranslateX(imageView.getTranslateX());
-        hpLabel.setTranslateY(imageView.getTranslateY()-15);
+        figureImage.setTranslateX(8 * position.getX());
+        figureImage.setTranslateY(8 * position.getY());
+        hitRegion = new Rectangle2D(figureImage.getTranslateX(), figureImage.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
+        nameTag.setTranslateX(figureImage.getTranslateX()-nameTag.getWidth()/2);
+        nameTag.setTranslateY(figureImage.getTranslateY()-25);
+        hpLabel.setTranslateX(figureImage.getTranslateX()-hpLabel.getWidth()/2);
+        hpLabel.setTranslateY(figureImage.getTranslateY()-15);
     }
 
     public Point2D getPosition() {
-        return new Point2D(imageView.getTranslateX()/8, imageView.getTranslateY()/8);
+        return new Point2D(figureImage.getTranslateX()/8, figureImage.getTranslateY()/8);
     }
 
     public Item getSelectedItem(){
@@ -152,13 +161,16 @@ public class Figure extends StackPane {
         }
         selectedItem = select;
         if(selectedItem != null) {
-            select.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY()));
+            select.setPosition(new Point2D(figureImage.getTranslateX(), figureImage.getTranslateY()));
             selectedItem.angleDraw(facing_right);
         }
     }
 
     public void setFacing_right(boolean facing_right) {
         this.facing_right = facing_right;
+
+        if(facing_right){ figureImage.setScaleX(1); } //Reverse Mirroring
+        else{ figureImage.setScaleX(-1); } //Mirror Img
     }
     public boolean getFacing_right(){return facing_right;}
 
@@ -167,7 +179,7 @@ public class Figure extends StackPane {
         if(health <= 0) {
             health = 0;
             Image image = new Image("file:resources/spawn.png", 8, 8, true, true); // TODO
-            imageView.setImage(image);
+            figureImage.setImage(image);
             setPosition(new Point2D(-1000, -1000));
         }
         hpLabel.setText(health+"");
@@ -188,7 +200,7 @@ public class Figure extends StackPane {
     }
 
     public Projectile shoot() throws NoMunitionException {
-       // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
+       // selectedItem.setPosition(new Point2D(figureImage.getTranslateX(), figureImage.getTranslateY())); // What is this for?
         return selectedItem.shoot();
     }
 

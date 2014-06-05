@@ -10,11 +10,10 @@ import javafx.scene.image.ImageView;
  */
 public class Projectile extends ImageView {
     boolean falls; // Gravitation on/off
-    double angle;
+    double angle;  // Rotation of image to make then face direction TODO implement more than just this var
 
     private Point2D velocity;
-
-    private int damage;
+    private Weapon source;
 
     private Rectangle2D hitRegion;
 
@@ -23,15 +22,16 @@ public class Projectile extends ImageView {
      * @param position of the weapon (ie position of figure)
      * @param firedAt direction (ie position of cross hair)
      * @param velocity determines speed and direction
-     * @param damage health damage caused when hitting a figure
+     * @param shotBy Weapon which produced this projectile, helpful for specific damaging
      */
-    public Projectile(Image image, Point2D position, Point2D firedAt, int velocity, int damage){
+    public Projectile(Image image, Point2D position, Point2D firedAt, int velocity, Weapon shotBy){
         setImage(image);
         setTranslateX(firedAt.getX());
         setTranslateY(firedAt.getY());
         this.velocity = firedAt.subtract(position);
         this.velocity = this.velocity.normalize().multiply(velocity);
-        this.damage = damage;
+        this.source = shotBy;
+        this.angle  = shotBy.getAngle();
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), image.getWidth(), image.getHeight());
         System.out.println("created projectile at " + getTranslateX() + " " + getTranslateY() + ", v=" + this.velocity);
         if(this.velocity.magnitude() == 0) {
@@ -64,7 +64,7 @@ public class Projectile extends ImageView {
     }
 
     public int getDamage() {
-        return damage;
+          return source.getDamage();
     }
 
 }

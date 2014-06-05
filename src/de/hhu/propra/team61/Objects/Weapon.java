@@ -61,10 +61,11 @@ public abstract class Weapon extends Item {
     /*ToDo if necessary*/
     public ImageView getCrosshair() { return crosshair; }
     public int getDamage() { return damage; }
+    public double getAngle() { return angle; }
+
 
     @Override
     public abstract Projectile shoot() throws NoMunitionException;
-
 
     //----------------------------------Crosshair-Related Functions--------------------------------- // TODO own class  // Why? Only this and deriving classes are needing those, while some Items might need a different type
     public double toRadian(double grad) { // This function transforms angles to rad which are needed for sin/cos etc.
