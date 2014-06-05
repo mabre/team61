@@ -1,7 +1,5 @@
 package de.hhu.propra.team61.GUI;
 
-import de.hhu.propra.team61.GUI.Chat;
-import de.hhu.propra.team61.GUI.CustomGrid;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.IO.Settings;
@@ -43,8 +41,8 @@ public class NetLobby extends Application implements Networkable {
     ColorPicker colorPicker2 = new ColorPicker();
     ColorPicker colorPicker3 = new ColorPicker();
     ColorPicker colorPicker4 = new ColorPicker();
-    ArrayList<TextField> names = new ArrayList<TextField>();
-    ArrayList<ColorPicker> colorPickers = new ArrayList<ColorPicker>();
+    ArrayList<TextField> names = new ArrayList<>();
+    ArrayList<ColorPicker> colorPickers = new ArrayList<>();
     ArrayList<Text> readys = new ArrayList<>();
     ArrayList<String> spectators = new ArrayList<>();
     TextField weapon1 = new TextField("50");
@@ -63,10 +61,10 @@ public class NetLobby extends Application implements Networkable {
     Text ready2 = new Text("not ready");
     Text ready3 = new Text("ready");
     Text ready4 = new Text("ready");
-    Text notReady = new Text();
     SceneController sceneController = new SceneController();
     Button start;
     Button ready;
+    Button applyButton;
 
     boolean isHost;
 
@@ -155,14 +153,14 @@ public class NetLobby extends Application implements Networkable {
         Text teamNumber = new Text("Max. number of teams: ");
         overviewGrid.add(teamNumber, 2, 1, 2, 1);
         overviewGrid.add(numberOfTeams, 4, 1, 2, 1);
-        Button applyButton = new Button("Apply Settings");
+        applyButton = new Button("Apply Settings");
         overviewGrid.add(applyButton, 4, 2);
         applyButton.setOnAction(e -> {
             if (Integer.parseInt(numberOfTeams.getText()) > 2 && team3Shown == false) {
-                addTeams(3);
+                addTeam(3);
             }
             if (Integer.parseInt(numberOfTeams.getText()) > 3) {
-                addTeams(4);
+                addTeam(4);
             }
             client.send(getStateForNewClient());
         });
@@ -197,6 +195,7 @@ public class NetLobby extends Application implements Networkable {
             listGrid.add(spectator, 0, 0);
         }
         spectator.setSelected(!isHost);
+        disableSettingsForSpectator(!isHost);
         generateSpectatorsBox();
         chatBox = new Chat(client);
         chatBox.setPrefHeight(350);
@@ -205,10 +204,7 @@ public class NetLobby extends Application implements Networkable {
 
         HBox bottomBox = new HBox();
         Button back = new Button("Back");
-        HBox readyBox = new HBox();
-        readyBox.setAlignment(Pos.CENTER_LEFT);
-        readyBox.getChildren().add(notReady);
-        bottomBox.getChildren().addAll(back, readyBox);
+        bottomBox.getChildren().add(back);
         back.setOnAction(e -> {
             sceneController.switchToMenue();
         });
@@ -233,24 +229,20 @@ public class NetLobby extends Application implements Networkable {
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                if (ready2.getText().equals("ready") && ready3.getText().equals("ready") && ready4.getText().equals("ready")) {
-                    Settings.save(toJson(), "NET_SETTINGS_FILE");               //create Json-object and save it in SETTINGS_FILE.conf
+                    Settings.save(toJson(), "NET_SETTINGS_FILE");
                     System.out.println("Network-GameSettings: saved settings");
                     MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
-                } else {
-                    notReady.setText("    Not all players ready yet.");
-                }
              }
         });
         ready = new Button("Ready");
-        ready.setDisable(true); // enabled when disabling spectator mode
+        ready.setDisable(true); //enabled when disabling spectator mode
         ready.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
                 ready.setText("Waiting …");
                 ready.setDisable(true);
                 client.send("CLIENT_READY");
-//                ready2.setText("Ready"); //TODO to/fromJson must contain ready status
+//                ready2.setText("Ready");
             }
         });
         startBox.setAlignment(Pos.CENTER_RIGHT);
@@ -334,8 +326,8 @@ public class NetLobby extends Application implements Networkable {
     public void fromJson(JSONObject json) {
         if(json.has("numberOfTeams")) {
             numberOfTeams.setText(json.getString("numberOfTeams"));
-            if (Integer.parseInt(numberOfTeams.getText()) > 2) {  addTeams(3); }
-            if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeams(4); }
+            if (Integer.parseInt(numberOfTeams.getText()) > 2) {  addTeam(3); }
+            if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeam(4); }
         }
         if(json.has("team-size")) {
             sizeField.setText(json.getString("team-size"));
@@ -362,7 +354,7 @@ public class NetLobby extends Application implements Networkable {
         }
     }
 
-    public void addTeams(int number) {
+    public void addTeam(int number) {
         if (number == 3 && !overviewGrid.getChildren().contains(colorPicker3)) {
             Text team3 = new Text("Team 3");
             overviewGrid.add(team3, 0, 12);
@@ -404,11 +396,16 @@ public class NetLobby extends Application implements Networkable {
             @Override
             public void handle(ActionEvent e) {
                 popUp.close();
-                for (int h=i; h < Integer.parseInt(numberOfTeams.getText())-1; h++) {      //go through every player after the one to remove and move names and colors
-                    names.get(h).setText(names.get(h + 1).getText());
-                    names.get(h+1).setText("");                                            //do that so that the last team will be empty afterwards
-                    colorPickers.get(h).setValue(colorPickers.get(h+1).getValue());
-                    colorPickers.get(h+1).setValue(Color.web("#000000"));
+                if (i == Integer.parseInt(numberOfTeams.getText())-1) {
+                    names.get(i).setText("");
+                    colorPickers.get(i).setValue(Color.web("#000000"));
+                } else {
+                    for (int h = i; h < Integer.parseInt(numberOfTeams.getText()) - 1; h++) {      //go through every player after the one to remove and move names and colors
+                        names.get(h).setText(names.get(h + 1).getText());
+                        names.get(h + 1).setText("");                                            //do that so that the last team will be empty afterwards
+                        colorPickers.get(h).setValue(colorPickers.get(h + 1).getValue());
+                        colorPickers.get(h + 1).setValue(Color.web("#000000"));
+                    }
                 }
                 //TODO disconnect player
             }
@@ -470,12 +467,43 @@ public class NetLobby extends Application implements Networkable {
     public void spectatorBoxChanged(boolean ifChecked) {
         if (ifChecked == true) {
             System.out.println("Spectator is checked");
-            ready.setDisable(true);
+            disableSettingsForSpectator(true);
             client.send("SPECTATOR CHECKED");
         } else {
             System.out.println("Spectator is unchecked");
-            ready.setDisable(false);
+            disableSettingsForSpectator(false);
             client.send("SPECTATOR UNCHECKED");
+        }
+    }
+
+    private void disableSettingsForSpectator(boolean isSpectator) {
+        ready.setDisable(isSpectator);
+        applyButton.setDisable(isSpectator);
+        weapon1.setDisable(isSpectator);
+        weapon2.setDisable(isSpectator);
+        weapon3.setDisable(isSpectator);
+        sizeField.setDisable(isSpectator);
+        numberOfTeams.setDisable(isSpectator);
+        mapChooser.setDisable(isSpectator);
+        for (int i=0; i<Integer.parseInt(numberOfTeams.getText()); i++) {
+            names.get(i).setDisable(isSpectator);
+            colorPickers.get(i).setDisable(isSpectator);
+        }
+    }
+
+    private void disableSettingsForTeam(int team) {
+        applyButton.setDisable(true);
+        weapon1.setDisable(true);
+        weapon2.setDisable(true);
+        weapon3.setDisable(true);
+        sizeField.setDisable(true);
+        numberOfTeams.setDisable(true);
+        mapChooser.setDisable(true);
+        for (int i=0; i<Integer.parseInt(numberOfTeams.getText()); i++) {
+            if (i != team) {
+                names.get(i).setDisable(true);
+                colorPickers.get(i).setDisable(true);
+            }
         }
     }
 
@@ -488,6 +516,7 @@ public class NetLobby extends Application implements Networkable {
         if (keyCode.contains("SPECTATOR")) {
             boolean checked = !(keyCode.contains("UNCHECKED"));
             int currentTeam = Integer.parseInt(extractPart(keyCode, "CHECKED "));
+            disableSettingsForTeam(currentTeam);
             String clientId = keyCode.split(" ", 2)[0];
             handleSpectatorBoxChanged(checked, currentTeam, clientId);
         } else if (keyCode.startsWith("READY")) {
@@ -512,7 +541,7 @@ public class NetLobby extends Application implements Networkable {
             if (currentTeam != -1)
                 throw new IllegalArgumentException("Team requested, but already in team " + currentTeam);
             if(teamsCreated < Integer.parseInt(sizeField.getText())) {
-                addTeams(3); // TODO method name suggests that 3 teams are created @jessypet
+                addTeam(3);
                 server.changeTeamById(clientId, (teamsCreated+1)-1); // TODO +1 dummy
             }
         }
@@ -528,8 +557,7 @@ public class NetLobby extends Application implements Networkable {
         if(team < 1) throw new IllegalArgumentException("Team " + team + " cannot change to ready state.");
 
         System.out.println("Team #" + team + "is ready");
-        // TODO @jessypet
-
+        readys.get(team).setText("ready");
         server.sendCommand(getStateForNewClient());
 
         if(teamsAreReady()) start.setDisable(false);
@@ -539,8 +567,11 @@ public class NetLobby extends Application implements Networkable {
      * @return true when all teams are ready
      */
     private boolean teamsAreReady() {
-        // TODO @jessypet
-        return true;
+        if (ready2.getText().equals("ready") && ready3.getText().equals("ready") && ready4.getText().equals("ready")) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
