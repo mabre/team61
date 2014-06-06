@@ -48,11 +48,13 @@ public class NetLobby extends Application implements Networkable {
     TextField weapon1 = new TextField("50");
     TextField weapon2 = new TextField("50");
     TextField weapon3 = new TextField("5");
+    /** number of figures per team */
     TextField sizeField = new TextField("4");
     TextField numberOfTeams = new TextField("1");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     CustomGrid overviewGrid;
-    boolean team3Shown = false;
+    int teamsCreated = 1;
+    boolean team3Shown = false; // TODO @jessypet remove these and use teamsCreated instead?
     boolean team2Shown = false;
     Chat chatBox;
     private VBox spectatorBox;
@@ -68,6 +70,8 @@ public class NetLobby extends Application implements Networkable {
     Button applyButton;
 
     boolean isHost;
+    /** -1 = spectator, 0 = host, 1+ = clients */
+    int associatedTeam;
 
     Server server;
     Thread serverThread;
@@ -80,6 +84,7 @@ public class NetLobby extends Application implements Networkable {
      */
     public NetLobby(String hostName, SceneController sceneController) {
         this.isHost = true;
+        this.associatedTeam = 0;
         this.sceneController = sceneController;
         serverThread = new Thread(server = new Server(() -> {
             this.hostName.setText(hostName);
@@ -102,6 +107,7 @@ public class NetLobby extends Application implements Networkable {
      */
     public NetLobby(String ipAddress, String name, SceneController sceneController) {
         this.isHost = false;
+        this.associatedTeam = -1;
         this.sceneController = sceneController;
         clientThread = new Thread(client = new Client(ipAddress, name, () -> {
             client.send("GET_STATUS");
@@ -144,15 +150,7 @@ public class NetLobby extends Application implements Networkable {
         applyButton = new Button("Apply Settings");
         overviewGrid.add(applyButton, 4, 2);
         applyButton.setOnAction(e -> {
-            if (Integer.parseInt(numberOfTeams.getText()) > 1 && team2Shown == false) {
-                addTeam(2);
-            }
-            if (Integer.parseInt(numberOfTeams.getText()) > 2 && team3Shown == false) {
-                addTeam(3);
-            }
-            if (Integer.parseInt(numberOfTeams.getText()) > 3) {
-                addTeam(4);
-            }
+            // the team configuration will be shown when clients join
             client.send(getStateForNewClient());
         });
         Text chooseMapText = new Text("Map:");
@@ -253,7 +251,7 @@ public class NetLobby extends Application implements Networkable {
         spectator.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                spectatorBoxChanged(newValue);
+                spectatorBoxChanged(newValue); // TODO this is fired twice?!
             }
         });
         if(spectatorBox != null) listGrid.getChildren().removeAll(spectatorBox);
@@ -319,9 +317,9 @@ public class NetLobby extends Application implements Networkable {
     public void fromJson(JSONObject json) {
         if(json.has("numberOfTeams")) {
             numberOfTeams.setText(json.getString("numberOfTeams"));
-            if (Integer.parseInt(numberOfTeams.getText()) > 1) {  addTeam(2); }
-            if (Integer.parseInt(numberOfTeams.getText()) > 2) {  addTeam(3); }
-            if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeam(4); }
+            if (Integer.parseInt(numberOfTeams.getText()) > 1) {  addTeam(1); }
+            if (Integer.parseInt(numberOfTeams.getText()) > 2) {  addTeam(2); }
+            if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeam(3); }
         }
         if(json.has("team-size")) {
             sizeField.setText(json.getString("team-size"));
@@ -348,8 +346,12 @@ public class NetLobby extends Application implements Networkable {
         }
     }
 
+    /**
+     * adds the team with the given number
+     * @param number team number, counting starts from 0 = host // TODO I think this method should actually add one team depending on int teamsCreated
+     */
     public void addTeam(int number) {
-        if (number == 2 && !overviewGrid.getChildren().contains(colorPicker2)) {
+        if (number == 1 && !overviewGrid.getChildren().contains(colorPicker2)) {
             Text team2 = new Text("Team 2");
             overviewGrid.add(team2, 0, 11);
             overviewGrid.add(name2, 1, 11);
@@ -362,10 +364,11 @@ public class NetLobby extends Application implements Networkable {
                 removePlayer(name2.getText(), 1);
             });
             overviewGrid.add(ready2, 4, 11);
-            ready4.setText("not ready");
+            ready2.setText("not ready");
             team2Shown = true;
+            teamsCreated = 2;
         }
-        if (number == 3 && !overviewGrid.getChildren().contains(colorPicker3)) {
+        if (number == 2 && !overviewGrid.getChildren().contains(colorPicker3)) {
             Text team3 = new Text("Team 3");
             overviewGrid.add(team3, 0, 12);
             overviewGrid.add(name3, 1, 12);
@@ -380,8 +383,9 @@ public class NetLobby extends Application implements Networkable {
             ready3.setText("not ready");
             overviewGrid.add(ready3, 4, 12);
             team3Shown = true;
+            teamsCreated = 3;
         }
-        if (number == 4 && !overviewGrid.getChildren().contains(colorPicker4)) {
+        if (number == 3 && !overviewGrid.getChildren().contains(colorPicker4)) {
             Text team4 = new Text("Team 4");
             overviewGrid.add(team4, 0, 13);
             overviewGrid.add(name4, 1, 13);
@@ -395,30 +399,18 @@ public class NetLobby extends Application implements Networkable {
             });
             ready4.setText("not ready");
             overviewGrid.add(ready4, 4, 13);
+            teamsCreated = 4;
         }
+        start.setDisable(!teamsAreReady());
     }
 
-    public void removePlayer(String name, int i) {
+    private void removePlayer(String name, int i) {
         Stage popUp = new Stage();
         Text wantToRemove = new Text("Do you really want to remove player " + name + "?");
         Button yes = new Button("Yes");
-        yes.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                popUp.close();
-                if (i == Integer.parseInt(numberOfTeams.getText())-1) {
-                    names.get(i).setText("");
-                    colorPickers.get(i).setValue(Color.web("#000000"));
-                } else {
-                    for (int h = i; h < Integer.parseInt(numberOfTeams.getText()) - 1; h++) {      //go through every player after the one to remove and move names and colors
-                        names.get(h).setText(names.get(h + 1).getText());
-                        names.get(h + 1).setText("");                                            //do that so that the last team will be empty afterwards
-                        colorPickers.get(h).setValue(colorPickers.get(h + 1).getValue());
-                        colorPickers.get(h + 1).setValue(Color.web("#000000"));
-                    }
-                }
-                //TODO disconnect player
-            }
+        yes.setOnAction(e -> {
+            popUp.close();
+            removeTeam(i);
         });
         Button no = new Button("No");
         no.setOnAction(new EventHandler<ActionEvent>() {
@@ -436,7 +428,25 @@ public class NetLobby extends Application implements Networkable {
         popUp.show();
     }
 
+    private void removeTeam(int team) {
+        System.out.println("removing team #" + team);
+        if (team == Integer.parseInt(numberOfTeams.getText())-1) {
+            names.get(team).setText("");
+            colorPickers.get(team).setValue(Color.web("#000000"));
+        } else {
+            for (int i = team; i < Integer.parseInt(numberOfTeams.getText()) - 1; i++) { // go through every player after the one to remove and move names and colors
+                names.get(i).setText(names.get(i + 1).getText());
+                names.get(i + 1).setText(""); // do that so that the last team will be empty afterwards
+                colorPickers.get(i).setValue(colorPickers.get(i + 1).getValue());
+                colorPickers.get(i + 1).setValue(Color.web("#000000"));
+            }
+        }
+        teamsCreated--;
+        //TODO disconnect player
+    }
+
     public void initializeArrayLists() {
+        // what about for(int i=0; i<MAX_NUMBER_OF_TEAMS; i++) names.add(new TextField()); ? @jessypet
         names.add(hostName);
         names.add(name2);
         names.add(name3);
@@ -465,6 +475,8 @@ public class NetLobby extends Application implements Networkable {
         } else if(command.startsWith("SPECTATOR_LIST")) {
             JSONObject spectators = new JSONObject(extractPart(command, "SPECTATOR_LIST "));
             updateSpectators(spectators);
+        } else if(command.startsWith("SET_TEAM_NUMBER")) {
+            setAssociatedTeam(Integer.parseInt(extractPart(command, "SET_TEAM_NUMBER ")));
         } else if(command.contains("CHAT ")) {
             String name = command.split(" ")[0];
             String msg = command.split("CHAT ")[1];
@@ -474,8 +486,16 @@ public class NetLobby extends Application implements Networkable {
         }
     }
 
-    public void spectatorBoxChanged(boolean ifChecked) {
-        if (ifChecked == true) {
+    private void setAssociatedTeam(int newTeam) {
+        associatedTeam = newTeam;
+        disableSettingsForSpectator(associatedTeam == -1);
+        disableSettingsForTeam(associatedTeam);
+        spectator.setSelected(associatedTeam == -1);
+        System.out.println("I belong to team " + associatedTeam);
+    }
+
+    public void spectatorBoxChanged(boolean isChecked) {
+        if (isChecked) {
             System.out.println("Spectator is checked");
             if (!isHost) {
                 disableSettingsForSpectator(true);
@@ -491,7 +511,7 @@ public class NetLobby extends Application implements Networkable {
     }
 
     private void disableSettingsForSpectator(boolean isSpectator) {
-        ready.setDisable(isSpectator);
+        ready.setDisable(isSpectator); // TODO looks like code duplication; merge function with disableSettingsForTeam, when team=-1 -> spectator
         applyButton.setDisable(isSpectator);
         weapon1.setDisable(isSpectator);
         weapon2.setDisable(isSpectator);
@@ -527,7 +547,8 @@ public class NetLobby extends Application implements Networkable {
 
     @Override
     public void handleKeyEventOnServer(String keyCode) {
-        if (keyCode.contains("SPECTATOR")) {
+        System.out.println("server handling command in lobby: " + keyCode);
+        if (keyCode.contains("SPECTATOR ")) {
             boolean checked = !(keyCode.contains("UNCHECKED"));
             int currentTeam = Integer.parseInt(extractPart(keyCode, "CHECKED "));
             String clientId = keyCode.split(" ", 2)[0];
@@ -541,21 +562,27 @@ public class NetLobby extends Application implements Networkable {
     }
 
     private void handleSpectatorBoxChanged(boolean isSpectating, int currentTeam, String clientId) {
-        int teamsCreated = 1;// TODO dummy variable; waiting for dynamically adding/removing teams @jessypet
-
         if(isSpectating) {
-            if (currentTeam < 1)
-                throw new IllegalArgumentException("Cannot remove team " + currentTeam);
-
-//            removeTeam(currentTeam); // TODO
-
+            if (currentTeam < 1) {
+//                throw new IllegalArgumentException("Cannot remove team " + currentTeam);
+                System.out.println("ERROR: Cannot remove team " + currentTeam);
+                return;
+            }
+            removeTeam(currentTeam);
             server.changeTeamById(clientId, -1);
         } else {
-            if (currentTeam != -1)
-                throw new IllegalArgumentException("Team requested, but already in team " + currentTeam);
-            if(teamsCreated < Integer.parseInt(sizeField.getText())) {
-                addTeam(3);
-                server.changeTeamById(clientId, (teamsCreated+1)-1); // TODO +1 dummy
+            System.out.println("handleSpectatorBoxChanged: current number of teams: " + teamsCreated);
+            if (currentTeam != -1) {
+//                throw new IllegalArgumentException("Team requested, but already in team " + currentTeam);
+                System.out.println("ERROR: Team requested, but already in team " + currentTeam);
+                return;
+            }
+            if(teamsCreated < Integer.parseInt(numberOfTeams.getText())) {
+                addTeam(teamsCreated);
+                server.changeTeamById(clientId, teamsCreated-1); // associate client with last team
+            } else {
+                System.out.println("Max. number of teams reached.");
+                server.changeTeamById(clientId, -1); // will reset the client's spectator checkbox
             }
         }
 

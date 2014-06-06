@@ -183,6 +183,7 @@ public class Server implements Runnable {
             for (int i = 0; i < clients.size(); i++) {
                 if (clients.get(i).id.equals(id)) {
                     clients.get(i).associatedTeam = newTeam;
+                    clients.get(i).out.println("SET_TEAM_NUMBER " + newTeam);
                     System.out.println(clients.get(i).id + "/" + clients.get(i).name + " associated with team " + newTeam);
                     return;
                 }
