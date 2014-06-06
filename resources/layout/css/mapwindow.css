@@ -1,0 +1,14 @@
+@CHARSET "ISO-8859-1";
+
+.root {
+    -fx-background-image: url("file:resources/layout/boardbackground.png");
+    -fx-background-position: top left;
+}
+
+#scrollPane  > .viewport {
+   -fx-background-color: transparent;
+}
+
+#scrollPane {
+   -fx-background-color: transparent;
+}

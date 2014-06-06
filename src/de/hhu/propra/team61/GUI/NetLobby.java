@@ -49,16 +49,17 @@ public class NetLobby extends Application implements Networkable {
     TextField weapon2 = new TextField("50");
     TextField weapon3 = new TextField("5");
     TextField sizeField = new TextField("4");
-    TextField numberOfTeams = new TextField("2");
+    TextField numberOfTeams = new TextField("1");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     CustomGrid overviewGrid;
     boolean team3Shown = false;
+    boolean team2Shown = false;
     Chat chatBox;
     private VBox spectatorBox;
     private CustomGrid listGrid;
     CheckBox spectator = new CheckBox("Spectator");
     Text readyHost = new Text("ready");
-    Text ready2 = new Text("not ready");
+    Text ready2 = new Text("ready");
     Text ready3 = new Text("ready");
     Text ready4 = new Text("ready");
     SceneController sceneController = new SceneController();
@@ -131,19 +132,6 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(hostName, 1, 10);
         overviewGrid.add(hostColorPicker, 2, 10);
 
-        Text team2 = new Text("Team 2");
-        overviewGrid.add(team2, 0, 11);
-        overviewGrid.add(name2, 1, 11);
-        colorPicker2.setValue(Color.web("#000000"));
-        overviewGrid.add(colorPicker2, 2, 11);
-        Button rmTeam2 = new Button("X");
-        rmTeam2.getStyleClass().add("removeButton");
-        overviewGrid.add(rmTeam2, 5, 11);
-        rmTeam2.setOnAction(e -> {
-            removePlayer(name2.getText(), 1);
-        });
-        overviewGrid.add(ready2, 4, 11);
-
         Text generalSettings = new Text("Choose general settings:");
         generalSettings.setFont(Font.font(16));
         overviewGrid.add(generalSettings, 0, 0, 2, 1);
@@ -156,6 +144,9 @@ public class NetLobby extends Application implements Networkable {
         applyButton = new Button("Apply Settings");
         overviewGrid.add(applyButton, 4, 2);
         applyButton.setOnAction(e -> {
+            if (Integer.parseInt(numberOfTeams.getText()) > 1 && team2Shown == false) {
+                addTeam(2);
+            }
             if (Integer.parseInt(numberOfTeams.getText()) > 2 && team3Shown == false) {
                 addTeam(3);
             }
@@ -225,7 +216,7 @@ public class NetLobby extends Application implements Networkable {
         Text lobbyText = new Text("Lobby");
         lobbyText.setFont(Font.font("Sans", 20));
         start = new Button("Start");
-        start.setDisable(true); // enabled when clients are ready
+        start.setDisable(!teamsAreReady()); // enabled when clients are ready
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
@@ -301,8 +292,10 @@ public class NetLobby extends Application implements Networkable {
         JSONArray teams = new JSONArray();
         JSONObject team1 = getJsonForTeam(hostName.getText(), hostColorPicker, readyHost);
         teams.put(team1);
-        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2, ready2);
-        teams.put(team2);
+        if (Integer.parseInt(numberOfTeams.getText()) > 1) {
+            JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2, ready2);
+            teams.put(team2);
+        }
         if (Integer.parseInt(numberOfTeams.getText()) > 2) {
             JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3, ready3);
             teams.put(team3);
@@ -326,6 +319,7 @@ public class NetLobby extends Application implements Networkable {
     public void fromJson(JSONObject json) {
         if(json.has("numberOfTeams")) {
             numberOfTeams.setText(json.getString("numberOfTeams"));
+            if (Integer.parseInt(numberOfTeams.getText()) > 1) {  addTeam(2); }
             if (Integer.parseInt(numberOfTeams.getText()) > 2) {  addTeam(3); }
             if (Integer.parseInt(numberOfTeams.getText()) > 3) {  addTeam(4); }
         }
@@ -355,6 +349,22 @@ public class NetLobby extends Application implements Networkable {
     }
 
     public void addTeam(int number) {
+        if (number == 2 && !overviewGrid.getChildren().contains(colorPicker2)) {
+            Text team2 = new Text("Team 2");
+            overviewGrid.add(team2, 0, 11);
+            overviewGrid.add(name2, 1, 11);
+            colorPicker2.setValue(Color.web("#000000"));
+            overviewGrid.add(colorPicker2, 2, 11);
+            Button rmTeam2 = new Button("X");
+            rmTeam2.getStyleClass().add("removeButton");
+            overviewGrid.add(rmTeam2, 5, 11);
+            rmTeam2.setOnAction(e -> {
+                removePlayer(name2.getText(), 1);
+            });
+            overviewGrid.add(ready2, 4, 11);
+            ready4.setText("not ready");
+            team2Shown = true;
+        }
         if (number == 3 && !overviewGrid.getChildren().contains(colorPicker3)) {
             Text team3 = new Text("Team 3");
             overviewGrid.add(team3, 0, 12);
@@ -467,11 +477,15 @@ public class NetLobby extends Application implements Networkable {
     public void spectatorBoxChanged(boolean ifChecked) {
         if (ifChecked == true) {
             System.out.println("Spectator is checked");
-            disableSettingsForSpectator(true);
+            if (!isHost) {
+                disableSettingsForSpectator(true);
+            }
             client.send("SPECTATOR CHECKED");
         } else {
             System.out.println("Spectator is unchecked");
-            disableSettingsForSpectator(false);
+            if (!isHost) {
+                disableSettingsForSpectator(false);
+            }
             client.send("SPECTATOR UNCHECKED");
         }
     }
@@ -516,7 +530,6 @@ public class NetLobby extends Application implements Networkable {
         if (keyCode.contains("SPECTATOR")) {
             boolean checked = !(keyCode.contains("UNCHECKED"));
             int currentTeam = Integer.parseInt(extractPart(keyCode, "CHECKED "));
-            disableSettingsForTeam(currentTeam);
             String clientId = keyCode.split(" ", 2)[0];
             handleSpectatorBoxChanged(checked, currentTeam, clientId);
         } else if (keyCode.startsWith("READY")) {
