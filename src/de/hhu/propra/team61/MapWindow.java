@@ -23,10 +23,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
@@ -43,8 +42,6 @@ public class MapWindow extends Application implements Networkable {
     private Scene drawing;
     private BorderPane root;
     private StackPane centerView;
-    private ScrollPane sp = new ScrollPane();
-    private StackPane scrollable;
     private Terrain terrain;
     private Label teamLabel;
     private int currentTeam = 0;
@@ -159,25 +156,14 @@ public class MapWindow extends Application implements Networkable {
         root = new BorderPane();
         // contains the terrain with figures
         centerView = new StackPane();
-        scrollable = new StackPane();
         centerView.setAlignment(Pos.TOP_LEFT);
-        VBox terrainBox = new VBox();
-        terrainBox.getChildren().add(terrain);
-        terrainBox.setAlignment(Pos.BOTTOM_LEFT);
-        scrollable.getChildren().add(terrainBox);
-
-        for(Team team: teams) {
-            scrollable.getChildren().add(team);
-            terrain.addFigures(team.getFigures());
-        }
-
-        sp.setContent(scrollable);
-        sp.setId("scrollPane");
-        sp.setPrefSize(1000, 250);
-        sp.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        centerView.getChildren().add(sp);
+        centerView.getChildren().add(terrain);
         root.setBottom(centerView);
 
+        for(Team team: teams) {
+            centerView.getChildren().add(team);
+            terrain.addFigures(team.getFigures());
+        }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         root.setTop(teamLabel);
 
