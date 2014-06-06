@@ -466,7 +466,7 @@ public class MapWindow extends Application implements Networkable {
         int team = Integer.parseInt(keyCode.split(" ", 2)[0]);
         keyCode = keyCode.split(" ", 2)[1];
 
-        if (team != currentTeam) {
+        if (team != currentTeam && !client.isLocalGame()) {
             System.out.println("The key event " + keyCode + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
             return;
         }
