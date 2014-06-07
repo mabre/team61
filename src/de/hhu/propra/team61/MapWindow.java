@@ -18,8 +18,11 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -155,10 +158,24 @@ public class MapWindow extends Application implements Networkable {
         // pane containing terrain, labels at the bottom etc.
         root = new BorderPane();
         // contains the terrain with figures
+        ScrollPane scrollPane = new ScrollPane();
         centerView = new StackPane();
         centerView.setAlignment(Pos.TOP_LEFT);
         centerView.getChildren().add(terrain);
-        root.setBottom(centerView);
+
+        // anchor the map to the bottom left corner (ScrollPane cannot do that)
+        final AnchorPane anchorPane = new AnchorPane();
+        AnchorPane.setBottomAnchor(centerView,  0.0);
+        AnchorPane.setLeftAnchor(centerView, 0.0);
+        anchorPane.getChildren().add(centerView);
+
+        scrollPane.setId("scrollPane");
+        scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
+            anchorPane.setPrefSize(Math.max(centerView.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(centerView.getBoundsInParent().getMaxY(), newBounds.getHeight()))
+        );
+        scrollPane.setContent(anchorPane);
+        scrollPane.setPrefSize(1000, 500);
+        root.setBottom(scrollPane);
 
         for(Team team: teams) {
             centerView.getChildren().add(team);
@@ -169,18 +186,19 @@ public class MapWindow extends Application implements Networkable {
 
         drawing = new Scene(root, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
-        drawing.setOnKeyPressed(
-                keyEvent -> {
-                    System.out.println("key pressed: " + keyEvent.getCode());
-                    switch(keyEvent.getCode()) {
-                        case C:
-                            System.out.println("toggle chat");
-                            chat.setVisible(!chat.isVisible());
-                            break;
-                        default:
-                            client.sendKeyEvent(keyEvent.getCode());
-                    }
+        scrollPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+                System.out.println("key pressed: " + keyEvent.getCode());
+                switch(keyEvent.getCode()) {
+                    case C:
+                        System.out.println("toggle chat");
+                        chat.setVisible(!chat.isVisible());
+                        break;
+                    default:
+                        client.sendKeyEvent(keyEvent.getCode());
                 }
+                // we do not want the scrollPane to receive a key event
+                keyEvent.consume();
+            }
         );
 
         chat = new Chat(client);
