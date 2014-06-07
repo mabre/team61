@@ -5,10 +5,14 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+
+import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 /**
  * Created by kevgny on 14.05.14.
@@ -24,6 +28,8 @@ public class Figure extends StackPane {
     private boolean isBurning;
     private boolean isPoisoned;
     private boolean isStuck;
+
+    private boolean isActive;
 
     private Item selectedItem;
 
@@ -113,7 +119,7 @@ public class Figure extends StackPane {
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
-        output.put("isStuck",isStuck);
+        output.put("isStuck", isStuck);
         return output;
     }
 
@@ -136,6 +142,16 @@ public class Figure extends StackPane {
 
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+        if(isActive) {
+            // TODO move to css
+            nameTag.setStyle("-fx-border-color: rgba(255,0,0,.2); -fx-border-style: solid; -fx-border-width: 1px; -fx-border-radius: 5px;");
+        } else {
+            nameTag.setStyle("");
+        }
+    }
 
     // TODO rethink parameter, /8 is bad!
     public void setPosition(Point2D position) {
