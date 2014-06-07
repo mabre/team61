@@ -304,7 +304,7 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         server.sendCommand("CURRENT_TEAM_END_ROUND");
 
-        String teamLabelText = "Turn: " + turnCount + " It’s Team " + currentTeam + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        String teamLabelText = "Turn: " + turnCount + " It’s Team " + (currentTeam+1) + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
     }
@@ -459,6 +459,7 @@ public class MapWindow extends Application implements Networkable {
             } catch(NumberFormatException | IndexOutOfBoundsException e) {
                     System.out.println("malformed command " + keyCode);
             }
+            return;
         }
 
         Point2D v = null;

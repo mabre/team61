@@ -214,7 +214,7 @@ public class NetLobby extends Application implements Networkable {
         Text lobbyText = new Text("Lobby");
         lobbyText.setFont(Font.font("Sans", 20));
         start = new Button("Start");
-        start.setDisable(!teamsAreReady()); // enabled when clients are ready
+        start.setDisable(!Server.teamsAreReady()); // enabled when clients are ready
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
@@ -230,7 +230,7 @@ public class NetLobby extends Application implements Networkable {
             public void handle(ActionEvent e) {
                 ready.setText("Waiting …");
                 ready.setDisable(true);
-                client.send("CLIENT_READY");
+                client.send("CLIENT_READY " + toJson());
 //                ready2.setText("Ready");
             }
         });
@@ -256,7 +256,7 @@ public class NetLobby extends Application implements Networkable {
         });
         if(spectatorBox != null) listGrid.getChildren().removeAll(spectatorBox);
         spectatorBox = new VBox();
-        Text spectatorText = new Text("Spectators:");
+        Text spectatorText = new Text("Spectators & Players:");
         spectatorBox.getChildren().add(spectatorText);
         for (int i=0; i<spectators.size(); i++) {
             Text newSpectator = new Text(spectators.get(i));
@@ -269,7 +269,8 @@ public class NetLobby extends Application implements Networkable {
         this.spectators.clear();
         JSONArray spectatorList = spectators.getJSONArray("spectators");
         for(int i=0; i<spectatorList.length(); i++) {
-            this.spectators.add(spectatorList.getString(i));
+            this.spectators.add(spectatorList.getJSONObject(i).getString("name") +
+                    " (" + spectatorList.getJSONObject(i).getString("team") + ")");
         }
         generateSpectatorsBox();
     }
@@ -351,6 +352,7 @@ public class NetLobby extends Application implements Networkable {
      * @param number team number, counting starts from 0 = host // TODO I think this method should actually add one team depending on int teamsCreated
      */
     public void addTeam(int number) {
+        teamsCreated = (number+1);
         if (number == 1 && !overviewGrid.getChildren().contains(colorPicker2)) {
             Text team2 = new Text("Team 2");
             overviewGrid.add(team2, 0, 11);
@@ -366,7 +368,6 @@ public class NetLobby extends Application implements Networkable {
             overviewGrid.add(ready2, 4, 11);
             ready2.setText("not ready");
             team2Shown = true;
-            teamsCreated = 2;
         }
         if (number == 2 && !overviewGrid.getChildren().contains(colorPicker3)) {
             Text team3 = new Text("Team 3");
@@ -383,7 +384,6 @@ public class NetLobby extends Application implements Networkable {
             ready3.setText("not ready");
             overviewGrid.add(ready3, 4, 12);
             team3Shown = true;
-            teamsCreated = 3;
         }
         if (number == 3 && !overviewGrid.getChildren().contains(colorPicker4)) {
             Text team4 = new Text("Team 4");
@@ -399,9 +399,8 @@ public class NetLobby extends Application implements Networkable {
             });
             ready4.setText("not ready");
             overviewGrid.add(ready4, 4, 13);
-            teamsCreated = 4;
         }
-        start.setDisable(!teamsAreReady());
+        start.setDisable(!Server.teamsAreReady());
     }
 
     private void removePlayer(String name, int i) {
@@ -446,7 +445,7 @@ public class NetLobby extends Application implements Networkable {
     }
 
     public void initializeArrayLists() {
-        // what about for(int i=0; i<MAX_NUMBER_OF_TEAMS; i++) names.add(new TextField()); ? @jessypet
+        // TODO what about for(int i=0; i<MAX_NUMBER_OF_TEAMS; i++) names.add(new TextField()); ? @jessypet
         names.add(hostName);
         names.add(name2);
         names.add(name3);
@@ -554,11 +553,34 @@ public class NetLobby extends Application implements Networkable {
             String clientId = keyCode.split(" ", 2)[0];
             handleSpectatorBoxChanged(checked, currentTeam, clientId);
         } else if (keyCode.startsWith("READY")) {
-            int team = Integer.parseInt(extractPart(keyCode, "READY "));
+            int team = Integer.parseInt(keyCode.split(" ", 3)[1]);
+            JSONObject clientSettings = new JSONObject(keyCode.split(" ", 3)[2]);
+            applySettingsFromClient(clientSettings, team);
             setTeamReady(team);
         } else {
             System.out.println("Lobby handleKeyEventOnServer: unknown command " + keyCode);
         }
+    }
+
+    /**
+     * applies a given settings object, but only the part which the given team is allowed to change, and sends new state to clients
+     * @param clientSettings a JSONObject containing settings
+     * @param team the team wanting to change settings (counting starts from 0=host)
+     */
+    private void applySettingsFromClient(JSONObject clientSettings, int team) {
+        JSONObject currentSettings = toJson();
+        // clients may only change the team settings, so replace the currently set team settings with the settings send from the team
+
+        JSONArray teamsArray = currentSettings.getJSONArray("teams");
+        for(int i=0; i<teamsArray.length(); i++) {
+            if(i == team) {
+                teamsArray.getJSONObject(i).put("name", clientSettings.getJSONArray("teams").getJSONObject(i).getString("name"));
+                teamsArray.getJSONObject(i).put("color", clientSettings.getJSONArray("teams").getJSONObject(i).getString("color"));
+            }
+        }
+
+        fromJson(currentSettings);
+        server.sendCommand(getStateForNewClient());
     }
 
     private void handleSpectatorBoxChanged(boolean isSpectating, int currentTeam, String clientId) {
@@ -596,22 +618,11 @@ public class NetLobby extends Application implements Networkable {
     private void setTeamReady(int team) {
         if(team < 1) throw new IllegalArgumentException("Team " + team + " cannot change to ready state.");
 
-        System.out.println("Team #" + team + "is ready");
+        System.out.println("Team #" + team + " is ready");
         readys.get(team).setText("ready");
         server.sendCommand(getStateForNewClient());
 
-        if(teamsAreReady()) start.setDisable(false);
-    }
-
-    /**
-     * @return true when all teams are ready
-     */
-    private boolean teamsAreReady() {
-        if (ready2.getText().equals("ready") && ready3.getText().equals("ready") && ready4.getText().equals("ready")) {
-            return true;
-        } else {
-            return false;
-        }
+        if(server.teamsAreReady()) start.setDisable(false);
     }
 
     @Override

@@ -150,14 +150,18 @@ public class Server implements Runnable {
         }
     }
 
-    private static String getSpectatorsAsJson() {
+    /**
+     * @return a JSONObject representing the connected clients, including associated team
+     */
+    private static String getClientListAsJson() {
         JSONObject json = new JSONObject();
         JSONArray spectatorsArray = new JSONArray();
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if(!clients.get(i).id.equals(Client.id)) { // TODO hardcoded spectator mode
-                    spectatorsArray.put(clients.get(i).name);
-                }
+            for (ClientConnection client: clients) {
+                JSONObject player = new JSONObject();
+                player.put("name", client.name);
+                player.put("team", client.getAssociatedTeam());
+                spectatorsArray.put(player);
             }
         }
         return json.put("spectators", spectatorsArray).toString();
@@ -174,7 +178,20 @@ public class Server implements Runnable {
     }
 
     /**
-     * changes the team number associated with a client
+     * @return true when all teams are ready
+     */
+
+    public static boolean teamsAreReady() {
+        for (ClientConnection client: clients) {
+            if (!client.isReady) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * changes the team number associated with a client; informs all clients about the change by sending the current list of clients
      * @param id the id associated with the client
      * @param newTeam the new team number of the client (counting starts from 0=host, -1 means spectator)
      */
@@ -185,6 +202,7 @@ public class Server implements Runnable {
                     clients.get(i).associatedTeam = newTeam;
                     clients.get(i).out.println("SET_TEAM_NUMBER " + newTeam);
                     System.out.println(clients.get(i).id + "/" + clients.get(i).name + " associated with team " + newTeam);
+                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                     return;
                 }
             }
@@ -236,7 +254,7 @@ public class Server implements Runnable {
                 synchronized (clients) {
                     clients.add(this);
                 }
-                sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                 broadcast();
             }
         }
@@ -255,6 +273,7 @@ public class Server implements Runnable {
                     name = identifier.split(" ")[1];
                     if(Client.id.equals(id)) { // we are host
                         associatedTeam = 0;
+                        isReady = true;
                     }
                     break;
                 }
@@ -277,7 +296,7 @@ public class Server implements Runnable {
                                 if(clientId.equals(Client.id) || clientId.equals(getIdFromName(userToKick))) {
                                     disconnect(userToKick);
                                     sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
-                                    sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                                 } else {
                                     sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
                                 }
@@ -297,23 +316,23 @@ public class Server implements Runnable {
                                 if(clientId.equals(Client.id) || clientId.equals(getIdFromName(names[1]))) {
                                     sendCommand("SERVER CHAT command executed. cmd: " + names[1] + ": " + msg);
                                     renameByName(names[1], names[2]);
-                                    sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                                 } else {
                                     sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
                                 }
                             } else {
                                 sendCommand("SERVER CHAT command executed. cmd: " + name + ": " + msg);
                                 renameByName(name, names[1]);
-                                sendCommand("SPECTATOR_LIST " + getSpectatorsAsJson());
+                                sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                             }
                         } else {
                             sendCommand(getNameFromId(clientId) + " CHAT " + msg);
                         }
                     } else if (line.contains("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());
-                    } else if (line.contains("CLIENT_READY")) {
+                    } else if (line.contains("CLIENT_READY ")) {
                         isReady = true;
-                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer("READY " + associatedTeam));
+                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer("READY " + associatedTeam + " " + extractPart(line, "CLIENT_READY ")));
                     } else if (line.contains("SPECTATOR ")) {
                         Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(line + " " + associatedTeam));
                     } else if (line.contains("KEYEVENT ")) {
@@ -364,6 +383,15 @@ public class Server implements Runnable {
 
         public void setName(String name) {
             this.name = name;
+        }
+
+        /**
+         * @return associated team as formatted string (eg. "Specatator" instead of -1)
+         */
+        public String getAssociatedTeam() {
+            if(associatedTeam == -1) return "Spectator";
+            if(associatedTeam == 0) return "Team 1 (Host)";
+            return "Team " + (associatedTeam+1);
         }
     }
 
