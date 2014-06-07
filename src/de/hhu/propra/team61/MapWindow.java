@@ -355,12 +355,12 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_ANGLE_UP":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
@@ -400,15 +400,15 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
+                teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_FACE_RIGHT":
+                teams.get(currentTeam).getCurrentFigure().setFacingRight(true);
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_SET_POSITION":
@@ -500,32 +500,16 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "Left":
             case "A":
-                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                   server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
-                   break;
-                } else {
-                    v = new Point2D(-FIGURE_SPEED, 0);
+                server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() == null) {
+                    moveCurrentlyActiveFigure(new Point2D(-FIGURE_SPEED, 0));
                 }
+               break;
             case "Right":
             case "D":
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
-                } else {
-                    if (v == null) v = new Point2D(FIGURE_SPEED, 0);
-                    Figure f = teams.get(currentTeam).getCurrentFigure();
-                    Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
-                    Rectangle2D hitRegion = f.getHitRegion();
-                    Point2D newPos = null;
-                    try {
-                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
-                    } catch (CollisionException e) {
-                        System.out.println("CollisionWithTerrainException, stopped movement");
-                        newPos = e.getLastGoodPosition();
-                    }/* catch (CollisionWithFigureException e) {
-                        // figures can walk through each other // TODO really? // Yes, please
-                        System.out.println("ERROR How did we get here?");
-                    }*/
-                    server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() == null) {
+                    moveCurrentlyActiveFigure(new Point2D(FIGURE_SPEED, 0));
                 }
                 break;
             case "1":
@@ -546,6 +530,27 @@ public class MapWindow extends Application implements Networkable {
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
+    }
+
+    /**
+     * moves the currently active figure and reports the position change to the connected clients
+     * @param v the velocity vector with which the figure wants to move
+     */
+    private void moveCurrentlyActiveFigure(Point2D v) {
+        Figure f = teams.get(currentTeam).getCurrentFigure();
+        Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
+        Rectangle2D hitRegion = f.getHitRegion();
+        Point2D newPos = null;
+        try {
+            newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
+        } catch (CollisionException e) {
+            System.out.println("CollisionWithTerrainException, stopped movement");
+            newPos = e.getLastGoodPosition();
+        }/* catch (CollisionWithFigureException e) {
+            // figures can walk through each other // TODO really? // Yes, please
+            System.out.println("ERROR How did we get here?");
+        }*/
+        server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
     }
 
     @Override

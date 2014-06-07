@@ -15,7 +15,7 @@ import javafx.scene.paint.Color;
  */
 
 public class Figure extends StackPane {
-    private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
+    private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
     private int health;
@@ -162,17 +162,17 @@ public class Figure extends StackPane {
         selectedItem = select;
         if(selectedItem != null) {
             select.setPosition(new Point2D(figureImage.getTranslateX(), figureImage.getTranslateY()));
-            selectedItem.angleDraw(facing_right);
+            selectedItem.angleDraw(facingRight);
         }
     }
 
-    public void setFacing_right(boolean facing_right) {
-        this.facing_right = facing_right;
-
-        if(facing_right){ figureImage.setScaleX(1); } //Reverse Mirroring
-        else{ figureImage.setScaleX(-1); } //Mirror Img
+    public void setFacingRight(boolean facingRight) {
+        this.facingRight = facingRight;
+        figureImage.setScaleX(facingRight ? 1 : -1); // mirror image when not facing right
     }
-    public boolean getFacing_right(){return facing_right;}
+    public boolean getFacingRight(){
+        return facingRight;
+    }
 
     public void sufferDamage(int damage) {
         health -= damage;
