@@ -10,10 +10,12 @@ public class CollisionException extends Exception {
     private String collisionPartnerClass;
 
     private Point2D lastGoodPosition;
+    private Point2D collidingPosition;
 
-    public CollisionException(String collisionPartnerClass, Point2D lastGoodPosition) {
-        this.collisionPartnerClass = collisionPartnerClass;
+    public CollisionException(Point2D collidingPosition, Point2D lastGoodPosition) {
+      //  this.collisionPartnerClass = collisionPartnerClass;
         this.lastGoodPosition = lastGoodPosition;
+        this.collidingPosition = collidingPosition;
     }
 
     public String getCollisionPartnerClass() {
@@ -22,5 +24,9 @@ public class CollisionException extends Exception {
 
     public Point2D getLastGoodPosition() {
         return lastGoodPosition;
+    }
+
+    public Point2D getCollidingPosition() {
+        return collidingPosition;
     }
 }

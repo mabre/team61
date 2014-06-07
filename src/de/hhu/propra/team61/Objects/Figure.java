@@ -199,9 +199,9 @@ public class Figure extends StackPane {
         return hitRegion;
     }
 
-    public Projectile shoot() throws NoMunitionException {
+    public Projectile shoot(int power) throws NoMunitionException {
        // selectedItem.setPosition(new Point2D(figureImage.getTranslateX(), figureImage.getTranslateY())); // What is this for?
-        return selectedItem.shoot();
+        return selectedItem.shoot(power);
     }
 
     //For testing purposes only

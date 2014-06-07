@@ -1,9 +1,12 @@
 package de.hhu.propra.team61.Objects;
 
+import de.hhu.propra.team61.Team;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+
+import java.util.ArrayList;
 
 /**
  *
@@ -67,4 +70,12 @@ public class Projectile extends ImageView {
           return source.getDamage();
     }
 
+    /*
+     * @param terrain for destruction
+     * @param teams ability to affect all figures
+     * @param impactPoint NEEDed for a hitbox placed ON colliding position, NOT last "good" one
+     */
+    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Point2D impactPoint){ //Passes down the request to weaponclass and calculates hitbox from position given
+        return this.source.handleCollision(terrain,teams,new Rectangle2D(impactPoint.getX(),impactPoint.getY(),getImage().getWidth(),getImage().getHeight()));
+    }
 }

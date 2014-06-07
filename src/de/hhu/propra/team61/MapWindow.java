@@ -55,6 +55,8 @@ public class MapWindow extends Application implements Networkable {
     private Thread clientThread;
     private String map; // TODO do we need this?
     private Chat chat;
+    private int power = 0; // Power/energy projectile is shot with
+    private boolean allowShooting = true; // Used to disable shooting multiple times during 1 turn
 
     private final static int FIGURE_SPEED = 5;
 
@@ -205,16 +207,18 @@ public class MapWindow extends Application implements Networkable {
                                 newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, false);
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
-                            } catch (CollisionWithTerrainException e) {
+                          /*  } catch (CollisionWithTerrainException e) {
                                 System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
                                 server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition (might still be !=null in next iteration)
-                                endTurn();
-                            } catch (CollisionWithFigureException e) {
+                                //endTurn();*/
+                            } catch (CollisionException e) {
                                 System.out.println("CollisionWithFigureException, let's harm somebody!");
                                 Platform.runLater(() -> {
-                                    e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
-                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHealth());
-                                    server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
+                                    ArrayList<String> commandList = flyingProjectile.handleCollision(terrain, teams, e.getCollidingPosition()); //ToDo get rid of collisionpartner? Would need adjustments in Terrain; Didn't want to touch that
+                                    for(String command : commandList){
+                                        server.sendCommand(command);
+                                    }
+                                    //server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
                                     endTurn();
                                 });
                             }
@@ -254,7 +258,7 @@ public class MapWindow extends Application implements Networkable {
      * @param figure a figure object reference
      * @return team index + " " + figure index of the given figure
      */
-    private String getFigureId(Figure figure) {
+    private String getFigureId(Figure figure) {  //ToDo Probably not necessary anymore due to the movement of collisionhandling to the weaponclasses
         String id = "";
         for(int i=0; i<teams.size(); i++) {
             for(int j=0; j<teams.get(i).getFigures().size(); j++) {
@@ -290,9 +294,11 @@ public class MapWindow extends Application implements Networkable {
     }
     
     public void endTurn() {
+        //ToDo Wait no until objectmovements
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
+        allowShooting = true;
         int oldCurrentTeam = currentTeam;
         do {
             currentTeam++;
@@ -348,8 +354,8 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(currentTeam).endRound();
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
-                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure() .getFacing_right());
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
             case "CURRENT_FIGURE_ANGLE_UP":
@@ -358,36 +364,43 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
-                if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                if (allowShooting) {
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     }
-                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
                     centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 }
                 break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
+                if (allowShooting) {
+                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    }
+
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                }
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
+                if(allowShooting){
+                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                        if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                            centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                            centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                        }
+                        teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
+                        centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                        centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    }
+                }
+                break;
             case "CURRENT_FIGURE_FACE_LEFT":
-                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
@@ -402,14 +415,18 @@ public class MapWindow extends Application implements Networkable {
                 Figure f = teams.get(currentTeam).getCurrentFigure();
                 f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
                 break;
-//            case "Number Sign": // TODO really? this is broken and deprecated
-//                cheatMode();
-//                break;
             case "CURRENT_FIGURE_SHOOT":
                 try {
-                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                     /* ToDo
+                    power = power + 5;
+                    Sleep/Wait if more ShootCommands are incoming, count them by incrementing THEN create projecctile
+                     */
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(power);
                     flyingProjectile = projectile;
                     centerView.getChildren().add(flyingProjectile);
+                    allowShooting = false;
+                    //ToDo setRoundTimer down to 5sec
+
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
                     break;
@@ -501,13 +518,13 @@ public class MapWindow extends Application implements Networkable {
                     Point2D newPos = null;
                     try {
                         newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
-                    } catch (CollisionWithTerrainException e) {
+                    } catch (CollisionException e) {
                         System.out.println("CollisionWithTerrainException, stopped movement");
                         newPos = e.getLastGoodPosition();
-                    } catch (CollisionWithFigureException e) {
+                    }/* catch (CollisionWithFigureException e) {
                         // figures can walk through each other // TODO really? // Yes, please
                         System.out.println("ERROR How did we get here?");
-                    }
+                    }*/
                     server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                 }
                 break;

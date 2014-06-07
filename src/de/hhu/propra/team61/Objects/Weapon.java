@@ -1,8 +1,13 @@
 package de.hhu.propra.team61.Objects;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
+import de.hhu.propra.team61.Team;
+import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+
+import java.util.ArrayList;
 
 /**
  * Created by kevgny on 21.05.14.
@@ -24,6 +29,11 @@ public abstract class Weapon extends Item {
 
     private double angle;       // Angle it is aimed at; 0 <=> Horizontal; +90 <=> straight upwards
     private ImageView crosshair;
+
+
+    public abstract ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea);
+    @Override
+    public abstract Projectile shoot(int power) throws NoMunitionException;
 
 
     public Weapon(int damage, int munition){ //ToDo Replace variables with something better
@@ -58,14 +68,10 @@ public abstract class Weapon extends Item {
     }
 
     //Getter and Setter
-    /*ToDo if necessary*/
     public ImageView getCrosshair() { return crosshair; }
     public int getDamage() { return damage; }
     public double getAngle() { return angle; }
 
-
-    @Override
-    public abstract Projectile shoot() throws NoMunitionException;
 
     //----------------------------------Crosshair-Related Functions--------------------------------- // TODO own class  // Why? Only this and deriving classes are needing those, while some Items might need a different type
     public double toRadian(double grad) { // This function transforms angles to rad which are needed for sin/cos etc.

@@ -15,12 +15,13 @@ public abstract class Item extends ImageView{
     protected int munition;     // Item can only be used when munition > 0
 
 
+    // ToDo I'll check if cannot do this nicer
     public abstract ImageView getCrosshair();
     public abstract void angleDraw(boolean faces_right);
     public abstract void angleUp(boolean faces_right);
     public abstract void angleDown(boolean faces_right);
 
-    public abstract Projectile shoot() throws NoMunitionException;
+    public abstract Projectile shoot(int power) throws NoMunitionException;
 
     /**
      * @param pos in px

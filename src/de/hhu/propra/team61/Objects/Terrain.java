@@ -180,7 +180,7 @@ public class Terrain extends GridPane {
      * @throws CollisionWithFigureException thrown when hitting a figure
      * @throws CollisionWithTerrainException thrown when hitting terrain
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean hasMass, boolean snapToPx) throws CollisionWithTerrainException, CollisionWithFigureException {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean hasMass, boolean snapToPx) throws CollisionException { // CollisionWithTerrainException, CollisionWithFigureException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         Point2D preferredFinalPosition = oldPosition.add(direction);
         Point2D normalizedDirection = direction.normalize();
@@ -240,6 +240,7 @@ public class Terrain extends GridPane {
                                 triedDiagonal = true;
                                 System.out.println("trying to walk diagonal along " + diagonalDirection + " to " + newPosition + " " + hitRegion);
                             } else {
+                                Point2D collidingPosition = newPosition;
                                 if(diagonalDirection.magnitude() == 0) { // did not go diagonal
                                     newPosition = newPosition.subtract(normalizedDirection);
                                 } else {
@@ -248,11 +249,11 @@ public class Terrain extends GridPane {
                                 if(snapToPx) {
                                     newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
                                 }
-                                if(intersectingFigure == null) {
-                                    throw new CollisionWithTerrainException(newPosition);
-                                } else {
+                                //if(intersectingFigure == null) {
+                                    throw new CollisionException(collidingPosition, newPosition);
+                              /*  } else {
                                     throw new CollisionWithFigureException(newPosition, intersectingFigure);
-                                }
+                                }*/
                             }
                         }
                     }

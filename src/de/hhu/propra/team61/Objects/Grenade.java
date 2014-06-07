@@ -1,8 +1,12 @@
 package de.hhu.propra.team61.Objects;
 
 import de.hhu.propra.team61.IO.JSON.JSONObject;
+import de.hhu.propra.team61.Team;
 import javafx.geometry.Point2D;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
+
+import java.util.ArrayList;
 
 /**
  * Created by kevgny on 22.05.14.
@@ -21,7 +25,7 @@ public class Grenade extends Weapon { //ToDo rename to a more fitting one
     }
 
     @Override
-    public Projectile shoot() throws NoMunitionException {
+    public Projectile shoot(int power) throws NoMunitionException {
         if(getTranslateY() < -100 || getTranslateX() < -100 ) {
             throw new NullPointerException("weapon is not in use, is at " + getTranslateX() + " " + getTranslateY());
         }
@@ -46,4 +50,23 @@ public class Grenade extends Weapon { //ToDo rename to a more fitting one
         return json;
     }
 
+    @Override
+    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea){
+        ArrayList<String> commandList = new ArrayList<String>();
+        commandList.add("REMOVE_FLYING_PROJECTILE");
+
+        int tCounter = 0;
+        for(Team t : teams){ // Calculate all worms hit, lacks hitradius usw, but for now I'm just assuring same functionality with the adaptions in background
+            int fCounter = 0;
+            for(Figure f : t.getFigures()){
+                if(f.getHitRegion().intersects(impactArea)){ //Give this some more love
+                    f.sufferDamage(getDamage());
+                    commandList.add("SET_HP " + tCounter + " " + fCounter + " " + f.getHealth());
+                }
+                fCounter += 1;
+            }
+            tCounter += 1;
+        }
+        return commandList;
+    }
 }
