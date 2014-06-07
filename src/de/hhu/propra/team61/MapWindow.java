@@ -302,7 +302,10 @@ public class MapWindow extends Application implements Networkable {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
+
         shootingIsAllowed = true;
+        server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
+
         int oldCurrentTeam = currentTeam;
         do {
             currentTeam++;
@@ -316,7 +319,8 @@ public class MapWindow extends Application implements Networkable {
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
-        server.sendCommand("CURRENT_TEAM_END_ROUND");
+        server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
+        server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
 
         String teamLabelText = "Turn: " + turnCount + " It’s Team " + currentTeam + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
@@ -354,17 +358,21 @@ public class MapWindow extends Application implements Networkable {
         String[] cmd = command.split(" ");
 
         switch(cmd[0]) {
+            case "ACTIVATE_FIGURE":
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
+                break;
             case "CURRENT_TEAM_END_ROUND":
-                teams.get(currentTeam).endRound();
+                teams.get(Integer.parseInt(cmd[1])).endRound();
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_ANGLE_UP":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
@@ -404,15 +412,15 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
+                teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_FACE_RIGHT":
+                teams.get(currentTeam).getCurrentFigure().setFacingRight(true);
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_SET_POSITION":
@@ -439,6 +447,9 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
+            case "DEACTIVATE_FIGURE":
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
+                break;
             case "GAME_OVER":
                 primaryStage.close();
                 if(moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -453,6 +464,7 @@ public class MapWindow extends Application implements Networkable {
                 flyingProjectile = null;
                 break;
             case "SET_CURRENT_TEAM":
+                teams.get(currentTeam).getCurrentFigure().setActive(false);
                 currentTeam = Integer.parseInt(cmd[1]);
                 break;
             case "SET_HP":
@@ -461,7 +473,7 @@ public class MapWindow extends Application implements Networkable {
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
             case "SUDDEN_DEATH":
-                    teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+                teams.get(Integer.parseInt(cmd[1])).suddenDeath();
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
                 break;
@@ -504,32 +516,16 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "Left":
             case "A":
-                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                   server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
-                   break;
-                } else {
-                    v = new Point2D(-FIGURE_SPEED, 0);
+                server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() == null) {
+                    moveCurrentlyActiveFigure(new Point2D(-FIGURE_SPEED, 0));
                 }
+               break;
             case "Right":
             case "D":
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
-                } else {
-                    if (v == null) v = new Point2D(FIGURE_SPEED, 0);
-                    Figure f = teams.get(currentTeam).getCurrentFigure();
-                    Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
-                    Rectangle2D hitRegion = f.getHitRegion();
-                    Point2D newPos = null;
-                    try {
-                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
-                    } catch (CollisionException e) {
-                        System.out.println("CollisionWithTerrainException, stopped movement");
-                        newPos = e.getLastGoodPosition();
-                    }/* catch (CollisionWithFigureException e) {
-                        // figures can walk through each other // TODO really? // Yes, please
-                        System.out.println("ERROR How did we get here?");
-                    }*/
-                    server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() == null) {
+                    moveCurrentlyActiveFigure(new Point2D(FIGURE_SPEED, 0));
                 }
                 break;
             case "1":
@@ -550,6 +546,27 @@ public class MapWindow extends Application implements Networkable {
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
+    }
+
+    /**
+     * moves the currently active figure and reports the position change to the connected clients
+     * @param v the velocity vector with which the figure wants to move
+     */
+    private void moveCurrentlyActiveFigure(Point2D v) {
+        Figure f = teams.get(currentTeam).getCurrentFigure();
+        Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
+        Rectangle2D hitRegion = f.getHitRegion();
+        Point2D newPos = null;
+        try {
+            newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
+        } catch (CollisionException e) {
+            System.out.println("CollisionWithTerrainException, stopped movement");
+            newPos = e.getLastGoodPosition();
+        }/* catch (CollisionWithFigureException e) {
+            // figures can walk through each other // TODO really? // Yes, please
+            System.out.println("ERROR How did we get here?");
+        }*/
+        server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
     }
 
     @Override

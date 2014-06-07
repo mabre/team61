@@ -5,17 +5,21 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+
+import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 /**
  * Created by kevin on 14.05.14.
  */
 
 public class Figure extends StackPane {
-    private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
+    private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
     private int health;
@@ -24,6 +28,8 @@ public class Figure extends StackPane {
     private boolean isBurning;
     private boolean isPoisoned;
     private boolean isStuck;
+
+    private boolean isActive;
 
     private Item selectedItem;
 
@@ -113,7 +119,7 @@ public class Figure extends StackPane {
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
-        output.put("isStuck",isStuck);
+        output.put("isStuck", isStuck);
         return output;
     }
 
@@ -136,6 +142,16 @@ public class Figure extends StackPane {
 
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+        if(isActive) {
+            // TODO move to css
+            nameTag.setStyle("-fx-border-color: rgba(255,0,0,.2); -fx-border-style: solid; -fx-border-width: 1px; -fx-border-radius: 5px;");
+        } else {
+            nameTag.setStyle("");
+        }
+    }
 
     // TODO rethink parameter, /8 is bad!
     public void setPosition(Point2D position) {
@@ -162,17 +178,17 @@ public class Figure extends StackPane {
         selectedItem = select;
         if(selectedItem != null) {
             select.setPosition(new Point2D(figureImage.getTranslateX(), figureImage.getTranslateY()));
-            selectedItem.angleDraw(facing_right);
+            selectedItem.angleDraw(facingRight);
         }
     }
 
-    public void setFacing_right(boolean facing_right) {
-        this.facing_right = facing_right;
-
-        if(facing_right){ figureImage.setScaleX(1); } //Reverse Mirroring
-        else{ figureImage.setScaleX(-1); } //Mirror Img
+    public void setFacingRight(boolean facingRight) {
+        this.facingRight = facingRight;
+        figureImage.setScaleX(facingRight ? 1 : -1); // mirror image when not facing right
     }
-    public boolean getFacing_right(){return facing_right;}
+    public boolean getFacingRight(){
+        return facingRight;
+    }
 
     public void sufferDamage(int damage) {
         health -= damage;
