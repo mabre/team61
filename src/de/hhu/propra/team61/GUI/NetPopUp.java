@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
@@ -20,6 +21,7 @@ public class NetPopUp extends Application {
 
     public void openPopUp(SceneController sceneController) {
         Stage netpopup = new Stage();
+        netpopup.initModality(Modality.APPLICATION_MODAL);
         netpopup.setTitle("Start network game");
         netpopup.setWidth(500);
         netpopup.setHeight(250);
