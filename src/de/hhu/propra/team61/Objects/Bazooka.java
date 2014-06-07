@@ -12,38 +12,37 @@ import java.util.ArrayList;
 /**
  * Created by kevin on 21.05.14.
  */
-interface GrenadeAttributes {
+interface BazookaAttributes {
     final String PROJECTILE_IMG = "file:resources/weapons/temp0.png";
-    final String WEAPON_IMG     = "file:resources/weapons/temp2.png";
+    final String WEAPON_IMG     = "file:resources/weapons/temp1.png";
     final String DAMAGETYPE     = "Explosiondamage";
-    final int    DAMAGE         =  40;
+    final int    DAMAGE         =  50;
     final int    EXPLOSIONPOWER = 100;
     final int    SHOCKWAVE      =   0;
-    final int    DELAY          =   5; //ToDo make this variable
+    final int    DELAY          =  -1; // ToDo somehow tell it's on collision
 }
-public class Grenade extends Weapon implements GrenadeAttributes{
+public class Bazooka extends Weapon implements BazookaAttributes{
 //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
 
 
-    public Grenade(int munition){
+    public Bazooka(int munition){
         super(munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE);
     }
 
-    public Grenade(JSONObject json) {
+    public Bazooka(JSONObject json) {
         super(json);
     }
-
     @Override
     public JSONObject toJson() {
         JSONObject json = super.toJson();
-        json.put("type", "Grenade");
+        json.put("type", "Bazooka");
 
         return json;
     }
 
     @Override
     /**
-     * This Function coordinates damage caused to Figures and Terrain.
+     * This Function coordinates damage caused to Figures and Terrain. Also sends Objects flying. //ToDo do this
      * It returns a series of commands the server has to send to the clients
      */
     public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea){

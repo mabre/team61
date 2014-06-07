@@ -9,7 +9,7 @@ import javafx.scene.image.ImageView;
 import java.util.ArrayList;
 
 /**
- *
+ * Created by kevin on ?
  */
 public class Projectile extends ImageView {
     boolean falls; // Gravitation on/off
@@ -70,7 +70,7 @@ public class Projectile extends ImageView {
           return source.getDamage();
     }
 
-    /*
+    /**
      * @param terrain for destruction
      * @param teams ability to affect all figures
      * @param impactPoint NEEDed for a hitbox placed ON colliding position, NOT last "good" one

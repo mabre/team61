@@ -29,34 +29,38 @@ import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
- * Created by kegny on 08.05.14.
+ * Created by kevin on 08.05.14.
  * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application implements Networkable {
-    private ArrayList<Team> teams;
+    //JavaFX related variables
     private Scene drawing;
     private Stage primaryStage;
     private BorderPane root;
     private StackPane centerView;
     private Terrain terrain;
     private Label teamLabel;
+    //Team related variables
+    private ArrayList<Team> teams; //Dynamic list containing all playing teams
     private int currentTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
+    private int power = 0; // Power/energy projectile is shot with
+    private boolean shootingIsAllowed = true; // Used to disable shooting multiple times during 1 turn
+    private int teamquantity;
+    private int teamsize;
+    //Projectile-Moving-Thread related variables
     private Projectile flyingProjectile = null;
     private Thread moveObjectsThread;
     private Stage stageToClose;
-    private int teamquantity;
-    private int teamsize;
+    //Network
     private Server server;
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
     private String map; // TODO do we need this?
     private Chat chat;
-    private int power = 0; // Power/energy projectile is shot with
-    private boolean allowShooting = true; // Used to disable shooting multiple times during 1 turn
 
     private final static int FIGURE_SPEED = 5;
 
@@ -85,9 +89,9 @@ public class MapWindow extends Application implements Networkable {
         JSONArray teamsArray = settings.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
-            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
-            weapons.add(new Gun("file:resources/weapons/temp3.png", 30, settings.getInt("weapon3")));
+            weapons.add(new Bazooka(settings.getInt("weapon1")));
+            weapons.add(new Grenade(settings.getInt("weapon2")));
+            weapons.add(new Shotgun(settings.getInt("weapon3")));
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
         }
 
@@ -214,7 +218,7 @@ public class MapWindow extends Application implements Networkable {
                             } catch (CollisionException e) {
                                 System.out.println("CollisionWithFigureException, let's harm somebody!");
                                 Platform.runLater(() -> {
-                                    ArrayList<String> commandList = flyingProjectile.handleCollision(terrain, teams, e.getCollidingPosition()); //ToDo get rid of collisionpartner? Would need adjustments in Terrain; Didn't want to touch that
+                                    ArrayList<String> commandList = flyingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
                                     for(String command : commandList){
                                         server.sendCommand(command);
                                     }
@@ -282,8 +286,8 @@ public class MapWindow extends Application implements Networkable {
             teams.clear();
             for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
                 ArrayList<Weapon> weapons = new ArrayList<>();
-                weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
-                weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
+                weapons.add(new Bazooka(2));
+                weapons.add(new Grenade(2));
                 Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE);
                 teams.add(team);
                 centerView.getChildren().add(team);
@@ -294,11 +298,11 @@ public class MapWindow extends Application implements Networkable {
     }
     
     public void endTurn() {
-        //ToDo Wait no until objectmovements
+        //ToDo Wait until no objectmovements
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
-        allowShooting = true;
+        shootingIsAllowed = true;
         int oldCurrentTeam = currentTeam;
         do {
             currentTeam++;
@@ -364,7 +368,7 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
-                if (allowShooting) {
+                if (shootingIsAllowed) {
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
@@ -375,7 +379,7 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
-                if (allowShooting) {
+                if (shootingIsAllowed) {
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
@@ -387,7 +391,7 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
-                if(allowShooting){
+                if(shootingIsAllowed){
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                             centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
@@ -424,7 +428,7 @@ public class MapWindow extends Application implements Networkable {
                     Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(power);
                     flyingProjectile = projectile;
                     centerView.getChildren().add(flyingProjectile);
-                    allowShooting = false;
+                    shootingIsAllowed = false;
                     //ToDo setRoundTimer down to 5sec
 
                 } catch (NoMunitionException e) {

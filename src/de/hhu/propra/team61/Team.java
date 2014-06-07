@@ -4,7 +4,7 @@ import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import de.hhu.propra.team61.Objects.Figure;
 import de.hhu.propra.team61.Objects.Grenade;
-import de.hhu.propra.team61.Objects.Gun;
+import de.hhu.propra.team61.Objects.Bazooka;
 import de.hhu.propra.team61.Objects.Weapon;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -60,7 +60,7 @@ public class Team extends StackPane {
         for(int i=0; i<weaponsArray.length(); i++) {
             Weapon w = null;
             if(weaponsArray.getJSONObject(i).getString("type").equals("Gun")) {
-                w = new Gun(weaponsArray.getJSONObject(i));
+                w = new Bazooka(weaponsArray.getJSONObject(i));
             } else if(weaponsArray.getJSONObject(i).getString("type").equals("Grenade")) {
                 w = new Grenade(weaponsArray.getJSONObject(i));
             }

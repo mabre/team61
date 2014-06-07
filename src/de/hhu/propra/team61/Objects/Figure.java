@@ -11,7 +11,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 
 /**
- * Created by kevgny on 14.05.14.
+ * Created by kevin on 14.05.14.
  */
 
 public class Figure extends StackPane {
