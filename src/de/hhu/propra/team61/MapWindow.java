@@ -343,115 +343,116 @@ public class MapWindow extends Application implements Networkable {
         String[] cmd = command.split(" ");
 
         if(cmd[0].equals("PAUSE")){
-            pause = !pause;
-            if(pause){teamLabel.setText("Pause - If(Host){Press P or ESC to continue}");} //ToDo ugly temporary implementation
-            else{teamLabel.setText("Continue");}
+            pause = Boolean.parseBoolean(cmd[1]);
+            if(pause) {
+                teamLabel.setText("Pause - If(Host){Press P or ESC to continue}"); //ToDo ugly temporary implementation
+            } else {
+                teamLabel.setText("Continue");
+            }
         }
-        if(pause) {
-        } else {
-            switch (cmd[0]) {
-                case "CURRENT_TEAM_END_ROUND":
-                    teams.get(currentTeam).endRound();
-                    break;
-                case "CURRENT_FIGURE_ANGLE_DOWN":
-                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                        teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                    }
-                    break;
-                case "CURRENT_FIGURE_ANGLE_UP":
-                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                        teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                    }
-                    break;
-                case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
+
+        switch (cmd[0]) {
+            case "CURRENT_TEAM_END_ROUND":
+                teams.get(currentTeam).endRound();
+                break;
+            case "CURRENT_FIGURE_ANGLE_DOWN":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_ANGLE_UP":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                }
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                }
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
+                if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     }
-                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
                     centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    break;
-                case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
-                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                    }
-                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
-                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    break;
-                case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                        if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                            centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                        }
-                        teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
-                        centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                        centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    }
-                    break;
-                case "CURRENT_FIGURE_FACE_LEFT":
-                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                        teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
-                        teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                    }
-                    break;
-                case "CURRENT_FIGURE_FACE_RIGHT":
-                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                        teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
-                        teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
-                    }
-                    break;
-                case "CURRENT_FIGURE_SET_POSITION":
-                    Figure f = teams.get(currentTeam).getCurrentFigure();
-                    f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
-                    break;
+                }
+                break;
+            case "CURRENT_FIGURE_FACE_LEFT":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_FACE_RIGHT":
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                }
+                break;
+            case "CURRENT_FIGURE_SET_POSITION":
+                Figure f = teams.get(currentTeam).getCurrentFigure();
+                f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
+                break;
 //            case "Number Sign": // TODO really? this is broken and deprecated
 //                cheatMode();
 //                break;
-                case "CURRENT_FIGURE_SHOOT":
-                    try {
-                        Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
-                        flyingProjectile = projectile;
-                        centerView.getChildren().add(flyingProjectile);
-                    } catch (NoMunitionException e) {
-                        System.out.println("no munition");
-                        break;
-                    }
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+            case "CURRENT_FIGURE_SHOOT":
+                try {
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                    flyingProjectile = projectile;
+                    centerView.getChildren().add(flyingProjectile);
+                } catch (NoMunitionException e) {
+                    System.out.println("no munition");
                     break;
-                case "GAME_OVER":
-                    if (moveObjectsThread != null) moveObjectsThread.interrupt();
-                    GameOverWindow gameOverWindow = new GameOverWindow();
-                    gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
-                    break;
-                case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
-                    flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
-                    break;
-                case "REMOVE_FLYING_PROJECTILE":
-                    centerView.getChildren().remove(flyingProjectile);
-                    flyingProjectile = null;
-                    break;
-                case "SET_CURRENT_TEAM":
-                    currentTeam = Integer.parseInt(cmd[1]);
-                    break;
-                case "SET_HP":
-                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
-                case "SET_TURN_COUNT":
-                    turnCount = Integer.parseInt(cmd[1]);
-                    break;
-                case "SUDDEN_DEATH":
-                    teams.get(Integer.parseInt(cmd[1])).suddenDeath();
-                case "TEAM_LABEL_SET_TEXT":
-                    teamLabel.setText(arrayToString(cmd, 1));
-                    break;
-                default:
-                    System.out.println("handleKeyEventOnClient: no event for key " + command);
-            }
+                }
+                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "GAME_OVER":
+                if (moveObjectsThread != null) moveObjectsThread.interrupt();
+                GameOverWindow gameOverWindow = new GameOverWindow();
+                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                break;
+            case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
+                flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
+                break;
+            case "REMOVE_FLYING_PROJECTILE":
+                centerView.getChildren().remove(flyingProjectile);
+                flyingProjectile = null;
+                break;
+            case "SET_CURRENT_TEAM":
+                currentTeam = Integer.parseInt(cmd[1]);
+                break;
+            case "SET_HP":
+                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+            case "SET_TURN_COUNT":
+                turnCount = Integer.parseInt(cmd[1]);
+                break;
+            case "SUDDEN_DEATH":
+                teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+            case "TEAM_LABEL_SET_TEXT":
+                teamLabel.setText(arrayToString(cmd, 1));
+                break;
+            default:
+                System.out.println("handleKeyEventOnClient: no event for key " + command);
         }
     }
 
@@ -476,17 +477,29 @@ public class MapWindow extends Application implements Networkable {
         int team = Integer.parseInt(keyCode.split(" ", 2)[0]);
         keyCode = keyCode.split(" ", 2)[1];
 
+        // pause is a special case: do not ignore pause command when paused, and also accept the input when it's not team 0's turn
+        switch(keyCode) {
+            case "Esc":
+            case "Pause":
+            case "P":
+                if (team == 0 || client.isLocalGame()) { // allowing pausing by host (team 0) and when playing local game
+                    pause = !pause;
+                    server.sendCommand("PAUSE " + pause);
+                }
+                break;
+        }
+
+        if(pause) {
+            System.out.println("Game paused, ignoring command " + keyCode);
+            return;
+        }
+
         if (team != currentTeam && !client.isLocalGame()) {
             System.out.println("The key event " + keyCode + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
             return;
         }
 
         switch(keyCode) {
-            case "Esc":
-            case "Pause":
-            case "P":
-                if(server !=null){server.sendCommand("PAUSE");}
-                break;
             case "Space":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     server.sendCommand("CURRENT_FIGURE_SHOOT");
