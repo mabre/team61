@@ -318,7 +318,7 @@ public class NetLobby extends Application implements Networkable {
 
     public void fromJson(JSONObject json) {
         for (int i=0; i<=3 ;i++) {
-            removeTeam(i);
+            removeTeam(i, false);
         }
         teamsCreated = 0;
 
@@ -386,7 +386,7 @@ public class NetLobby extends Application implements Networkable {
         yes.setOnAction(e -> {
             popUp.close();
             if(server != null) {
-                removeTeam(i);
+                removeTeam(i, true);
                 server.changeTeamByNumber(i, -1); // change team to spectator
                 server.sendCommand(getStateForNewClient()); // send new lobby state to clients
             } else {
@@ -415,8 +415,9 @@ public class NetLobby extends Application implements Networkable {
      * all clients. The caller must assure that this is done when the change is not temporary (e.g. when re-writing the
      * list of teams).
      * @param team the team to be removed
+     * @param changeClientsAssociatedTeam // TODO temporary work-around for the case we are removing all teams and re-add them
      */
-    private void removeTeam(int team) {
+    private void removeTeam(int team, boolean changeClientsAssociatedTeam) {
         if(teamsCreated < team) {
             System.out.println("WARNING " + teamsCreated + " teams exist, hence cannot remove team #" + team);
             return;
@@ -431,7 +432,7 @@ public class NetLobby extends Application implements Networkable {
                 colorPickers.get(i + 1).setValue(Color.web("#000000"));
                 readys.get(i).setText(readys.get(i+1).getText());
                 readys.get(i+1).setText("not ready");
-                if(server != null) server.changeTeamByNumber(i+1, i);
+                if(server != null && changeClientsAssociatedTeam) server.changeTeamByNumber(i+1, i);
             }
         }
 
@@ -563,7 +564,7 @@ public class NetLobby extends Application implements Networkable {
                 System.out.println("ERROR: Cannot remove team " + currentTeam);
                 return;
             }
-            removeTeam(currentTeam);
+            removeTeam(currentTeam, true);
             server.changeTeamById(clientId, -1);
         } else {
             System.out.println("handleSpectatorBoxChanged: current number of teams: " + teamsCreated);
