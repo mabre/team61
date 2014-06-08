@@ -289,14 +289,20 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
-    public int getNumberOfLivingTeams(){
+    public int getNumberOfLivingTeams(){ //TODO Macht im prinzip noch nichts, da livingTeams=2, egal was passiert.
+        System.out.println("teamquantity"+ teamquantity);
         int livingTeams = 0;
-        int currentTeamCheck = 0;
-        int c = currentTeamCheck % teamsize;
-        for (int i = teams.get(currentTeam).getNumberOfLivingFigures() ; i>0 ;i-- ){
+        int currentTeamCheck = currentTeam ;
+        int c;
+        for (int i = teamquantity + 1; i>0 ; i-- ){
             currentTeamCheck++;
-            if(c != 0 ) {
+//            if (currentTeamCheck == teamquantity ){
+//                currentTeamCheck = 0;
+//            }
+            c = currentTeamCheck % (teamquantity + 1)  ; //TODO c soll beinhalten, ob das aktuelle team Pin's enthält
+            if (c != 0 ) {
                 livingTeams++;
+                System.out.println("Hier!" + livingTeams + " und Da:" + currentTeamCheck);
             }
         }
         return livingTeams;
@@ -316,12 +322,13 @@ public class MapWindow extends Application implements Networkable {
                 server.sendCommand("GAME_OVER " + currentTeam);
                 return;
             }
-        } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
-        if (getNumberOfLivingTeams() < 2){
-            server.sendCommand("GAME_OVER " + currentTeam);
-            return;
-        }
+                if (getNumberOfLivingTeams() < 2){
+                server.sendCommand("GAME_OVER " + currentTeam);
+                return;
+            }
+
+        } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         server.sendCommand("CURRENT_TEAM_END_ROUND");
