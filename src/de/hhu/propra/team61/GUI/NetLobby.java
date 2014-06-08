@@ -111,6 +111,8 @@ public class NetLobby extends Application implements Networkable {
         HBox topBox = addTopHBox();
         root.setTop(topBox);
         overviewGrid = new CustomGrid();
+        overviewGrid.setPrefWidth(672);
+        overviewGrid.setPrefHeight(550);
         root.setLeft(overviewGrid);
 
         Text teamsText = new Text("Teams:");
