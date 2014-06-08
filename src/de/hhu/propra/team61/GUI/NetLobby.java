@@ -418,7 +418,7 @@ public class NetLobby extends Application implements Networkable {
         hboxes.get(teamsCreated-1).getChildren().clear();      // remove the last fields so that the number of players is reduced
         overviewGrid.getChildren().removeAll(hboxes.get(teamsCreated-1));
         teamsCreated--;
-        //TODO disconnect player
+        //Server.disconnect(names.get(team).getText());
     }
 
     public void initializeArrayLists() {
