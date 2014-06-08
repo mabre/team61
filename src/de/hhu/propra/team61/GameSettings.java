@@ -36,16 +36,29 @@ public class GameSettings extends Application {
 
     int numberOfTeams = 2;
     CustomGrid settingGrid = new CustomGrid();
-    TextField name1 = new TextField();
-    TextField name2 = new TextField();
-    TextField name3 = new TextField();
-    TextField name4 = new TextField();
+    TextField name1 = new TextField("player1");
+    TextField name2 = new TextField("player2");
+    TextField name3 = new TextField("player3");
+    TextField name4 = new TextField("player4");
     ArrayList<TextField> names = new ArrayList<TextField>();
     ArrayList<ColorPicker> colorPickers = new ArrayList<ColorPicker>();
+    ArrayList<ToggleGroup> figures = new ArrayList<>();
     ColorPicker colorPicker1 = new ColorPicker();
     ColorPicker colorPicker2 = new ColorPicker();
     ColorPicker colorPicker3 = new ColorPicker();
     ColorPicker colorPicker4 = new ColorPicker();
+    ToggleGroup figure1 = new ToggleGroup();
+    ToggleGroup figure2 = new ToggleGroup();
+    ToggleGroup figure3 = new ToggleGroup();
+    ToggleGroup figure4 = new ToggleGroup();
+    RadioButton penguin1 = new RadioButton("Penguin");
+    RadioButton unicorn1 = new RadioButton("Unicorn");
+    RadioButton penguin2 = new RadioButton("Penguin");
+    RadioButton unicorn2 = new RadioButton("Unicorn");
+    RadioButton penguin3 = new RadioButton("Penguin");
+    RadioButton unicorn3 = new RadioButton("Unicorn");
+    RadioButton penguin4 = new RadioButton("Penguin");
+    RadioButton unicorn4 = new RadioButton("Unicorn");
     TextField savefield = new TextField();
     TextField weapon1 = new TextField("50");
     TextField weapon2 = new TextField("50");
@@ -55,25 +68,30 @@ public class GameSettings extends Application {
     Button addTeam = new Button("+");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
 
+    SceneController sceneController = new SceneController();
+
     Server server;
     Thread serverThread;
     Client client;
     Thread clientThread;
 
-    public void doSettings(Stage stageToClose) {
-        BigStage settingStage = new BigStage("Game Settings");
+    public GameSettings(SceneController sceneController) {
+        this.sceneController = sceneController;
+    }
+
+    public void doSettings() {
         settingGrid.setAlignment(Pos.TOP_LEFT);
         initializeArrayLists();
 
         //Save/load settings
-        Text savetext = new Text("Save settings in ");
-        settingGrid.add(savetext, 0, 0);
+        Text saveText = new Text("Save settings in ");
+        settingGrid.add(saveText, 0, 0);
         settingGrid.add(savefield, 1, 0);
         Text extension = new Text(".conf");
         settingGrid.add(extension, 2, 0);
-        Button savebutton = new Button("Save");
-        settingGrid.add(savebutton, 3, 0);
-        savebutton.setOnAction(new EventHandler<ActionEvent>() {
+        Button saveButton = new Button("Save");
+        settingGrid.add(saveButton, 3, 0);
+        saveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
                 Settings.save(toJson(), savefield.getText());               //create Json-object and save it in the wanted file
@@ -86,18 +104,18 @@ public class GameSettings extends Application {
         FileChooser.ExtensionFilter fileFilter = new FileChooser.ExtensionFilter("CONF", "*.conf");
         loadChooser.getExtensionFilters().add(fileFilter);
         loadChooser.setTitle("Choose file to load");
-        Button loadbtn = new Button("Choose file..");
-        loadbtn.setOnAction(new EventHandler<ActionEvent>() {
+        Button loadButton = new Button("Choose file..");
+        loadButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(final ActionEvent e) {
-                File loadfile = loadChooser.showOpenDialog(settingStage);     //Open file-window to open a file and save it in 'loadfile'
-                if (loadfile != null) {
-                    String loadfilestring = loadfile.getAbsolutePath();
-                    fromJson(loadfilestring);
+                File loadFile = loadChooser.showOpenDialog(sceneController.getStage());
+                if (loadFile != null) {
+                    String loadFileString = loadFile.getAbsolutePath();
+                    fromJson(loadFileString);
                 }
             }
         });
-        settingGrid.add(loadbtn, 1, 1);
+        settingGrid.add(loadButton, 1, 1);
 
         //Weapons, TextFields for entering a quantity
         Label weapons = new Label("Weapons");
@@ -114,8 +132,6 @@ public class GameSettings extends Application {
         Text w3 = new Text("Weapon 3: ");
         settingGrid.add(w3, 4, 4);
         settingGrid.add(weapon3, 5, 4);
-        Text empty2 = new Text ("An empty field will lead to a number of 0.");
-        settingGrid.add(empty2, 6, 4);
 
         Label indi = new Label("Individual Team Settings");
         indi.setFont(Font.font("Verdana", 20));
@@ -126,17 +142,30 @@ public class GameSettings extends Application {
         settingGrid.add(name, 1, 7);
         Text color = new Text("Color");
         settingGrid.add(color, 2, 7);
+        Text figure = new Text("Figure");
+        settingGrid.add(figure, 3, 7);
         //Team 1
         Text team1 = new Text("Team 1");
         settingGrid.add(team1, 0, 8);
         settingGrid.add(name1, 1, 8);
         settingGrid.add(colorPicker1, 2, 8);
+        colorPicker1.setValue(Color.web("#003300"));
+        penguin1.setToggleGroup(figure1);
+        penguin1.setSelected(true);
+        unicorn1.setToggleGroup(figure1);
+        settingGrid.add(penguin1, 3, 8);
+        settingGrid.add(unicorn1, 4, 8);
         //Team 2
         Text team2 = new Text("Team 2");
         settingGrid.add(team2, 0, 9);
         settingGrid.add(name2, 1, 9);
         settingGrid.add(colorPicker2, 2, 9);
-        colorPicker2.setValue(Color.web("#000000"));
+        colorPicker2.setValue(Color.web("#123456"));
+        penguin2.setToggleGroup(figure2);
+        unicorn2.setSelected(true);
+        unicorn2.setToggleGroup(figure2);
+        settingGrid.add(penguin2, 3, 9);
+        settingGrid.add(unicorn2, 4, 9);
 
         hboxplus.getChildren().add(addTeam);          //Add plus button
         settingGrid.add(hboxplus, 0, 11);
@@ -148,9 +177,9 @@ public class GameSettings extends Application {
             }
         });
 
-        Text sizetext = new Text("Team-Size:");
+        Text sizeText = new Text("Team-Size:");
         sizefield.setText("4");
-        settingGrid.add(sizetext, 0, 14);
+        settingGrid.add(sizeText, 0, 14);
         settingGrid.add(sizefield, 1, 14);
         Text chooseMapText = new Text("Choose map:");
         settingGrid.add(chooseMapText, 2, 14);
@@ -162,34 +191,34 @@ public class GameSettings extends Application {
         mapChooser.getSelectionModel().selectFirst();
         settingGrid.add(mapChooser, 3, 14);
 
+        Text sameColor = new Text();
+        settingGrid.add(sameColor, 0, 17, 3, 1);
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 16);
         cont.setOnAction(e -> {
-            // our local game is also client/server based, with server running on localhost
-            serverThread = new Thread(server = new Server(() -> {
-                clientThread = new Thread(client = new Client(() -> {
-                    Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
-                    System.out.println("GameSettings: saved settings");
-                    Platform.runLater(() -> new MapWindow(mapChooser.getValue(), settingStage, "SETTINGS_FILE.conf", client, clientThread, server, serverThread));
+                // our local game is also client/server based, with server running on localhost
+                serverThread = new Thread(server = new Server(() -> {
+                    clientThread = new Thread(client = new Client(() -> {
+                        Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
+                        System.out.println("GameSettings: saved settings");
+                        Platform.runLater(() -> new MapWindow(mapChooser.getValue(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                    }));
+                    clientThread.start();
                 }));
-                clientThread.start();
-            }));
-            serverThread.start();
+                serverThread.start();
         });
 
         Button back = new Button("Back");
         settingGrid.add(back, 1, 16);
         back.setOnAction(e -> {
-            stageToClose.show(); // close settings and show mainwindow again
-            settingStage.close();
+            sceneController.switchToMenue();
         });
 
-        Scene sscene = new Scene(settingGrid, 1000, 600);
-        settingStage.setScene(sscene);
-        sscene.getStylesheets().add("file:resources/layout/css/settings.css");
+        Scene settingScene = new Scene(settingGrid, 1000, 600);
+        settingScene.getStylesheets().add("file:resources/layout/css/settings.css");
         settingGrid.getStyleClass().add("settingpane");
-        settingStage.show();
-        stageToClose.close();                   //close last stage (mainwindow)
+        sceneController.setSettingsScene(settingScene);
+        sceneController.switchToGameSettings();
     }
 
     public JSONObject toJson() {
@@ -201,16 +230,16 @@ public class GameSettings extends Application {
         output.put("weapon2", weapon2.getText());
         output.put("weapon3", weapon3.getText());
         JSONArray teams = new JSONArray();
-        JSONObject team1 = getJsonForTeam(name1.getText(), colorPicker1);
+        JSONObject team1 = getJsonForTeam(name1.getText(), colorPicker1, figure1);
         teams.put(team1);
-        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2);
+        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2, figure2);
         teams.put(team2);
         if (numberOfTeams > 2) {
-            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3);
+            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3, figure3);
             teams.put(team3);
         }
         if (numberOfTeams > 3) {
-            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4);
+            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4, figure4);
             teams.put(team4);
         }
         output.put("teams", teams);
@@ -253,10 +282,11 @@ public class GameSettings extends Application {
      * @param color of the team
      * @return a JSONObject representing basic settings for a team
      */
-    public JSONObject getJsonForTeam(String name, ColorPicker color) {
+    public JSONObject getJsonForTeam(String name, ColorPicker color, ToggleGroup figure) {
         JSONObject team = new JSONObject();
         team.put("name", name);
         team.put("color", toHex(color.getValue()));
+        team.put("figure", figure.getSelectedToggle());
         return team;
     }
 
@@ -266,15 +296,27 @@ public class GameSettings extends Application {
             settingGrid.add(team3, 0, 10);
             settingGrid.add(name3, 1, 10);
             settingGrid.add(colorPicker3, 2, 10);
+            colorPicker3.setValue(Color.web("#e6804d"));
+            penguin3.setToggleGroup(figure3);
+            penguin3.setSelected(true);
+            unicorn3.setToggleGroup(figure3);
+            settingGrid.add(penguin3, 3, 10);
+            settingGrid.add(unicorn3, 4, 10);
         }
         if (number == 4) {
             Text team4 = new Text("Team 4");
             settingGrid.add(team4, 0, 11);
             settingGrid.add(name4, 1, 11);
             settingGrid.add(colorPicker4, 2, 11);
+            colorPicker4.setValue(Color.web("#990000"));
             hboxplus.getChildren().remove(addTeam);              //Maximum is 4, button is hidden now
             Text enough = new Text("Max. 4 teams");
             settingGrid.add(enough, 1, 12);
+            penguin4.setToggleGroup(figure4);
+            unicorn4.setSelected(true);
+            unicorn4.setToggleGroup(figure4);
+            settingGrid.add(penguin4, 3, 11);
+            settingGrid.add(unicorn4, 4, 11);
         }
     }
 
@@ -287,6 +329,10 @@ public class GameSettings extends Application {
         colorPickers.add(colorPicker2);
         colorPickers.add(colorPicker3);
         colorPickers.add(colorPicker4);
+        figures.add(figure1);
+        figures.add(figure2);
+        figures.add(figure3);
+        figures.add(figure4);
     }
 
     public ArrayList<String> getLevels() {
@@ -295,5 +341,5 @@ public class GameSettings extends Application {
     }
 
     @Override
-    public void start(Stage settingstage) {}
+    public void start(Stage filler) {}
 }

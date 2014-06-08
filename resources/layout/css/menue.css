@@ -1,6 +1,6 @@
 @CHARSET "ISO-8859-1";
 
-.menuepane{
+.root {
     -fx-background-image: url("file:resources/layout/menue.png");
     -fx-background-position: top left;
 }

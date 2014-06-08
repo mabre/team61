@@ -1,0 +1,6 @@
+@CHARSET "ISO-8859-1";
+
+.root {
+    -fx-background-image: url("file:resources/layout/levelback1.png");
+    -fx-background-position: top left;
+}

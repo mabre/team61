@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane fx:id="grid" fx:controller="de.hhu.propra.team61.GUI.MenueController" alignment ="CENTER" hgap="10" vgap="10" xmlns:fx="http://javafx.com/fxml">
+    <children>
+        <Button fx:id="startlocal" text="Start local game" onAction="#handleStartLocal" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.halignment="CENTER" />
+        <Button fx:id="startnetwork" text="Start network game" onAction="#handleStartNetwork" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.halignment="CENTER"/>
+        <Button fx:id="startsaved" text="Start saved game" onAction="#handleStartSaved" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.halignment="CENTER"/>
+        <Button fx:id="options" text="Options" onAction="#handleOptions" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.halignment="CENTER"/>
+        <Button fx:id="exit" text="Exit" onAction="#handleExit" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.halignment="CENTER"/>
+    </children>
+    <padding>
+        <Insets bottom="25" left="25" right="25" top="25" />
+    </padding>
+</GridPane>
