@@ -65,7 +65,7 @@ public class MapWindow extends Application implements Networkable {
         client.registerCurrentNetworkable(this);
         this.server = server;
         this.serverThread = serverThread;
-        if(server != null) server.registerCurrentNetworkable(this);
+        if (server != null) server.registerCurrentNetworkable(this);
 
         // TODO code duplication; we have to check what we actually need at the end of the week
         try {
@@ -81,7 +81,7 @@ public class MapWindow extends Application implements Networkable {
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
-        for(int i=0; i<teamsArray.length(); i++) {
+        for (int i = 0; i < teamsArray.length(); i++) {
             ArrayList<Weapon> weapons = new ArrayList<>();
             weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
             weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
@@ -91,7 +91,7 @@ public class MapWindow extends Application implements Networkable {
 
         initialize();
 
-        if(server != null) server.sendCommand(getStateForNewClient());
+        if (server != null) server.sendCommand(getStateForNewClient());
     }
 
     public MapWindow(JSONObject input, Stage stageToClose, Client client, Thread clientThread) {
@@ -104,7 +104,7 @@ public class MapWindow extends Application implements Networkable {
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
-        for(int i=0; i<teamsArray.length(); i++) {
+        for (int i = 0; i < teamsArray.length(); i++) {
             teams.add(new Team(teamsArray.getJSONObject(i)));
         }
 
@@ -121,7 +121,7 @@ public class MapWindow extends Application implements Networkable {
         client.registerCurrentNetworkable(this);
         this.server = server;
         this.serverThread = serverThread;
-        if(server != null) server.registerCurrentNetworkable(this);
+        if (server != null) server.registerCurrentNetworkable(this);
 
         this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
 
@@ -130,7 +130,7 @@ public class MapWindow extends Application implements Networkable {
         JSONObject settings = Settings.getSavedSettings(file);
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
-        for(int i=0; i<teamsArray.length(); i++) {
+        for (int i = 0; i < teamsArray.length(); i++) {
             teams.add(new Team(teamsArray.getJSONObject(i)));
         }
 
@@ -139,7 +139,7 @@ public class MapWindow extends Application implements Networkable {
 
         initialize();
 
-        if(server != null) server.sendCommand(getStateForNewClient());
+        if (server != null) server.sendCommand(getStateForNewClient());
     }
 
     /**
@@ -162,7 +162,7 @@ public class MapWindow extends Application implements Networkable {
         centerView.getChildren().add(terrain);
         root.setCenter(centerView);
 
-        for(Team team: teams) {
+        for (Team team : teams) {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
@@ -173,7 +173,7 @@ public class MapWindow extends Application implements Networkable {
         drawing.setOnKeyPressed(
                 keyEvent -> {
                     System.out.println("key pressed: " + keyEvent.getCode());
-                    switch(keyEvent.getCode()) {
+                    switch (keyEvent.getCode()) {
                         case C:
                             System.out.println("toggle chat");
                             chat.setVisible(!chat.isVisible());
@@ -194,7 +194,7 @@ public class MapWindow extends Application implements Networkable {
         primaryStage.setScene(drawing);
         primaryStage.show();
 
-        if(server != null) { // only the server should do calculations
+        if (server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
                 try {
                     long before = System.currentTimeMillis(), now, sleep;
@@ -240,7 +240,7 @@ public class MapWindow extends Application implements Networkable {
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
         JSONArray teamsArray = new JSONArray();
-        for(Team t: teams) {
+        for (Team t : teams) {
             teamsArray.put(t.toJson());
         }
         output.put("teams", teamsArray);
@@ -256,10 +256,10 @@ public class MapWindow extends Application implements Networkable {
      */
     private String getFigureId(Figure figure) {
         String id = "";
-        for(int i=0; i<teams.size(); i++) {
-            for(int j=0; j<teams.get(i).getFigures().size(); j++) {
-                if(teams.get(i).getFigures().get(j) == figure) {
-                    id = i+" "+j;
+        for (int i = 0; i < teams.size(); i++) {
+            for (int j = 0; j < teams.get(i).getFigures().size(); j++) {
+                if (teams.get(i).getFigures().get(j) == figure) {
+                    id = i + " " + j;
                 }
             }
         }
@@ -272,11 +272,11 @@ public class MapWindow extends Application implements Networkable {
             levelCounter++;
             terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
             // quite bad hack to reload spawn points, but ok as it's a cheat anyway
-            for(Team team: teams) {
+            for (Team team : teams) {
                 centerView.getChildren().remove(team);
             }
             teams.clear();
-            for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
+            for (int i = 0; i < teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
                 ArrayList<Weapon> weapons = new ArrayList<>();
                 weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
                 weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
@@ -289,24 +289,15 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
-    public int getNumberOfLivingTeams(){ //TODO Macht im prinzip noch nichts, da livingTeams=2, egal was passiert.
-        System.out.println("teamquantity"+ teamquantity);
+    public int getNumberOfLivingTeams() { //TODO Macht im prinzip noch nichts, da livingTeams=2, egal was passiert.
         int livingTeams = 0;
-        int currentTeamCheck = currentTeam ;
-        int c;
-        for (int i = teamquantity + 1; i>0 ; i-- ){
-            currentTeamCheck++;
-//            if (currentTeamCheck == teamquantity ){
-//                currentTeamCheck = 0;
-//            }
-            c = currentTeamCheck % (teamquantity + 1)  ; //TODO c soll beinhalten, ob das aktuelle team Pin's enthält
-            if (c != 0 ) {
+        for (Team team : teams) {
+            if (team.getNumberOfLivingFigures() > 0){
                 livingTeams++;
-                System.out.println("Hier!" + livingTeams + " und Da:" + currentTeamCheck);
-            }
         }
-        return livingTeams;
     }
+    return livingTeams;
+}
 
     public void endTurn() {
         turnCount++; // TODO timing issue
