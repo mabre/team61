@@ -188,16 +188,18 @@ public class MapWindow extends Application implements Networkable {
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         scrollPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
                 System.out.println("key pressed: " + keyEvent.getCode());
-                switch(keyEvent.getCode()) {
-                    case C:
-                        System.out.println("toggle chat");
-                        chat.setVisible(!chat.isVisible());
-                        break;
-                    default:
-                        client.sendKeyEvent(keyEvent.getCode());
+                if(!chat.isVisible()) { // do not consume keyEvent when chat is active
+                    switch (keyEvent.getCode()) {
+                        case C:
+                            System.out.println("toggle chat");
+                            chat.setVisible(!chat.isVisible());
+                            break;
+                        default:
+                            client.sendKeyEvent(keyEvent.getCode());
+                    }
+                    // we do not want the scrollPane to receive a key event
+                    keyEvent.consume();
                 }
-                // we do not want the scrollPane to receive a key event
-                keyEvent.consume();
             }
         );
 
