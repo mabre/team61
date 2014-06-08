@@ -357,6 +357,12 @@ public class NetLobby extends Application implements Networkable {
             removePlayer(number);
         });
         readys.get(number).setText("not ready");
+        // TODO Shouldn't we just change the visibility, instead of adding/removing it all the time (less risk for exceptions)?
+        if (hboxes.get(number).getChildren().size() != 0) {
+            System.out.println("WARNING hboxes.get("+number+").getChildren().size() is not 0, but " + hboxes.get(number).getChildren().size() +
+                    ", so we wanted to add a team which already exists.");
+            return;
+        }
         hboxes.get(number).getChildren().addAll(team, names.get(number), colorPickers.get(number), readys.get(number), rmTeam);
         overviewGrid.add(hboxes.get(number), 0, number + 10, 5, 1);
         start.setDisable(!Server.teamsAreReady());
