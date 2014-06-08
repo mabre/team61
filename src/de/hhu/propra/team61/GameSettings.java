@@ -42,6 +42,7 @@ public class GameSettings extends Application {
     TextField name4 = new TextField("player4");
     ArrayList<TextField> names = new ArrayList<TextField>();
     ArrayList<ColorPicker> colorPickers = new ArrayList<ColorPicker>();
+    ArrayList<ToggleGroup> figures = new ArrayList<>();
     ColorPicker colorPicker1 = new ColorPicker();
     ColorPicker colorPicker2 = new ColorPicker();
     ColorPicker colorPicker3 = new ColorPicker();
@@ -244,16 +245,16 @@ public class GameSettings extends Application {
         output.put("weapon2", weapon2.getText());
         output.put("weapon3", weapon3.getText());
         JSONArray teams = new JSONArray();
-        JSONObject team1 = getJsonForTeam(name1.getText(), colorPicker1);
+        JSONObject team1 = getJsonForTeam(name1.getText(), colorPicker1, figure1);
         teams.put(team1);
-        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2);
+        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2, figure2);
         teams.put(team2);
         if (numberOfTeams > 2) {
-            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3);
+            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3, figure3);
             teams.put(team3);
         }
         if (numberOfTeams > 3) {
-            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4);
+            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4, figure4);
             teams.put(team4);
         }
         output.put("teams", teams);
@@ -296,10 +297,11 @@ public class GameSettings extends Application {
      * @param color of the team
      * @return a JSONObject representing basic settings for a team
      */
-    public JSONObject getJsonForTeam(String name, ColorPicker color) {
+    public JSONObject getJsonForTeam(String name, ColorPicker color, ToggleGroup figure) {
         JSONObject team = new JSONObject();
         team.put("name", name);
         team.put("color", toHex(color.getValue()));
+        team.put("figure", figure.getSelectedToggle());
         return team;
     }
 
@@ -342,6 +344,10 @@ public class GameSettings extends Application {
         colorPickers.add(colorPicker2);
         colorPickers.add(colorPicker3);
         colorPickers.add(colorPicker4);
+        figures.add(figure1);
+        figures.add(figure2);
+        figures.add(figure3);
+        figures.add(figure4);
     }
 
     public ArrayList<String> getLevels() {
