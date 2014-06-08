@@ -342,8 +342,12 @@ public class MapWindow extends Application implements Networkable {
 
         String[] cmd = command.split(" ");
 
-        if(cmd[0].equals("PAUSE")){ pause = !pause; }
-        if(pause) { server.sendCommand("TEAM_LABEL_SET_TEXT " + "Pause - If(Host){Press P or ESC to continue}"); //ToDo ugly temporary implementation
+        if(cmd[0].equals("PAUSE")){
+            pause = !pause;
+            if(pause){teamLabel.setText("Pause - If(Host){Press P or ESC to continue}");} //ToDo ugly temporary implementation
+            else{teamLabel.setText("Continue");}
+        }
+        if(pause) {
         } else {
             switch (cmd[0]) {
                 case "CURRENT_TEAM_END_ROUND":
