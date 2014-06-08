@@ -168,19 +168,33 @@ public class GameSettings extends Application {
         mapChooser.getSelectionModel().selectFirst();
         settingGrid.add(mapChooser, 3, 14);
 
+        Text sameColor = new Text();
+        settingGrid.add(sameColor, 0, 17, 3, 1);
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 16);
         cont.setOnAction(e -> {
-            // our local game is also client/server based, with server running on localhost
-            serverThread = new Thread(server = new Server(() -> {
-                clientThread = new Thread(client = new Client(() -> {
-                    Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
-                    System.out.println("GameSettings: saved settings");
-                    Platform.runLater(() -> new MapWindow(mapChooser.getValue(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+            boolean differentColors = true;
+            for (int i=0; i<numberOfTeams; i++) {
+                for(int h=i+1; i<numberOfTeams; i++) {
+                    if (colorPickers.get(i).getValue() == colorPickers.get(h).getValue()) {
+                        differentColors = false;
+                    }
+                }
+            }
+            if (differentColors) {
+                // our local game is also client/server based, with server running on localhost
+                serverThread = new Thread(server = new Server(() -> {
+                    clientThread = new Thread(client = new Client(() -> {
+                        Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
+                        System.out.println("GameSettings: saved settings");
+                        Platform.runLater(() -> new MapWindow(mapChooser.getValue(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                    }));
+                    clientThread.start();
                 }));
-                clientThread.start();
-            }));
-            serverThread.start();
+                serverThread.start();
+            } else {
+                sameColor.setText("You should not choose the same color!");
+            }
         });
 
         Button back = new Button("Back");
@@ -285,14 +299,10 @@ public class GameSettings extends Application {
     }
 
     public void initializeArrayLists() {
-        names.add(name1);
-        names.add(name2);
-        names.add(name3);
-        names.add(name4);
-        colorPickers.add(colorPicker1);
-        colorPickers.add(colorPicker2);
-        colorPickers.add(colorPicker3);
-        colorPickers.add(colorPicker4);
+        for (int i=0; i<=3; i++) {
+            names.add(new TextField());
+            colorPickers.add(new ColorPicker());
+        }
     }
 
     public ArrayList<String> getLevels() {

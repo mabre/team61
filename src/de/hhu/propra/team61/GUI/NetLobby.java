@@ -55,6 +55,7 @@ public class NetLobby extends Application implements Networkable {
     Button start;
     Button ready;
     Button applyButton;
+    Text sameColor = new Text();
 
     boolean isHost;
     /** -1 = spectator, 0 = host, 1+ = clients */
@@ -164,9 +165,9 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(weapon3, 1, 6);
 
         VBox rightBox = new VBox();
-        rightBox.setPrefWidth(345);
+        rightBox.setPrefWidth(328);
         listGrid = new CustomGrid();
-        listGrid.setPrefHeight(200);
+        listGrid.setPrefHeight(250);
         if (!isHost) {
             listGrid.add(spectator, 0, 0);
             spectator.setSelected(true);
@@ -175,13 +176,13 @@ public class NetLobby extends Application implements Networkable {
 
         generateSpectatorsBox();
         chatBox = new Chat(client);
-        chatBox.setPrefHeight(350);
+        chatBox.setPrefHeight(300);
         rightBox.getChildren().addAll(listGrid, chatBox);
         root.setRight(rightBox);
 
         HBox bottomBox = new HBox();
         Button back = new Button("Back");
-        bottomBox.getChildren().add(back);
+        bottomBox.getChildren().addAll(back, sameColor);
         back.setOnAction(e -> {
             sceneController.switchToMenue();
         });
@@ -206,10 +207,22 @@ public class NetLobby extends Application implements Networkable {
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                    Settings.save(toJson(), "NET_SETTINGS_FILE");
-                    System.out.println("Network-GameSettings: saved settings");
-                    MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
-             }
+                    boolean differentColors = true;
+                    for (int i=0; i<teamsCreated; i++) {
+                        for(int h=i+1; i<teamsCreated; i++) {
+                            if (colorPickers.get(i).getValue() == colorPickers.get(h).getValue()) {
+                                differentColors = false;
+                            }
+                        }
+                    }
+                    if (differentColors) {
+                        Settings.save(toJson(), "NET_SETTINGS_FILE");
+                        System.out.println("Network-GameSettings: saved settings");
+                        MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                    } else {
+                        sameColor.setText("You should not choose the same color!");
+                    }
+            }
         });
         ready = new Button("Ready");
         ready.setDisable(true); //enabled when disabling spectator mode
