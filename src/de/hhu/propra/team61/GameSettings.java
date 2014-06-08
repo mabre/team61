@@ -67,7 +67,6 @@ public class GameSettings extends Application {
     HBox hboxplus = new HBox(5);
     Button addTeam = new Button("+");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
-    Boolean differentColors = true;
 
     SceneController sceneController = new SceneController();
 
@@ -197,17 +196,6 @@ public class GameSettings extends Application {
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 16);
         cont.setOnAction(e -> {
-            int i = 0;
-            while (differentColors && (i<numberOfTeams-1)) {
-                int h=i+1;
-                while (differentColors && (h<numberOfTeams)) {
-                    if (colorPickers.get(i).getValue() == colorPickers.get(h).getValue()) {
-                        differentColors = false;
-                    }
-                    h++;
-                }
-            }
-            if (differentColors) {
                 // our local game is also client/server based, with server running on localhost
                 serverThread = new Thread(server = new Server(() -> {
                     clientThread = new Thread(client = new Client(() -> {
@@ -218,9 +206,6 @@ public class GameSettings extends Application {
                     clientThread.start();
                 }));
                 serverThread.start();
-            } else {
-                sameColor.setText("You should not choose the same color!");
-            }
         });
 
         Button back = new Button("Back");
