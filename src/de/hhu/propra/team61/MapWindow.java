@@ -60,6 +60,7 @@ public class MapWindow extends Application implements Networkable {
     private Thread clientThread;
     private String map; // TODO do we need this?
     private Chat chat;
+    private boolean pause = false;
     SceneController sceneController;
 
     private final static int FIGURE_SPEED = 5;
@@ -361,12 +362,21 @@ public class MapWindow extends Application implements Networkable {
 
         String[] cmd = command.split(" ");
 
-        switch(cmd[0]) {
+        if(cmd[0].equals("PAUSE")){
+            pause = Boolean.parseBoolean(cmd[1]);
+            if(pause) {
+                teamLabel.setText("Pause - If(Host){Press P or ESC to continue}"); //ToDo ugly temporary implementation
+            } else {
+                teamLabel.setText("Continue");
+            }
+        }
+
+        switch (cmd[0]) {
             case "CURRENT_TEAM_END_ROUND":
                 teams.get(currentTeam).endRound();
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
-                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
@@ -394,7 +404,7 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
-                if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
@@ -405,7 +415,7 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
-                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
@@ -437,7 +447,7 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
             case "GAME_OVER":
-                if(moveObjectsThread != null) moveObjectsThread.interrupt();
+                if (moveObjectsThread != null) moveObjectsThread.interrupt();
                 GameOverWindow gameOverWindow = new GameOverWindow();
                 gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
@@ -457,7 +467,7 @@ public class MapWindow extends Application implements Networkable {
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
             case "SUDDEN_DEATH":
-                    teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+                teams.get(Integer.parseInt(cmd[1])).suddenDeath();
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
                 break;
@@ -486,6 +496,23 @@ public class MapWindow extends Application implements Networkable {
 
         int team = Integer.parseInt(keyCode.split(" ", 2)[0]);
         keyCode = keyCode.split(" ", 2)[1];
+
+        // pause is a special case: do not ignore pause command when paused, and also accept the input when it's not team 0's turn
+        switch(keyCode) {
+            case "Esc":
+            case "Pause":
+            case "P":
+                if (team == 0 || client.isLocalGame()) { // allowing pausing by host (team 0) and when playing local game
+                    pause = !pause;
+                    server.sendCommand("PAUSE " + pause);
+                }
+                break;
+        }
+
+        if(pause) {
+            System.out.println("Game paused, ignoring command " + keyCode);
+            return;
+        }
 
         if (team != currentTeam && !client.isLocalGame()) {
             System.out.println("The key event " + keyCode + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);

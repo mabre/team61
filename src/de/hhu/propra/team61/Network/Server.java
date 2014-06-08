@@ -328,7 +328,7 @@ public class Server implements Runnable {
                                 sendCommand("SERVER CHAT command failed: No such user. cmd: " + getNameFromId(clientId) + " " + msg);
                             }
                         } else if (msg.startsWith("/kickteam ")) {
-                            if(clientId.equals(Client.id)) { // TODO hardcoded spectator mode
+                            if(clientId.equals(Client.id)) { // TODO team cannot surrender
                                 currentNetworkable.handleKeyEventOnServer(msg);
                                 sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
                             } else {
