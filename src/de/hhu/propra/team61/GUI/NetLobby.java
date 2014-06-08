@@ -107,6 +107,15 @@ public class NetLobby extends Application implements Networkable {
     }
 
     public void buildGUI() {
+        sceneController.getStage().setOnCloseRequest(event -> {
+            clientThread.interrupt();
+            if(serverThread != null) serverThread.interrupt();
+            System.out.println("NetLobby threads interrupted");
+            client.stop();
+            if(server != null) server.stop();
+            System.out.println("NetLobby client/server (if any) stopped");
+        });
+
         BorderPane root = new BorderPane();
         HBox topBox = addTopHBox();
         root.setTop(topBox);
@@ -376,7 +385,13 @@ public class NetLobby extends Application implements Networkable {
         Button yes = new Button("Yes");
         yes.setOnAction(e -> {
             popUp.close();
-            removeTeam(i);
+            if(server != null) {
+                removeTeam(i);
+                server.changeTeamByNumber(i, -1); // change team to spectator
+                server.sendCommand(getStateForNewClient()); // send new lobby state to clients
+            } else {
+                spectator.setSelected(true);
+            }
         });
         Button no = new Button("No");
         no.setOnAction(new EventHandler<ActionEvent>() {
@@ -394,6 +409,13 @@ public class NetLobby extends Application implements Networkable {
         popUp.show();
     }
 
+    /**
+     * removes the given team; the team numbers are updated to fill the gap
+     * NOTE: Does NOT set the client belonging to that team to spectator mode, and does NOT send the new lobby state to
+     * all clients. The caller must assure that this is done when the change is not temporary (e.g. when re-writing the
+     * list of teams).
+     * @param team the team to be removed
+     */
     private void removeTeam(int team) {
         if(teamsCreated < team) {
             System.out.println("WARNING " + teamsCreated + " teams exist, hence cannot remove team #" + team);
@@ -407,14 +429,15 @@ public class NetLobby extends Application implements Networkable {
                 names.get(i + 1).setText(""); // do that so that the last team will be empty afterwards
                 colorPickers.get(i).setValue(colorPickers.get(i + 1).getValue());
                 colorPickers.get(i + 1).setValue(Color.web("#000000"));
-                readys.get(i).setText("not ready");
+                readys.get(i).setText(readys.get(i+1).getText());
+                readys.get(i+1).setText("not ready");
+                if(server != null) server.changeTeamByNumber(i+1, i);
             }
         }
 
         hboxes.get(teamsCreated-1).getChildren().clear();      // remove the last fields so that the number of players is reduced
         overviewGrid.getChildren().removeAll(hboxes.get(teamsCreated-1));
         teamsCreated--;
-        //Server.disconnect(names.get(team).getText());
     }
 
     public void initializeArrayLists() {
@@ -435,7 +458,7 @@ public class NetLobby extends Application implements Networkable {
             new MapWindow(state, client, clientThread, sceneController);
         } else if(command.startsWith("STATUS LOBBY")) {
             JSONObject state = new JSONObject(extractPart(command, "STATUS LOBBY "));
-            fromJson(state);
+            if(server == null) fromJson(state); // the server has the current state, do not overwrite it (has side-effects)
         } else if(command.startsWith("SPECTATOR_LIST")) {
             JSONObject spectators = new JSONObject(extractPart(command, "SPECTATOR_LIST "));
             updateSpectators(spectators);

@@ -210,6 +210,30 @@ public class Server implements Runnable {
         }
     }
 
+    /**
+     * changes the team number associated with a client; informs all clients about the change by sending the current list of clients
+     * @param team the number of the team, counting starts from 0=host
+     * @param newTeam the new team number of the client (counting starts from 0=host, -1 means spectator)
+     */
+    public void changeTeamByNumber(int team, int newTeam) {
+        if(team < 1) {
+            System.out.println("ERROR: team " + team + " cannot be changed.");
+            return;
+        }
+        synchronized (clients) {
+            for (int i = 0; i < clients.size(); i++) {
+                if (clients.get(i).associatedTeam == team) {
+                    clients.get(i).associatedTeam = newTeam;
+                    clients.get(i).out.println("SET_TEAM_NUMBER " + newTeam);
+                    System.out.println(clients.get(i).id + "/" + clients.get(i).name + " associated with team " + newTeam);
+                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
+                    return;
+                }
+            }
+            System.out.println("WARNING Did not find " + team);
+        }
+    }
+
 
     private static class ConnectionHandler implements Runnable {
         private Socket socket;
