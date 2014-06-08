@@ -305,17 +305,13 @@ public class NetLobby extends Application implements Networkable {
     }
 
     public void fromJson(JSONObject json) {
-        for (int i=1; i<=3 ;i++) {
+        for (int i=0; i<=3 ;i++) {
             removeTeam(i);
         }
-        teamsCreated = 1;
+        teamsCreated = 0;
+
         if(json.has("numberOfTeams")) {
             numberOfTeams.setText(json.getString("numberOfTeams"));
-        }
-        if(json.has("teamsCreated")) {
-            if (json.getInt("teamsCreated") > 1) {  addTeam(1); }
-            if (json.getInt("teamsCreated") > 2) {  addTeam(2); }
-            if (json.getInt("teamsCreated") > 3) {  addTeam(3); }
         }
         if(json.has("team-size")) {
             sizeField.setText(json.getString("team-size"));
@@ -334,10 +330,11 @@ public class NetLobby extends Application implements Networkable {
         }
         if(json.has("teams")) {
             JSONArray teamsArray = json.getJSONArray("teams");
-            for(int i=0; i<teamsCreated; i++) {
+            for(int i=0; i<teamsArray.length(); i++) {
+                addTeam(i);
                 names.get(i).setText(teamsArray.getJSONObject(i).getString("name"));
                 colorPickers.get(i).setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
-                readys.get(i).setText(teamsArray.getJSONObject(i).getString("not ready"));
+                readys.get(i).setText(teamsArray.getJSONObject(i).getString("ready"));
             }
         }
     }
@@ -347,6 +344,9 @@ public class NetLobby extends Application implements Networkable {
      * @param number team number, counting starts from 0 = host
      */
     public void addTeam(int number) {                   //add a new team
+        if(number != teamsCreated) {
+            System.out.println("WARNING creating team #" + number + ", but " + teamsCreated + " teams already exist");
+        }
         teamsCreated++;
         Text team = new Text("Team " + (number+1));
         hboxes.add(new HBox(20));                   //HBox makes it easier remove a player
@@ -386,6 +386,11 @@ public class NetLobby extends Application implements Networkable {
     }
 
     private void removeTeam(int team) {
+        if(teamsCreated < team) {
+            System.out.println("WARNING " + teamsCreated + " teams exist, hence cannot remove team #" + team);
+            return;
+        }
+
         System.out.println("removing team #" + team);
         if (team != (teamsCreated-1)) {
             for (int i = team; i < Integer.parseInt(numberOfTeams.getText()) - 1; i++) { // go through every player after the one to remove and move names and colors
@@ -396,7 +401,9 @@ public class NetLobby extends Application implements Networkable {
                 readys.get(i).setText("not ready");
             }
         }
+
         hboxes.get(teamsCreated-1).getChildren().clear();      // remove the last fields so that the number of players is reduced
+        overviewGrid.getChildren().removeAll(hboxes.get(teamsCreated-1));
         teamsCreated--;
         //TODO disconnect player
     }
@@ -468,11 +475,10 @@ public class NetLobby extends Application implements Networkable {
             mapChooser.setDisable(true);
         }
         for (int i=0; i<=3; i++) {
-            if (i != team) {
-                names.get(i).setDisable(true);
-                colorPickers.get(i).setDisable(true);
-            }
+            names.get(i).setDisable(i != team);
+            colorPickers.get(i).setDisable(i != team);
         }
+        ready.setDisable(team == -1);
     }
 
     /**********************************************************************************************/
