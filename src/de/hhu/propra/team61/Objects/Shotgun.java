@@ -13,20 +13,27 @@ import java.util.ArrayList;
  * Created by kevin on 08.06.14.
  */
 interface ShotgunAttributes {
-    final String PROJECTILE_IMG = "file:resources/weapons/temp0.png";
-    final String WEAPON_IMG     = "file:resources/weapons/temp3.png";
-    final String DAMAGETYPE     = "Explosiondamage";
-    final int    DAMAGE         =  30;
-    final int    EXPLOSIONPOWER =  20;
-    final int    SHOCKWAVE      =   0;
-    final int    DELAY          =  -1; // ToDo somehow tell it's on collision
+    final String  NAME           = "Shotgun";
+    final String  DESCRIPTION    = "Show your affection by shooting into the face - twice";
+
+    final String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
+    final String  WEAPON_IMG     = "file:resources/weapons/temp3.png";
+    final String  DAMAGETYPE     = "Explosiondamage";
+    final int     DAMAGE         =  30;
+    final int     EXPLOSIONPOWER =  20;
+    final int     SHOCKWAVE      =   0;
+    final int     DELAY          =  -1; // ToDo somehow tell it's on collision
+
+    final boolean POISONS       = false;  // toogle isPoisoned
+    final boolean IGNITES       = false; // toogle isBurning
+    final boolean BLOCKS        = false; // toogle isStuck
 }
 public class Shotgun extends Weapon implements ShotgunAttributes{
 //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
 
 
     public Shotgun(int munition){
-        super(munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE);
+        super(munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,IGNITES,BLOCKS);
     }
 
     public Shotgun(JSONObject json) {
@@ -36,7 +43,7 @@ public class Shotgun extends Weapon implements ShotgunAttributes{
     @Override
     public JSONObject toJson() {
         JSONObject json = super.toJson();
-        json.put("type", "Gun");
+        json.put("type", "Shotgun");
 
         return json;
     }
@@ -51,7 +58,7 @@ public class Shotgun extends Weapon implements ShotgunAttributes{
         commandList.add("REMOVE_FLYING_PROJECTILE");
 
         int tCounter = 0;
-        for(Team t : teams){ // Calculate all worms hit, lacks hitradius,terraindestruction(non implemented) usw, but for now I'm just assuring same functionality with the adaptions in background
+        for(Team t : teams){ // Calculate all worms hit, lacks hitradius, terraindestruction(non implemented) usw, but for now I'm just assuring same functionality with the adaptions in background
             int fCounter = 0;
             for(Figure f : t.getFigures()){
                 if(f.getHitRegion().intersects(impactArea)){ //Give this some more love

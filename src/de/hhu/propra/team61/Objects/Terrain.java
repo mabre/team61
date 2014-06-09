@@ -20,6 +20,7 @@ import java.util.ArrayList;
  */
 public class Terrain extends GridPane {
     private static String imgPath = "file:resources/";
+    private static int BLOCK_SIZE = 8;
 
     private ArrayList<ArrayList<Character>> terrain;
     private ArrayList<Point2D> spawnPoints;
@@ -68,7 +69,7 @@ public class Terrain extends GridPane {
                     case 'L': img = "lava.png";
                         break;
                     case 'P': // special case: spawn point, add to list and draw sky
-                        spawnPoints.add(new Point2D(j, i));
+                        spawnPoints.add(new Point2D(j * BLOCK_SIZE, i * BLOCK_SIZE));
                         terrain.get(i).set(j, ' ');
                     default : img = "sky.png";
                 }
@@ -138,7 +139,7 @@ public class Terrain extends GridPane {
                 return false;
             case '/':
                 Point2D p;
-                for(int i=0; i<8; i++) {
+                for(int i=0; i<8; i++) { //ToDo Replace with BLOCK_SIZE ?
                     int px = x*8+i;
                     int py = y*8+8-i;
                     p = new Point2D(px, py);
@@ -207,7 +208,7 @@ public class Terrain extends GridPane {
                 triedDiagonal = false;
 
                 // calculate indices of fields which are touched by hitRegion
-                int minY = (int) Math.floor(hitRegion.getMinY() / 8);
+                int minY = (int) Math.floor(hitRegion.getMinY() / 8); //ToDo Replace with BLOCK_SIZE ?
                 int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
                 int minX = (int) Math.floor(hitRegion.getMinX() / 8);
                 int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
@@ -274,7 +275,7 @@ public class Terrain extends GridPane {
 
                     // calculate indices of fields which are touched by hitRegion // TODO code duplication
                     int minY = (int) Math.floor(hitRegion.getMinY() / 8);
-                    int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
+                    int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8); //ToDo Replace with BLOCK_SIZE ?
                     int minX = (int) Math.floor(hitRegion.getMinX() / 8);
                     int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
 

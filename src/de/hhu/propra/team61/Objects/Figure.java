@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.Objects;
 
+import com.sun.scenario.effect.Offset;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -19,6 +20,8 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
  */
 
 public class Figure extends StackPane {
+    private final int NORMED_OBJECT_SIZE = 16;
+
     private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
@@ -94,19 +97,19 @@ public class Figure extends StackPane {
 
         setAlignment(Pos.TOP_LEFT);
 
-        hitRegion = new Rectangle2D(figureImage.getTranslateX(), figureImage.getTranslateY(),16,16);
+        hitRegion = new Rectangle2D(figureImage.getTranslateX(), figureImage.getTranslateY(),NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE);
 
-        Image image = new Image("file:resources/figures/pin.png", 16, 16, true, true);
+        Image image = new Image("file:resources/figures/pin.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         figureImage.setImage(image);
         getChildren().add(figureImage);
 
 
         nameTag = new Label(name);
-        getChildren().add(nameTag);
-
         hpLabel = new Label(health+"");
-        setPosition(getPosition()); // updates label position
+        getChildren().add(nameTag);
         getChildren().add(hpLabel);
+
+        setPosition(getPosition()); //Set Graphics to their place
     }
 
     public JSONObject toJson(){
@@ -153,19 +156,22 @@ public class Figure extends StackPane {
         }
     }
 
-    // TODO rethink parameter, /8 is bad!
     public void setPosition(Point2D position) {
-        figureImage.setTranslateX(8 * position.getX());
-        figureImage.setTranslateY(8 * position.getY());
+        int offset = NORMED_OBJECT_SIZE / 2;
+
+        figureImage.setTranslateX(position.getX());
+        figureImage.setTranslateY(position.getY());
+
         hitRegion = new Rectangle2D(figureImage.getTranslateX(), figureImage.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
-        nameTag.setTranslateX(figureImage.getTranslateX()-nameTag.getWidth()/2);
-        nameTag.setTranslateY(figureImage.getTranslateY()-25);
-        hpLabel.setTranslateX(figureImage.getTranslateX()-hpLabel.getWidth()/2);
-        hpLabel.setTranslateY(figureImage.getTranslateY()-15);
+
+        nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getWidth() / 2);
+        nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
+        hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getWidth() / 2);
+        hpLabel.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE);
     }
 
     public Point2D getPosition() {
-        return new Point2D(figureImage.getTranslateX()/8, figureImage.getTranslateY()/8);
+        return new Point2D(figureImage.getTranslateX(), figureImage.getTranslateY());
     }
 
     public Item getSelectedItem(){

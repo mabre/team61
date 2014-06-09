@@ -41,6 +41,9 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application implements Networkable {
+    private final static int FIGURE_SPEED     =  5;
+    private final static int DAMAGE_BY_POISON = 10;
+
     //JavaFX related variables
     private Scene drawing;
     private BorderPane root;
@@ -72,7 +75,6 @@ public class MapWindow extends Application implements Networkable {
     private String map; // TODO do we need this?
     private Chat chat;
 
-    private final static int FIGURE_SPEED = 5;
 
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
@@ -102,6 +104,7 @@ public class MapWindow extends Application implements Networkable {
             weapons.add(new Bazooka(settings.getInt("weapon1")));
             weapons.add(new Grenade(settings.getInt("weapon2")));
             weapons.add(new Shotgun(settings.getInt("weapon3")));
+            weapons.add(new PoisonedArrow(4)); //ToDo replace with: settings.getInt("weapon4"))
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
         }
 
@@ -192,6 +195,7 @@ public class MapWindow extends Application implements Networkable {
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        teams.get(currentTeam).getCurrentFigure().setActive(true);
         root.setTop(teamLabel);
 
         drawing = new Scene(root, 1600, 300);
@@ -326,6 +330,17 @@ public class MapWindow extends Application implements Networkable {
         shootingIsAllowed = true;
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
 
+        // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
+        if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
+            for (Team t : teams) {
+                for (Figure f : t.getFigures()) {
+                    if(f.getHealth() > 0) { //Avoid reviving the poisoned dead
+                        if (f.getIsPoisoned()) { f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON)); }
+                    }
+                }
+            }
+        }
+
         int oldCurrentTeam = currentTeam;
         do {
             currentTeam++;
@@ -430,6 +445,17 @@ public class MapWindow extends Application implements Networkable {
                     }
                 }
                 break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_4":
+                if (shootingIsAllowed) {
+                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    }
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(3));
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                }
+                break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
@@ -444,7 +470,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_SET_POSITION":
                 Figure f = teams.get(currentTeam).getCurrentFigure();
-                f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
+                f.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
                 break;
             case "CURRENT_FIGURE_SHOOT":
                 try {
@@ -587,6 +613,11 @@ public class MapWindow extends Application implements Networkable {
                     server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_3");
                 }
                 break;
+            case "4":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 4) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_4");
+                }
+                break;
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
@@ -598,7 +629,7 @@ public class MapWindow extends Application implements Networkable {
      */
     private void moveCurrentlyActiveFigure(Point2D v) {
         Figure f = teams.get(currentTeam).getCurrentFigure();
-        Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
+        Point2D pos = new Point2D(f.getPosition().getX(), f.getPosition().getY());
         Rectangle2D hitRegion = f.getHitRegion();
         Point2D newPos = null;
         try {

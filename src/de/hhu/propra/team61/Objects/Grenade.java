@@ -13,20 +13,27 @@ import java.util.ArrayList;
  * Created by kevin on 21.05.14.
  */
 interface GrenadeAttributes {
-    final String PROJECTILE_IMG = "file:resources/weapons/temp0.png";
-    final String WEAPON_IMG     = "file:resources/weapons/temp2.png";
-    final String DAMAGETYPE     = "Explosiondamage";
-    final int    DAMAGE         =  40;
-    final int    EXPLOSIONPOWER = 100;
-    final int    SHOCKWAVE      =   0;
-    final int    DELAY          =   5; //ToDo make this variable
+    final String  NAME           = "Grenade";
+    final String  DESCRIPTION    = "Another classic.";
+
+    final String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
+    final String  WEAPON_IMG     = "file:resources/weapons/temp2.png";
+    final String  DAMAGETYPE     = "Explosiondamage";
+    final int     DAMAGE         =  40;
+    final int     EXPLOSIONPOWER = 100;
+    final int     SHOCKWAVE      =   0;
+    final int     DELAY          =   5; //ToDo make this variable
+
+    final boolean POISONS       = false;  // toogle isPoisoned
+    final boolean IGNITES       = false; // toogle isBurning
+    final boolean BLOCKS        = false; // toogle isStuck
 }
 public class Grenade extends Weapon implements GrenadeAttributes{
 //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
 
 
     public Grenade(int munition){
-        super(munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE);
+        super(munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,IGNITES,BLOCKS);
     }
 
     public Grenade(JSONObject json) {

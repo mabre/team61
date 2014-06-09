@@ -39,6 +39,10 @@ public abstract class Weapon extends Item {
     private int explosionpower; // Damage to environment
     private int shockwave;      // Throw Figures away from Collisionpoint
 
+    private boolean poisons;    // toogle isPoisoned
+    private boolean ignites;    // toogle isBurning
+    private boolean blocks;     // toogle isStuck
+
     private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
 
     private double angle;       // Angle it is aimed at; 0 <=> Horizontal; +90 <=> straight upwards
@@ -49,23 +53,26 @@ public abstract class Weapon extends Item {
 
     /**
      * @param munition Number of shots left
-     * @param WEAPON_IMG String/Path to the Image representing the Weapon
-     * @param PROJECTILE_IMG String/Path to the image representing the projectile
+     * @param weaponImg String/Path to the Image representing the Weapon
+     * @param projectileImg String/Path to the image representing the projectile
      * @param delay fusetimer  //ToDo validate if this is needed up here or if it's enough if this stays in the implementations
      * @param damagetype e.g. Firedamage //ToDo same here
      * @param damage Figure.sufferDamage(damage)
      * @param explosionpower Destructive force
      * @param shockwave Propulsion of Objects
      */
-    public Weapon(int munition, String WEAPON_IMG, String PROJECTILE_IMG, int delay, String damagetype, int damage, int explosionpower, int shockwave){ //ToDo Replace variables with something better
+    public Weapon(int munition, String weaponImg, String projectileImg, int delay, String damagetype, int damage, int explosionpower, int shockwave, boolean poisons, boolean ignites, boolean blocks){ //ToDo Replace variables with something better
         this.munition = munition;
-        this.weaponImg = WEAPON_IMG;
-        this.projectileImg = PROJECTILE_IMG;
+        this.weaponImg = weaponImg;
+        this.projectileImg = projectileImg;
         this.delay = delay;
         this.damagetype = damagetype;
         this.damage = damage;
         this.explosionpower = explosionpower;
         this.shockwave = shockwave;
+        this.poisons = poisons;
+        this.ignites = ignites;
+        this.blocks = blocks;
 
         initialize(); //Draw Crosshair etc
     }
@@ -78,6 +85,9 @@ public abstract class Weapon extends Item {
         this.damage = json.getInt("damage");
         this.explosionpower = json.getInt("explosionpower");
         this.shockwave = json.getInt("shockwave");
+        this.poisons = json.getBoolean("poisons");
+        this.ignites = json.getBoolean("ignites");
+        this.blocks = json.getBoolean("blocks");
 
         initialize(); //Draw Crosshair etc
     }
@@ -92,6 +102,9 @@ public abstract class Weapon extends Item {
         json.put("damage",damage);
         json.put("explosionpower",explosionpower);
         json.put("shockwave",shockwave);
+        json.put("poisons",poisons);
+        json.put("ignites",ignites);
+        json.put("blocks",blocks);
         return json;
     }
 
