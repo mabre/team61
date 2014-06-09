@@ -1,0 +1,18 @@
+@CHARSET "ISO-8859-1";
+
+.root {
+    -fx-background-image: url("file:resources/layout/gameover.png");
+    -fx-background-position: top left;
+    -fx-fill: #FFFFFF;
+}
+
+#overGrid {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-background-radius: 10;
+    -fx-padding: 10 10 10 10;
+}
+
+#gridBox {
+    -fx-padding: 250 200 0 0;
+}
+

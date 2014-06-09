@@ -1,10 +1,10 @@
 @CHARSET "ISO-8859-1";
 
-.optionspane{
+.root{
     -fx-background-image: url("file:resources/layout/back.png");
     -fx-background-position: top left;
 }
 
-.optionstext {
+.optionsText {
     -fx-fill: linear-gradient(from 0% 0% to 100% 200%, repeat, #ff5e30 0%, #ff2b30 50%);
 }

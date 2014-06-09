@@ -22,6 +22,7 @@ public class Client implements Runnable {
     String serverAddress;
     static String id; //! must not contain spaces!
     private String name;
+    private boolean isLocalGame = false;
 
     Runnable readyListener;
 
@@ -50,6 +51,7 @@ public class Client implements Runnable {
      */
     public Client(Runnable listener) {
         this("127.0.0.1", "HOST", listener);
+        isLocalGame = true;
     }
 
     public void run() {
@@ -114,5 +116,9 @@ public class Client implements Runnable {
 
     public void registerCurrentNetworkable(Networkable networkable) {
         this.currentNetworkable = networkable;
+    }
+
+    public boolean isLocalGame() {
+        return isLocalGame;
     }
 }

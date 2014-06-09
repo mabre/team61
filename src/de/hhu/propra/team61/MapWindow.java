@@ -1,6 +1,7 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.GUI.Chat;
+import de.hhu.propra.team61.GUI.GameOverWindow;
 import de.hhu.propra.team61.IO.GameState;
 import de.hhu.propra.team61.IO.JSON.JSONArray;
 import de.hhu.propra.team61.IO.JSON.JSONObject;
@@ -17,7 +18,13 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -36,9 +43,11 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 public class MapWindow extends Application implements Networkable {
     //JavaFX related variables
     private Scene drawing;
-    private Stage primaryStage;
     private BorderPane root;
+    private Stage stageToClose;
+    SceneController sceneController;
     private StackPane centerView;
+
     private Terrain terrain;
     private Label teamLabel;
     //Team related variables
@@ -46,14 +55,15 @@ public class MapWindow extends Application implements Networkable {
     private int currentTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
-    private int power = 0; // Power/energy projectile is shot with
-    private boolean shootingIsAllowed = true; // Used to disable shooting multiple times during 1 turn
     private int teamquantity;
     private int teamsize;
+
+    private int power = 0; // Power/energy projectile is shot with
+    private boolean shootingIsAllowed = true; // Used to disable shooting multiple times during 1 turn
+    private boolean pause = false;
     //Projectile-Moving-Thread related variables
     private Projectile flyingProjectile = null;
     private Thread moveObjectsThread;
-    private Stage stageToClose;
     //Network
     private Server server;
     private Client client;
@@ -64,7 +74,8 @@ public class MapWindow extends Application implements Networkable {
 
     private final static int FIGURE_SPEED = 5;
 
-    public MapWindow(String map, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
+        this.sceneController = sceneController;
         this.map = map;
         this.client = client;
         this.clientThread = clientThread;
@@ -81,7 +92,6 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
 
-        this.stageToClose = stageToClose;
         JSONObject settings = Settings.getSavedSettings(file);
         this.teamquantity = settings.getInt("numberOfTeams");
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
@@ -100,7 +110,8 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) server.sendCommand(getStateForNewClient());
     }
 
-    public MapWindow(JSONObject input, Stage stageToClose, Client client, Thread clientThread) {
+    public MapWindow(JSONObject input, Client client, Thread clientThread, SceneController sceneController) {
+        this.sceneController = sceneController;
         this.client = client;
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
@@ -117,11 +128,11 @@ public class MapWindow extends Application implements Networkable {
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
 
-        this.stageToClose = stageToClose;
         initialize();
     }
 
-    public MapWindow(JSONObject input, Stage stageToClose, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public MapWindow(JSONObject input, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
+        this.sceneController = sceneController;
         this.client = client;
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
@@ -130,8 +141,6 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) server.registerCurrentNetworkable(this);
 
         this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
-
-        this.stageToClose = stageToClose;
 
         JSONObject settings = Settings.getSavedSettings(file);
         teams = new ArrayList<>();
@@ -152,34 +161,45 @@ public class MapWindow extends Application implements Networkable {
      * creates the stage, so that everything is visible
      */
     private void initialize() {
-        primaryStage = new Stage();
-        primaryStage.setOnCloseRequest(event -> {
+        sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
-
-            stageToClose.show();
-            primaryStage.close();
+            sceneController.switchToMenue();
         });
-
         // pane containing terrain, labels at the bottom etc.
         root = new BorderPane();
         // contains the terrain with figures
+        ScrollPane scrollPane = new ScrollPane();
         centerView = new StackPane();
         centerView.setAlignment(Pos.TOP_LEFT);
         centerView.getChildren().add(terrain);
-        root.setCenter(centerView);
+
+        // anchor the map to the bottom left corner (ScrollPane cannot do that)
+        final AnchorPane anchorPane = new AnchorPane();
+        AnchorPane.setBottomAnchor(centerView,  0.0);
+        AnchorPane.setLeftAnchor(centerView, 0.0);
+        anchorPane.getChildren().add(centerView);
+
+        scrollPane.setId("scrollPane");
+        scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
+            anchorPane.setPrefSize(Math.max(centerView.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(centerView.getBoundsInParent().getMaxY(), newBounds.getHeight()))
+        );
+        scrollPane.setContent(anchorPane);
+        scrollPane.setPrefSize(1000, 500);
+        root.setBottom(scrollPane);
 
         for(Team team: teams) {
             centerView.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
-        root.setBottom(teamLabel);
+        root.setTop(teamLabel);
 
         drawing = new Scene(root, 1600, 300);
-        drawing.setOnKeyPressed(
-                keyEvent -> {
-                    System.out.println("key pressed: " + keyEvent.getCode());
-                    switch(keyEvent.getCode()) {
+        drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
+        scrollPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+                System.out.println("key pressed: " + keyEvent.getCode());
+                if(!chat.isVisible()) { // do not consume keyEvent when chat is active
+                    switch (keyEvent.getCode()) {
                         case C:
                             System.out.println("toggle chat");
                             chat.setVisible(!chat.isVisible());
@@ -187,7 +207,10 @@ public class MapWindow extends Application implements Networkable {
                         default:
                             client.sendKeyEvent(keyEvent.getCode());
                     }
+                    // we do not want the scrollPane to receive a key event
+                    keyEvent.consume();
                 }
+            }
         );
 
         chat = new Chat(client);
@@ -196,9 +219,8 @@ public class MapWindow extends Application implements Networkable {
         centerView.getChildren().add(chat);
         chat.setVisible(false);
 
-        primaryStage.setTitle("The Playground");
-        primaryStage.setScene(drawing);
-        primaryStage.show();
+        sceneController.setGameScene(drawing);
+        sceneController.switchToMapwindow();
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
@@ -238,8 +260,6 @@ public class MapWindow extends Application implements Networkable {
             });
             moveObjectsThread.start();
         }
-
-        stageToClose.close();
     }
 
     /**
@@ -322,7 +342,7 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
 
-        String teamLabelText = "Turn: " + turnCount + " It’s Team " + currentTeam + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        String teamLabelText = "Turn: " + turnCount + " It’s Team " + (currentTeam+1) + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
     }
@@ -357,7 +377,7 @@ public class MapWindow extends Application implements Networkable {
 
         String[] cmd = command.split(" ");
 
-        switch(cmd[0]) {
+        switch (cmd[0]) {
             case "ACTIVATE_FIGURE":
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 break;
@@ -392,7 +412,6 @@ public class MapWindow extends Application implements Networkable {
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     }
-
                     teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
                     centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
@@ -451,10 +470,9 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
                 break;
             case "GAME_OVER":
-                primaryStage.close();
-                if(moveObjectsThread != null) moveObjectsThread.interrupt();
+                if (moveObjectsThread != null) moveObjectsThread.interrupt();
                 GameOverWindow gameOverWindow = new GameOverWindow();
-                gameOverWindow.showWinner(Integer.parseInt(cmd[1]), stageToClose, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
@@ -495,9 +513,35 @@ public class MapWindow extends Application implements Networkable {
             } catch(NumberFormatException | IndexOutOfBoundsException e) {
                     System.out.println("malformed command " + keyCode);
             }
+            return;
         }
 
         Point2D v = null;
+
+        int team = Integer.parseInt(keyCode.split(" ", 2)[0]);
+        keyCode = keyCode.split(" ", 2)[1];
+
+        // pause is a special case: do not ignore pause command when paused, and also accept the input when it's not team 0's turn
+        switch(keyCode) {
+            case "Esc":
+            case "Pause":
+            case "P":
+                if (team == 0 || client.isLocalGame()) { // allowing pausing by host (team 0) and when playing local game
+                    pause = !pause;
+                    server.sendCommand("PAUSE " + pause);
+                }
+                break;
+        }
+
+        if(pause) {
+            System.out.println("Game paused, ignoring command " + keyCode);
+            return;
+        }
+
+        if (team != currentTeam && !client.isLocalGame()) {
+            System.out.println("The key event " + keyCode + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
+            return;
+        }
 
         switch(keyCode) {
             case "Space":
@@ -567,6 +611,16 @@ public class MapWindow extends Application implements Networkable {
             System.out.println("ERROR How did we get here?");
         }*/
         server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+    }
+
+    public Pane drawBackgroundImage() {
+        Pane backgroundPane = new Pane();
+        String img = "file:resources/levelback1.png";
+        Image image = new Image(img);
+        ImageView background = new ImageView();
+        background.setImage(image);
+        backgroundPane.getChildren().add(background);
+        return backgroundPane;
     }
 
     @Override

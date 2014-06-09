@@ -21,13 +21,13 @@
 #chatBox {
     -fx-background-color: rgba(0, 0, 0, 0.3);
     -fx-background-radius: 10;
-    -fx-padding: 20 200 76 25;
+    -fx-padding: 20 25 10 25;
 }
 
 .listGrid {
     -fx-background-color: rgba(255, 119, 48, 0.5);
     -fx-background-radius: 10;
-    -fx-padding: 20 200 150 10;
+    -fx-padding: 20 25 10 25;
 }
 
 #bottomBox {

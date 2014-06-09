@@ -16,14 +16,24 @@
 1. Click on “Start network game”.
 2. Enter your name.
 3. Click on “Host a game”.
-4. Change the game settings. To update the number of teams, or inform the connected clients of changes, click on “Apply Settings”.
-5. Click on “Start”.
-6. Do NOT try to play a revenge after a network game. ([#55](https://github.com/ProPra14/team61/issues/55))
+4. Change the game settings. To inform the connected clients of changes, click on “Apply Settings”. (NB: You probably want to change the number of teams.)
+5. Wait for all players being ready.
+6. Click on “Start”.
+7. The game can be paused by pressing P or ESC.
+8. Do NOT try to play a revenge after a network game. ([#55](https://github.com/ProPra14/team61/issues/55))
 
 ## Connect as Spectator
 
 1. Click on “Start network game”.
-2. Enter your name and the ip address of the host. (NB: “Spectator” checkbox has no effect atm.)
+2. Enter your name and the ip address of the host.
 3. Click on “Join a game”.
-4. Depending on the game status, you see the lobby (and you have to wait till the host starts the game) or the running game. (NB: Changing settings in the lobby has no effect. Do NOT try to click on “start”. ([#56](https://github.com/ProPra14/team61/issues/56)))
+4. Depending on the game status, you see the lobby (and you have to wait till the host starts the game) or the running game.
 5. Do NOT try to play a revenge after a network game. ([#55](https://github.com/ProPra14/team61/issues/55))
+
+## Connect as Player
+
+1. Follow steps 1–4 of “Connect as Spectator”
+2. Uncheck “Spectator”.
+3. If the max. number of teams is not reached, you can now edit your team’s settings.
+4. Click on “Ready” to inform the server of the changes you made.
+5. Wait for the host to start the game.
