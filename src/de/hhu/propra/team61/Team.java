@@ -1,11 +1,11 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.IO.JSON.JSONArray;
-import de.hhu.propra.team61.IO.JSON.JSONObject;
-import de.hhu.propra.team61.Objects.Figure;
-import de.hhu.propra.team61.Objects.Grenade;
-import de.hhu.propra.team61.Objects.Gun;
-import de.hhu.propra.team61.Objects.Weapon;
+import de.hhu.propra.team61.io.json.JSONArray;
+import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.objects.Figure;
+import de.hhu.propra.team61.objects.Grenade;
+import de.hhu.propra.team61.objects.Gun;
+import de.hhu.propra.team61.objects.Weapon;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;

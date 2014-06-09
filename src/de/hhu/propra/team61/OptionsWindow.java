@@ -1,6 +1,6 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.GUI.OptionController;
+import de.hhu.propra.team61.gui.OptionController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -25,7 +25,7 @@ public class OptionsWindow extends Application {
     }
 
 	public void doOptions() throws IOException {
-        FXMLLoader optionLoader = new FXMLLoader(getClass().getResource("GUI/options.fxml"));
+        FXMLLoader optionLoader = new FXMLLoader(getClass().getResource("gui/options.fxml"));
         root = optionLoader.load();
         optionController = optionLoader.getController();
         Scene optionScene = new Scene(root, 1000, 600);

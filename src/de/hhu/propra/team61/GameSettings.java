@@ -1,16 +1,14 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.GUI.BigStage;
-import de.hhu.propra.team61.GUI.CustomGrid;
-import de.hhu.propra.team61.IO.JSON.JSONArray;
-import de.hhu.propra.team61.IO.JSON.JSONObject;
-import de.hhu.propra.team61.IO.Settings;
-import de.hhu.propra.team61.IO.TerrainManager;
-import de.hhu.propra.team61.Network.Client;
-import de.hhu.propra.team61.Network.Server;
+import de.hhu.propra.team61.gui.CustomGrid;
+import de.hhu.propra.team61.io.json.JSONArray;
+import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.io.Settings;
+import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.network.Client;
+import de.hhu.propra.team61.network.Server;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -23,7 +21,6 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
