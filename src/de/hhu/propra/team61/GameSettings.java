@@ -196,16 +196,28 @@ public class GameSettings extends Application {
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 16);
         cont.setOnAction(e -> {
-                // our local game is also client/server based, with server running on localhost
-                serverThread = new Thread(server = new Server(() -> {
-                    clientThread = new Thread(client = new Client(() -> {
-                        Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
-                        System.out.println("GameSettings: saved settings");
-                        Platform.runLater(() -> new MapWindow(mapChooser.getValue(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                boolean differentColors = true;
+                for (int i=0; i<numberOfTeams-1; i++) {
+                    for(int h=i+1; h<numberOfTeams; h++) {
+                        if (colorPickers.get(i).getValue().equals(colorPickers.get(h).getValue())) {
+                            differentColors = false;
+                        }
+                    }
+                }
+                if (differentColors) {
+                    // our local game is also client/server based, with server running on localhost
+                    serverThread = new Thread(server = new Server(() -> {
+                        clientThread = new Thread(client = new Client(() -> {
+                            Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
+                            System.out.println("GameSettings: saved settings");
+                            Platform.runLater(() -> new MapWindow(mapChooser.getValue(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                        }));
+                        clientThread.start();
                     }));
-                    clientThread.start();
-                }));
-                serverThread.start();
+                    serverThread.start();
+                } else {
+                    sameColor.setText("You should not choose the same color!");
+                }
         });
 
         Button back = new Button("Back");

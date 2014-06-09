@@ -218,9 +218,21 @@ public class NetLobby extends Application implements Networkable {
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                        Settings.save(toJson(), "NET_SETTINGS_FILE");
-                        System.out.println("Network-GameSettings: saved settings");
-                        MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                boolean differentColors = true;
+                for (int i=0; i<teamsCreated-1; i++) {
+                    for(int h=i+1; h<teamsCreated; h++) {
+                        if (colorPickers.get(i).getValue().equals(colorPickers.get(h).getValue())) {
+                            differentColors = false;
+                        }
+                    }
+                }
+                if (differentColors) {
+                    Settings.save(toJson(), "NET_SETTINGS_FILE");
+                    System.out.println("Network-GameSettings: saved settings");
+                    MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                } else {
+                    sameColor.setText("You should not choose the same color!");
+                }
             }
         });
         ready = new Button("Ready");
