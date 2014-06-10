@@ -305,7 +305,17 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
     }
-    
+
+    public int getNumberOfLivingTeams() {
+        int livingTeams = 0;
+        for (Team team : teams) {
+            if (team.getNumberOfLivingFigures() > 0){
+                livingTeams++;
+            }
+        }
+        return livingTeams;
+    }
+
     public void endTurn() {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
@@ -321,6 +331,15 @@ public class MapWindow extends Application implements Networkable {
                 return;
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
+
+        if (getNumberOfLivingTeams() == 0){
+            server.sendCommand("GAME_OVER " + -1);
+            return;
+        }
+        if (getNumberOfLivingTeams() < 2){
+            server.sendCommand("GAME_OVER " + currentTeam);
+            return;
+        }
 
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         server.sendCommand("CURRENT_TEAM_END_ROUND");
