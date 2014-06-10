@@ -21,6 +21,9 @@ public class Figure extends StackPane {
     private int health;
     private int armor;
 
+    private Point2D velocity = new Point2D(0,0);
+    private boolean inAir = false;
+
     private boolean isBurning;
     private boolean isPoisoned;
     private boolean isStuck;
@@ -190,6 +193,29 @@ public class Figure extends StackPane {
     public Projectile shoot() throws NoMunitionException {
        // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
         return selectedItem.shoot();
+    }
+
+    public Point2D getVelocity() {
+        return velocity;
+    }
+
+    public void resetVelocity() {
+        int fallDamage = (int)((velocity.magnitude()-10) / 12); // TODO magic numbers
+        if(fallDamage > 0) {
+            sufferDamage(fallDamage);
+        }
+        System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
+        velocity = new Point2D(0,0);
+        inAir = false;
+    }
+
+    public void addVelocity(Point2D dV) {
+        velocity =  velocity.add(dV);
+        inAir = true;
+    }
+
+    public boolean isInAir() {
+        return inAir;
     }
 
     //For testing purposes only

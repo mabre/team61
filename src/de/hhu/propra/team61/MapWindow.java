@@ -189,7 +189,7 @@ public class MapWindow extends Application implements Networkable {
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         scrollPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
                 System.out.println("key pressed: " + keyEvent.getCode());
-                if(!chat.isVisible()) { // do not consume keyEvent when chat is active
+                if (!chat.isVisible()) { // do not consume keyEvent when chat is active
                     switch (keyEvent.getCode()) {
                         case C:
                             System.out.println("toggle chat");
@@ -238,6 +238,27 @@ public class MapWindow extends Application implements Networkable {
                                 });
                             }
                         }
+                        for(Team team: teams) {
+                            for(Figure figure: team.getFigures()) {
+                                if(figure.isInAir()) {
+                                    try {
+                                        final Point2D newPos; // TODO code duplication
+                                        newPos = terrain.getPositionForDirection(figure.getPosition(), figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
+                                        figure.addVelocity(new Point2D(0,1));
+                                        Platform.runLater(() -> {
+                                            figure.setPosition(newPos);
+                                        }); // TODO IMPORTANT network
+                                    } catch (CollisionWithTerrainException e) {
+                                        System.out.println("CollisionWithTerrainException");
+                                        Platform.runLater(() -> figure.setPosition(e.getLastGoodPosition()));
+                                        figure.resetVelocity();
+                                    } catch (CollisionWithFigureException e) {
+                                        System.out.println("WARNING: CollisionWithFigureException should not happen here");
+                                    }
+                                }
+                            }
+                        }
+
                         now = System.currentTimeMillis();
                         sleep = Math.max(0, (1000 / 10) - (now - before)); // 10 fps
                         Thread.sleep(sleep);
@@ -526,7 +547,12 @@ public class MapWindow extends Application implements Networkable {
             // these codes always result in optical changes only, so nothing to do on server side
             case "Up":
             case "W":
-                server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
+                } else {
+                    Figure f = teams.get(currentTeam).getCurrentFigure();
+                    f.addVelocity(new Point2D(0, -5));
+                }
                 break;
             case "Down":
             case "S":

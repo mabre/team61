@@ -255,43 +255,44 @@ public class Terrain extends GridPane {
                 } // for each field
             } while(triedDiagonal && ++tries<2);
 
-            if(hasMass) {
-                System.out.println("beforehitground: " + newPosition + " " + hitRegion);
-                boolean hitGround = false;
-                tries = 0;
-                final double MOVING_GROUND_DELTA_Y = .1;
-                do { // while(!hitGround)
-                    System.out.println("moving to ground ... " + (++tries));
-                    newPosition = newPosition.add(0, MOVING_GROUND_DELTA_Y);
-                    // calculate moved hitRegion
-                    hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY() + MOVING_GROUND_DELTA_Y, hitRegion.getWidth(), hitRegion.getHeight());
-                    System.out.println(newPosition + " " + hitRegion);
-
-                    // calculate indices of fields which are touched by hitRegion // TODO code duplication
-                    int minY = (int) Math.floor(hitRegion.getMinY() / 8);
-                    int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
-                    int minX = (int) Math.floor(hitRegion.getMinX() / 8);
-                    int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
-
-                    for (int y = minY; y <= maxY && !hitGround; y++) { // TODO recheck necessity of <=
-                        for (int x = minX; x <= maxX && !hitGround; x++) {
-                            // TODO also do intersection check with figures; not needed at the moment, since hasMass && !canWalkThroughFigures is never true atm
-                            //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " " + x + " " + y);
-                            if (intersects(hitRegion, x, y)) {
-                                newPosition = newPosition.subtract(0, MOVING_GROUND_DELTA_Y);
-                                // calculate moved hitRegion
-                                hitRegion = new Rectangle2D(hitRegion.getMinX(), hitRegion.getMinY() - MOVING_GROUND_DELTA_Y, hitRegion.getWidth(), hitRegion.getHeight());
-                                hitGround = true;
-                            }
-                        }
-                    }
-                    if (tries > 200) {
-                        System.out.println("WARNING stopped movement, probably an error");
-                        break;
-                    }
-                } while (!hitGround);
-            } // if hasMass
-
+            // TODO IMPORTANT
+//            if(hasMass) {
+//                System.out.println("beforehitground: " + newPosition + " " + hitRegion);
+//                boolean hitGround = false;
+//                tries = 0;
+//                do { // while(!hitGround)
+//                    System.out.println("moving to ground ... " + (++tries));
+//                    direction.add(0,.1);
+//                    newPosition = newPosition.add(direction);
+//                    // calculate moved hitRegion
+//                    hitRegion = new Rectangle2D(hitRegion.getMinX()+direction.getX(), hitRegion.getMinY()+direction.getY(), hitRegion.getWidth(), hitRegion.getHeight());
+//                    System.out.println(newPosition + " " + hitRegion);
+//
+//                    // calculate indices of fields which are touched by hitRegion // TODO code duplication
+//                    int minY = (int) Math.floor(hitRegion.getMinY() / 8);
+//                    int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
+//                    int minX = (int) Math.floor(hitRegion.getMinX() / 8);
+//                    int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
+//
+//                    for (int y = minY; y <= maxY && !hitGround; y++) { // TODO recheck necessity of <=
+//                        for (int x = minX; x <= maxX && !hitGround; x++) {
+//                            // TODO also do intersection check with figures; not needed at the moment, since hasMass && !canWalkThroughFigures is never true atm
+//                            //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " " + x + " " + y);
+//                            if (intersects(hitRegion, x, y)) {
+//                                newPosition = newPosition.subtract(direction);
+//                                // calculate moved hitRegion
+//                                hitRegion = new Rectangle2D(hitRegion.getMinX()+direction.getX(), hitRegion.getMinY()-direction.getY(), hitRegion.getWidth(), hitRegion.getHeight());
+//                                hitGround = true;
+//                            }
+//                        }
+//                    }
+//                    if (tries > 50) {
+//                        System.out.println("WARNING stopped movement, probably an error");
+//                        break;
+//                    }
+//                } while (!hitGround);
+//            } // if hasMass
+//
         } // for i<runs
 
         if(snapToPx) {
