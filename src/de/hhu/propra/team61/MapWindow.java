@@ -289,7 +289,7 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
-    public int getNumberOfLivingTeams() { //TODO Macht im prinzip noch nichts, da livingTeams=2, egal was passiert.
+    public int getNumberOfLivingTeams() {
         int livingTeams = 0;
         for (Team team : teams) {
             if (team.getNumberOfLivingFigures() > 0){
@@ -300,6 +300,17 @@ public class MapWindow extends Application implements Networkable {
 }
 
     public void endTurn() {
+
+        if (getNumberOfLivingTeams() == 0){
+            server.sendCommand("GAME_OVER " + -1);
+            return;
+        }
+
+        if (getNumberOfLivingTeams() < 2){
+            server.sendCommand("GAME_OVER " + currentTeam);
+            return;
+        }
+
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
@@ -313,8 +324,7 @@ public class MapWindow extends Application implements Networkable {
                 server.sendCommand("GAME_OVER " + currentTeam);
                 return;
             }
-
-                if (getNumberOfLivingTeams() < 2){
+            if (getNumberOfLivingTeams() < 2){
                 server.sendCommand("GAME_OVER " + currentTeam);
                 return;
             }
