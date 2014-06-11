@@ -38,6 +38,7 @@ public class Terrain extends GridPane {
 
         //Draw Terrain
         setAlignment(Pos.TOP_LEFT);
+        setGridLinesVisible(true);
 
         String img;
 

@@ -242,16 +242,19 @@ public class MapWindow extends Application implements Networkable {
                             for(Figure figure: team.getFigures()) {
                                 if(figure.isInAir()) {
                                     try {
+                                        final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
                                         final Point2D newPos; // TODO code duplication
-                                        newPos = terrain.getPositionForDirection(figure.getPosition(), figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
+                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
                                         figure.addVelocity(new Point2D(0,1));
                                         Platform.runLater(() -> {
-                                            figure.setPosition(newPos);
+                                            figure.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
                                         }); // TODO IMPORTANT network
                                     } catch (CollisionWithTerrainException e) {
                                         System.out.println("CollisionWithTerrainException");
-                                        Platform.runLater(() -> figure.setPosition(e.getLastGoodPosition()));
-                                        figure.resetVelocity();
+                                        Platform.runLater(() -> {
+                                            Platform.runLater(() -> figure.setPosition(new Point2D(e.getLastGoodPosition().getX()/8, e.getLastGoodPosition().getY()/8)));
+                                            figure.resetVelocity();
+                                        }); // TODO IMPORTANT network
                                     } catch (CollisionWithFigureException e) {
                                         System.out.println("WARNING: CollisionWithFigureException should not happen here");
                                     }

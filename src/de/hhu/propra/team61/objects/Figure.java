@@ -9,6 +9,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
 /**
  * Created by kevgny on 14.05.14.
@@ -31,6 +32,7 @@ public class Figure extends StackPane {
     private Item selectedItem;
 
     private Rectangle2D hitRegion;
+    private Rectangle hitRegionDebug;
     private ImageView imageView;
     private Label hpLabel;
 
@@ -138,6 +140,12 @@ public class Figure extends StackPane {
         imageView.setTranslateX(8 * position.getX());
         imageView.setTranslateY(8 * position.getY());
         hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
+        getChildren().removeAll(hitRegionDebug);
+        hitRegionDebug = new Rectangle(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
+        hitRegionDebug.setTranslateX(imageView.getTranslateX());
+        hitRegionDebug.setTranslateY(imageView.getTranslateY());
+        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
+        //getChildren().add(hitRegionDebug); // brakes scroll pane?!
         hpLabel.setTranslateX(imageView.getTranslateX());
         hpLabel.setTranslateY(imageView.getTranslateY() - 15);
     }
@@ -200,7 +208,7 @@ public class Figure extends StackPane {
     }
 
     public void resetVelocity() {
-        int fallDamage = (int)((velocity.magnitude()-10) / 12); // TODO magic numbers
+        int fallDamage = (int)(Math.pow((velocity.magnitude()-10), 1.5)); // TODO magic numbers
         if(fallDamage > 0) {
             sufferDamage(fallDamage);
         }
