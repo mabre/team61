@@ -186,13 +186,14 @@ public class Figure extends StackPane {
     }
     public boolean getFacing_right(){return facing_right;}
 
-    public void sufferDamage(int damage) {
+    public void sufferDamage(int damage) throws DeathException {
         health -= damage;
         if(health <= 0) {
             health = 0;
-            Image image = new Image("file:resources/spawn.png", 8, 8, true, true); // TODO
-            imageView.setImage(image);
+            Image image = new Image("file:resources/spawn.png", 16, 16, true, true);
+            Platform.runLater(() -> imageView.setImage(image));
             setPosition(GRAVEYARD);
+            throw new DeathException(this);
         }
         Platform.runLater(() -> hpLabel.setText(health+""));
         System.out.println(name + " got damage " + damage + ", health at " + health);
@@ -200,7 +201,11 @@ public class Figure extends StackPane {
 
     public void setHealth(int hp) {
         this.health = hp;
-        sufferDamage(0); // redraws the label and validated new hp
+        try {
+            sufferDamage(0); // redraws the label and validated new hp
+        } catch(DeathException e) {
+            // cannot happen here
+        }
     }
 
     public int getHealth() {
@@ -223,7 +228,7 @@ public class Figure extends StackPane {
     /**
      * resets the velocity vector to 0 and - depending on the speed - the figure suffers fall damage
      */
-    public void resetVelocity() {
+    public void resetVelocity() throws DeathException {
         int fallDamage = (int)(Math.pow((velocity.magnitude() - FALL_DAMAGE_THRESHOLD), 1.1)); // TODO magic numbers
         if(fallDamage > 0) {
             sufferDamage(fallDamage);

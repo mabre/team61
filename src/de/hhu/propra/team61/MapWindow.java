@@ -233,7 +233,13 @@ public class MapWindow extends Application implements Networkable {
                             } catch (CollisionWithFigureException e) {
                                 System.out.println("CollisionWithFigureException, let's harm somebody!");
                                 Platform.runLater(() -> {
-                                    e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
+                                    try {
+                                        e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
+                                    } catch (DeathException de) {
+                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+                                            endTurn();
+                                        }
+                                    }
                                     server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHealth());
                                     server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
                                     endTurn();
@@ -242,27 +248,35 @@ public class MapWindow extends Application implements Networkable {
                         }
                         for(Team team: teams) {
                             for(Figure figure: team.getFigures()) {
-                                final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
-                                try {
-                                    final Point2D newPos; // TODO code duplication
-                                    newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
-                                    figure.addVelocity(GRAVITY.multiply(figure.getMass()));
-                                    if(!oldPos.equals(newPos)) { // do not send a message when position is unchanged
-                                        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
-//                                      // TODO IMPORTANT timing issue (apply locally [new data structure] -> do not apply changes on server!)
+                                if(figure.getHealth() > 0) {
+                                    final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
+                                    try {
+                                        final Point2D newPos; // TODO code duplication
+                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
+                                        figure.addVelocity(GRAVITY.multiply(figure.getMass()));
+                                        if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
+                                            //                                      // TODO IMPORTANT timing issue (apply locally [new data structure] -> do not apply changes on server!)
+                                        }
+                                    } catch (CollisionWithTerrainException e) {
+                                        if (!e.getLastGoodPosition().equals(oldPos)) {
+                                            System.out.println("CollisionWithTerrainException");
+                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                        }
+                                        int oldHp = figure.getHealth();
+                                        try {
+                                            figure.resetVelocity();
+                                        } catch (DeathException de) {
+                                            if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+                                                endTurn();
+                                            }
+                                        }
+                                        if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
+                                            server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                        }
+                                    } catch (CollisionWithFigureException e) {
+                                        System.out.println("WARNING: CollisionWithFigureException should not happen here");
                                     }
-                                } catch (CollisionWithTerrainException e) {
-                                    if(!e.getLastGoodPosition().equals(oldPos)) {
-                                        System.out.println("CollisionWithTerrainException");
-                                        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
-                                    }
-                                    int oldHp = figure.getHealth();
-                                    figure.resetVelocity();
-                                    if(figure.getHealth() != oldHp) { // only send hp update when hp has been changed
-                                        server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
-                                    }
-                                } catch (CollisionWithFigureException e) {
-                                    System.out.println("WARNING: CollisionWithFigureException should not happen here");
                                 }
                             }
                         }
