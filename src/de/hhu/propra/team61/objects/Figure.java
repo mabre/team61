@@ -2,6 +2,7 @@ package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.MapWindow;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -193,7 +194,7 @@ public class Figure extends StackPane {
             imageView.setImage(image);
             setPosition(GRAVEYARD);
         }
-        hpLabel.setText(health+"");
+        Platform.runLater(() -> hpLabel.setText(health+""));
         System.out.println(name + " got damage " + damage + ", health at " + health);
     }
 
@@ -219,6 +220,9 @@ public class Figure extends StackPane {
         return velocity;
     }
 
+    /**
+     * resets the velocity vector to 0 and - depending on the speed - the figure suffers fall damage
+     */
     public void resetVelocity() {
         int fallDamage = (int)(Math.pow((velocity.magnitude() - FALL_DAMAGE_THRESHOLD), 1.1)); // TODO magic numbers
         if(fallDamage > 0) {

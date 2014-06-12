@@ -197,9 +197,9 @@ public class Terrain extends GridPane {
             newPosition = newPosition.add(normalizedDirection);
 
             // calculate moved hitRegion
-            hitRegion = new Rectangle2D(hitRegion.getMinX()+normalizedDirection.getX(), hitRegion.getMinY()+normalizedDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
+            hitRegion = new Rectangle2D(hitRegion.getMinX() + normalizedDirection.getX(), hitRegion.getMinY() + normalizedDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
 
-            debugLog("checking new position for collision: " + newPosition + " (" + (i+1) + "/" + runs +")" + " " + hitRegion);
+            debugLog("checking new position for collision: " + newPosition + " (" + (i + 1) + "/" + runs + ")" + " " + hitRegion);
 
             // check if hitRegion intersects with non-walkable terrain
             boolean triedDiagonal = false;
@@ -219,7 +219,7 @@ public class Terrain extends GridPane {
                         //debugLog(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
                         boolean intersects = intersects(hitRegion, x, y);
                         Figure intersectingFigure = null;
-                        if(!canWalkThroughFigures && !intersects) {
+                        if (!canWalkThroughFigures && !intersects) {
                             for (Figure figure : figures) {
                                 if (hitRegion.intersects(figure.getHitRegion())) {
                                     intersects = true;
@@ -230,27 +230,28 @@ public class Terrain extends GridPane {
                         if (intersects) {
                             try {
                                 debugLog("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
-                                if(intersectingFigure != null) debugLog("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
-                            } catch(IndexOutOfBoundsException e) {
+                                if (intersectingFigure != null)
+                                    debugLog("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
+                            } catch (IndexOutOfBoundsException e) {
                                 debugLog("intersection at " + x + " " + y + " out of bounds");
                             }
                             if (canWalkAlongDiagonals && tries == 0 && intersectingFigure == null) {
                                 diagonalDirection = new Point2D(Math.signum(normalizedDirection.getX()), -2);
                                 Point2D positionOnSlope = newPosition.subtract(normalizedDirection).add(diagonalDirection);
-                                hitRegion = new Rectangle2D(hitRegion.getMinX()-normalizedDirection.getX()+diagonalDirection.getX(), hitRegion.getMinY()-normalizedDirection.getY()+diagonalDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
+                                hitRegion = new Rectangle2D(hitRegion.getMinX() - normalizedDirection.getX() + diagonalDirection.getX(), hitRegion.getMinY() - normalizedDirection.getY() + diagonalDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
                                 newPosition = positionOnSlope;
                                 triedDiagonal = true;
                                 debugLog("trying to walk diagonal along " + diagonalDirection + " to " + newPosition + " " + hitRegion);
                             } else {
-                                if(diagonalDirection.magnitude() == 0) { // did not go diagonal
+                                if (diagonalDirection.magnitude() == 0) { // did not go diagonal
                                     newPosition = newPosition.subtract(normalizedDirection);
                                 } else {
                                     newPosition = newPosition.subtract(diagonalDirection);
                                 }
-                                if(snapToPx) {
+                                if (snapToPx) {
                                     newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
                                 }
-                                if(intersectingFigure == null) {
+                                if (intersectingFigure == null) {
                                     throw new CollisionWithTerrainException(newPosition);
                                 } else {
                                     throw new CollisionWithFigureException(newPosition, intersectingFigure);
@@ -259,7 +260,8 @@ public class Terrain extends GridPane {
                         }
                     }
                 } // for each field
-            } while(triedDiagonal && ++tries<2);
+            } while (triedDiagonal && ++tries < 2);
+        }
 
         if(snapToPx) {
             newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication

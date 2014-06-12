@@ -64,6 +64,7 @@ public class MapWindow extends Application implements Networkable {
     private SceneController sceneController;
 
     public final static Point2D GRAVITY = new Point2D(0,.01);
+    private final static int FPS = 10;
 
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
@@ -241,30 +242,34 @@ public class MapWindow extends Application implements Networkable {
                         }
                         for(Team team: teams) {
                             for(Figure figure: team.getFigures()) {
+                                final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
                                 try {
-                                    final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
                                     final Point2D newPos; // TODO code duplication
                                     newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
                                     figure.addVelocity(GRAVITY.multiply(figure.getMass()));
-                                    Platform.runLater(() -> {
-                                        figure.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8)); // TODO timing issue (should be solved with network compatiblity -> do not apply changes on server!)
-                                    }); // TODO IMPORTANT network (do not send if position has not changed)
+                                    if(!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
+//                                      // TODO IMPORTANT timing issue (apply locally [new data structure] -> do not apply changes on server!)
+                                    }
                                 } catch (CollisionWithTerrainException e) {
-//                                    if(e.getLastGoodPosition().equals(figure.getPosition())) { // TODO
+                                    if(!e.getLastGoodPosition().equals(oldPos)) {
                                         System.out.println("CollisionWithTerrainException");
-                                        Platform.runLater(() -> {
-                                            Platform.runLater(() -> figure.setPosition(new Point2D(e.getLastGoodPosition().getX() / 8, e.getLastGoodPosition().getY() / 8)));
-                                            figure.resetVelocity();
-                                        }); // TODO IMPORTANT network
-//                                    }
+                                        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                    }
+                                    int oldHp = figure.getHealth();
+                                    figure.resetVelocity();
+                                    if(figure.getHealth() != oldHp) { // only send hp update when hp has been changed
+                                        server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                    }
                                 } catch (CollisionWithFigureException e) {
                                     System.out.println("WARNING: CollisionWithFigureException should not happen here");
                                 }
                             }
                         }
 
+                        // sleep thread, and assure constant frame rate
                         now = System.currentTimeMillis();
-                        sleep = Math.max(0, (1000 / 10) - (now - before)); // 10 fps
+                        sleep = Math.max(0, (1000 / FPS) - (now - before));
                         Thread.sleep(sleep);
                         before = System.currentTimeMillis();
                     }
@@ -449,10 +454,6 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
-            case "CURRENT_FIGURE_SET_POSITION":
-                Figure f = teams.get(currentTeam).getCurrentFigure();
-                f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
-                break;
 //            case "Number Sign": // TODO really? this is broken and deprecated
 //                cheatMode();
 //                break;
@@ -468,6 +469,10 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "FIGURE_SET_POSITION":
+                Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
+                f.setPosition(new Point2D(Double.parseDouble(cmd[3]) / 8, Double.parseDouble(cmd[4]) / 8)); // TODO alternative setter
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -589,7 +594,7 @@ public class MapWindow extends Application implements Networkable {
                         // figures can walk through each other // TODO really?
                         System.out.println("ERROR How did we get here?");
                     }
-                    server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                    server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY());
                 }
                 break;
             case "1":
