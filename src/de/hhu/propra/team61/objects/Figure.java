@@ -16,6 +16,9 @@ import javafx.scene.shape.Rectangle;
  */
 
 public class Figure extends StackPane {
+
+    private static int MASS = 100;
+
     private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
@@ -208,7 +211,7 @@ public class Figure extends StackPane {
     }
 
     public void resetVelocity() {
-        int fallDamage = (int)(Math.pow((velocity.magnitude()-10), 1.5)); // TODO magic numbers
+        int fallDamage = (int)(Math.pow((velocity.magnitude() - 10), 1.5)); // TODO magic numbers
         if(fallDamage > 0) {
             sufferDamage(fallDamage);
         }
@@ -217,9 +220,13 @@ public class Figure extends StackPane {
         inAir = false;
     }
 
-    public void addVelocity(Point2D dV) {
+    public void addVelocity(Point2D dV) { // TODO interface?
         velocity =  velocity.add(dV);
         inAir = true;
+    }
+
+    public int getMass() {
+        return MASS;
     }
 
     public boolean isInAir() {

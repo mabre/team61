@@ -61,9 +61,10 @@ public class MapWindow extends Application implements Networkable {
     private String map; // TODO do we need this?
     private Chat chat;
     private boolean pause = false;
-    SceneController sceneController;
+    private SceneController sceneController;
 
     private final static int FIGURE_SPEED = 5;
+    private final static Point2D GRAVITY = new Point2D(0,.01);
 
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
@@ -222,6 +223,7 @@ public class MapWindow extends Application implements Networkable {
                             try {
                                 final Point2D newPos;
                                 newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, false);
+                                flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                             } catch (CollisionWithTerrainException e) {
@@ -245,7 +247,7 @@ public class MapWindow extends Application implements Networkable {
                                         final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
                                         final Point2D newPos; // TODO code duplication
                                         newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
-                                        figure.addVelocity(new Point2D(0,1));
+                                        figure.addVelocity(GRAVITY.multiply(figure.getMass()));
                                         Platform.runLater(() -> {
                                             figure.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
                                         }); // TODO IMPORTANT network
