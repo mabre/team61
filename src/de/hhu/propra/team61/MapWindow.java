@@ -247,7 +247,7 @@ public class MapWindow extends Application implements Networkable {
                                     newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
                                     figure.addVelocity(GRAVITY.multiply(figure.getMass()));
                                     Platform.runLater(() -> {
-                                        figure.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
+                                        figure.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8)); // TODO timing issue (should be solved with network compatiblity -> do not apply changes on server!)
                                     }); // TODO IMPORTANT network (do not send if position has not changed)
                                 } catch (CollisionWithTerrainException e) {
 //                                    if(e.getLastGoodPosition().equals(figure.getPosition())) { // TODO
