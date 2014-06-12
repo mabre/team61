@@ -15,6 +15,8 @@ import java.util.ArrayList;
  * Created by markus on 17.05.14.
  */
 public class Terrain extends GridPane {
+    private static final boolean DEBUG = false;
+
     private static String imgPath = "file:resources/";
 
     private ArrayList<ArrayList<Character>> terrain;
@@ -162,6 +164,10 @@ public class Terrain extends GridPane {
         }
     }
 
+    private static void debugLog(String msg) {
+        if(DEBUG) System.out.println(msg);
+    }
+
     /**
      * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
      * When canWalkAlongDiagonals is true, the movement continues at slopes in diagonal direction (used for figures);
@@ -182,8 +188,8 @@ public class Terrain extends GridPane {
         Point2D preferredFinalPosition = oldPosition.add(direction);
         Point2D normalizedDirection = direction.normalize();
 
-        System.out.println("start position: " + oldPosition);
-        System.out.println("normalized velocity: " + normalizedDirection);
+        debugLog("start position: " + oldPosition);
+        debugLog("normalized velocity: " + normalizedDirection);
 
         final int runs = (int)direction.magnitude();
 
@@ -194,7 +200,7 @@ public class Terrain extends GridPane {
             // calculate moved hitRegion
             hitRegion = new Rectangle2D(hitRegion.getMinX()+normalizedDirection.getX(), hitRegion.getMinY()+normalizedDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
 
-            System.out.println("checking new position for collision: " + newPosition + " (" + (i+1) + "/" + runs +")" + " " + hitRegion);
+            debugLog("checking new position for collision: " + newPosition + " (" + (i+1) + "/" + runs +")" + " " + hitRegion);
 
             // check if hitRegion intersects with non-walkable terrain
             boolean triedDiagonal = false;
@@ -211,7 +217,7 @@ public class Terrain extends GridPane {
 
                 for (int y = minY; y <= maxY && !triedDiagonal; y++) { // TODO recheck necessity of <=
                     for (int x = minX; x <= maxX && !triedDiagonal; x++) {
-                        //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
+                        //debugLog(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
                         boolean intersects = intersects(hitRegion, x, y);
                         Figure intersectingFigure = null;
                         if(!canWalkThroughFigures && !intersects) {
@@ -224,10 +230,10 @@ public class Terrain extends GridPane {
                         }
                         if (intersects) {
                             try {
-                                System.out.println("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
-                                if(intersectingFigure != null) System.out.println("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
+                                debugLog("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
+                                if(intersectingFigure != null) debugLog("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
                             } catch(IndexOutOfBoundsException e) {
-                                System.out.println("intersection at " + x + " " + y + " out of bounds");
+                                debugLog("intersection at " + x + " " + y + " out of bounds");
                             }
                             if (canWalkAlongDiagonals && tries == 0 && intersectingFigure == null) {
                                 diagonalDirection = new Point2D(Math.signum(normalizedDirection.getX()), -2);
@@ -235,7 +241,7 @@ public class Terrain extends GridPane {
                                 hitRegion = new Rectangle2D(hitRegion.getMinX()-normalizedDirection.getX()+diagonalDirection.getX(), hitRegion.getMinY()-normalizedDirection.getY()+diagonalDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
                                 newPosition = positionOnSlope;
                                 triedDiagonal = true;
-                                System.out.println("trying to walk diagonal along " + diagonalDirection + " to " + newPosition + " " + hitRegion);
+                                debugLog("trying to walk diagonal along " + diagonalDirection + " to " + newPosition + " " + hitRegion);
                             } else {
                                 if(diagonalDirection.magnitude() == 0) { // did not go diagonal
                                     newPosition = newPosition.subtract(normalizedDirection);
@@ -258,16 +264,16 @@ public class Terrain extends GridPane {
 
             // TODO IMPORTANT
 //            if(hasMass) {
-//                System.out.println("beforehitground: " + newPosition + " " + hitRegion);
+//                debugLog("beforehitground: " + newPosition + " " + hitRegion);
 //                boolean hitGround = false;
 //                tries = 0;
 //                do { // while(!hitGround)
-//                    System.out.println("moving to ground ... " + (++tries));
+//                    debugLog("moving to ground ... " + (++tries));
 //                    direction.add(0,.1);
 //                    newPosition = newPosition.add(direction);
 //                    // calculate moved hitRegion
 //                    hitRegion = new Rectangle2D(hitRegion.getMinX()+direction.getX(), hitRegion.getMinY()+direction.getY(), hitRegion.getWidth(), hitRegion.getHeight());
-//                    System.out.println(newPosition + " " + hitRegion);
+//                    debugLog(newPosition + " " + hitRegion);
 //
 //                    // calculate indices of fields which are touched by hitRegion // TODO code duplication
 //                    int minY = (int) Math.floor(hitRegion.getMinY() / 8);
@@ -278,7 +284,7 @@ public class Terrain extends GridPane {
 //                    for (int y = minY; y <= maxY && !hitGround; y++) { // TODO recheck necessity of <=
 //                        for (int x = minX; x <= maxX && !hitGround; x++) {
 //                            // TODO also do intersection check with figures; not needed at the moment, since hasMass && !canWalkThroughFigures is never true atm
-//                            //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " " + x + " " + y);
+//                            //debugLog(hitRegion + " " + terrain.get(y).get(x) + " " + x + " " + y);
 //                            if (intersects(hitRegion, x, y)) {
 //                                newPosition = newPosition.subtract(direction);
 //                                // calculate moved hitRegion
@@ -288,7 +294,7 @@ public class Terrain extends GridPane {
 //                        }
 //                    }
 //                    if (tries > 50) {
-//                        System.out.println("WARNING stopped movement, probably an error");
+//                        debugLog("WARNING stopped movement, probably an error");
 //                        break;
 //                    }
 //                } while (!hitGround);

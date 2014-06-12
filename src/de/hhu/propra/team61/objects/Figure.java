@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.MapWindow;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -17,7 +18,11 @@ import javafx.scene.shape.Rectangle;
 
 public class Figure extends StackPane {
 
-    private static int MASS = 100;
+    public static final int JUMP_SPEED = 28;
+    public static final int WALK_SPEED = 5;
+    private static final int MASS = 1000;
+    private static final int FALL_DAMAGE_THRESHOLD = (int)(MapWindow.GRAVITY.magnitude()*MASS*JUMP_SPEED/10);
+    private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
 
     private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
 
@@ -26,7 +31,6 @@ public class Figure extends StackPane {
     private int armor;
 
     private Point2D velocity = new Point2D(0,0);
-    private boolean inAir = false;
 
     private boolean isBurning;
     private boolean isPoisoned;
@@ -140,6 +144,11 @@ public class Figure extends StackPane {
 
     // TODO rethink parameter, /8 is bad!
     public void setPosition(Point2D position) {
+        if(health <= 0 && !position.equals(GRAVEYARD)) { // workaround for a timing issue // TODO we have to do sth when a figure dies when it is its turn
+            System.out.println("WARNING: figure " + name + " is dead, hence cannot be moved");
+            position = GRAVEYARD;
+        }
+
         imageView.setTranslateX(8 * position.getX());
         imageView.setTranslateY(8 * position.getY());
         hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
@@ -182,7 +191,7 @@ public class Figure extends StackPane {
             health = 0;
             Image image = new Image("file:resources/spawn.png", 8, 8, true, true); // TODO
             imageView.setImage(image);
-            setPosition(new Point2D(-1000, -1000));
+            setPosition(GRAVEYARD);
         }
         hpLabel.setText(health+"");
         System.out.println(name + " got damage " + damage + ", health at " + health);
@@ -211,26 +220,20 @@ public class Figure extends StackPane {
     }
 
     public void resetVelocity() {
-        int fallDamage = (int)(Math.pow((velocity.magnitude() - 10), 1.5)); // TODO magic numbers
+        int fallDamage = (int)(Math.pow((velocity.magnitude() - FALL_DAMAGE_THRESHOLD), 1.1)); // TODO magic numbers
         if(fallDamage > 0) {
             sufferDamage(fallDamage);
         }
-        System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
+        if(!velocity.equals(MapWindow.GRAVITY.multiply(MASS))) System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
         velocity = new Point2D(0,0);
-        inAir = false;
     }
 
     public void addVelocity(Point2D dV) { // TODO interface?
         velocity =  velocity.add(dV);
-        inAir = true;
     }
 
     public int getMass() {
         return MASS;
-    }
-
-    public boolean isInAir() {
-        return inAir;
     }
 
     //For testing purposes only

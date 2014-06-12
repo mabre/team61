@@ -63,8 +63,7 @@ public class MapWindow extends Application implements Networkable {
     private boolean pause = false;
     private SceneController sceneController;
 
-    private final static int FIGURE_SPEED = 5;
-    private final static Point2D GRAVITY = new Point2D(0,.01);
+    public final static Point2D GRAVITY = new Point2D(0,.01);
 
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
@@ -242,24 +241,24 @@ public class MapWindow extends Application implements Networkable {
                         }
                         for(Team team: teams) {
                             for(Figure figure: team.getFigures()) {
-                                if(figure.isInAir()) {
-                                    try {
-                                        final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
-                                        final Point2D newPos; // TODO code duplication
-                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
-                                        figure.addVelocity(GRAVITY.multiply(figure.getMass()));
-                                        Platform.runLater(() -> {
-                                            figure.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
-                                        }); // TODO IMPORTANT network
-                                    } catch (CollisionWithTerrainException e) {
+                                try {
+                                    final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
+                                    final Point2D newPos; // TODO code duplication
+                                    newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
+                                    figure.addVelocity(GRAVITY.multiply(figure.getMass()));
+                                    Platform.runLater(() -> {
+                                        figure.setPosition(new Point2D(newPos.getX()/8, newPos.getY()/8));
+                                    }); // TODO IMPORTANT network (do not send if position has not changed)
+                                } catch (CollisionWithTerrainException e) {
+//                                    if(e.getLastGoodPosition().equals(figure.getPosition())) { // TODO
                                         System.out.println("CollisionWithTerrainException");
                                         Platform.runLater(() -> {
-                                            Platform.runLater(() -> figure.setPosition(new Point2D(e.getLastGoodPosition().getX()/8, e.getLastGoodPosition().getY()/8)));
+                                            Platform.runLater(() -> figure.setPosition(new Point2D(e.getLastGoodPosition().getX() / 8, e.getLastGoodPosition().getY() / 8)));
                                             figure.resetVelocity();
                                         }); // TODO IMPORTANT network
-                                    } catch (CollisionWithFigureException e) {
-                                        System.out.println("WARNING: CollisionWithFigureException should not happen here");
-                                    }
+//                                    }
+                                } catch (CollisionWithFigureException e) {
+                                    System.out.println("WARNING: CollisionWithFigureException should not happen here");
                                 }
                             }
                         }
@@ -556,7 +555,7 @@ public class MapWindow extends Application implements Networkable {
                     server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
                 } else {
                     Figure f = teams.get(currentTeam).getCurrentFigure();
-                    f.addVelocity(new Point2D(0, -5));
+                    f.addVelocity(new Point2D(0, -Figure.JUMP_SPEED));
                 }
                 break;
             case "Down":
@@ -569,14 +568,14 @@ public class MapWindow extends Application implements Networkable {
                    server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
                    break;
                 } else {
-                    v = new Point2D(-FIGURE_SPEED, 0);
+                    v = new Point2D(-Figure.WALK_SPEED, 0);
                 }
             case "Right":
             case "D":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
                 } else {
-                    if (v == null) v = new Point2D(FIGURE_SPEED, 0);
+                    if (v == null) v = new Point2D(Figure.WALK_SPEED, 0);
                     Figure f = teams.get(currentTeam).getCurrentFigure();
                     Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
                     Rectangle2D hitRegion = f.getHitRegion();
