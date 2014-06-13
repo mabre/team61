@@ -452,7 +452,10 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_SET_POSITION":
                 Figure f = teams.get(currentTeam).getCurrentFigure();
-                f.setPosition(new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8));
+                Point2D position = new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8);
+                f.setPosition(position);
+                scrollPane.setHvalue(position.getX()*8 / scrollPane.getContent().getBoundsInLocal().getWidth());
+                scrollPane.setVvalue(position.getY()*8 / scrollPane.getContent().getBoundsInLocal().getHeight());
                 break;
 //            case "Number Sign": // TODO really? this is broken and deprecated
 //                cheatMode();
