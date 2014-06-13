@@ -67,9 +67,10 @@ public class MapWindow extends Application implements Networkable {
     private String map; // TODO do we need this?
     private Chat chat;
     private boolean pause = false;
-    SceneController sceneController;
+    private SceneController sceneController;
 
-    private final static int FIGURE_SPEED = 5;
+    public final static Point2D GRAVITY = new Point2D(0,.01);
+    private final static int FPS = 10;
 
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
@@ -228,7 +229,8 @@ public class MapWindow extends Application implements Networkable {
                         if (flyingProjectile != null) {
                             try {
                                 final Point2D newPos;
-                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, false);
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
+                                flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                             } catch (CollisionWithTerrainException e) {
@@ -238,15 +240,58 @@ public class MapWindow extends Application implements Networkable {
                             } catch (CollisionWithFigureException e) {
                                 System.out.println("CollisionWithFigureException, let's harm somebody!");
                                 Platform.runLater(() -> {
-                                    e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
+                                    try {
+                                        e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
+                                    } catch (DeathException de) {
+                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+                                            endTurn();
+                                        }
+                                    }
                                     server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHealth());
                                     server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
                                     endTurn();
                                 });
                             }
                         }
+                        for(Team team: teams) {
+                            for(Figure figure: team.getFigures()) {
+                                if(figure.getHealth() > 0) {
+                                    final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
+                                    try {
+                                        final Point2D newPos; // TODO code duplication
+                                        figure.addVelocity(GRAVITY.multiply(figure.getMass()));
+                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false);
+                                        if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                            figure.setPosition(new Point2D(newPos.getX() / 8 , newPos.getY() / 8)); // needed to prevent timing issue when calculating new position before client is handled on server
+                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
+                                        }
+                                    } catch (CollisionWithTerrainException e) {
+                                        if (!e.getLastGoodPosition().equals(oldPos)) {
+                                            System.out.println("CollisionWithTerrainException");
+                                            figure.setPosition(new Point2D(e.getLastGoodPosition().getX() / 8 , e.getLastGoodPosition().getY() / 8));
+                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                        }
+                                        int oldHp = figure.getHealth();
+                                        try {
+                                            figure.resetVelocity();
+                                        } catch (DeathException de) {
+                                            if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+                                                endTurn();
+                                            }
+                                        }
+                                        if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
+                                            server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                        }
+                                    } catch (CollisionWithFigureException e) {
+                                        System.out.println("WARNING: CollisionWithFigureException should not happen here");
+                                    }
+                                }
+                            }
+                        }
+
+                        // sleep thread, and assure constant frame rate
                         now = System.currentTimeMillis();
-                        sleep = Math.max(0, (1000 / 10) - (now - before)); // 10 fps
+                        sleep = Math.max(0, (1000 / FPS) - (now - before));
                         Thread.sleep(sleep);
                         before = System.currentTimeMillis();
                     }
@@ -450,13 +495,6 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
                 }
                 break;
-            case "CURRENT_FIGURE_SET_POSITION":
-                Figure f = teams.get(currentTeam).getCurrentFigure();
-                Point2D position = new Point2D(Double.parseDouble(cmd[1]) / 8, Double.parseDouble(cmd[2]) / 8);
-                f.setPosition(position);
-                scrollPane.setHvalue(position.getX()*8 / scrollPane.getContent().getBoundsInLocal().getWidth());
-                scrollPane.setVvalue(position.getY()*8 / scrollPane.getContent().getBoundsInLocal().getHeight());
-                break;
 //            case "Number Sign": // TODO really? this is broken and deprecated
 //                cheatMode();
 //                break;
@@ -472,6 +510,15 @@ public class MapWindow extends Application implements Networkable {
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "FIGURE_SET_POSITION":
+                Point2D position = new Point2D(Double.parseDouble(cmd[3]) / 8, Double.parseDouble(cmd[4]) / 8);
+                if(server == null) { // server already applied change to prevent timing issue
+                    Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
+                    f.setPosition(position); // TODO alternative setter
+                }
+                scrollPane.setHvalue(position.getX()*8 / terrain.getWidth());
+                scrollPane.setVvalue(position.getY()*8 / terrain.getHeight());
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -555,7 +602,11 @@ public class MapWindow extends Application implements Networkable {
             // these codes always result in optical changes only, so nothing to do on server side
             case "Up":
             case "W":
-                server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
+                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
+                } else {
+                    teams.get(currentTeam).getCurrentFigure().jump();
+                }
                 break;
             case "Down":
             case "S":
@@ -567,20 +618,20 @@ public class MapWindow extends Application implements Networkable {
                    server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
                    break;
                 } else {
-                    v = new Point2D(-FIGURE_SPEED, 0);
+                    v = new Point2D(-Figure.WALK_SPEED, 0);
                 }
             case "Right":
             case "D":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
                 } else {
-                    if (v == null) v = new Point2D(FIGURE_SPEED, 0);
+                    if (v == null) v = new Point2D(Figure.WALK_SPEED, 0);
                     Figure f = teams.get(currentTeam).getCurrentFigure();
                     Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
                     Rectangle2D hitRegion = f.getHitRegion();
                     Point2D newPos = null;
                     try {
-                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
+                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
                     } catch (CollisionWithTerrainException e) {
                         System.out.println("CollisionWithTerrainException, stopped movement");
                         newPos = e.getLastGoodPosition();
@@ -588,7 +639,8 @@ public class MapWindow extends Application implements Networkable {
                         // figures can walk through each other // TODO really?
                         System.out.println("ERROR How did we get here?");
                     }
-                    server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                    f.setPosition(new Point2D(newPos.getX() / 8, newPos.getY() / 8)); // needed to prevent timing issue when calculating new position before client is handled on server
+                    server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY());
                 }
                 break;
             case "1":

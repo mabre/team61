@@ -9,10 +9,11 @@ import javafx.scene.image.ImageView;
  *
  */
 public class Projectile extends ImageView {
-    boolean falls; // Gravitation on/off
     double angle;
 
     private Point2D velocity;
+
+    private int mass;
 
     private int damage;
 
@@ -25,12 +26,13 @@ public class Projectile extends ImageView {
      * @param velocity determines speed and direction
      * @param damage health damage caused when hitting a figure
      */
-    public Projectile(Image image, Point2D position, Point2D firedAt, int velocity, int damage){
+    public Projectile(Image image, Point2D position, Point2D firedAt, int velocity, int mass, int damage){
         setImage(image);
         setTranslateX(firedAt.getX());
         setTranslateY(firedAt.getY());
         this.velocity = firedAt.subtract(position);
         this.velocity = this.velocity.normalize().multiply(velocity);
+        this.mass = mass;
         this.damage = damage;
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), image.getWidth(), image.getHeight());
         System.out.println("created projectile at " + getTranslateX() + " " + getTranslateY() + ", v=" + this.velocity);
@@ -61,6 +63,14 @@ public class Projectile extends ImageView {
 
     public Point2D getVelocity() {
         return velocity;
+    }
+
+    public void addVelocity(Point2D dV) {
+        velocity =  velocity.add(dV);
+    }
+
+    public int getMass() {
+        return mass;
     }
 
     public int getDamage() {
