@@ -19,12 +19,12 @@ import javafx.scene.shape.Rectangle;
 
 public class Figure extends StackPane {
 
-    public static final int JUMP_SPEED = 28;
-    public static final int WALK_SPEED = 5;
+    /** note that the actual speed is lower because gravity is subtracted before the figure actually jumps */
     private static final int MASS = 1000;
-    /** figures do not get fall damage when collision speed is smaller than jump speed + a little more
-     * (needed because our calculations are not exact, e.g. we do not have the zero-velocity-point, thus start-speed != final-speed when jumping */
-    private static final int FALL_DAMAGE_THRESHOLD = (int)(JUMP_SPEED);
+    public static final int WALK_SPEED = 5;
+    public static final int JUMP_SPEED = 18 + (int)(MapWindow.GRAVITY.getY() * MASS);
+    public static final int MAX_Y_SPEED = (int)(1.2*JUMP_SPEED);
+    private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
 
     private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
@@ -36,6 +36,8 @@ public class Figure extends StackPane {
     /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
     private Point2D position = new Point2D(0,0);
     private Point2D velocity = new Point2D(0,0);
+    /** the maximal speed (absolute value) in y direction since last call of resetVelocity, used to limit jump speed */
+    private double maxYSpeed = 0;
 
     private boolean isBurning;
     private boolean isPoisoned;
@@ -248,6 +250,7 @@ public class Figure extends StackPane {
             System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
         }
         velocity = new Point2D(0,0);
+        maxYSpeed = 0;
 
         if(fallDamage > 0) {
             sufferDamage(fallDamage);
@@ -256,6 +259,25 @@ public class Figure extends StackPane {
 
     public void addVelocity(Point2D dV) { // TODO interface?
         velocity =  velocity.add(dV);
+        if(maxYSpeed < Math.abs(velocity.getY())) {
+            maxYSpeed = Math.abs(velocity.getY());
+        }
+    }
+
+    public void jump() {
+        if(velocity.getY() > 0) {
+            System.out.println("falling, jumping not possible");
+            return;
+        }
+        if(maxYSpeed < MAX_Y_SPEED) { // figure cannot accelerate further when y-speed was greater than MAX_Y_SPEED during the current jump
+            addVelocity(new Point2D(0, -JUMP_SPEED));
+            if(maxYSpeed > MAX_Y_SPEED) { // if figure is now faster than MAX_Y_SPEED, slow it down
+                velocity = new Point2D(velocity.getX(), -MAX_Y_SPEED);
+                System.out.println("jump speed limit reached (cut): " + maxYSpeed);
+            }
+        } else {
+            System.out.println("jump speed limit reached (ignored): " + maxYSpeed);
+        }
     }
 
     public int getMass() {

@@ -576,8 +576,7 @@ public class MapWindow extends Application implements Networkable {
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
                 } else {
-                    Figure f = teams.get(currentTeam).getCurrentFigure();
-                    f.addVelocity(new Point2D(0, -Figure.JUMP_SPEED));
+                    teams.get(currentTeam).getCurrentFigure().jump();
                 }
                 break;
             case "Down":

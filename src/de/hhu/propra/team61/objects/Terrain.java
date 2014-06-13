@@ -142,7 +142,7 @@ public class Terrain extends GridPane {
                     int py = y*8+8-i;
                     p = new Point2D(px, py);
                     if(hitRegion.contains(p)) {
-                        System.out.println("diagonal / intersection at " + px + "x" + py + "px");
+                        debugLog("diagonal / intersection at " + px + "x" + py + "px");
                         return true;
                     }
                 }
@@ -153,7 +153,7 @@ public class Terrain extends GridPane {
                     int py = y*8+i;
                     p = new Point2D(px, py);
                     if(hitRegion.contains(p)) {
-                        System.out.println("diagonal / intersection at " + px + "x" + py + "px");
+                        debugLog("diagonal / intersection at " + px + "x" + py + "px");
                         return true;
                     }
                 }
