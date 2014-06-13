@@ -8,7 +8,6 @@ import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
-import de.hhu.propra.team61.SceneController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;

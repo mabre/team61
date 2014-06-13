@@ -1,6 +1,5 @@
 package de.hhu.propra.team61.gui;
 
-import de.hhu.propra.team61.SceneController;
 import javafx.fxml.FXML;
 
 /**

@@ -2,6 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.Chat;
 import de.hhu.propra.team61.gui.GameOverWindow;
+import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
@@ -22,10 +23,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -601,14 +599,12 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
-    public Pane drawBackgroundImage() {
-        Pane backgroundPane = new Pane();
-        String img = "file:resources/levelback1.png";
+    public ImageView drawBackgroundImage() {
+        String img = "file:resources/board.png";
         Image image = new Image(img);
         ImageView background = new ImageView();
         background.setImage(image);
-        backgroundPane.getChildren().add(background);
-        return backgroundPane;
+        return background;
     }
 
     @Override

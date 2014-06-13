@@ -1,7 +1,7 @@
 @CHARSET "ISO-8859-1";
 
 .root {
-    -fx-background-image: url("file:resources/layout/boardbackground.png");
+    -fx-background-image: url("file:resources/layout/board.png");
     -fx-background-position: top left;
 }
 
