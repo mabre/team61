@@ -16,6 +16,7 @@ import java.util.ArrayList;
  */
 public class Terrain extends GridPane {
     private static final boolean DEBUG = false;
+    private static final boolean GRID_ENABLED = false;
 
     private static String imgPath = "file:resources/";
 
@@ -40,7 +41,7 @@ public class Terrain extends GridPane {
 
         //Draw Terrain
         setAlignment(Pos.TOP_LEFT);
-        setGridLinesVisible(true);
+        setGridLinesVisible(GRID_ENABLED);
 
         String img;
 
@@ -150,7 +151,7 @@ public class Terrain extends GridPane {
             case '\\':
                 for(int i=0; i<8; i++) {
                     int px = x*8+i;
-                    int py = y*8+i;
+                    int py = y*8+1+i;
                     p = new Point2D(px, py);
                     if(hitRegion.contains(p)) {
                         debugLog("diagonal / intersection at " + px + "x" + py + "px");
@@ -177,13 +178,12 @@ public class Terrain extends GridPane {
      * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
      * @param canWalkThroughFigures when true, the object is able to walk through figures (no CollisionWithFigureException will be thrown) TODO therefore, have a wrapper function which does not throw this exception
-     * @param hasMass when true, the object is moved down to the ground TODO temporary, till real physics is there
      * @param snapToPx when true, the positions returned are rounded to whole px
      * @return new position of the object
      * @throws CollisionWithFigureException thrown when hitting a figure
      * @throws CollisionWithTerrainException thrown when hitting terrain
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean hasMass, boolean snapToPx) throws CollisionWithTerrainException, CollisionWithFigureException {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx) throws CollisionWithTerrainException, CollisionWithFigureException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         Point2D normalizedDirection = direction.normalize();
 
@@ -236,7 +236,7 @@ public class Terrain extends GridPane {
                                 debugLog("intersection at " + x + " " + y + " out of bounds");
                             }
                             if (canWalkAlongDiagonals && tries == 0 && intersectingFigure == null) {
-                                diagonalDirection = new Point2D(Math.signum(normalizedDirection.getX()), -2);
+                                diagonalDirection = new Point2D(Math.signum(normalizedDirection.getX())/12, -1.5);
                                 Point2D positionOnSlope = newPosition.subtract(normalizedDirection).add(diagonalDirection);
                                 hitRegion = new Rectangle2D(hitRegion.getMinX() - normalizedDirection.getX() + diagonalDirection.getX(), hitRegion.getMinY() - normalizedDirection.getY() + diagonalDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
                                 newPosition = positionOnSlope;

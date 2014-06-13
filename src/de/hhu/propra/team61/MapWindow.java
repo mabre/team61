@@ -222,7 +222,7 @@ public class MapWindow extends Application implements Networkable {
                         if (flyingProjectile != null) {
                             try {
                                 final Point2D newPos;
-                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, false);
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
                                 flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
@@ -253,7 +253,7 @@ public class MapWindow extends Application implements Networkable {
                                     try {
                                         final Point2D newPos; // TODO code duplication
                                         figure.addVelocity(GRAVITY.multiply(figure.getMass()));
-                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
+                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false);
                                         if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
                                             figure.setPosition(new Point2D(newPos.getX() / 8 , newPos.getY() / 8)); // needed to prevent timing issue when calculating new position before client is handled on server
                                             server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
@@ -602,7 +602,7 @@ public class MapWindow extends Application implements Networkable {
                     Rectangle2D hitRegion = f.getHitRegion();
                     Point2D newPos = null;
                     try {
-                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
+                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
                     } catch (CollisionWithTerrainException e) {
                         System.out.println("CollisionWithTerrainException, stopped movement");
                         newPos = e.getLastGoodPosition();
