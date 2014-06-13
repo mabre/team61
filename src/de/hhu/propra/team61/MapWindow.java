@@ -252,15 +252,16 @@ public class MapWindow extends Application implements Networkable {
                                     final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
                                     try {
                                         final Point2D newPos; // TODO code duplication
-                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
                                         figure.addVelocity(GRAVITY.multiply(figure.getMass()));
+                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, true, false);
                                         if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                            figure.setPosition(new Point2D(newPos.getX() / 8 , newPos.getY() / 8)); // needed to prevent timing issue when calculating new position before client is handled on server
                                             server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
-                                            //                                      // TODO IMPORTANT timing issue (apply locally [new data structure] -> do not apply changes on server!)
                                         }
                                     } catch (CollisionWithTerrainException e) {
                                         if (!e.getLastGoodPosition().equals(oldPos)) {
                                             System.out.println("CollisionWithTerrainException");
+                                            figure.setPosition(new Point2D(e.getLastGoodPosition().getX() / 8 , e.getLastGoodPosition().getY() / 8));
                                             server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
                                         }
                                         int oldHp = figure.getHealth();
@@ -485,8 +486,10 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
             case "FIGURE_SET_POSITION":
-                Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
-                f.setPosition(new Point2D(Double.parseDouble(cmd[3]) / 8, Double.parseDouble(cmd[4]) / 8)); // TODO alternative setter
+                if(server == null) { // server already applied change to prevent timing issue
+                    Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
+                    f.setPosition(new Point2D(Double.parseDouble(cmd[3]) / 8, Double.parseDouble(cmd[4]) / 8)); // TODO alternative setter
+                }
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -608,6 +611,7 @@ public class MapWindow extends Application implements Networkable {
                         // figures can walk through each other // TODO really?
                         System.out.println("ERROR How did we get here?");
                     }
+                    f.setPosition(new Point2D(newPos.getX() / 8, newPos.getY() / 8)); // needed to prevent timing issue when calculating new position before client is handled on server
                     server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY());
                 }
                 break;

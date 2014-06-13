@@ -22,7 +22,9 @@ public class Figure extends StackPane {
     public static final int JUMP_SPEED = 28;
     public static final int WALK_SPEED = 5;
     private static final int MASS = 1000;
-    private static final int FALL_DAMAGE_THRESHOLD = (int)(MapWindow.GRAVITY.magnitude()*MASS*JUMP_SPEED/10);
+    /** figures do not get fall damage when collision speed is smaller than jump speed + a little more
+     * (needed because our calculations are not exact, e.g. we do not have the zero-velocity-point, thus start-speed != final-speed when jumping */
+    private static final int FALL_DAMAGE_THRESHOLD = (int)(JUMP_SPEED);
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
 
     private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
@@ -31,6 +33,8 @@ public class Figure extends StackPane {
     private int health;
     private int armor;
 
+    /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
+    private Point2D position = new Point2D(0,0);
     private Point2D velocity = new Point2D(0,0);
 
     private boolean isBurning;
@@ -61,8 +65,9 @@ public class Figure extends StackPane {
 
     public Figure(JSONObject input){
         imageView = new ImageView();
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
+        this.position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
+        imageView.setTranslateX(position.getX());
+        imageView.setTranslateY(position.getY());
 
         this.name = input.getString("name");
         this.health = input.getInt("health");
@@ -79,8 +84,9 @@ public class Figure extends StackPane {
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
         imageView = new ImageView();
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
+        this.position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
+        imageView.setTranslateX(position.getX());
+        imageView.setTranslateY(position.getY());
 
         this.name = name;
         this.health = input.getInt("health");
@@ -98,7 +104,7 @@ public class Figure extends StackPane {
     private void initialize() {
         setAlignment(Pos.TOP_LEFT);
 
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),16,16);
+        hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
         Image image = new Image("file:resources/figures/pin.png", 16, 16, true, true);
         imageView.setImage(image);
@@ -115,8 +121,8 @@ public class Figure extends StackPane {
         output.put("name", name);
         output.put("health", health);
         output.put("armor", armor);
-        output.put("position.x", imageView.getTranslateX()); // TODO save as array
-        output.put("position.y", imageView.getTranslateY());
+        output.put("position.x", position.getX()); // TODO save as array
+        output.put("position.y", position.getY());
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
@@ -143,28 +149,35 @@ public class Figure extends StackPane {
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
 
-    // TODO rethink parameter, /8 is bad!
-    public void setPosition(Point2D position) {
-        if(health <= 0 && !position.equals(GRAVEYARD)) { // workaround for a timing issue // TODO we have to do sth when a figure dies when it is its turn
+    /**
+     * moves the figure to the given position, updated the hit region, position of the figure image and the hp label
+     * JavaFX parts are run with runLater, hence it is save to call this function from non-fx threads.
+     * @param newPosition the new position of the figure in blocks // TODO rethink parameter, /8 is bad! [is done on weaponsFF]
+     */
+    public void setPosition(Point2D newPosition) {
+        if(health <= 0 && !newPosition.equals(GRAVEYARD)) { // workaround for a timing issue // TODO we have to do sth when a figure dies when it is its turn
             System.out.println("WARNING: figure " + name + " is dead, hence cannot be moved");
             position = GRAVEYARD;
         }
 
-        imageView.setTranslateX(8 * position.getX());
-        imageView.setTranslateY(8 * position.getY());
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
+        position = new Point2D(8 * newPosition.getX(), 8 * newPosition.getY());
+        hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
         getChildren().removeAll(hitRegionDebug);
-        hitRegionDebug = new Rectangle(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
-        hitRegionDebug.setTranslateX(imageView.getTranslateX());
-        hitRegionDebug.setTranslateY(imageView.getTranslateY());
+        hitRegionDebug = new Rectangle(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
+        hitRegionDebug.setTranslateX(position.getX());
+        hitRegionDebug.setTranslateY(position.getY());
         hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
-        //getChildren().add(hitRegionDebug); // brakes scroll pane?!
-        hpLabel.setTranslateX(imageView.getTranslateX());
-        hpLabel.setTranslateY(imageView.getTranslateY() - 15);
+        //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
+        Platform.runLater(() -> {
+            imageView.setTranslateX(this.position.getX());
+            imageView.setTranslateY(this.position.getY());
+            hpLabel.setTranslateX(position.getX());
+            hpLabel.setTranslateY(position.getY() - 15);
+        });
     }
 
     public Point2D getPosition() {
-        return new Point2D(imageView.getTranslateX()/8, imageView.getTranslateY()/8);
+        return new Point2D(position.getX()/8, position.getY()/8);
     }
 
     public Item getSelectedItem(){
@@ -176,7 +189,7 @@ public class Figure extends StackPane {
         }
         selectedItem = select;
         if(selectedItem != null) {
-            select.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY()));
+            select.setPosition(new Point2D(position.getX(), position.getY()));
             selectedItem.angleDraw(facing_right);
         }
     }
@@ -229,12 +242,16 @@ public class Figure extends StackPane {
      * resets the velocity vector to 0 and - depending on the speed - the figure suffers fall damage
      */
     public void resetVelocity() throws DeathException {
-        int fallDamage = (int)(Math.pow((velocity.magnitude() - FALL_DAMAGE_THRESHOLD), 1.1)); // TODO magic numbers
+        int fallDamage = (int)(velocity.magnitude() - FALL_DAMAGE_THRESHOLD);
+
+        if(!velocity.equals(MapWindow.GRAVITY.multiply(MASS))) { // do not print when "default gravity" is applied when figures are standing on ground
+            System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
+        }
+        velocity = new Point2D(0,0);
+
         if(fallDamage > 0) {
             sufferDamage(fallDamage);
         }
-        if(!velocity.equals(MapWindow.GRAVITY.multiply(MASS))) System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
-        velocity = new Point2D(0,0);
     }
 
     public void addVelocity(Point2D dV) { // TODO interface?
