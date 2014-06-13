@@ -43,8 +43,14 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 public class MapWindow extends Application implements Networkable {
     private ArrayList<Team> teams;
     private Scene drawing;
-    private BorderPane root;
-    private StackPane centerView;
+    /** contains terrain, labels at the top etc. (ie. everything) */
+    private BorderPane rootPane;
+    /** contains chat, scrollPane with terrain, teams etc. */
+    private StackPane centerPane;
+    /** contains terrain, teams, weapons */
+    private StackPane fieldPane;
+    /** contains fieldPane */
+    private ScrollPane scrollPane;
     private Terrain terrain;
     private Label teamLabel;
     private int currentTeam = 0;
@@ -156,58 +162,59 @@ public class MapWindow extends Application implements Networkable {
             shutdown();
             sceneController.switchToMenue();
         });
-        // pane containing terrain, labels at the bottom etc.
-        root = new BorderPane();
+        rootPane = new BorderPane();
         // contains the terrain with figures
-        ScrollPane scrollPane = new ScrollPane();
-        centerView = new StackPane();
-        centerView.setAlignment(Pos.TOP_LEFT);
-        centerView.getChildren().add(terrain);
+        scrollPane = new ScrollPane();
+        centerPane = new StackPane();
+        centerPane.setAlignment(Pos.TOP_LEFT);
+        fieldPane = new StackPane();
+        fieldPane.setAlignment(Pos.TOP_LEFT);
+        fieldPane.getChildren().add(terrain);
 
         // anchor the map to the bottom left corner (ScrollPane cannot do that)
         final AnchorPane anchorPane = new AnchorPane();
-        AnchorPane.setBottomAnchor(centerView,  0.0);
-        AnchorPane.setLeftAnchor(centerView, 0.0);
-        anchorPane.getChildren().add(centerView);
+        AnchorPane.setBottomAnchor(fieldPane, 0.0);
+        AnchorPane.setLeftAnchor(fieldPane, 0.0);
+        anchorPane.getChildren().add(fieldPane);
 
         scrollPane.setId("scrollPane");
         scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
-            anchorPane.setPrefSize(Math.max(centerView.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(centerView.getBoundsInParent().getMaxY(), newBounds.getHeight()))
+                        anchorPane.setPrefSize(Math.max(fieldPane.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(fieldPane.getBoundsInParent().getMaxY(), newBounds.getHeight()))
         );
         scrollPane.setContent(anchorPane);
-        scrollPane.setPrefSize(1000, 500);
-        root.setBottom(scrollPane);
+        scrollPane.setPrefSize(1000, 550);
+        centerPane.getChildren().add(scrollPane);
+        rootPane.setBottom(centerPane);
 
         for(Team team: teams) {
-            centerView.getChildren().add(team);
+            fieldPane.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
-        root.setTop(teamLabel);
+        rootPane.setTop(teamLabel);
 
-        drawing = new Scene(root, 1600, 300);
+        drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
-                System.out.println("key pressed: " + keyEvent.getCode());
-                if(!chat.isVisible()) { // do not consume keyEvent when chat is active
-                    switch (keyEvent.getCode()) {
-                        case C:
-                            System.out.println("toggle chat");
-                            chat.setVisible(!chat.isVisible());
-                            break;
-                        default:
-                            client.sendKeyEvent(keyEvent.getCode());
-                    }
-                    // we do not want the scrollPane to receive a key event
-                    keyEvent.consume();
+            System.out.println("key pressed: " + keyEvent.getCode());
+            if (!chat.isVisible()) { // do not consume keyEvent when chat is active
+                switch (keyEvent.getCode()) {
+                    case C:
+                        System.out.println("toggle chat");
+                        chat.setVisible(!chat.isVisible());
+                        break;
+                    default:
+                        client.sendKeyEvent(keyEvent.getCode());
                 }
+                // we do not want the scrollPane to receive a key event
+                keyEvent.consume();
             }
-        );
+        });
 
         chat = new Chat(client);
         chat.setMaxWidth(300);
         chat.setUnobtrusive(true);
-        centerView.getChildren().add(chat);
+        centerPane.getChildren().add(chat);
         chat.setVisible(false);
 
         sceneController.setGameScene(drawing);
@@ -290,7 +297,7 @@ public class MapWindow extends Application implements Networkable {
             terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
             // quite bad hack to reload spawn points, but ok as it's a cheat anyway
             for(Team team: teams) {
-                centerView.getChildren().remove(team);
+                fieldPane.getChildren().remove(team);
             }
             teams.clear();
             for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
@@ -299,7 +306,7 @@ public class MapWindow extends Application implements Networkable {
                 weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
                 Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE);
                 teams.add(team);
-                centerView.getChildren().add(team);
+                fieldPane.getChildren().add(team);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -404,31 +411,31 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
                 if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                        centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                        fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                        fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     }
                     teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
-                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                    centerView.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 }
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
@@ -454,13 +461,13 @@ public class MapWindow extends Application implements Networkable {
                 try {
                     Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
                     flyingProjectile = projectile;
-                    centerView.getChildren().add(flyingProjectile);
+                    fieldPane.getChildren().add(flyingProjectile);
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
                     break;
                 }
-                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
             case "GAME_OVER":
@@ -472,7 +479,7 @@ public class MapWindow extends Application implements Networkable {
                 flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
                 break;
             case "REMOVE_FLYING_PROJECTILE":
-                centerView.getChildren().remove(flyingProjectile);
+                fieldPane.getChildren().remove(flyingProjectile);
                 flyingProjectile = null;
                 break;
             case "SET_CURRENT_TEAM":
