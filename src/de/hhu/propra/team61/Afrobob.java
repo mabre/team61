@@ -1,11 +1,10 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.GUI.BigStage;
-import de.hhu.propra.team61.GUI.MenueController;
+import de.hhu.propra.team61.gui.BigStage;
+import de.hhu.propra.team61.gui.MenueController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
@@ -36,7 +35,7 @@ public class Afrobob extends Application {
 
     public void start (Stage filler) throws IOException {
         sceneController.setStage(mainwindow);
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("GUI/menue.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("gui/menue.fxml"));
         root = loader.load();
         menueController = loader.getController();
         Scene scene = new Scene(root, 1000, 600);

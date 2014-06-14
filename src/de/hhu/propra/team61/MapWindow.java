@@ -1,16 +1,16 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.GUI.Chat;
-import de.hhu.propra.team61.GUI.GameOverWindow;
-import de.hhu.propra.team61.IO.GameState;
-import de.hhu.propra.team61.IO.JSON.JSONArray;
-import de.hhu.propra.team61.IO.JSON.JSONObject;
-import de.hhu.propra.team61.IO.Settings;
-import de.hhu.propra.team61.IO.TerrainManager;
-import de.hhu.propra.team61.Network.Client;
-import de.hhu.propra.team61.Network.Networkable;
-import de.hhu.propra.team61.Network.Server;
-import de.hhu.propra.team61.Objects.*;
+import de.hhu.propra.team61.gui.Chat;
+import de.hhu.propra.team61.gui.GameOverWindow;
+import de.hhu.propra.team61.io.GameState;
+import de.hhu.propra.team61.io.json.JSONArray;
+import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.io.Settings;
+import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.network.Client;
+import de.hhu.propra.team61.network.Networkable;
+import de.hhu.propra.team61.network.Server;
+import de.hhu.propra.team61.objects.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;

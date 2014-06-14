@@ -1,8 +1,8 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.IO.JSON.JSONArray;
-import de.hhu.propra.team61.IO.JSON.JSONObject;
-import de.hhu.propra.team61.Objects.*;
+import de.hhu.propra.team61.io.json.JSONArray;
+import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.objects.*;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;

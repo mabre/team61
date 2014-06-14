@@ -1,8 +1,7 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.GUI.BigStage;
+import de.hhu.propra.team61.gui.BigStage;
 import javafx.scene.Scene;
-import javafx.stage.Stage;
 
 /**
  * Created by Jessypet on 01.06.14.
