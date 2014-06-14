@@ -486,15 +486,13 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON":
-                if (shootingIsAllowed) {
-                    if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                        fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                        fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                    }
-                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(Integer.parseInt(cmd[1])+1));
-                    fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                    fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(Integer.parseInt(cmd[1])-1));
+                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
@@ -512,7 +510,7 @@ public class MapWindow extends Application implements Networkable {
                 try {
                      /* ToDo
                     power = power + 5;
-                    Sleep/Wait if more ShootCommands are incoming, count them by incrementing THEN create projecctile
+                    Sleep/Wait if more ShootCommands are incoming, count them by incrementing THEN create projectile
                      */
                     Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(power);
                     flyingProjectile = projectile;
@@ -680,23 +678,31 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "1":
-                if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
+                if(shootingIsAllowed) {
+                    if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
+                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
+                    }
                 }
                 break;
             case "2":
-                if(teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
+                if(shootingIsAllowed) {
+                    if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
+                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
+                    }
                 }
                 break;
             case "3":
-                if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
+                if(shootingIsAllowed) {
+                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
+                    }
                 }
                 break;
             case "4":
-                if(teams.get(currentTeam).getNumberOfWeapons() >= 4) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
+                if(shootingIsAllowed) {
+                    if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
+                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
+                    }
                 }
                 break;
             default:

@@ -63,17 +63,11 @@ public class Terrain extends GridPane {
             for (int j = 0; j < terrain.get(i).size(); j++) {
                 char terraintype = terrain.get(i).get(j);
                 switch (terraintype) {
-                    case '_':
-                        img = "plain_ground.png"; // ToDo obsolete?
-                        break;
                     case '/':
                         img = "slant_ground_ri.png";
                         break;
                     case '\\':
                         img = "slant_ground_le.png";
-                        break;
-                    case '|': //ToDo obsolete?
-                        img = "wall_le.png";
                         break;
                     case 'S':
                         img = "stones.png";
@@ -306,8 +300,9 @@ public class Terrain extends GridPane {
             case 'W':
             case 'L': return RESISTANCE_OF_FLUIDS;
             case '/':
-            case '\\':return getResistance(x,y + 1) * MODIFIER_FOR_SLANTS; //Slants are depending on blocks below
-            case '|': return 0; //toDo if not obsolete
+            case '\\'://Slants are depending on blocks below
+                      if(terrain.size() > y + 1){ return getResistance(x,y + 1) * MODIFIER_FOR_SLANTS; }
+                      else{ return RESISTANCE_OF_SKY; } // Return an at least somewhat useful information
             case 'S': return RESISTANCE_OF_STONE;
             case 'E': return RESISTANCE_OF_EARTH;
             case 'I': return RESISTANCE_OF_ICE;
@@ -363,8 +358,8 @@ public class Terrain extends GridPane {
                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + replacement);// ' ' is impossible due to the Client/Server-MSG-System
 
             } else {
-                resistanceOfBlock = getResistance(blockX,blockY);
-                if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS){
+                resistanceOfBlock = getResistance(blockX,blockY); // Check if partially enough destructive Force
+                if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && resistanceOfBlock != RESISTANCE_OF_SKY){ // BUT do not create slants out of air
 
                     if(blockX > 0 && blockX < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1) != '#' && terrain.get(blockY).get(blockX-1) != ' '){
