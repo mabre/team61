@@ -2,10 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
-import de.hhu.propra.team61.objects.Figure;
-import de.hhu.propra.team61.objects.Grenade;
-import de.hhu.propra.team61.objects.Gun;
-import de.hhu.propra.team61.objects.Weapon;
+import de.hhu.propra.team61.objects.*;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
@@ -57,14 +54,18 @@ public class Team extends StackPane {
         }
         weapons = new ArrayList<>();
         JSONArray weaponsArray = state.getJSONArray("weapons");
-        for(int i=0; i<weaponsArray.length(); i++) {
-            Weapon w = null;
-            if(weaponsArray.getJSONObject(i).getString("type").equals("Gun")) {
-                w = new Gun(weaponsArray.getJSONObject(i));
-            } else if(weaponsArray.getJSONObject(i).getString("type").equals("Grenade")) {
-                w = new Grenade(weaponsArray.getJSONObject(i));
+        for(int i=0; i<weaponsArray.length(); i++){
+            JSONObject w = weaponsArray.getJSONObject(i);
+            switch(w.getString("name")){
+                case "Bazooka": weapons.add(new Bazooka(w.getInt("munition")));
+                    break;
+                case "Grenade": weapons.add(new Grenade(w.getInt("munition")));
+                    break;
+                case "Shotgun": weapons.add(new Shotgun(w.getInt("munition")));
+                    break;
+                case "Poisoned Arrow": weapons.add(new PoisonedArrow(w.getInt("munition")));
+                    break;
             }
-            weapons.add(w);
         }
         currentFigure = state.getInt("currentFigure");
         setAlignment(Pos.TOP_LEFT);

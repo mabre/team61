@@ -36,12 +36,14 @@ import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
- * Created by kegny on 08.05.14.
+ * Created by kevin on 08.05.14.
  * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application implements Networkable {
-    private ArrayList<Team> teams;
+    private final static int DAMAGE_BY_POISON = 10;
+
+    //JavaFX related variables
     private Scene drawing;
     /** contains terrain, labels at the top etc. (ie. everything) */
     private BorderPane rootPane;
@@ -53,20 +55,27 @@ public class MapWindow extends Application implements Networkable {
     private ScrollPane scrollPane;
     private Terrain terrain;
     private Label teamLabel;
+    //Team related variables
+    private ArrayList<Team> teams; //Dynamic list containing all playing teams
     private int currentTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
-    private Projectile flyingProjectile = null;
-    private Thread moveObjectsThread;
     private int teamquantity;
     private int teamsize;
+
+    private int power = 0; // Power/energy projectile is shot with
+    private boolean shootingIsAllowed = true; // Used to disable shooting multiple times during 1 turn
+    private boolean pause = false;
+    //Projectile-Moving-Thread related variables
+    private Projectile flyingProjectile = null;
+    private Thread moveObjectsThread;
+    //Network
     private Server server;
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
     private String map; // TODO do we need this?
     private Chat chat;
-    private boolean pause = false;
     private SceneController sceneController;
 
     public final static Point2D GRAVITY = new Point2D(0,.01);
@@ -97,9 +106,10 @@ public class MapWindow extends Application implements Networkable {
         JSONArray teamsArray = settings.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Gun("file:resources/weapons/temp1.png", 50, settings.getInt("weapon1")));
-            weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, settings.getInt("weapon2")));
-            weapons.add(new Gun("file:resources/weapons/temp3.png", 30, settings.getInt("weapon3")));
+            weapons.add(new Bazooka(settings.getInt("weapon1")));
+            weapons.add(new Grenade(settings.getInt("weapon2")));
+            weapons.add(new Shotgun(settings.getInt("weapon3")));
+            weapons.add(new PoisonedArrow(4)); //ToDo replace with: settings.getInt("weapon4"))
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
         }
 
@@ -233,22 +243,18 @@ public class MapWindow extends Application implements Networkable {
                                 flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
-                            } catch (CollisionWithTerrainException e) {
-                                System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
-                                server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition (might still be !=null in next iteration)
-                                endTurn();
-                            } catch (CollisionWithFigureException e) {
-                                System.out.println("CollisionWithFigureException, let's harm somebody!");
+                            } catch (CollisionException e) {
+                                System.out.println("CollisionException, let's do this!");
                                 Platform.runLater(() -> {
-                                    try {
-                                        e.getCollisionPartner().sufferDamage(flyingProjectile.getDamage());
-                                    } catch (DeathException de) {
-                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
-                                            endTurn();
-                                        }
-                                    }
-                                    server.sendCommand("SET_HP " + getFigureId(e.getCollisionPartner()) + " " + e.getCollisionPartner().getHealth());
-                                    server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
+//                                    } catch (DeathException de) { // TODO that change was somewhat important I think ... (see handleCollision in Weapon)
+//                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+//                                            endTurn();
+//                                        }
+//                                    }
+                                    //Get series of commands to send to the clients from
+                                    //Collisionhandling done by the weapon causing this exception
+                                    ArrayList<String> commandList = flyingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
+                                    for(String command : commandList){ server.sendCommand(command); } //Send commands+
                                     endTurn();
                                 });
                             }
@@ -256,19 +262,19 @@ public class MapWindow extends Application implements Networkable {
                         for(Team team: teams) {
                             for(Figure figure: team.getFigures()) {
                                 if(figure.getHealth() > 0) {
-                                    final Point2D oldPos = new Point2D(figure.getPosition().getX() * 8, figure.getPosition().getY() * 8);
+                                    final Point2D oldPos = new Point2D(figure.getPosition().getX(), figure.getPosition().getY());
                                     try {
                                         final Point2D newPos; // TODO code duplication
                                         figure.addVelocity(GRAVITY.multiply(figure.getMass()));
                                         newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false);
                                         if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
-                                            figure.setPosition(new Point2D(newPos.getX() / 8 , newPos.getY() / 8)); // needed to prevent timing issue when calculating new position before client is handled on server
+                                            figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
                                             server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
                                         }
-                                    } catch (CollisionWithTerrainException e) {
+                                    } catch (CollisionException e) {
                                         if (!e.getLastGoodPosition().equals(oldPos)) {
                                             System.out.println("CollisionWithTerrainException");
-                                            figure.setPosition(new Point2D(e.getLastGoodPosition().getX() / 8 , e.getLastGoodPosition().getY() / 8));
+                                            figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
                                             server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
                                         }
                                         int oldHp = figure.getHealth();
@@ -282,8 +288,6 @@ public class MapWindow extends Application implements Networkable {
                                         if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                             server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
                                         }
-                                    } catch (CollisionWithFigureException e) {
-                                        System.out.println("WARNING: CollisionWithFigureException should not happen here");
                                     }
                                 }
                             }
@@ -323,7 +327,7 @@ public class MapWindow extends Application implements Networkable {
      * @param figure a figure object reference
      * @return team index + " " + figure index of the given figure
      */
-    private String getFigureId(Figure figure) {
+    private String getFigureId(Figure figure) {  //ToDo Probably not necessary anymore due to the movement of collisionhandling to the weaponclasses
         String id = "";
         for(int i=0; i<teams.size(); i++) {
             for(int j=0; j<teams.get(i).getFigures().size(); j++) {
@@ -347,8 +351,8 @@ public class MapWindow extends Application implements Networkable {
             teams.clear();
             for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
                 ArrayList<Weapon> weapons = new ArrayList<>();
-                weapons.add(new Gun("file:resources/weapons/temp1.png", 50, 2));
-                weapons.add(new Grenade("file:resources/weapons/temp2.png", 40, 2));
+                weapons.add(new Bazooka(2));
+                weapons.add(new Grenade(2));
                 Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE);
                 teams.add(team);
                 fieldPane.getChildren().add(team);
@@ -371,8 +375,25 @@ public class MapWindow extends Application implements Networkable {
     public void endTurn() {
         if(turnCount == -42) return; // cheat mode
 
+        //ToDo Wait until no objectmovements
+
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
+
+
+        shootingIsAllowed = true;
+        server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
+
+        // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
+        if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
+            for (Team t : teams) {
+                for (Figure f : t.getFigures()) {
+                    if(f.getHealth() > 0) { //Avoid reviving the poisoned dead
+                        if (f.getIsPoisoned()) { f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON)); }
+                    }
+                }
+            }
+        }
 
         int oldCurrentTeam = currentTeam;
         do {
@@ -396,7 +417,8 @@ public class MapWindow extends Application implements Networkable {
         }
 
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
-        server.sendCommand("CURRENT_TEAM_END_ROUND");
+        server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
+        server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
 
         String teamLabelText = "Turn: " + turnCount + " It’s Team " + (currentTeam+1) + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
@@ -441,22 +463,29 @@ public class MapWindow extends Application implements Networkable {
                 teamLabel.setText("Continue");
             }
         }
-
+        
         switch (cmd[0]) {
+            case "ACTIVATE_FIGURE":
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
+                Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
+                scrollPane.setHvalue(activePos.getX() / terrain.getWidth());
+                scrollPane.setVvalue(activePos.getY() / terrain.getHeight());
+                break;
             case "CURRENT_TEAM_END_ROUND":
-                teams.get(currentTeam).endRound();
+                teams.get(Integer.parseInt(cmd[1])).endRound();
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDown(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_ANGLE_UP":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_1": //ToDo make this and the other choose 1 case
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
@@ -475,36 +504,53 @@ public class MapWindow extends Application implements Networkable {
                 fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
-                if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                if(shootingIsAllowed){
+                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
+                        if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
+                            fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                            fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                        }
+                        teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
+                        fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                        fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
+                    }
+                }
+                break;
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_4":
+                if (shootingIsAllowed) {
+                    // TODO sth is missing here
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     }
-                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(3));
                     fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 }
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
+                teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().setFacing_right(false);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
             case "CURRENT_FIGURE_FACE_RIGHT":
+                teams.get(currentTeam).getCurrentFigure().setFacingRight(true);
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    teams.get(currentTeam).getCurrentFigure().setFacing_right(true);
-                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacing_right());
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleDraw(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
-//            case "Number Sign": // TODO really? this is broken and deprecated
-//                cheatMode();
-//                break;
             case "CURRENT_FIGURE_SHOOT":
                 try {
-                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                     /* ToDo
+                    power = power + 5;
+                    Sleep/Wait if more ShootCommands are incoming, count them by incrementing THEN create projecctile
+                     */
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(power);
                     flyingProjectile = projectile;
                     fieldPane.getChildren().add(flyingProjectile);
+                    shootingIsAllowed = false;
+                    //ToDo setRoundTimer down to 5sec
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
                     break;
@@ -514,13 +560,22 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
             case "FIGURE_SET_POSITION":
-                Point2D position = new Point2D(Double.parseDouble(cmd[3]) / 8, Double.parseDouble(cmd[4]) / 8);
+                Point2D position = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
                 if(server == null) { // server already applied change to prevent timing issue
                     Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
                     f.setPosition(position); // TODO alternative setter
                 }
-                scrollPane.setHvalue(position.getX()*8 / terrain.getWidth());
-                scrollPane.setVvalue(position.getY()*8 / terrain.getHeight());
+                scrollPane.setHvalue(position.getX() / terrain.getWidth());
+                scrollPane.setVvalue(position.getY() / terrain.getHeight());
+            case "REPLACE_BLOCK":
+                if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
+                terrain.replaceBlock(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),cmd[3].charAt(0));
+                break;
+            case "RELOAD_TERRAIN":
+                terrain.load(terrain.toArrayList());
+                break;
+            case "DEACTIVATE_FIGURE":
+                teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -535,6 +590,7 @@ public class MapWindow extends Application implements Networkable {
                 flyingProjectile = null;
                 break;
             case "SET_CURRENT_TEAM":
+                teams.get(currentTeam).getCurrentFigure().setActive(false);
                 currentTeam = Integer.parseInt(cmd[1]);
                 break;
             case "SET_HP":
@@ -627,33 +683,18 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "Left":
             case "A":
+                server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                   server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
                    break;
                 } else {
-                    v = new Point2D(-Figure.WALK_SPEED, 0);
+                    moveCurrentlyActiveFigure(new Point2D(-Figure.WALK_SPEED, 0));
                 }
+                break;
             case "Right":
             case "D":
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
-                } else {
-                    if (v == null) v = new Point2D(Figure.WALK_SPEED, 0);
-                    Figure f = teams.get(currentTeam).getCurrentFigure();
-                    Point2D pos = new Point2D(f.getPosition().getX() * 8, f.getPosition().getY() * 8);
-                    Rectangle2D hitRegion = f.getHitRegion();
-                    Point2D newPos = null;
-                    try {
-                        newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
-                    } catch (CollisionWithTerrainException e) {
-                        System.out.println("CollisionWithTerrainException, stopped movement");
-                        newPos = e.getLastGoodPosition();
-                    } catch (CollisionWithFigureException e) {
-                        // figures can walk through each other // TODO really?
-                        System.out.println("ERROR How did we get here?");
-                    }
-                    f.setPosition(new Point2D(newPos.getX() / 8, newPos.getY() / 8)); // needed to prevent timing issue when calculating new position before client is handled on server
-                    server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY());
+                server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
+                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() == null) {
+                    moveCurrentlyActiveFigure(new Point2D(Figure.WALK_SPEED, 0));
                 }
                 break;
             case "1":
@@ -671,18 +712,23 @@ public class MapWindow extends Application implements Networkable {
                     server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_3");
                 }
                 break;
+            case "4":
+                if(teams.get(currentTeam).getNumberOfWeapons() >= 4) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_4");
+                }
+                break;
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
         }
     }
 
     private void executeCheat(String cmd) {
-        switch(cmd) {
+        switch (cmd) {
             case "1fig": // kills every figure except the first figure of the first team and prevents game over window from being shown
-                for(int i=1; i<teams.size(); i++) {
+                for (int i = 1; i < teams.size(); i++) {
                     teams.get(i).suddenDeath();
                 }
-                for(int i=1; i<teams.get(0).getFigures().size(); i++) {
+                for (int i = 1; i < teams.get(0).getFigures().size(); i++) {
                     teams.get(0).getFigures().get(i).setHealth(0);
                 }
                 turnCount = -42; // prevents endTurn() from showing game over window
@@ -695,6 +741,25 @@ public class MapWindow extends Application implements Networkable {
             default:
                 System.out.println("No cheating, please!");
         }
+    }
+
+    /**
+     * moves the currently active figure and reports the position change to the connected clients
+     * @param v the velocity vector with which the figure wants to move
+     */
+    private void moveCurrentlyActiveFigure(Point2D v) {
+        Figure f = teams.get(currentTeam).getCurrentFigure();
+        Point2D pos = new Point2D(f.getPosition().getX(), f.getPosition().getY());
+        Rectangle2D hitRegion = f.getHitRegion();
+        Point2D newPos = null;
+        try {
+            newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
+        } catch (CollisionException e) {
+            System.out.println("CollisionException, stopped movement");
+            newPos = e.getLastGoodPosition();
+        }
+        f.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
+        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY());
     }
 
     public Pane drawBackgroundImage() {
