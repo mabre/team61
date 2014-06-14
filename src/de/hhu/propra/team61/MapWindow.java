@@ -202,6 +202,7 @@ public class MapWindow extends Application implements Networkable {
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
 
         drawing = new Scene(rootPane, 1600, 300);
@@ -381,7 +382,6 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
 
-        shootingIsAllowed = true;
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -485,45 +485,13 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_1": //ToDo make this and the other choose 1 case
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(0));
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_2":
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(1));
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_3":
-                if(shootingIsAllowed){
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                        if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                            fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                            fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                        }
-                        teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(2));
-                        fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                        fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
-                    }
-                }
-                break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_4":
+            case "CURRENT_FIGURE_CHOOSE_WEAPON":
                 if (shootingIsAllowed) {
-                    // TODO sth is missing here
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                         fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     }
-                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(3));
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(Integer.parseInt(cmd[1])+1));
                     fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                     fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 }
@@ -575,6 +543,7 @@ public class MapWindow extends Application implements Networkable {
                 terrain.load(terrain.toArrayList());
                 break;
             case "DEACTIVATE_FIGURE":
+                shootingIsAllowed = true;
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
                 break;
             case "GAME_OVER":
@@ -595,6 +564,19 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "SET_HP":
                 teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+                break;
+            case "CONDITION":
+                switch(cmd[1]){
+                    case "POISON":
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
+                        break;
+                    case "FIRE":
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsBurning(true);
+                        break;
+                    case "STUCK":
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);
+                        break;
+                }
                 break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
@@ -699,22 +681,22 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "1":
                 if(teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_1");
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                 }
                 break;
             case "2":
                 if(teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_2");
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                 }
                 break;
             case "3":
                 if(teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_3");
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                 }
                 break;
             case "4":
                 if(teams.get(currentTeam).getNumberOfWeapons() >= 4) {
-                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON_4");
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                 }
                 break;
             default:

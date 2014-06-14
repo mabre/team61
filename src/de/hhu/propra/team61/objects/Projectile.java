@@ -16,8 +16,6 @@ public class Projectile extends ImageView {
 
     private int mass;
 
-    private int damage;
-
     double angle;  // Rotation of image to make then face direction TODO implement more than just this var
 
     private Weapon source;
@@ -31,14 +29,14 @@ public class Projectile extends ImageView {
      * @param velocity determines speed and direction
      * @param shotBy Weapon which produced this projectile, helpful for specific damaging
      */
-    public Projectile(Image image, Point2D position, Point2D firedAt, int velocity, int mass, int damage, Weapon shotBy){
+    public Projectile(Image image, Point2D position, Point2D firedAt, int velocity, Weapon shotBy){
         setImage(image);
         setTranslateX(firedAt.getX());
         setTranslateY(firedAt.getY());
 
         this.velocity = firedAt.subtract(position);
         this.velocity = this.velocity.normalize().multiply(velocity);
-        this.damage = damage; // TODO -> shotBy
+
         this.source = shotBy;
         this.angle  = shotBy.getAngle();
         this.mass   = shotBy.getMass();
@@ -82,10 +80,6 @@ public class Projectile extends ImageView {
 
     public int getMass() {
         return mass;
-    }
-
-    public int getDamage() {
-        return damage;
     }
 
     /**

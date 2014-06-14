@@ -91,8 +91,8 @@ public abstract class Weapon extends Item {
         this.blocks = blocks;
 
         this.mass = mass;
-        this.drifts = drifts;
         this.speed = speed;
+        this.drifts = drifts;
 
         initialize(); //Draw Crosshair etc
     }
@@ -125,7 +125,7 @@ public abstract class Weapon extends Item {
             Image image = new Image(projectileImg,NORMED_OBJECT_SIZE / 4, NORMED_OBJECT_SIZE / 4,true,true);
             int yOffset = (int)(NORMED_OBJECT_SIZE-image.getHeight())/2;
             int xOffset = (int)(NORMED_OBJECT_SIZE-image.getWidth())/2;
-            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+xOffset, getTranslateY()+yOffset), new Point2D(getCrosshair().getTranslateX()+xOffset, getCrosshair().getTranslateY()+yOffset), speed, mass, damage, this);
+            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+xOffset, getTranslateY()+yOffset), new Point2D(getCrosshair().getTranslateX()+xOffset, getCrosshair().getTranslateY()+yOffset), speed, this);
 
             munition--;
             System.out.println("munition left: " + munition);
@@ -158,16 +158,16 @@ public abstract class Weapon extends Item {
                         e.printStackTrace();
                         // TODO IMPORTANT
                     }
-                    if(poisons){ teams.get(t).getFigures().get(f).setIsPoisoned(true); }
-                    if(ignites){ teams.get(t).getFigures().get(f).setIsPoisoned(true); }
-                    if(blocks) { teams.get(t).getFigures().get(f).setIsPoisoned(true); }
+                    if(poisons){ commandList.add("CONDITION" + " " + "POISON" + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
+                    if(ignites){ commandList.add("CONDITION" + " " + "FIRE" + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
+                    if(blocks) { commandList.add("CONDITION" + " " + "STUCK" + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
                     commandList.add("SET_HP " + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth());
                     //ToDo add server commands for getting burned/poisoned etc.
                 }
             }
         }
 
-        // 2. Destroy Terrain and add necessary commands to list being sended
+        // 2. Destroy Terrain and add necessary commands to list being sent
         commandList.addAll(terrain.handleExplosion(new Point2D(impactArea.getMinX(),impactArea.getMinY()), explosionpower));
 
         // 3. Send Figures flying
