@@ -15,6 +15,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
+import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
 
 /**
  * Created by markus on 15.05.14.
@@ -336,8 +337,8 @@ public class Server implements Runnable {
                             }
                         } else if (msg.startsWith("/rename ")) {
                             String names[] = msg.split(" ", 3);
-                            if(names.length == 3) {
-                                if(clientId.equals(Client.id) || clientId.equals(getIdFromName(names[1]))) {
+                            if (names.length == 3) {
+                                if (clientId.equals(Client.id) || clientId.equals(getIdFromName(names[1]))) {
                                     sendCommand("SERVER CHAT command executed. cmd: " + names[1] + ": " + msg);
                                     renameByName(names[1], names[2]);
                                     sendCommand("SPECTATOR_LIST " + getClientListAsJson());
@@ -349,6 +350,10 @@ public class Server implements Runnable {
                                 renameByName(name, names[1]);
                                 sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                             }
+                        // cheat codes are enclosed in double low-9 quotation mark [AltGr-v on Linux] and right double quotation mark [AltGr-n]
+                        // (typographic German opening quotation mark 99 / typographic English closing quotation mark 99 - no-one will type this accidentally)
+                        } else if (msg.startsWith("/„") && msg.endsWith("”")) {
+                            currentNetworkable.handleKeyEventOnServer("CHEAT " + removeLastChar(extractPart(msg, "/„")));
                         } else {
                             sendCommand(getNameFromId(clientId) + " CHAT " + msg);
                         }

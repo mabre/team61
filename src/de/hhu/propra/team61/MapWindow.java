@@ -369,6 +369,8 @@ public class MapWindow extends Application implements Networkable {
     }
 
     public void endTurn() {
+        if(turnCount == -42) return; // cheat mode
+
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
@@ -537,11 +539,13 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "SET_HP":
                 teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+                break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
             case "SUDDEN_DEATH":
                 teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+                break;
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
                 break;
@@ -564,11 +568,20 @@ public class MapWindow extends Application implements Networkable {
                     System.out.println("malformed command " + keyCode);
             }
             return;
+        } else if(keyCode.startsWith("CHEAT ")) {
+            executeCheat(extractPart(keyCode, "CHEAT "));
+            return;
         }
 
         Point2D v = null;
 
-        int team = Integer.parseInt(keyCode.split(" ", 2)[0]);
+        int team = -1;
+        try {
+            team = Integer.parseInt(keyCode.split(" ", 2)[0]);
+        } catch(NumberFormatException e) {
+            System.out.println("handleKeyEventOnServer: NumberFormatException" + e.getMessage());
+            return;
+        }
         keyCode = keyCode.split(" ", 2)[1];
 
         // pause is a special case: do not ignore pause command when paused, and also accept the input when it's not team 0's turn
@@ -660,6 +673,27 @@ public class MapWindow extends Application implements Networkable {
                 break;
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
+        }
+    }
+
+    private void executeCheat(String cmd) {
+        switch(cmd) {
+            case "1fig": // kills every figure except the first figure of the first team and prevents game over window from being shown
+                for(int i=1; i<teams.size(); i++) {
+                    teams.get(i).suddenDeath();
+                }
+                for(int i=1; i<teams.get(0).getFigures().size(); i++) {
+                    teams.get(0).getFigures().get(i).setHealth(0);
+                }
+                turnCount = -42; // prevents endTurn() from showing game over window
+                System.out.println("You are now alone.");
+                break;
+            case "1up": // 100 live for first figure of first team
+                teams.get(0).getFigures().get(0).setHealth(100);
+                System.out.println("Ate my spinach.");
+                break;
+            default:
+                System.out.println("No cheating, please!");
         }
     }
 
