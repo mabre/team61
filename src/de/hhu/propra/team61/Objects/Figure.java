@@ -20,9 +20,7 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
  */
 
 public class Figure extends StackPane {
-    private final int NORMED_OBJECT_SIZE = 16;
-
-    private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
+    public final int NORMED_OBJECT_SIZE = 16;
 
     private String name;
     private int health;
@@ -33,6 +31,7 @@ public class Figure extends StackPane {
     private boolean isStuck;
 
     private boolean isActive;
+    private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
 
     private Item selectedItem;
 

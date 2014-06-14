@@ -12,40 +12,29 @@ import java.util.ArrayList;
 /**
  * Created by kevin on 21.05.14.
  */
-interface GrenadeAttributes {
-    final String  NAME           = "Grenade";
-    final String  DESCRIPTION    = "Another classic.";
+public class Grenade extends Weapon {
+    private final static String  NAME           = "Grenade";
+    private final static String  DESCRIPTION    = "Another classic.";
 
-    final String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
-    final String  WEAPON_IMG     = "file:resources/weapons/temp2.png";
-    final String  DAMAGETYPE     = "Explosiondamage";
-    final int     DAMAGE         =  40;
-    final int     EXPLOSIONPOWER = 100;
-    final int     SHOCKWAVE      =   0;
-    final int     DELAY          =   5; //ToDo make this variable
+    private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
+    private final static String  WEAPON_IMG     = "file:resources/weapons/temp2.png";
+    private final static String  DAMAGETYPE     = "Explosiondamage";
+    private final static int     DAMAGE         =  40;
+    private final static int     EXPLOSIONPOWER = 100;
+    private final static int     SHOCKWAVE      =   0;
+    private final static int     DELAY          =   5;  // ToDo make this variable
 
-    final boolean POISONS       = false;  // toogle isPoisoned
-    final boolean IGNITES       = false; // toogle isBurning
-    final boolean BLOCKS        = false; // toogle isStuck
-}
-public class Grenade extends Weapon implements GrenadeAttributes{
+    private final static boolean POISONS       = false; // toggle isPoisoned
+    private final static boolean IGNITES       = false; // toggle isBurning
+    private final static boolean BLOCKS        = false; // toggle isStuck
+
+    private final static int     MASS          =   10;  // ToDo adapt
+    private final static boolean DRIFTS        = true;
+
 //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
-
-
+   // ---------------------------------------------------------------------------------------------
     public Grenade(int munition){
-        super(munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,IGNITES,BLOCKS);
-    }
-
-    public Grenade(JSONObject json) {
-        super(json);
-    }
-
-    @Override
-    public JSONObject toJson() {
-        JSONObject json = super.toJson();
-        json.put("type", "Grenade");
-
-        return json;
+        super(NAME,DESCRIPTION,munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,IGNITES,BLOCKS,MASS,DRIFTS);
     }
 
     @Override
@@ -53,22 +42,7 @@ public class Grenade extends Weapon implements GrenadeAttributes{
      * This Function coordinates damage caused to Figures and Terrain.
      * It returns a series of commands the server has to send to the clients
      */
-    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea){
-        ArrayList<String> commandList = new ArrayList<String>();
-        commandList.add("REMOVE_FLYING_PROJECTILE");
-
-        int tCounter = 0;
-        for(Team t : teams){ // Calculate all worms hit, lacks hitradius,terraindestruction(non implemented) usw, but for now I'm just assuring same functionality with the adaptions in background
-            int fCounter = 0;
-            for(Figure f : t.getFigures()){
-                if(f.getHitRegion().intersects(impactArea)){ //Give this some more love
-                    f.sufferDamage(getDamage());
-                    commandList.add("SET_HP " + tCounter + " " + fCounter + " " + f.getHealth());
-                }
-                fCounter += 1;
-            }
-            tCounter += 1;
-        }
-        return commandList;
+    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea) { //ToDo modify this to make use of a fuse
+        return super.handleCollision(terrain, teams, impactArea);
     }
 }

@@ -7,13 +7,17 @@ import javafx.scene.image.ImageView;
  * Created by kevin on 21.05.14.
  * Abstract class implementing all methods which Items have in common
  */
-public abstract class Item extends ImageView{
-    private String name;
-    private String description;
+public abstract class Item extends ImageView{ //ToDo give this a makeover
+    protected String name;
+    protected String description;
     protected String imagePath;
 
     protected int munition;     // Item can only be used when munition > 0
 
+    public Item(String name, String description){
+        this.name = name;
+        this.description = description;
+    }
 
     // ToDo I'll check if cannot do this nicer
     public abstract ImageView getCrosshair();

@@ -237,18 +237,13 @@ public class MapWindow extends Application implements Networkable {
                                 newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, false);
                                 Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
-                          /*  } catch (CollisionWithTerrainException e) {
-                                System.out.println("CollisionWithTerrainException, let's destroy something!"); // TODO
-                                server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition (might still be !=null in next iteration)
-                                //endTurn();*/
                             } catch (CollisionException e) {
-                                System.out.println("CollisionWithFigureException, let's harm somebody!");
+                                System.out.println("CollisionException, let's do this!");
                                 Platform.runLater(() -> {
+                                    //Get series of commands to send to the clients from
+                                    //Collisionhandling done by the weapon causing this exception
                                     ArrayList<String> commandList = flyingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
-                                    for(String command : commandList){
-                                        server.sendCommand(command);
-                                    }
-                                    //server.sendCommand("REMOVE_FLYING_PROJECTILE"); // TODO potential race condition
+                                    for(String command : commandList){ server.sendCommand(command); } //Send commands
                                     endTurn();
                                 });
                             }
@@ -410,7 +405,7 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().angleUp(teams.get(currentTeam).getCurrentFigure().getFacingRight());
                 }
                 break;
-            case "CURRENT_FIGURE_CHOOSE_WEAPON_1":
+            case "CURRENT_FIGURE_CHOOSE_WEAPON_1": //ToDo make this and the other choose 1 case
                 if (shootingIsAllowed) {
                     if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                         centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
@@ -491,6 +486,13 @@ public class MapWindow extends Application implements Networkable {
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 centerView.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "REPLACE_BLOCK":
+                if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
+                terrain.replaceBlock(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),cmd[3].charAt(0));
+                break;
+            case "RELOAD_TERRAIN":
+                terrain.load(terrain.toArrayList());
                 break;
             case "DEACTIVATE_FIGURE":
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
@@ -635,12 +637,9 @@ public class MapWindow extends Application implements Networkable {
         try {
             newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
         } catch (CollisionException e) {
-            System.out.println("CollisionWithTerrainException, stopped movement");
+            System.out.println("CollisionException, stopped movement");
             newPos = e.getLastGoodPosition();
-        }/* catch (CollisionWithFigureException e) {
-            // figures can walk through each other // TODO really? // Yes, please
-            System.out.println("ERROR How did we get here?");
-        }*/
+        }
         server.sendCommand("CURRENT_FIGURE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
     }
 

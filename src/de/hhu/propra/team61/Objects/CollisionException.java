@@ -4,6 +4,7 @@ import javafx.geometry.Point2D;
 
 /**
  * Created by markus on 20.05.14.
+ * Modified by kevin on 12.06.14.
  */
 public class CollisionException extends Exception {
 
@@ -12,8 +13,8 @@ public class CollisionException extends Exception {
     private Point2D lastGoodPosition;
     private Point2D collidingPosition;
 
-    public CollisionException(Point2D collidingPosition, Point2D lastGoodPosition) {
-      //  this.collisionPartnerClass = collisionPartnerClass;
+    public CollisionException(String collisionPartnerClass, Point2D collidingPosition, Point2D lastGoodPosition) {
+        this.collisionPartnerClass = collisionPartnerClass;
         this.lastGoodPosition = lastGoodPosition;
         this.collidingPosition = collidingPosition;
     }

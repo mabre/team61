@@ -12,7 +12,7 @@ import java.util.ArrayList;
  * Created by kevin on ?
  */
 public class Projectile extends ImageView {
-    boolean falls; // Gravitation on/off
+    int    mass;   // used for Gravitation
     double angle;  // Rotation of image to make then face direction TODO implement more than just this var
 
     private Point2D velocity;
@@ -31,12 +31,18 @@ public class Projectile extends ImageView {
         setImage(image);
         setTranslateX(firedAt.getX());
         setTranslateY(firedAt.getY());
+
         this.velocity = firedAt.subtract(position);
         this.velocity = this.velocity.normalize().multiply(velocity);
+
         this.source = shotBy;
         this.angle  = shotBy.getAngle();
+        this.mass   = shotBy.getMass();
+
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), image.getWidth(), image.getHeight());
+
         System.out.println("created projectile at " + getTranslateX() + " " + getTranslateY() + ", v=" + this.velocity);
+
         if(this.velocity.magnitude() == 0) {
             throw new IllegalArgumentException("Projectile with no speed was requested; position: " + position + ", firedAt " + firedAt + ", velocity " + velocity);
         }
@@ -66,16 +72,18 @@ public class Projectile extends ImageView {
         return velocity;
     }
 
-    public int getDamage() {
-          return source.getDamage();
+    public int getMass() {
+        return mass;
     }
 
     /**
+     * calculates hitbox from position given and passes down the request to weaponclass with that additional information
+     *
      * @param terrain for destruction
      * @param teams ability to affect all figures
      * @param impactPoint NEEDed for a hitbox placed ON colliding position, NOT last "good" one
      */
-    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Point2D impactPoint){ //Passes down the request to weaponclass and calculates hitbox from position given
+    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Point2D impactPoint){
         return this.source.handleCollision(terrain,teams,new Rectangle2D(impactPoint.getX(),impactPoint.getY(),getImage().getWidth(),getImage().getHeight()));
     }
 }
