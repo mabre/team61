@@ -199,6 +199,8 @@ public class Figure extends StackPane {
             nameTag.setTranslateY(position.getY() - NORMED_OBJECT_SIZE * 2);
             hpLabel.setTranslateX(position.getX() + offset - hpLabel.getWidth() / 2);
             hpLabel.setTranslateY(position.getY() - NORMED_OBJECT_SIZE);
+
+            setSelectedItem(getSelectedItem()); // Update position of weapon
         });
     }
 
@@ -209,7 +211,7 @@ public class Figure extends StackPane {
     public Item getSelectedItem(){
         return selectedItem;
     }
-    public void setSelectedItem(Weapon select){
+    public void setSelectedItem(Item select){
         if(selectedItem != null) {
             selectedItem.hide();
         }

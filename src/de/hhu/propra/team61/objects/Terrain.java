@@ -335,13 +335,12 @@ public class Terrain extends GridPane {
         if (explosionPower > 0 && terrain.get(blockY).get(blockX) != '#') { //else abort recursion
             double resistanceOfBlock = getResistance(blockX,blockY);
 
-
-            //Print Debugging-MSG to console:
-            System.out.println("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
-
-
             //Calc behaviour for current Block
             if (explosionPower >= resistanceOfBlock) { // Enough destructive force
+
+                //Print Debugging-MSG to console:
+                //System.out.println("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
+
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
                 replaceBlock(blockX,blockY,replacement); //Mark as destroyed
@@ -360,6 +359,10 @@ public class Terrain extends GridPane {
             } else {
                 resistanceOfBlock = getResistance(blockX,blockY); // Check if partially enough destructive Force
                 if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && resistanceOfBlock != RESISTANCE_OF_SKY){ // BUT do not create slants out of air
+
+                    //Print Debugging-MSG to console:
+                    //System.out.println("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
+
 
                     if(blockX > 0 && blockX < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1) != '#' && terrain.get(blockY).get(blockX-1) != ' '){
@@ -387,7 +390,6 @@ public class Terrain extends GridPane {
 
         ArrayList<String> commands = new ArrayList<String>();
         explode(commands,blockX,blockY,explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
-        //gravel(commands,blockX,blockY,explosionPower);
         commands.add("RELOAD_TERRAIN"); //Tell Clients to update Map for visibility;
 
         return commands;

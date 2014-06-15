@@ -133,7 +133,9 @@ public abstract class Weapon extends Item {
             resetAngle();
             return shot;
         } else {
-            // ToDo Add "0.Schuss"
+            if(munition == 0){
+                // ToDo Add "0.Schuss"
+            }
             throw new NoMunitionException();
         }
     }
@@ -158,11 +160,10 @@ public abstract class Weapon extends Item {
                         e.printStackTrace();
                         // TODO IMPORTANT
                     }
-                    if(poisons){ commandList.add("CONDITION" + " " + "POISON" + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
-                    if(ignites){ commandList.add("CONDITION" + " " + "FIRE" + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
-                    if(blocks) { commandList.add("CONDITION" + " " + "STUCK" + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
+                    if(poisons){ commandList.add("CONDITION" + " " + "POISON" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
+                    if(ignites){ commandList.add("CONDITION" + " " + "FIRE" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
+                    if(blocks) { commandList.add("CONDITION" + " " + "STUCK" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
                     commandList.add("SET_HP " + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth());
-                    //ToDo add server commands for getting burned/poisoned etc.
                 }
             }
         }
