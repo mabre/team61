@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.Team;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
@@ -51,11 +52,15 @@ public class Projectile extends ImageView {
     }
 
     /**
+     * Sets the position of the projectile
+     * This method can be called from any thread.
      * @param pos new position in px
      */
     public void setPosition(Point2D pos) {
-        setTranslateX(pos.getX());
-        setTranslateY(pos.getY());
+        Platform.runLater(() -> {
+            setTranslateX(pos.getX());
+            setTranslateY(pos.getY());
+        });
         hitRegion = new Rectangle2D(pos.getX(), pos.getY(), hitRegion.getWidth(), hitRegion.getHeight());
     }
 

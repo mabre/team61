@@ -42,6 +42,9 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  */
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
+    private final static int FPS = 25;
+    /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
+    public final static Point2D GRAVITY = new Point2D(0, .01);
 
     //JavaFX related variables
     private Scene drawing;
@@ -56,15 +59,18 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private Label teamLabel;
     //Team related variables
-    private ArrayList<Team> teams; //Dynamic list containing all playing teams
+    /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
+    private ArrayList<Team> teams;
     private int currentTeam = 0;
     private int turnCount = 0;
     private int levelCounter = 0;
     private int teamquantity;
     private int teamsize;
 
-    private int power = 0; // Power/energy projectile is shot with
-    private boolean shootingIsAllowed = true; // Used to disable shooting multiple times during 1 turn
+    /** power/energy projectile is shot with */
+    private int power = 0;
+    /** used to disable shooting multiple times during one turn */
+    private boolean shootingIsAllowed = true;
     private boolean pause = false;
     //Projectile-Moving-Thread related variables
     private Projectile flyingProjectile = null;
@@ -74,12 +80,10 @@ public class MapWindow extends Application implements Networkable {
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
+
     private String map; // TODO do we need this?
     private Chat chat;
     private SceneController sceneController;
-
-    public final static Point2D GRAVITY = new Point2D(0,.01);
-    private final static int FPS = 10;
 
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
@@ -242,12 +246,12 @@ public class MapWindow extends Application implements Networkable {
                                 final Point2D newPos;
                                 newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
                                 flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
-                                Platform.runLater(() -> flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY())));
+                                flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                             } catch (CollisionException e) {
                                 System.out.println("CollisionException, let's do this!");
                                 Platform.runLater(() -> {
-//                                    } catch (DeathException de) { // TODO that change was somewhat important I think ... (see handleCollision in Weapon)
+//                                    } catch (DeathException de) { // TODO that change was somewhat important I think (or not?) ... (see handleCollision in Weapon)
 //                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
 //                                            endTurn();
 //                                        }
@@ -550,7 +554,7 @@ public class MapWindow extends Application implements Networkable {
                 gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
-                flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
+                if(server==null) flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
                 break;
             case "REMOVE_FLYING_PROJECTILE":
                 fieldPane.getChildren().remove(flyingProjectile);
