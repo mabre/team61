@@ -671,18 +671,12 @@ public class MapWindow extends Application implements Networkable {
             case "Left":
             case "A":
                 server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
-                if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                   break;
-                } else {
-                    moveCurrentlyActiveFigure(new Point2D(-Figure.WALK_SPEED, 0));
-                }
+                moveCurrentlyActiveFigure(new Point2D(-Figure.WALK_SPEED, 0));
                 break;
             case "Right":
             case "D":
                 server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
-                if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() == null) {
-                    moveCurrentlyActiveFigure(new Point2D(Figure.WALK_SPEED, 0));
-                }
+                moveCurrentlyActiveFigure(new Point2D(Figure.WALK_SPEED, 0));
                 break;
             case "1":
                 if(shootingIsAllowed) {
