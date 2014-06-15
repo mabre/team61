@@ -378,7 +378,10 @@ public class MapWindow extends Application implements Networkable {
     }
 
     public void endTurn() {
-        if(turnCount == -42) return; // cheat mode
+        if(turnCount == -42) { // cheat mode
+            shootingIsAllowed = true;
+            return;
+        }
 
         //ToDo Wait until no objectmovements
 
