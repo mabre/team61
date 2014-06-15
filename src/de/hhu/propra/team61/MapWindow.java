@@ -42,7 +42,7 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  */
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
-    private final static int FPS = 25;
+    private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
 

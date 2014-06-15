@@ -20,6 +20,14 @@ public class Terrain extends GridPane {
 
     private static String imgPath = "file:resources/";
     private static int BLOCK_SIZE = 8;
+    private static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
+    private static Image ICE_IMAGE = new Image(imgPath + "ice.png");
+    private static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
+    private static Image SKY_IMAGE = new Image(imgPath + "sky.png");
+    private static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
+    private static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
+    private static Image STONES_IMAGE = new Image(imgPath + "stones.png");
+    private static Image WATER_IMAGE = new Image(imgPath + "water.png");
 
     //Technical Blocks/Special Cases
     private final double RESISTANCE_OF_SKY = 15;
@@ -63,38 +71,36 @@ public class Terrain extends GridPane {
             for (int j = 0; j < terrain.get(i).size(); j++) {
                 char terraintype = terrain.get(i).get(j);
                 switch (terraintype) {
-                    case '/':
-                        img = "slant_ground_ri.png";
-                        break;
-                    case '\\':
-                        img = "slant_ground_le.png";
+                    case ' ':
+                        add(new ImageView(SKY_IMAGE), j, i);
                         break;
                     case 'S':
-                        img = "stones.png";
+                        add(new ImageView(STONES_IMAGE), j, i);
                         break;
                     case 'E':
-                        img = "earth.png";
-                        break;
-                    case 'W':
-                        img = "water.png";
+                        add(new ImageView(EARTH_IMAGE), j, i);
                         break;
                     case 'I':
-                        img = "ice.png";
+                        add(new ImageView(ICE_IMAGE), j, i);
+                        break;
+                    case '/':
+                        add(new ImageView(SLANT_RI_IMAGE), j, i);
+                        break;
+                    case '\\':
+                        add(new ImageView(SLANT_LE_IMAGE), j, i);
+                        break;
+                    case 'W':
+                        add(new ImageView(WATER_IMAGE), j, i);
                         break;
                     case 'L':
-                        img = "lava.png";
+                        add(new ImageView(LAVE_IMAGE), j, i);
                         break;
                     case 'P': // special case: spawn point, add to list and draw sky
                         spawnPoints.add(new Point2D(j * BLOCK_SIZE, i * BLOCK_SIZE));
                         terrain.get(i).set(j, ' ');
                     default:
-                        img = "sky.png";
+                        add(new ImageView(SKY_IMAGE), j, i);
                 }
-                Image image = new Image(imgPath + img);
-                ImageView content = new ImageView();
-                content.setImage(image);
-
-                add(content, j, i);
                 //terrainGrid.setConstraints(content,j,i);
             }
         }
@@ -387,7 +393,7 @@ public class Terrain extends GridPane {
         // Get Block, which is center of explosion, from Point2D
         int blockX = (int)impactPoint.getX() / BLOCK_SIZE;
         int blockY = (int)impactPoint.getY() / BLOCK_SIZE;
-
+        
         ArrayList<String> commands = new ArrayList<String>();
         explode(commands,blockX,blockY,explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
         commands.add("RELOAD_TERRAIN"); //Tell Clients to update Map for visibility;
