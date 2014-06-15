@@ -14,10 +14,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 /**
- * Created by kevgny on 14.05.14.
+ * Created by kevin on 14.05.14.
  */
 
 public class Figure extends StackPane {
+    public static final int NORMED_OBJECT_SIZE = 16;
 
     /** note that the actual speed is lower because gravity is subtracted before the figure actually jumps */
     private static final int MASS = 1000;
@@ -43,11 +44,15 @@ public class Figure extends StackPane {
     private boolean isPoisoned;
     private boolean isStuck;
 
+    private boolean isActive;
+    private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
+
     private Item selectedItem;
 
-    private Rectangle2D hitRegion;
     private Rectangle hitRegionDebug;
-    private ImageView imageView;
+    private Rectangle2D hitRegion;
+    private ImageView figureImage;
+    private Label nameTag;
     private Label hpLabel;
 
     // In and Out
@@ -60,16 +65,16 @@ public class Figure extends StackPane {
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
 
-        imageView = new ImageView();
+        figureImage = new ImageView();
 
         initialize();
     }
 
     public Figure(JSONObject input){
-        imageView = new ImageView();
-        this.position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
-        imageView.setTranslateX(position.getX());
-        imageView.setTranslateY(position.getY());
+        figureImage = new ImageView();
+        position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
+        figureImage.setTranslateX(position.getX());
+        figureImage.setTranslateY(position.getY());
 
         this.name = input.getString("name");
         this.health = input.getInt("health");
@@ -85,10 +90,10 @@ public class Figure extends StackPane {
     }
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
-        imageView = new ImageView();
-        this.position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
-        imageView.setTranslateX(position.getX());
-        imageView.setTranslateY(position.getY());
+        figureImage = new ImageView();
+        position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
+        figureImage.setTranslateX(position.getX());
+        figureImage.setTranslateY(position.getY());
 
         this.name = name;
         this.health = input.getInt("health");
@@ -104,18 +109,22 @@ public class Figure extends StackPane {
     }
 
     private void initialize() {
+        selectedItem = null;
+
         setAlignment(Pos.TOP_LEFT);
 
         hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        Image image = new Image("file:resources/figures/pin.png", 16, 16, true, true);
-        imageView.setImage(image);
-        getChildren().add(imageView);
+        Image image = new Image("file:resources/figures/pin.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+        figureImage.setImage(image);
+        getChildren().add(figureImage);
 
-        selectedItem = null;
+        nameTag = new Label(name);
         hpLabel = new Label(health+"");
-        setPosition(getPosition()); // updates label position
+        getChildren().add(nameTag);
         getChildren().add(hpLabel);
+
+        setPosition(getPosition()); //Set Graphics to their place
     }
 
     public JSONObject toJson(){
@@ -128,11 +137,12 @@ public class Figure extends StackPane {
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
-        output.put("isStuck",isStuck);
+        output.put("isStuck", isStuck);
         return output;
     }
 
     public void setColor(Color color) {
+        nameTag.setTextFill(color);
         hpLabel.setTextFill(color);
     }
 
@@ -151,10 +161,20 @@ public class Figure extends StackPane {
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
 
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+        if(isActive) {
+            // TODO move to css
+            nameTag.setStyle("-fx-border-color: rgba(255,0,0,.2); -fx-border-style: solid; -fx-border-width: 1px; -fx-border-radius: 5px;");
+        } else {
+            nameTag.setStyle("");
+        }
+    }
+
     /**
      * moves the figure to the given position, updated the hit region, position of the figure image and the hp label
      * JavaFX parts are run with runLater, hence it is save to call this function from non-fx threads.
-     * @param newPosition the new position of the figure in blocks // TODO rethink parameter, /8 is bad! [is done on weaponsFF]
+     * @param newPosition the new position of the figure in px
      */
     public void setPosition(Point2D newPosition) {
         if(health <= 0 && !newPosition.equals(GRAVEYARD)) { // workaround for a timing issue // TODO we have to do sth when a figure dies when it is its turn
@@ -162,7 +182,9 @@ public class Figure extends StackPane {
             position = GRAVEYARD;
         }
 
-        position = new Point2D(8 * newPosition.getX(), 8 * newPosition.getY());
+        int offset = NORMED_OBJECT_SIZE / 2;
+
+        position = new Point2D(newPosition.getX(), newPosition.getY());
         hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
         getChildren().removeAll(hitRegionDebug);
         hitRegionDebug = new Rectangle(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
@@ -171,46 +193,53 @@ public class Figure extends StackPane {
         hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
         //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
         Platform.runLater(() -> {
-            imageView.setTranslateX(this.position.getX());
-            imageView.setTranslateY(this.position.getY());
-            hpLabel.setTranslateX(position.getX());
-            hpLabel.setTranslateY(position.getY() - 15);
+            figureImage.setTranslateX(position.getX());
+            figureImage.setTranslateY(position.getY());
+            nameTag.setTranslateX(position.getX() + offset - nameTag.getWidth() / 2);
+            nameTag.setTranslateY(position.getY() - NORMED_OBJECT_SIZE * 2);
+            hpLabel.setTranslateX(position.getX() + offset - hpLabel.getWidth() / 2);
+            hpLabel.setTranslateY(position.getY() - NORMED_OBJECT_SIZE);
+
+            setSelectedItem(getSelectedItem()); // Update position of weapon
         });
     }
 
     public Point2D getPosition() {
-        return new Point2D(position.getX()/8, position.getY()/8);
+        return new Point2D(position.getX(), position.getY());
     }
 
     public Item getSelectedItem(){
         return selectedItem;
     }
-    public void setSelectedItem(Weapon select){
+    public void setSelectedItem(Item select){
         if(selectedItem != null) {
             selectedItem.hide();
         }
         selectedItem = select;
         if(selectedItem != null) {
             select.setPosition(new Point2D(position.getX(), position.getY()));
-            selectedItem.angleDraw(facing_right);
+            selectedItem.angleDraw(facingRight);
         }
     }
 
-    public void setFacing_right(boolean facing_right) {
-        this.facing_right = facing_right;
+    public void setFacingRight(boolean facingRight) {
+        this.facingRight = facingRight;
+        figureImage.setScaleX(facingRight ? 1 : -1); // mirror image when not facing right
     }
-    public boolean getFacing_right(){return facing_right;}
+    public boolean getFacingRight(){
+        return facingRight;
+    }
 
     public void sufferDamage(int damage) throws DeathException {
         health -= damage;
         if(health <= 0) {
             health = 0;
-            Image image = new Image("file:resources/spawn.png", 16, 16, true, true);
-            Platform.runLater(() -> imageView.setImage(image));
+            Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+            Platform.runLater(() -> figureImage.setImage(image));
             setPosition(GRAVEYARD);
             throw new DeathException(this);
         }
-        Platform.runLater(() -> hpLabel.setText(health+""));
+        Platform.runLater(() -> hpLabel.setText(health + ""));
         System.out.println(name + " got damage " + damage + ", health at " + health);
     }
 
@@ -231,9 +260,9 @@ public class Figure extends StackPane {
         return hitRegion;
     }
 
-    public Projectile shoot() throws NoMunitionException {
-       // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
-        return selectedItem.shoot();
+    public Projectile shoot(int power) throws NoMunitionException {
+        // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
+        return selectedItem.shoot(power);
     }
 
     public Point2D getVelocity() {
