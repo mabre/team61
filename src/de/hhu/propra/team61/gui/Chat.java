@@ -100,7 +100,7 @@ public class Chat extends VBox {
                 "/kickteam <team number>\n" +
                 "    Removes the given team (sudden death)\n" +
                 "    Only a member of that team and the host are allowed to kick a team.\n" +
-                "/kick <new name>\n" +
+                "/rename <new name>\n" +
                 "    Changes your name\n" +
                 "/rename <old name> <new name>\n" +
                 "    Changes a name\n" +
