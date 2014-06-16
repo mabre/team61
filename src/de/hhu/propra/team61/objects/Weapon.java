@@ -157,7 +157,7 @@ public abstract class Weapon extends Item {
                     try {
                         teams.get(t).getFigures().get(f).sufferDamage(damage);
                     } catch (DeathException e) {
-                        e.printStackTrace();
+                        System.out.println("WARNING: unhandled death exception");
                         // TODO IMPORTANT
                     }
                     if(poisons){ commandList.add("CONDITION" + " " + "POISON" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }

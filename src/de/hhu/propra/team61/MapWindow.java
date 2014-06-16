@@ -267,6 +267,7 @@ public class MapWindow extends Application implements Networkable {
                         for(Team team: teams) {
                             for(Figure figure: team.getFigures()) {
                                 if(figure.getHealth() > 0) {
+                                    final boolean scrollToFigure = (figure == teams.get(currentTeam).getCurrentFigure());
                                     final Point2D oldPos = new Point2D(figure.getPosition().getX(), figure.getPosition().getY());
                                     try {
                                         final Point2D newPos; // TODO code duplication
@@ -274,13 +275,13 @@ public class MapWindow extends Application implements Networkable {
                                         newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false);
                                         if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
                                             figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
-                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()));
+                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
                                         }
                                     } catch (CollisionException e) {
                                         if (!e.getLastGoodPosition().equals(oldPos)) {
                                             System.out.println("CollisionWithTerrainException");
                                             figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
-                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                         }
                                         int oldHp = figure.getHealth();
                                         try {
@@ -449,6 +450,24 @@ public class MapWindow extends Application implements Networkable {
         System.out.println("MapWindow client/server (if any) stopped");
     }
 
+    /**
+     * changes the scroll pane scroll position so that the given object is visible in the center
+     * @param x the x coordinate of the object
+     * @param y the y coordinate of the object
+     * @param width the width of the object
+     * @param height the height if the object
+     */
+    private void scrollTo(double x, double y, double width, double height) {
+        final double paneWidth = scrollPane.getWidth();
+        final double paneHeight = scrollPane.getHeight();
+
+        final double contentWidth = terrain.getWidth();
+        final double contentHeight = terrain.getHeight();
+
+        scrollPane.setHvalue((x-paneWidth/2+width/2) / (contentWidth-paneWidth));
+        scrollPane.setVvalue((y-paneHeight/2+height/2) / (contentHeight-paneHeight));
+    }
+
     @Override
     public void start(Stage ostage) {
     }
@@ -475,8 +494,7 @@ public class MapWindow extends Application implements Networkable {
             case "ACTIVATE_FIGURE":
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
-                scrollPane.setHvalue(activePos.getX() / terrain.getWidth());
-                scrollPane.setVvalue(activePos.getY() / terrain.getHeight());
+                scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE);
                 break;
             case "CURRENT_TEAM_END_ROUND":
                 teams.get(Integer.parseInt(cmd[1])).endRound();
@@ -538,8 +556,9 @@ public class MapWindow extends Application implements Networkable {
                     Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
                     f.setPosition(position); // TODO alternative setter
                 }
-                scrollPane.setHvalue(position.getX() / terrain.getWidth());
-                scrollPane.setVvalue(position.getY() / terrain.getHeight());
+                if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
+                    scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE);
+                }
             case "REPLACE_BLOCK":
                 if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
                 terrain.replaceBlock(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),cmd[3].charAt(0));
@@ -748,7 +767,7 @@ public class MapWindow extends Application implements Networkable {
             newPos = e.getLastGoodPosition();
         }
         f.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
-        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY());
+        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
     }
 
     public Pane drawBackgroundImage() {
