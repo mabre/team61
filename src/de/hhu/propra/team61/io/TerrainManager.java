@@ -1,5 +1,7 @@
 package de.hhu.propra.team61.io;
 
+import de.hhu.propra.team61.io.json.JSONObject;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,15 +35,15 @@ public class TerrainManager {
      * @return an ArrayList containing the board ([row][column])
      * How a valid board looks like is documented in BoardLegend
      */
-    public static ArrayList<ArrayList<Character>> load(String filename) throws FileNotFoundException {
-        ArrayList<ArrayList<Character>> rows = new ArrayList<>();
+    public static /*ArrayList<ArrayList<Character>>*/ JSONObject load(String filename) throws FileNotFoundException {
+        /*ArrayList<ArrayList<Character>>*/JSONObject rows = new /*ArrayList<>()*/ JSONObject();
         String dir = LEVEL_DIR;
         if(filename.equals(SAVE_LEVEL_FILE)) dir = "";
 
         try(BufferedReader br = new BufferedReader(new FileReader(dir + filename))) {
             String line;
             while( (line = br.readLine()) != null) {
-                ArrayList<Character> row = new ArrayList<>();
+                /*ArrayList<Character>*/ JSONObject row = new /*ArrayList<>()*/ JSONObject();
                 for(int i=0; i<line.length(); i++) {
                     row.add(line.charAt(i));
                 }
@@ -56,22 +58,22 @@ public class TerrainManager {
     }
 
     /**
-     * @param levelnumber the index of the level in the ArrayList returned by {@link #getAvailableTerrains() getAvailableTerrains}
-     * @return an ArrayList containing the board ([row][column])
+     * @param levelnumber the index of the level in the JSONObject  returned by {@link #getAvailableTerrains() getAvailableTerrains}
+     * @return an JSONObject containing the board ([row][column])
      */
-    public static ArrayList<ArrayList<Character>> load(int levelnumber) throws FileNotFoundException {
+    public static JSONObject/*ArrayList<ArrayList<Character>>*/ load(int levelnumber) throws FileNotFoundException {
         return load(getAvailableTerrains().get(levelnumber));
     }
 
     /**
      * @param levelstring string representation of a level
-     * @return 2-D ArrayList representing the given level
+     * @return 2-D JSONObject representing the given level
      */
-    public static ArrayList<ArrayList<Character>> loadFromString(String levelstring) {
-        ArrayList<ArrayList<Character>> level = new ArrayList<>();
-        ArrayList<String> rows = new ArrayList<>(Arrays.asList(levelstring.split("0xA")));
+    public static JSONObject /*ArrayList<ArrayList<Character>>*/ loadFromString(String levelstring) {
+        /*ArrayList<ArrayList<Character>>*/JSONObject level = new /*ArrayList<>()*/ JSONObject();
+        /*ArrayList<String>*/ JSONObject rows = new /*ArrayList<>*/ JSONObject(/*Arrays.asList*/JSONObject(levelstring.split("0xA")));
         for(String row: rows) {
-            ArrayList<Character> fields = new ArrayList<>();
+            /*ArrayList<Character>*/JSONObject fields = new /*ArrayList<>()*/ JSONObject();
             for(int i=0; i<row.length(); i++) {
                 fields.add(row.charAt(i));
             }
@@ -83,9 +85,9 @@ public class TerrainManager {
     /**
      * @param level is saved as ordinary level file to SAVE_LEVEL_FILE
      */
-    public static void save(ArrayList<ArrayList<Character>> level) {
+    public static void save(/*ArrayList<ArrayList<Character>>*/JSONObject level) {
         String levelString = "";
-        for(ArrayList<Character> row : level) {
+        for(JSONObject/*ArrayList<Character>*/ row : level) {
             for(Character field : row) {
                 levelString += field;
             }
@@ -108,10 +110,10 @@ public class TerrainManager {
      * @param level 2-D list representing a level
      * @return a string without newline representing the level, literal "0xA" separates lines
      */
-    public static String toString(ArrayList<ArrayList<Character>> level) {
+    public static String toString(/*ArrayList<ArrayList<Character>>*/JSONObject level) {
         StringBuilder levelString = new StringBuilder();
 
-        for(ArrayList<Character> row : level) {
+        for(/*ArrayList<Character>*/JSONObject row : level) {
             row.forEach(levelString::append);
             levelString.append("0xA");
         }
@@ -120,9 +122,9 @@ public class TerrainManager {
     }
 
     /**
-     * @return an ArrayList containing the board saved in SAVE_LEVEL_FILE, or the first level when the file does not exist
+     * @return an JSONObject containing the board saved in SAVE_LEVEL_FILE, or the first level when the file does not exist
      */
-    public static ArrayList<ArrayList<Character>> loadSavedLevel() {
+    public static /*ArrayList<ArrayList<Character>>*/JSONObject loadSavedLevel() {
         try {
             return load(SAVE_LEVEL_FILE);
         } catch (FileNotFoundException e) {
@@ -131,7 +133,7 @@ public class TerrainManager {
             } catch (FileNotFoundException e1) {
                 System.out.println("No levels?");
                 e1.printStackTrace();
-                return new ArrayList<>();
+                return new /*ArrayList<>()*/JSONObject();
             }
         }
     }
@@ -139,7 +141,7 @@ public class TerrainManager {
     // TODO move to unit tests
     public static void main(String[] args) {
         try {
-            ArrayList<ArrayList<Character>> t = TerrainManager.load(0);
+            /*ArrayList<ArrayList<Character>>*/JSONObject t = TerrainManager.load(0);
             System.out.println(toString(t));
         } catch (FileNotFoundException e) {
             e.printStackTrace();

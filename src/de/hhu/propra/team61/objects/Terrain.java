@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -24,7 +25,7 @@ public class Terrain extends GridPane {
     /**
      * @param terrain 2-D-ArrayList containing the terrain to be displayed
      */
-    public Terrain(ArrayList<ArrayList<Character>> terrain) {
+    public Terrain(JSONObject terrain) {
         load(terrain);
         figures = new ArrayList<>();
     }
