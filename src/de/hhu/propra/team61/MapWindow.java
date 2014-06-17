@@ -236,6 +236,8 @@ public class MapWindow extends Application implements Networkable {
         sceneController.setGameScene(drawing);
         sceneController.switchToMapwindow();
 
+        terrain.rewind();
+
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
                 try {
@@ -389,8 +391,9 @@ public class MapWindow extends Application implements Networkable {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
-
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
+
+        terrain.rewind();
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
         if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
@@ -465,7 +468,7 @@ public class MapWindow extends Application implements Networkable {
         final double contentHeight = terrain.getHeight();
 
         scrollPane.setHvalue((x-paneWidth/2+width/2) / (contentWidth-paneWidth));
-        scrollPane.setVvalue((y-paneHeight/2+height/2) / (contentHeight-paneHeight));
+        scrollPane.setVvalue((y - paneHeight / 2 + height / 2) / (contentHeight - paneHeight));
     }
 
     @Override
@@ -631,7 +634,7 @@ public class MapWindow extends Application implements Networkable {
             }
             return;
         } else if(keyCode.startsWith("CHEAT ")) {
-            executeCheat(extractPart(keyCode, "CHEAT "));
+            executeCheat(extractPart(keyCode, "CHEAT ").split(" "));
             return;
         }
 
@@ -730,8 +733,8 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
-    private void executeCheat(String cmd) {
-        switch (cmd) {
+    private void executeCheat(String[] cmd) {
+        switch (cmd[0]) {
             case "1fig": // kills every figure except the first figure of the first team and prevents game over window from being shown
                 for (int i = 1; i < teams.size(); i++) {
                     teams.get(i).suddenDeath();
@@ -745,6 +748,10 @@ public class MapWindow extends Application implements Networkable {
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
+                break;
+            case "rewind": // sets wind to given value
+                terrain.setWind(Double.parseDouble(cmd[1]));
+                System.out.println("It’s windy.");
                 break;
             default:
                 System.out.println("No cheating, please!");

@@ -193,8 +193,8 @@ public class Figure extends StackPane {
         hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
         //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
         Platform.runLater(() -> {
-            figureImage.setTranslateX(position.getX());
-            figureImage.setTranslateY(position.getY());
+            figureImage.setTranslateX(Math.round(position.getX()));
+            figureImage.setTranslateY(Math.round(position.getY()));
             nameTag.setTranslateX(position.getX() + offset - nameTag.getWidth() / 2);
             nameTag.setTranslateY(position.getY() - NORMED_OBJECT_SIZE * 2);
             hpLabel.setTranslateX(position.getX() + offset - hpLabel.getWidth() / 2);
