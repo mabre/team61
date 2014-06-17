@@ -45,6 +45,8 @@ public class MapWindow extends Application implements Networkable {
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
+    private final static int ROUNDS_TILL_SUDDEN_DEATH = 0; // TODO IMPORTANT sensible values / pref?
+    private final static int SUDDEN_DEATH_ROUNDS = 20;
 
     //JavaFX related variables
     private Scene drawing;
@@ -80,6 +82,8 @@ public class MapWindow extends Application implements Networkable {
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
+
+    private Figure boss = null;
 
     private String map; // TODO do we need this?
     private Chat chat;
@@ -259,6 +263,8 @@ public class MapWindow extends Application implements Networkable {
                                     //Get series of commands to send to the clients from
                                     //Collisionhandling done by the weapon causing this exception
                                     ArrayList<String> commandList = flyingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
+                                    fieldPane.getChildren().remove(flyingProjectile);
+                                    flyingProjectile = null;
                                     for(String command : commandList){ server.sendCommand(command); } //Send commands+
                                     endTurn();
                                 });
@@ -389,8 +395,14 @@ public class MapWindow extends Application implements Networkable {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
-
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
+
+        if(turnCount % teams.size() >= ROUNDS_TILL_SUDDEN_DEATH && boss == null) {
+            System.out.println("sudden death is coming ..."); // TODO IMPORTANT network
+            spawnBoss();
+        } else if(boss != null) {
+            moveBoss();
+        }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
         if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
@@ -431,6 +443,19 @@ public class MapWindow extends Application implements Networkable {
         String teamLabelText = "Turn: " + turnCount + " It’s Team " + (currentTeam+1) + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
+    }
+
+    private void spawnBoss() {
+        String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar");
+        boss = new Figure(bossName, 1000000, 1000000, false, false, false, "boss.png"); // TODO short-hand constructor
+        boss.setPosition(new Point2D(0, 0));
+        fieldPane.getChildren().add(boss);
+    }
+
+    private void moveBoss() {
+        boss.setPosition(boss.getPosition().add(terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS, 0));
+        terrain.destroyColumn(boss.getPosition());
+        terrain.load(terrain.toArrayList());
     }
 
     /**
@@ -579,8 +604,10 @@ public class MapWindow extends Application implements Networkable {
                 if(server==null) flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
                 break;
             case "REMOVE_FLYING_PROJECTILE":
-                fieldPane.getChildren().remove(flyingProjectile);
-                flyingProjectile = null;
+                if(flyingProjectile != null) {
+                    fieldPane.getChildren().remove(flyingProjectile);
+                    flyingProjectile = null;
+                }
                 break;
             case "SET_CURRENT_TEAM":
                 teams.get(currentTeam).getCurrentFigure().setActive(false);

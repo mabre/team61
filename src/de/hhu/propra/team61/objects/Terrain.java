@@ -321,7 +321,11 @@ public class Terrain extends GridPane {
     }
 
     public void replaceBlock(int blockX, int blockY, char replacement){
-        terrain.set(blockY,terrain.get(blockY)).set(blockX,replacement);
+        try {
+            terrain.set(blockY, terrain.get(blockY)).set(blockX, replacement); // TODO auto-reload?
+        } catch (Exception e) {
+            System.out.println("");
+        }
     }
 
     /**
@@ -399,5 +403,32 @@ public class Terrain extends GridPane {
         commands.add("RELOAD_TERRAIN"); //Tell Clients to update Map for visibility;
 
         return commands;
+    }
+
+    public void destroyColumn(Point2D position) {
+        int column = (int)(position.getX() / BLOCK_SIZE);
+        if(column > getTerrainWidth()) column = getTerrainWidth();
+
+        for(int row = 0; row < terrain.size(); row++) {
+            for(int col = 0; col <= column; col ++) {
+                replaceBlock(col, row, 'L'); // TODO special terrain type?
+            }
+        }
+
+        Rectangle2D destroyedTerrain = new Rectangle2D(0,0,column*BLOCK_SIZE,terrain.size()*BLOCK_SIZE);
+
+        for(Figure figure: figures) {
+            if(figure.getHitRegion().intersects(destroyedTerrain)) {
+                figure.setHealth(0);
+            }
+        }
+    }
+
+    /**
+     * @return the width of the terrain in px
+     */
+    public int getTerrainWidth() {
+        if(terrain == null || terrain.size() == 0) return 0;
+        return terrain.get(0).size() * BLOCK_SIZE;
     }
 }

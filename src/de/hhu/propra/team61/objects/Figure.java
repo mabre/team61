@@ -33,6 +33,7 @@ public class Figure extends StackPane {
     private String name;
     private int health;
     private int armor;
+    private String image = "pin.png";
 
     /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
     private Point2D position = new Point2D(0,0);
@@ -55,8 +56,15 @@ public class Figure extends StackPane {
     private Label nameTag;
     private Label hpLabel;
 
-    // In and Out
-    public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+    /**
+     * @param name
+     * @param hp
+     * @param armor
+     * @param isBurning
+     * @param isPoisoned
+     * @param isStuck
+     */
+    public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck, String image){
         this.name   = name;
         this.health = hp;
         this.armor  = armor;
@@ -66,6 +74,7 @@ public class Figure extends StackPane {
         this.isStuck    = isStuck;
 
         figureImage = new ImageView();
+        this.image = image;
 
         initialize();
     }
@@ -115,8 +124,8 @@ public class Figure extends StackPane {
 
         hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        Image image = new Image("file:resources/figures/pin.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
-        figureImage.setImage(image);
+        Image img = new Image("file:resources/figures/" + image, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+        figureImage.setImage(img);
         getChildren().add(figureImage);
 
         nameTag = new Label(name);
