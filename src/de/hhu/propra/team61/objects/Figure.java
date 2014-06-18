@@ -85,7 +85,7 @@ public class Figure extends StackPane {
         figureImage.setTranslateX(position.getX());
         figureImage.setTranslateY(position.getY());
 
-        this.name = input.getString("name");
+        this.name = input.getString("name"); // TODO json.get wrapper which checks if property exists an can return default value
         this.health = input.getInt("health");
         this.armor  = input.getDouble("armor");
         this.digitated = input.getBoolean("digitated");
@@ -152,6 +152,7 @@ public class Figure extends StackPane {
         output.put("digitated", digitated);
         output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
         output.put("maxYSpeedMultiplier", maxYSpeedMultiplier);
+        output.put("causedHpDamage", causedHpDamage);
         output.put("position.x", position.getX()); // TODO save as array
         output.put("position.y", position.getY());
 

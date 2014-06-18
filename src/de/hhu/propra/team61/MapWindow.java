@@ -45,6 +45,9 @@ public class MapWindow extends Application implements Networkable {
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
+    private final static int DIGITATION_MIN_HEALTH = 65;
+    private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
+    private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
 
     //JavaFX related variables
     private Scene drawing;
@@ -453,7 +456,7 @@ public class MapWindow extends Application implements Networkable {
     private void doDigitations() {
         for(Team team: teams) {
             for(Figure figure: team.getFigures()) {
-                if(figure.getHealth() >= 70 && figure.getCausedHpDamage() > 30) {
+                if(figure.getHealth() >= DIGITATION_MIN_HEALTH && figure.getCausedHpDamage() >= DIGITATION_MIN_CAUSED_DAMAGE) {
                     figure.digitate();
                     server.sendCommand("DIGITATE " + getFigureId(figure));
                 }
@@ -464,7 +467,7 @@ public class MapWindow extends Application implements Networkable {
     private void undoDigitations() {
         for(Team team: teams) {
             for(Figure figure: team.getFigures()) {
-                if(figure.getHealth() < 30) {
+                if(figure.getHealth() < DEDIGITATION_HEALTH_THRESHOLD) {
                     figure.dedigitate();
                     server.sendCommand("DEDIGITATE " + getFigureId(figure));
                 }
