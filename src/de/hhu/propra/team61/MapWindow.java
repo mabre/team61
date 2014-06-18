@@ -2,6 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.Chat;
 import de.hhu.propra.team61.gui.GameOverWindow;
+import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
