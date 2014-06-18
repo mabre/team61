@@ -29,7 +29,7 @@ public class Team extends StackPane {
         this.color = color;
         figures = new ArrayList<>();
         for (Point2D sp : spawnPoints) {
-            Figure f = new Figure("Max"+(int)(Math.random()*100), 100, 100, false, false, false); // TODO @Kegny create sensible default constructor
+            Figure f = new Figure("Max"+(int)(Math.random()*100), 100, 0, false, false, false); // TODO @Kegny create sensible default constructor
             f.setColor(this.color);
             figures.add(f);
             f.setPosition(sp);

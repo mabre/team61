@@ -32,7 +32,6 @@ public class Figure extends StackPane {
 
     private String name;
     private int health;
-    private int armor;
 
     /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
     private Point2D position = new Point2D(0,0);
@@ -55,8 +54,15 @@ public class Figure extends StackPane {
     private Label nameTag;
     private Label hpLabel;
 
+    private String type="penguin"; // TODO IMPORTANT better done on other branch?
+    // properties for digitation
+    private boolean digitated = false;
+    private int maxYSpeedMultiplier = 1;
+    private int jumpDuringFallThreshold = 0;
+    private double armor = 0;
+
     // In and Out
-    public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+    public Figure(String name, int hp, double armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
         this.name   = name;
         this.health = hp;
         this.armor  = armor;
@@ -78,7 +84,7 @@ public class Figure extends StackPane {
 
         this.name = input.getString("name");
         this.health = input.getInt("health");
-        this.armor  = input.getInt("armor");
+        this.armor  = input.getDouble("armor");
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -97,7 +103,10 @@ public class Figure extends StackPane {
 
         this.name = name;
         this.health = input.getInt("health");
-        this.armor  = input.getInt("armor");
+        this.armor  = input.getDouble("armor");
+        this.digitated = input.getBoolean("digitated");
+        this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
+        this.maxYSpeedMultiplier = input.getInt("maxYSpeedMultiplier");
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -120,7 +129,7 @@ public class Figure extends StackPane {
         getChildren().add(figureImage);
 
         nameTag = new Label(name);
-        hpLabel = new Label(health+"");
+        hpLabel = new Label(digitated ? health+"+" : health+"");
         getChildren().add(nameTag);
         getChildren().add(hpLabel);
 
@@ -132,6 +141,9 @@ public class Figure extends StackPane {
         output.put("name", name);
         output.put("health", health);
         output.put("armor", armor);
+        output.put("digitated", digitated);
+        output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
+        output.put("maxYSpeedMultiplier", maxYSpeedMultiplier);
         output.put("position.x", position.getX()); // TODO save as array
         output.put("position.y", position.getY());
 
@@ -149,8 +161,8 @@ public class Figure extends StackPane {
     public String getName(){return name;}
     public void setName(String name){this.name = name;}
 
-    public int getArmor() {return armor;}
-    public void setArmor(int armor) {this.armor = armor;}
+    public double getArmor() {return armor;}
+//    public void setArmor(double armor) {this.armor = armor;}
 
     public boolean getIsBurning() {return isBurning;}
     public void setIsBurning(boolean isBurning){this.isBurning = isBurning;}
@@ -230,8 +242,13 @@ public class Figure extends StackPane {
         return facingRight;
     }
 
+    /**
+     * lets the figure suffer damage
+     * @param damage the damage (armor will reduce the damage)
+     * @throws DeathException when the figure is dead after suffering the given damage
+     */
     public void sufferDamage(int damage) throws DeathException {
-        health -= damage;
+        health -= damage - (armor*damage);
         if(health <= 0) {
             health = 0;
             Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
@@ -240,7 +257,7 @@ public class Figure extends StackPane {
             throw new DeathException(this);
         }
         Platform.runLater(() -> hpLabel.setText(health + ""));
-        System.out.println(name + " got damage " + damage + ", health at " + health);
+        System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health);
     }
 
     public void setHealth(int hp) {
@@ -250,6 +267,7 @@ public class Figure extends StackPane {
         } catch(DeathException e) {
             // cannot happen here
         }
+        System.out.println(name + "'s health at " +hp);
     }
 
     public int getHealth() {
@@ -273,7 +291,7 @@ public class Figure extends StackPane {
      * resets the velocity vector to 0 and - depending on the speed - the figure suffers fall damage
      */
     public void resetVelocity() throws DeathException {
-        int fallDamage = (int)(velocity.magnitude() - FALL_DAMAGE_THRESHOLD);
+        int fallDamage = (int)(velocity.magnitude() - FALL_DAMAGE_THRESHOLD*maxYSpeedMultiplier);
 
         if(!velocity.equals(MapWindow.GRAVITY.multiply(MASS))) { // do not print when "default gravity" is applied when figures are standing on ground
             System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
@@ -296,11 +314,15 @@ public class Figure extends StackPane {
     public void jump() {
         if(velocity.getY() > 0) {
             System.out.println("falling, jumping not possible");
-            return;
+            if(velocity.getY() > jumpDuringFallThreshold) {
+                return;
+            } else {
+                System.out.println("oops, digitated, you can!");
+            }
         }
-        if(maxYSpeed < MAX_Y_SPEED) { // figure cannot accelerate further when y-speed was greater than MAX_Y_SPEED during the current jump
+        if(maxYSpeed < MAX_Y_SPEED*maxYSpeedMultiplier) { // figure cannot accelerate further when y-speed was greater than MAX_Y_SPEED during the current jump
             addVelocity(new Point2D(0, -JUMP_SPEED));
-            if(maxYSpeed > MAX_Y_SPEED) { // if figure is now faster than MAX_Y_SPEED, slow it down
+            if(maxYSpeed > MAX_Y_SPEED*maxYSpeedMultiplier) { // if figure is now faster than MAX_Y_SPEED, slow it down
                 velocity = new Point2D(velocity.getX(), -MAX_Y_SPEED);
                 System.out.println("jump speed limit reached (cut): " + maxYSpeed);
             }
@@ -311,6 +333,19 @@ public class Figure extends StackPane {
 
     public int getMass() {
         return MASS;
+    }
+
+    public void digitate() {
+        switch(type) {
+            case "penguin":
+                maxYSpeedMultiplier = 2;
+                jumpDuringFallThreshold = MAX_Y_SPEED;
+//                break; // TODO IMPORTANT
+            case "unicorn":
+                armor = .5;
+        }
+        digitated = true;
+        Platform.runLater(() -> hpLabel.setText(health+"+"));
     }
 
     //For testing purposes only

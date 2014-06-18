@@ -389,7 +389,6 @@ public class MapWindow extends Application implements Networkable {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
-
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -745,6 +744,14 @@ public class MapWindow extends Application implements Networkable {
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
+                break;
+            case "forcedig": // forces digitation of all figures
+                for(Team team: teams) {
+                    for (Figure figure : team.getFigures()) {
+                        figure.digitate();
+                    }
+                }
+                System.out.println("Mass-Digitation.");
                 break;
             default:
                 System.out.println("No cheating, please!");
