@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.animation.SpriteAnimation;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
@@ -352,7 +353,18 @@ public class Figure extends StackPane {
                 armor = .5;
         }
         digitated = true;
-        Platform.runLater(() -> hpLabel.setText(health + "+"));
+
+        Platform.runLater(() -> {
+            hpLabel.setText(health + "+");
+
+            ImageView digitationAnimationImage = new ImageView("file:resources/animations/digitation.png");
+            digitationAnimationImage.setTranslateX(figureImage.getTranslateX() - NORMED_OBJECT_SIZE/2);
+            digitationAnimationImage.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE/2);
+            SpriteAnimation digitationAnimation = new SpriteAnimation(digitationAnimationImage, 1000, 6, 1);
+            digitationAnimation.setOnFinished((e) -> getChildren().removeAll(digitationAnimationImage));
+            digitationAnimation.play();
+            getChildren().add(digitationAnimationImage);
+        });
     }
 
     public void dedigitate() {
