@@ -263,7 +263,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("teams", teamsArray);
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
-        output.put("terrain", TerrainManager.toString(terrain.toArrayList()));
+        output.put("terrain", terrain);
         return output;
     }
 

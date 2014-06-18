@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -8,6 +9,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 
+import javax.sound.sampled.AudioSystem;
 import java.util.ArrayList;
 
 /**
@@ -30,18 +32,21 @@ public class Terrain extends GridPane {
         figures = new ArrayList<>();
     }
 
-    public void load(ArrayList<ArrayList<Character>> terrain) {
+//TODO    private void fromArray(JSONObject String?){}
+
+    public void load(JSONObject terrainObject) {
         getChildren().clear();
+        JSONArray terrainAsJSON = new JSONArray(terrainObject.getJSONArray("terrain"));
+        //ToDo transformer schreiben
+        for (int i=0;i<terrainAsJSON.length();i++){
+            for(int j=0; j<terrainAsJSON.length();j++){
+               this.terrain.get(i).get(j) = terrainAsJSON.getString(i).charAt(j);
+            }
 
-        this.terrain = terrain;
-
-        spawnPoints = new ArrayList<Point2D>();
-
-        //Draw Terrain
+        }
+        spawnPoints = new ArrayList</*Point2D*/>();
         setAlignment(Pos.TOP_LEFT);
-
         String img;
-
         for(int i=0; i < terrain.size(); i++){
             for(int j=0; j < terrain.get(i).size(); j++){
                 char terraintype = terrain.get(i).get(j);

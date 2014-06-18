@@ -36,25 +36,9 @@ public class TerrainManager {
      * How a valid board looks like is documented in BoardLegend
      */
     public static /*ArrayList<ArrayList<Character>>*/ JSONObject load(String filename) throws FileNotFoundException {
-        /*ArrayList<ArrayList<Character>>*/JSONObject rows = new /*ArrayList<>()*/ JSONObject();
-        String dir = LEVEL_DIR;
-        if(filename.equals(SAVE_LEVEL_FILE)) dir = "";
-
-        try(BufferedReader br = new BufferedReader(new FileReader(dir + filename))) {
-            String line;
-            while( (line = br.readLine()) != null) {
-                /*ArrayList<Character>*/ JSONObject row = new /*ArrayList<>()*/ JSONObject();
-                for(int i=0; i<line.length(); i++) {
-                    row.add(line.charAt(i));
-                }
-                rows.add(row);
-            }
-        // TODO do something sensible herewurm
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-
-        return rows;
+        //String dir = LEVEL_DIR;
+        //if(filename.equals(SAVE_LEVEL_FILE)) dir = ""; //TODO Still necessary?
+        return Json.getFromFile(LEVEL_DIR);
     }
 
     /**
@@ -71,39 +55,7 @@ public class TerrainManager {
      */
     public static JSONObject /*ArrayList<ArrayList<Character>>*/ loadFromString(String levelstring) {
         /*ArrayList<ArrayList<Character>>*/JSONObject level = new /*ArrayList<>()*/ JSONObject();
-        /*ArrayList<String>*/ JSONObject rows = new /*ArrayList<>*/ JSONObject(/*Arrays.asList*/JSONObject(levelstring.split("0xA")));
-        for(String row: rows) {
-            /*ArrayList<Character>*/JSONObject fields = new /*ArrayList<>()*/ JSONObject();
-            for(int i=0; i<row.length(); i++) {
-                fields.add(row.charAt(i));
-            }
-            level.add(fields);
-        }
         return level;
-    }
-
-    /**
-     * @param level is saved as ordinary level file to SAVE_LEVEL_FILE
-     */
-    public static void save(/*ArrayList<ArrayList<Character>>*/JSONObject level) {
-        String levelString = "";
-        for(JSONObject/*ArrayList<Character>*/ row : level) {
-            for(Character field : row) {
-                levelString += field;
-            }
-            levelString += "\n";
-        }
-        if(!levelString.equals("")) {
-            levelString = levelString.substring(0, levelString.length()-1);
-        }
-        try(PrintWriter writer = new PrintWriter(SAVE_LEVEL_FILE, "UTF-8")) {
-            writer.print(levelString);
-        // TODO do something sensible here
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -112,32 +64,8 @@ public class TerrainManager {
      */
     public static String toString(/*ArrayList<ArrayList<Character>>*/JSONObject level) {
         StringBuilder levelString = new StringBuilder();
-
-        for(/*ArrayList<Character>*/JSONObject row : level) {
-            row.forEach(levelString::append);
-            levelString.append("0xA");
-        }
-
         return levelString.toString().substring(0, levelString.length()-3); // remove final "0xA"
     }
-
-    /**
-     * @return an JSONObject containing the board saved in SAVE_LEVEL_FILE, or the first level when the file does not exist
-     */
-    public static /*ArrayList<ArrayList<Character>>*/JSONObject loadSavedLevel() {
-        try {
-            return load(SAVE_LEVEL_FILE);
-        } catch (FileNotFoundException e) {
-            try {
-                return load(0);
-            } catch (FileNotFoundException e1) {
-                System.out.println("No levels?");
-                e1.printStackTrace();
-                return new /*ArrayList<>()*/JSONObject();
-            }
-        }
-    }
-
     // TODO move to unit tests
     public static void main(String[] args) {
         try {
