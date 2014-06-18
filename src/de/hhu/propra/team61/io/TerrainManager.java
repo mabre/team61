@@ -38,7 +38,7 @@ public class TerrainManager {
     public static /*ArrayList<ArrayList<Character>>*/ JSONObject load(String filename) throws FileNotFoundException {
         //String dir = LEVEL_DIR;
         //if(filename.equals(SAVE_LEVEL_FILE)) dir = ""; //TODO Still necessary?
-        return Json.getFromFile(LEVEL_DIR);
+        return Json.getFromFile(LEVEL_DIR + filename);
     }
 
     /**
