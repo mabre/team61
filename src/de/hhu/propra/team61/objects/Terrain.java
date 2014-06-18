@@ -1,11 +1,14 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.animation.SpriteAnimation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 
@@ -411,16 +414,30 @@ public class Terrain extends GridPane {
 
         for(int row = 0; row < terrain.size(); row++) {
             for(int col = 0; col <= column; col ++) {
-                replaceBlock(col, row, 'L'); // TODO special terrain type?
+                replaceBlock(col, row, '@'); // TODO special terrain type?
             }
         }
 
-        Rectangle2D destroyedTerrain = new Rectangle2D(0,0,column*BLOCK_SIZE,terrain.size()*BLOCK_SIZE);
+        Rectangle2D destroyedTerrain = new Rectangle2D(0, 0, column*BLOCK_SIZE, terrain.size()*BLOCK_SIZE+BLOCK_SIZE);
 
         for(Figure figure: figures) {
             if(figure.getHitRegion().intersects(destroyedTerrain)) {
                 figure.setHealth(0);
             }
+        }
+
+        for(int i=0; i<=column; i++) {
+            ImageView riftImage = new ImageView("file:resources/animations/boss_rift.png");
+            riftImage.setTranslateX(i*BLOCK_SIZE);
+            SpriteAnimation riftAnimation = new SpriteAnimation(riftImage, 500, 10, 1);
+//          add(riftImage, 10, 0);
+            ((StackPane) getParent()).getChildren().add(riftImage); // TODO bad cast
+//            riftAnimation.setOnFinished((e) -> {
+//                ((StackPane) getParent()).getChildren().removeAll(riftImage);
+//            });
+            riftImage.setFitHeight(terrain.size()*BLOCK_SIZE);
+            riftAnimation.setDelay(new Duration((column-i)*50));
+            riftAnimation.play();
         }
     }
 

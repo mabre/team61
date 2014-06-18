@@ -446,7 +446,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void spawnBoss() {
-        String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar");
+        String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar"); // similarity to Vel’Koz and Kog’Maw is purely coincidental
         boss = new Figure(bossName, 1000000, 1000000, false, false, false, "boss.png"); // TODO short-hand constructor
         boss.setPosition(new Point2D(0, 0));
         fieldPane.getChildren().add(boss);
