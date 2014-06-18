@@ -36,12 +36,15 @@ public class Terrain extends GridPane {
 
     public void load(JSONObject terrainObject) {
         getChildren().clear();
-        JSONArray terrainAsJSON = new JSONArray(terrainObject.getJSONArray("terrain"));
+        JSONArray terrainAsJSON = terrainObject.getJSONArray("terrain");
+        this.terrain = new ArrayList<ArrayList<Character>>(); // Initialize terrain
         //ToDo transformer schreiben
         for (int i=0;i<terrainAsJSON.length();i++){
+            this.terrain.add(new ArrayList<Character>()); // add "underarraylists" to terrain
             for(int j=0; j<terrainAsJSON.getString(0).length();j++){
-               this.terrain.get(i).set(j,terrainAsJSON.getString(i).charAt(j) );// = terrainAsJSON.getString(i).charAt(j);
+               this.terrain.get(i).add(j,terrainAsJSON.getString(i).charAt(j) );// = terrainAsJSON.getString(i).charAt(j);
             }
+
         }
         spawnPoints = new ArrayList</*Point2D*/>();
         setAlignment(Pos.TOP_LEFT);
