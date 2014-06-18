@@ -40,7 +40,7 @@ public class Figure extends StackPane {
     /** the maximal speed (absolute value) in y direction since last call of resetVelocity, used to limit jump speed */
     private double maxYSpeed = 0;
 
-    private boolean isBurning;
+    private boolean isParalyzed;
     private boolean isPoisoned;
     private boolean isStuck;
 
@@ -56,12 +56,12 @@ public class Figure extends StackPane {
     private Label hpLabel;
 
     // In and Out
-    public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+    public Figure(String name, int hp, int armor, boolean isParalyzed, boolean isPoisoned, boolean isStuck){
         this.name   = name;
         this.health = hp;
         this.armor  = armor;
 
-        this.isBurning  = isBurning;
+        this.isParalyzed = isParalyzed;
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
 
@@ -79,12 +79,11 @@ public class Figure extends StackPane {
         this.name = input.getString("name");
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
-        this.isBurning  = input.getBoolean("isBurning");
+        this.isParalyzed = input.getBoolean("isParalyzed");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
 
         System.out.println("FIGURE created from json");
-        printAllAttributes(this);
 
         initialize();
     }
@@ -98,12 +97,11 @@ public class Figure extends StackPane {
         this.name = name;
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
-        this.isBurning  = input.getBoolean("isBurning");
+        this.isParalyzed = input.getBoolean("isParalyzed");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
 
         System.out.println("FIGURE created from OptionsJson");
-        printAllAttributes(this);
 
         initialize();
     }
@@ -135,7 +133,7 @@ public class Figure extends StackPane {
         output.put("position.x", position.getX()); // TODO save as array
         output.put("position.y", position.getY());
 
-        output.put("isBurning", isBurning);
+        output.put("isParalyzed", isParalyzed);
         output.put("isPoisoned", isPoisoned);
         output.put("isStuck", isStuck);
         return output;
@@ -152,8 +150,8 @@ public class Figure extends StackPane {
     public int getArmor() {return armor;}
     public void setArmor(int armor) {this.armor = armor;}
 
-    public boolean getIsBurning() {return isBurning;}
-    public void setIsBurning(boolean isBurning){this.isBurning = isBurning;}
+    public boolean getIsParalyzed() {return isParalyzed;}
+    public void setIsParalyzed(boolean isParalyzed){this.isParalyzed = isParalyzed;}
 
     public boolean getIsPoisoned() {return isPoisoned;}
     public void setIsPoisoned(boolean isPoisoned){this.isPoisoned = isPoisoned;}
@@ -311,18 +309,5 @@ public class Figure extends StackPane {
 
     public int getMass() {
         return MASS;
-    }
-
-    //For testing purposes only
-    private static void printAllAttributes(Figure testwurm){
-        System.out.println("Health  : " + testwurm.getHealth());
-        System.out.println("Armor   : " + testwurm.getArmor());
-        System.out.println("Name    : " + testwurm.getName());
-        System.out.println("Burning : " + testwurm.getIsBurning());
-        System.out.println("Poisoned: " + testwurm.getIsPoisoned());
-        System.out.println("Stuck   : " + testwurm.getIsStuck());
-
-        System.out.println("Position: " + testwurm.getPosition());
-        System.out.println();
     }
 }

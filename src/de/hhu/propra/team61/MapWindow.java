@@ -424,6 +424,8 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
+        //supplydrop(100); TODO
+
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.sendCommand("ACTIVATE_FIGURE " + currentTeam);

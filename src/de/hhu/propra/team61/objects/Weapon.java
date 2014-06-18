@@ -161,7 +161,7 @@ public abstract class Weapon extends Item {
                         // TODO IMPORTANT
                     }
                     if(poisons){ commandList.add("CONDITION" + " " + "POISON" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
-                    if(ignites){ commandList.add("CONDITION" + " " + "FIRE" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
+                    if(ignites){ commandList.add("CONDITION" + " " + "PARALYZE" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
                     if(blocks) { commandList.add("CONDITION" + " " + "STUCK" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
                     commandList.add("SET_HP " + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth());
                 }

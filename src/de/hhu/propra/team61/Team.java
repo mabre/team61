@@ -100,9 +100,10 @@ public class Team extends StackPane {
             }
             currentFigure++;
             if (currentFigure == figures.size()) {
-                currentFigure = 0;
+                currentFigure = 0; // loop
             }
             i++;
+            if (figures.get(currentFigure).getIsParalyzed() && getNumberOfLivingFigures() > 1){currentFigure++; i++;} //Skip paralyzed figures IF not last man standing
         }
         while (figures.get(currentFigure).getHealth() == 0);
     }
