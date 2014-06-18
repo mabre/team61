@@ -42,7 +42,7 @@ public class Terrain extends GridPane {
         for (int i=0;i<terrainAsJSON.length();i++){
             this.terrain.add(new ArrayList<Character>()); // add "underarraylists" to terrain
             for(int j=0; j<terrainAsJSON.getString(0).length();j++){
-               this.terrain.get(i).add(j,terrainAsJSON.getString(i).charAt(j) );// = terrainAsJSON.getString(i).charAt(j);
+               this.terrain.get(i).set(j,terrainAsJSON.getString(i).charAt(j));
             }
 
         }
