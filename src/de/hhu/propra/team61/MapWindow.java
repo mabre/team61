@@ -386,6 +386,8 @@ public class MapWindow extends Application implements Networkable {
 
         //ToDo Wait until no objectmovements
 
+        teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
+
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
@@ -423,6 +425,12 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
+        if(turnCount == teams.size() * teams.get(0).getFigures().size() * 2) {
+            doDigitations();
+        } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
+            undoDigitations();
+        }
+
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
@@ -430,6 +438,38 @@ public class MapWindow extends Application implements Networkable {
         String teamLabelText = "Turn: " + turnCount + " It’s Team " + (currentTeam+1) + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
+    }
+
+    private int collectRecentlyCausedDamage() {
+        int recentlyCausedDamage = 0;
+        for(Team team: teams) {
+            for(Figure figure: team.getFigures()) {
+                recentlyCausedDamage += figure.popRecentlySufferedDamage();
+            }
+        }
+        return recentlyCausedDamage;
+    }
+
+    private void doDigitations() {
+        for(Team team: teams) {
+            for(Figure figure: team.getFigures()) {
+                if(figure.getHealth() >= 70 && figure.getCausedHpDamage() > 30) {
+                    figure.digitate();
+                    server.sendCommand("DIGITATE " + getFigureId(figure));
+                }
+            }
+        }
+    }
+
+    private void undoDigitations() {
+        for(Team team: teams) {
+            for(Figure figure: team.getFigures()) {
+                if(figure.getHealth() < 30) {
+                    figure.dedigitate();
+                    server.sendCommand("DEDIGITATE " + getFigureId(figure));
+                }
+            }
+        }
     }
 
     /**
@@ -549,6 +589,16 @@ public class MapWindow extends Application implements Networkable {
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
+            case "DEDIGITATE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).dedigitate();
+                }
+                break;
+            case "DIGITATE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).digitate();
+                }
+                break;
             case "FIGURE_SET_POSITION":
                 Point2D position = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
                 if(server == null) { // server already applied change to prevent timing issue
@@ -558,6 +608,7 @@ public class MapWindow extends Application implements Networkable {
                 if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
                     scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE);
                 }
+                break;
             case "REPLACE_BLOCK":
                 if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
                 terrain.replaceBlock(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),cmd[3].charAt(0));
@@ -744,6 +795,14 @@ public class MapWindow extends Application implements Networkable {
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
+                break;
+            case "dedigitate": // calls undoDigitations() method
+                undoDigitations();
+                System.out.println("Returning to Baby I");
+                break;
+            case "digitate": // calls doDigitations() method
+                doDigitations();
+                System.out.println("Digitation.");
                 break;
             case "forcedig": // forces digitation of all figures
                 for(Team team: teams) {

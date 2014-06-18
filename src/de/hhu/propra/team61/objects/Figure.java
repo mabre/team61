@@ -60,6 +60,8 @@ public class Figure extends StackPane {
     private int maxYSpeedMultiplier = 1;
     private int jumpDuringFallThreshold = 0;
     private double armor = 0;
+    private int causedHpDamage = 0;
+    private int recentlySufferedDamage = 0;
 
     // In and Out
     public Figure(String name, int hp, double armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
@@ -85,6 +87,10 @@ public class Figure extends StackPane {
         this.name = input.getString("name");
         this.health = input.getInt("health");
         this.armor  = input.getDouble("armor");
+        this.digitated = input.getBoolean("digitated");
+        this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
+        this.maxYSpeedMultiplier = input.getInt("maxYSpeedMultiplier");
+        this.causedHpDamage = input.getInt("causedHpDamage");
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -101,12 +107,13 @@ public class Figure extends StackPane {
         figureImage.setTranslateX(position.getX());
         figureImage.setTranslateY(position.getY());
 
-        this.name = name;
+        this.name = name; // TODO code duplication
         this.health = input.getInt("health");
         this.armor  = input.getDouble("armor");
         this.digitated = input.getBoolean("digitated");
         this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
         this.maxYSpeedMultiplier = input.getInt("maxYSpeedMultiplier");
+        this.causedHpDamage = input.getInt("causedHpDamage");
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -256,7 +263,7 @@ public class Figure extends StackPane {
             setPosition(GRAVEYARD);
             throw new DeathException(this);
         }
-        Platform.runLater(() -> hpLabel.setText(health + ""));
+        Platform.runLater(() -> hpLabel.setText(health + (digitated ? "+" : "")));
         System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health);
     }
 
@@ -335,7 +342,7 @@ public class Figure extends StackPane {
         return MASS;
     }
 
-    public void digitate() {
+    public void digitate() { // similarity to digivolution is purely coincidental
         switch(type) {
             case "penguin":
                 maxYSpeedMultiplier = 2;
@@ -345,7 +352,34 @@ public class Figure extends StackPane {
                 armor = .5;
         }
         digitated = true;
-        Platform.runLater(() -> hpLabel.setText(health+"+"));
+        Platform.runLater(() -> hpLabel.setText(health + "+"));
+    }
+
+    public void dedigitate() {
+        maxYSpeedMultiplier = 1;
+        jumpDuringFallThreshold = 0;
+        armor = 0;
+        digitated = false;
+        Platform.runLater(() -> hpLabel.setText(health + ""));
+    }
+
+    public int getCausedHpDamage() {
+        return causedHpDamage;
+    }
+
+    public void addCausedHpDamage(int damage) {
+        causedHpDamage += damage;
+        System.out.println(name + " caused " + damage + " hp damage this round");
+    }
+
+    public void addRecentlySufferedDamage(int damage) {
+        recentlySufferedDamage += damage;
+    }
+
+    public int popRecentlySufferedDamage() {
+        int rsd = recentlySufferedDamage;
+        recentlySufferedDamage = 0;
+        return rsd;
     }
 
     //For testing purposes only
