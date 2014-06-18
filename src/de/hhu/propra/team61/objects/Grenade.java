@@ -1,49 +1,45 @@
 package de.hhu.propra.team61.objects;
 
-import de.hhu.propra.team61.io.json.JSONObject;
-import javafx.geometry.Point2D;
-import javafx.scene.image.Image;
+import de.hhu.propra.team61.Team;
+import javafx.geometry.Rectangle2D;
+
+import java.util.ArrayList;
 
 /**
- * Created by kevgny on 22.05.14.
+ * Created by kevin on 21.05.14.
  */
-public class Grenade extends Weapon { //ToDo rename to a more fitting one
-    public Grenade(String path, int damage, int munition){
-        super(damage, munition);
+public class Grenade extends Weapon {
+    private final static String  NAME           = "Grenade";
+    private final static String  DESCRIPTION    = "Another classic.";
 
-        imagePath = path;
-        Image image = new Image(imagePath, 16, 16, true, true); //ToDo Replace with an actual Weapon
-        setImage(image);
-    }
+    private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
+    private final static String  WEAPON_IMG     = "file:resources/weapons/temp2.png";
+    private final static String  DAMAGETYPE     = "Explosiondamage";
+    private final static int     DAMAGE         =  40;
+    private final static int     EXPLOSIONPOWER = 100;
+    private final static int     SHOCKWAVE      =   0;
+    private final static int     DELAY          =   5;  // ToDo make this variable
 
-    public Grenade(JSONObject json) {
-        super(json);
-    }
+    private final static boolean POISONS       = false; // toggle isPoisoned
+    private final static boolean IGNITES       = false; // toggle isBurning
+    private final static boolean BLOCKS        = false; // toggle isStuck
 
-    @Override
-    public Projectile shoot() throws NoMunitionException {
-        if(getTranslateY() < -100 || getTranslateX() < -100 ) {
-            throw new NullPointerException("weapon is not in use, is at " + getTranslateX() + " " + getTranslateY());
-        }
-        if(munition > 0) {
-            Image image = new Image("file:resources/weapons/temp0.png",4,4,true,true);
-            int offset = (int)(16-image.getHeight())/2;
-            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+offset, getTranslateY()+offset), new Point2D(getCrosshair().getTranslateX()+offset, getCrosshair().getTranslateY()+offset), 4, getDamage());
-            munition--;
-            System.out.println("munition left: " + munition);
-            resetAngle();
-            return shot;
-        } else {
-            throw new NoMunitionException();
-        }
+    private final static int     MASS          =   40;
+    private final static int     SPEED         =    8;
+    private final static boolean DRIFTS        = true;
+
+    //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
+    // ---------------------------------------------------------------------------------------------
+    public Grenade(int munition){
+        super(NAME,DESCRIPTION,munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,IGNITES,BLOCKS,MASS,DRIFTS,SPEED);
     }
 
     @Override
-    public JSONObject toJson() {
-        JSONObject json = super.toJson();
-        json.put("type", "Grenade");
-
-        return json;
+    /**
+     * This Function coordinates damage caused to Figures and Terrain.
+     * It returns a series of commands the server has to send to the clients
+     */
+    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea) { //ToDo modify this to make use of a fuse
+        return super.handleCollision(terrain, teams, impactArea);
     }
-
 }

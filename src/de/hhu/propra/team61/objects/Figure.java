@@ -1,6 +1,8 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.MapWindow;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -9,26 +11,48 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
 /**
- * Created by kevgny on 14.05.14.
+ * Created by kevin on 14.05.14.
  */
 
 public class Figure extends StackPane {
+    public static final int NORMED_OBJECT_SIZE = 16;
+
+    /** note that the actual speed is lower because gravity is subtracted before the figure actually jumps */
+    private static final int MASS = 1000;
+    public static final int WALK_SPEED = 5;
+    public static final int JUMP_SPEED = 18 + (int)(MapWindow.GRAVITY.getY() * MASS);
+    public static final int MAX_Y_SPEED = (int)(1.2*JUMP_SPEED);
+    private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
+    private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
+
     private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
     private int health;
     private int armor;
 
+    /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
+    private Point2D position = new Point2D(0,0);
+    private Point2D velocity = new Point2D(0,0);
+    /** the maximal speed (absolute value) in y direction since last call of resetVelocity, used to limit jump speed */
+    private double maxYSpeed = 0;
+
     private boolean isBurning;
     private boolean isPoisoned;
     private boolean isStuck;
 
+    private boolean isActive;
+    private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
+
     private Item selectedItem;
 
+    private Rectangle hitRegionDebug;
     private Rectangle2D hitRegion;
-    private ImageView imageView;
+    private ImageView figureImage;
+    private Label nameTag;
     private Label hpLabel;
 
     // In and Out
@@ -41,15 +65,16 @@ public class Figure extends StackPane {
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
 
-        imageView = new ImageView();
+        figureImage = new ImageView();
 
         initialize();
     }
 
     public Figure(JSONObject input){
-        imageView = new ImageView();
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
+        figureImage = new ImageView();
+        position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
+        figureImage.setTranslateX(position.getX());
+        figureImage.setTranslateY(position.getY());
 
         this.name = input.getString("name");
         this.health = input.getInt("health");
@@ -65,9 +90,10 @@ public class Figure extends StackPane {
     }
 
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
-        imageView = new ImageView();
-        imageView.setTranslateX(input.getDouble("position.x"));
-        imageView.setTranslateY(input.getDouble("position.y"));
+        figureImage = new ImageView();
+        position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
+        figureImage.setTranslateX(position.getX());
+        figureImage.setTranslateY(position.getY());
 
         this.name = name;
         this.health = input.getInt("health");
@@ -83,18 +109,22 @@ public class Figure extends StackPane {
     }
 
     private void initialize() {
+        selectedItem = null;
+
         setAlignment(Pos.TOP_LEFT);
 
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),16,16);
+        hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        Image image = new Image("file:resources/figures/pin.png", 16, 16, true, true);
-        imageView.setImage(image);
-        getChildren().add(imageView);
+        Image image = new Image("file:resources/figures/pin.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+        figureImage.setImage(image);
+        getChildren().add(figureImage);
 
-        selectedItem = null;
+        nameTag = new Label(name);
         hpLabel = new Label(health+"");
-        setPosition(getPosition()); // updates label position
+        getChildren().add(nameTag);
         getChildren().add(hpLabel);
+
+        setPosition(getPosition()); //Set Graphics to their place
     }
 
     public JSONObject toJson(){
@@ -102,16 +132,17 @@ public class Figure extends StackPane {
         output.put("name", name);
         output.put("health", health);
         output.put("armor", armor);
-        output.put("position.x", imageView.getTranslateX()); // TODO save as array
-        output.put("position.y", imageView.getTranslateY());
+        output.put("position.x", position.getX()); // TODO save as array
+        output.put("position.y", position.getY());
 
         output.put("isBurning", isBurning);
         output.put("isPoisoned", isPoisoned);
-        output.put("isStuck",isStuck);
+        output.put("isStuck", isStuck);
         return output;
     }
 
     public void setColor(Color color) {
+        nameTag.setTextFill(color);
         hpLabel.setTextFill(color);
     }
 
@@ -130,53 +161,95 @@ public class Figure extends StackPane {
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
 
-    // TODO rethink parameter, /8 is bad!
-    public void setPosition(Point2D position) {
-        imageView.setTranslateX(8 * position.getX());
-        imageView.setTranslateY(8 * position.getY());
-        hitRegion = new Rectangle2D(imageView.getTranslateX(),imageView.getTranslateY(),hitRegion.getWidth(),hitRegion.getHeight());
-        hpLabel.setTranslateX(imageView.getTranslateX());
-        hpLabel.setTranslateY(imageView.getTranslateY() - 15);
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+        if(isActive) {
+            // TODO move to css
+            nameTag.setStyle("-fx-border-color: rgba(255,0,0,.2); -fx-border-style: solid; -fx-border-width: 1px; -fx-border-radius: 5px;");
+        } else {
+            nameTag.setStyle("");
+        }
+    }
+
+    /**
+     * moves the figure to the given position, updated the hit region, position of the figure image and the hp label
+     * JavaFX parts are run with runLater, hence it is save to call this function from non-fx threads.
+     * @param newPosition the new position of the figure in px
+     */
+    public void setPosition(Point2D newPosition) {
+        if(health <= 0 && !newPosition.equals(GRAVEYARD)) { // workaround for a timing issue // TODO we have to do sth when a figure dies when it is its turn
+            System.out.println("WARNING: figure " + name + " is dead, hence cannot be moved");
+            position = GRAVEYARD;
+        }
+
+        int offset = NORMED_OBJECT_SIZE / 2;
+
+        position = new Point2D(newPosition.getX(), newPosition.getY());
+        hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
+        getChildren().removeAll(hitRegionDebug);
+        hitRegionDebug = new Rectangle(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
+        hitRegionDebug.setTranslateX(position.getX());
+        hitRegionDebug.setTranslateY(position.getY());
+        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
+        //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
+        Platform.runLater(() -> {
+            figureImage.setTranslateX(position.getX());
+            figureImage.setTranslateY(position.getY());
+            nameTag.setTranslateX(position.getX() + offset - nameTag.getWidth() / 2);
+            nameTag.setTranslateY(position.getY() - NORMED_OBJECT_SIZE * 2);
+            hpLabel.setTranslateX(position.getX() + offset - hpLabel.getWidth() / 2);
+            hpLabel.setTranslateY(position.getY() - NORMED_OBJECT_SIZE);
+
+            setSelectedItem(getSelectedItem()); // Update position of weapon
+        });
     }
 
     public Point2D getPosition() {
-        return new Point2D(imageView.getTranslateX()/8, imageView.getTranslateY()/8);
+        return new Point2D(position.getX(), position.getY());
     }
 
     public Item getSelectedItem(){
         return selectedItem;
     }
-    public void setSelectedItem(Weapon select){
+    public void setSelectedItem(Item select){
         if(selectedItem != null) {
             selectedItem.hide();
         }
         selectedItem = select;
         if(selectedItem != null) {
-            select.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY()));
-            selectedItem.angleDraw(facing_right);
+            select.setPosition(new Point2D(position.getX(), position.getY()));
+            selectedItem.angleDraw(facingRight);
         }
     }
 
-    public void setFacing_right(boolean facing_right) {
-        this.facing_right = facing_right;
+    public void setFacingRight(boolean facingRight) {
+        this.facingRight = facingRight;
+        figureImage.setScaleX(facingRight ? 1 : -1); // mirror image when not facing right
     }
-    public boolean getFacing_right(){return facing_right;}
+    public boolean getFacingRight(){
+        return facingRight;
+    }
 
-    public void sufferDamage(int damage) {
+    public void sufferDamage(int damage) throws DeathException {
         health -= damage;
         if(health <= 0) {
             health = 0;
-            Image image = new Image("file:resources/spawn.png", 8, 8, true, true); // TODO
-            imageView.setImage(image);
-            setPosition(new Point2D(-1000, -1000));
+            Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+            Platform.runLater(() -> figureImage.setImage(image));
+            setPosition(GRAVEYARD);
+            throw new DeathException(this);
         }
-        hpLabel.setText(health+"");
+        Platform.runLater(() -> hpLabel.setText(health + ""));
         System.out.println(name + " got damage " + damage + ", health at " + health);
     }
 
     public void setHealth(int hp) {
         this.health = hp;
-        sufferDamage(0); // redraws the label and validated new hp
+        try {
+            sufferDamage(0); // redraws the label and validated new hp
+        } catch(DeathException e) {
+            // cannot happen here
+        }
     }
 
     public int getHealth() {
@@ -187,9 +260,57 @@ public class Figure extends StackPane {
         return hitRegion;
     }
 
-    public Projectile shoot() throws NoMunitionException {
-       // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
-        return selectedItem.shoot();
+    public Projectile shoot(int power) throws NoMunitionException {
+        // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
+        return selectedItem.shoot(power);
+    }
+
+    public Point2D getVelocity() {
+        return velocity;
+    }
+
+    /**
+     * resets the velocity vector to 0 and - depending on the speed - the figure suffers fall damage
+     */
+    public void resetVelocity() throws DeathException {
+        int fallDamage = (int)(velocity.magnitude() - FALL_DAMAGE_THRESHOLD);
+
+        if(!velocity.equals(MapWindow.GRAVITY.multiply(MASS))) { // do not print when "default gravity" is applied when figures are standing on ground
+            System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
+        }
+        velocity = new Point2D(0,0);
+        maxYSpeed = 0;
+
+        if(fallDamage > 0) {
+            sufferDamage(fallDamage);
+        }
+    }
+
+    public void addVelocity(Point2D dV) { // TODO interface?
+        velocity =  velocity.add(dV);
+        if(maxYSpeed < Math.abs(velocity.getY())) {
+            maxYSpeed = Math.abs(velocity.getY());
+        }
+    }
+
+    public void jump() {
+        if(velocity.getY() > 0) {
+            System.out.println("falling, jumping not possible");
+            return;
+        }
+        if(maxYSpeed < MAX_Y_SPEED) { // figure cannot accelerate further when y-speed was greater than MAX_Y_SPEED during the current jump
+            addVelocity(new Point2D(0, -JUMP_SPEED));
+            if(maxYSpeed > MAX_Y_SPEED) { // if figure is now faster than MAX_Y_SPEED, slow it down
+                velocity = new Point2D(velocity.getX(), -MAX_Y_SPEED);
+                System.out.println("jump speed limit reached (cut): " + maxYSpeed);
+            }
+        } else {
+            System.out.println("jump speed limit reached (ignored): " + maxYSpeed);
+        }
+    }
+
+    public int getMass() {
+        return MASS;
     }
 
     //For testing purposes only

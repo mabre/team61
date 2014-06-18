@@ -18,8 +18,8 @@ public class Chat extends VBox {
 
     boolean unobtrusive = false;
 
-    private static final double OPACITY_UNOBTRUSIVE = .8;
-    private static final double OPACITY_UNOBTRUSIVE_HOVER = .3;
+    private static final double OPACITY_UNOBTRUSIVE = .4;
+    private static final double OPACITY_UNOBTRUSIVE_HOVER = .8;
 
     public Chat(Client client) {
         this.setId("chatBox");
@@ -77,7 +77,7 @@ public class Chat extends VBox {
         output.appendText(name + "ː " + msg + "\n");
         if(!isVisible()) {
             setVisible(true);
-            setOpacity(OPACITY_UNOBTRUSIVE_HOVER);
+            setOpacity(OPACITY_UNOBTRUSIVE);
         }
     }
 
@@ -100,7 +100,7 @@ public class Chat extends VBox {
                 "/kickteam <team number>\n" +
                 "    Removes the given team (sudden death)\n" +
                 "    Only a member of that team and the host are allowed to kick a team.\n" +
-                "/kick <new name>\n" +
+                "/rename <new name>\n" +
                 "    Changes your name\n" +
                 "/rename <old name> <new name>\n" +
                 "    Changes a name\n" +

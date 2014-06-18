@@ -24,6 +24,17 @@ public class JavaFxUtils {
     }
 
     /**
+     * @param str the string
+     * @return the string with the last character removed
+     */
+    public static String removeLastChar(String str) {
+        if (str != null && str.length() > 0) {
+            str = str.substring(0, str.length()-1);
+        }
+        return str;
+    }
+
+    /**
      * @param arr an array of strings
      * @param from array elements before from are not part of the result
      * @return a string containing the strings in the array with a space between them (reverses String.split(" "))
