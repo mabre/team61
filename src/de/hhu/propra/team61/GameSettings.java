@@ -2,29 +2,27 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.CustomGrid;
 import de.hhu.propra.team61.gui.SceneController;
+import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
-import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Server;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import java.io.File;
-import java.util.ArrayList;
 
-import static de.hhu.propra.team61.JavaFxUtils.toHex;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Jessypet on 21.05.14.
@@ -34,15 +32,13 @@ public class GameSettings extends Application {
 
     int numberOfTeams = 2;
     CustomGrid settingGrid = new CustomGrid();
-    ChoiceBox<String> team1 = new ChoiceBox<>();
-    ChoiceBox<String> team2 = new ChoiceBox<>();
-    ChoiceBox<String> team3 = new ChoiceBox<>();
-    ChoiceBox<String> team4 = new ChoiceBox<>();
-    ChoiceBox<String> style = new ChoiceBox<>();
-    HBox hboxplus = new HBox(5);
+    ArrayList<ChoiceBox<String>> teams = new ArrayList<>();
+    ChoiceBox<String> style;
+    HBox hboxPlus = new HBox(5);
     Button addTeamButton = new Button("+");
-
     SceneController sceneController = new SceneController();
+    Text map = new Text();
+    Text teamSize = new Text();
 
     Server server;
     Thread serverThread;
@@ -54,14 +50,15 @@ public class GameSettings extends Application {
     }
 
     public void doSettings() {
+        initializeArrayLists();
         settingGrid.setAlignment(Pos.TOP_LEFT);
         Text teamsText = new Text("Choose Teams:");
         teamsText.setFont(Font.font("Verdana", 18));
         settingGrid.add(teamsText, 0, 1);
-        settingGrid.add(team1, 0, 2);
-        settingGrid.add(team2, 0, 3);
-        hboxplus.getChildren().add(addTeamButton);
-        settingGrid.add(hboxplus, 0, 6);
+        settingGrid.add(teams.get(0), 0, 2);
+        settingGrid.add(teams.get(1), 0, 3);
+        hboxPlus.getChildren().add(addTeamButton);
+        settingGrid.add(hboxPlus, 0, 6);
         addTeamButton.setOnAction(e -> {
             numberOfTeams++;
             addTeam(numberOfTeams);
@@ -69,38 +66,62 @@ public class GameSettings extends Application {
         Text stylesText = new Text("Choose Game Style:");
         stylesText.setFont(Font.font("Verdana", 18));
         settingGrid.add(stylesText, 3, 1);
+        style = new ChoiceBox<>(FXCollections.observableArrayList(getStyles()));
+        List styles = style.getItems();
+        style.getSelectionModel().selectFirst();
         settingGrid.add(style, 3, 2);
-        getTeams();
-        getStyles();
-        Text sameColor = new Text();
-        settingGrid.add(sameColor, 0, 17, 3, 1);
+        settingGrid.add(map, 3, 3);
+        settingGrid.add(teamSize, 3, 4, 2, 1);
+        showStyleInformation(style.getValue());
+        style.valueProperty().addListener(new ChangeListener<String>() {
+            public void changed(ObservableValue ov, String value, String new_value) {
+                showStyleInformation(new_value);
+            }
+        });
+        Text error = new Text();
+        settingGrid.add(error, 0, 17, 5, 1);
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 16);
         cont.setOnAction(e -> {
-                boolean differentColors = true;
-                /*for (int i=0; i<numberOfTeams-1; i++) {
+                boolean differentColors = true;                     //Check if two players with same team or with same color
+                boolean differentTeams = true;
+                for (int i=0; i<numberOfTeams-1; i++) {
+                    for (int h=i+1; h<numberOfTeams; h++) {
+                        if (teams.get(i).getValue().equals(teams.get(h).getValue())) {
+                            differentTeams = false;
+                        }
+                    }
+                }
+                for (int i=0; i<numberOfTeams-1; i++) {
+                    JSONObject objecti = CustomizeManager.getSavedSettings("teams/"+teams.get(i).getValue());
                     for(int h=i+1; h<numberOfTeams; h++) {
-                        if (colorPickers.get(i).getValue().equals(colorPickers.get(h).getValue())) {
+                        JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teams.get(h).getValue());
+                        if (objecti.getString("color").equals(objecth.getString("color"))) {
                             differentColors = false;
                         }
                     }
-                }*/
-                if (differentColors) {
-                    // our local game is also client/server based, with server running on localhost
-                    serverThread = new Thread(server = new Server(() -> {
-                        clientThread = new Thread(client = new Client(() -> {
-                            //Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
-                            System.out.println("GameSettings: saved settings");
-                            //Platform.runLater(() -> new MapWindow(mapChooser.getValue(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                }
+                if (differentTeams) {
+                    if (differentColors) {
+                        // our local game is also client/server based, with server running on localhost
+                        serverThread = new Thread(server = new Server(() -> {
+                            clientThread = new Thread(client = new Client(() -> {
+                                Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
+                                System.out.println("GameSettings: saved settings");
+                                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue());
+                                String map = styleObject.getString("map");
+                                Platform.runLater(() -> new MapWindow(map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                            }));
+                            clientThread.start();
                         }));
-                        clientThread.start();
-                    }));
-                    serverThread.start();
+                        serverThread.start();
+                    } else {
+                        error.setText("You should not choose teams with the same color!");
+                    }
                 } else {
-                    sameColor.setText("You should not choose the same color!");
+                    error.setText("You should not choose the same team more than once!");
                 }
         });
-
         Button back = new Button("Back");
         settingGrid.add(back, 1, 16);
         back.setOnAction(e -> {
@@ -114,89 +135,72 @@ public class GameSettings extends Application {
         sceneController.switchToGameSettings();
     }
 
-    public void getTeams() {
-        //TODO
-    }
-
-    public void getStyles() {
-        //TODO
-    }
-
-    /*public JSONObject toJson() {
+    public JSONObject toJson() {
+        JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue());
         JSONObject output = new JSONObject();
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
-        output.put("team-size", sizefield.getText()); //save size of teams
-        output.put("map", mapChooser.getValue());
-        output.put("weapon1", weapon1.getText()); // TODO make array instead of using suffix
-        output.put("weapon2", weapon2.getText());
-        output.put("weapon3", weapon3.getText());
-        JSONArray teams = new JSONArray();
-        JSONObject team1 = getJsonForTeam(name1.getText(), colorPicker1, figure1);
-        teams.put(team1);
-        JSONObject team2 = getJsonForTeam(name2.getText(), colorPicker2, figure2);
-        teams.put(team2);
+        output.put("team-size", styleObject.getString("team-size")); //save size of teams
+        output.put("map", styleObject.getString("map"));
+        JSONArray weapons = styleObject.getJSONArray("weapons");
+        for(int i=0; i<weapons.length(); i++) {
+            JSONObject weapon = new JSONObject();
+            weapon.put("weapon"+(i+1), weapons.getJSONObject(i).getInt("weapon"+(i+1)));
+        }
+        output.put("weapons", weapons);
+        JSONArray teamsArray = new JSONArray();
+        JSONObject team1 = getJsonForTeam(teams.get(0).getValue());
+        teamsArray.put(team1);
+        JSONObject team2 = getJsonForTeam(teams.get(1).getValue());
+        teamsArray.put(team2);
         if (numberOfTeams > 2) {
-            JSONObject team3 = getJsonForTeam(name3.getText(), colorPicker3, figure3);
-            teams.put(team3);
+            JSONObject team3 = getJsonForTeam(teams.get(2).getValue());
+            teamsArray.put(team3);
         }
         if (numberOfTeams > 3) {
-            JSONObject team4 = getJsonForTeam(name4.getText(), colorPicker4, figure4);
-            teams.put(team4);
+            JSONObject team4 = getJsonForTeam(teams.get(3).getValue());
+            teamsArray.put(team4);
         }
-        output.put("teams", teams);
+        output.put("teams", teamsArray);
         return output;
     }
 
-    public void fromJson(String file) {
-        JSONObject savedSettings = Settings.getSavedSettings(file);
-        if(savedSettings.has("numberOfTeams")) {
-            numberOfTeams = savedSettings.getInt("numberOfTeams");
-            if (numberOfTeams > 2) {  addTeams(3); }
-            if (numberOfTeams > 3) {  addTeams(4); }
-        }
-        if(savedSettings.has("team-size")) {
-            sizefield.setText(savedSettings.getString("team-size"));
-        }
-        if(savedSettings.has("map")) {
-            mapChooser.setValue(savedSettings.getString("map"));
-        }
-        if(savedSettings.has("weapon1")) {
-            weapon1.setText(savedSettings.getString("weapon1"));
-        }
-        if(savedSettings.has("weapon2")) {
-            weapon2.setText(savedSettings.getString("weapon2"));
-        }
-        if(savedSettings.has("weapon3")) {
-            weapon3.setText(savedSettings.getString("weapon3"));
-        }
-        if(savedSettings.has("teams")) {
-            JSONArray teamsArray = savedSettings.getJSONArray("teams");
-            for(int i=0; i<teamsArray.length(); i++) {
-                names.get(i).setText(teamsArray.getJSONObject(i).getString("name"));
-                colorPickers.get(i).setValue(Color.web(teamsArray.getJSONObject(i).getString("color")));
-            }
-        }
-    }*/
-
-    /**
-     * @param name of the team
-     * @param color of the team
-     * @return a JSONObject representing basic settings for a team
-     */
-    /*public JSONObject getJsonForTeam(String name, ColorPicker color, ToggleGroup figure) {
+    public JSONObject getJsonForTeam(String fileName) {
+        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+fileName);
         JSONObject team = new JSONObject();
-        team.put("name", name);
-        team.put("color", toHex(color.getValue()));
-        team.put("figure", figure.getSelectedToggle());
+        team.put("name", teamObject.getString("name"));
+        team.put("color", teamObject.getString("color"));
+        JSONObject figureNames = new JSONObject();
+        JSONObject figureNamesObject = teamObject.getJSONObject("figure-names");
+        for (int i=0; i<6; i++) {
+            figureNames.put("figure"+(i+1), figureNamesObject.getString("figure"+(i + 1)));
+        }
         return team;
-    }*/
+    }
+
+    public void showStyleInformation(String file) {
+        JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+file);
+        map.setText("Map: "+styleObject.getString("map"));
+        teamSize.setText("Team-Size: "+styleObject.getString("team-size"));
+    }
+
+    public ArrayList<String> getTeams() {
+        ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
+        return availableTeams;
+    }
+
+    public ArrayList<String> getStyles() {
+        ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
+        return availableGameStyles;
+    }
 
     public void addTeam(int number) {
-        if (number == 3) {
-            settingGrid.add(team3, 0, 4);
-        }
-        if (number == 4) {
-            settingGrid.add(team4, 0, 5);
+        settingGrid.add(teams.get(number-1), 0, number+1);
+    }
+
+    public void initializeArrayLists() {
+        for (int i=0; i<4; i++) {
+            teams.add(new ChoiceBox<>(FXCollections.observableArrayList(getTeams())));
+            teams.get(i).getSelectionModel().select(i);
         }
     }
 

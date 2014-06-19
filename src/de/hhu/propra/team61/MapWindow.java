@@ -109,6 +109,7 @@ public class MapWindow extends Application implements Networkable {
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
+        JSONArray weaponsArray = settings.getJSONArray("weapons");
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Weapon> weapons = new ArrayList<>();
             weapons.add(new Bazooka(settings.getInt("weapon1")));
@@ -206,7 +207,7 @@ public class MapWindow extends Application implements Networkable {
             fieldPane.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
-        teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
 
@@ -429,7 +430,7 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
 
-        String teamLabelText = "Turn: " + turnCount + " It’s Team " + (currentTeam+1) + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        String teamLabelText = "Turn " + turnCount + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
     }
@@ -574,7 +575,7 @@ public class MapWindow extends Application implements Networkable {
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
                 GameOverWindow gameOverWindow = new GameOverWindow();
-                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), teams.get(Integer.parseInt(cmd[1])).getName(), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 if(server==null) flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
@@ -771,16 +772,14 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
     }
 
-    public Pane drawBackgroundImage() {
-        Pane backgroundPane = new Pane();
-        String img = "file:resources/levelback1.png";
+    public ImageView drawBackgroundImage() {
+        String img = "file:resources/board.png";
         Image image = new Image(img);
         ImageView background = new ImageView();
         background.setImage(image);
-        backgroundPane.getChildren().add(background);
-        return backgroundPane;
+        return background;
     }
-
+    
     @Override
     public String getStateForNewClient() {
         return "STATUS MAPWINDOW " + this.toJson().toString();

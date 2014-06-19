@@ -37,6 +37,7 @@ public class NetLobby extends Application implements Networkable {
     ArrayList<ColorPicker> colorPickers = new ArrayList<>();
     ArrayList<Text> readys = new ArrayList<>();
     ArrayList<String> spectators = new ArrayList<>();
+    ArrayList<Button> removeButtons = new ArrayList<>();
     TextField weapon1 = new TextField("50");
     TextField weapon2 = new TextField("50");
     TextField weapon3 = new TextField("5");
@@ -142,14 +143,20 @@ public class NetLobby extends Application implements Networkable {
         Text teamSize = new Text("Size of teams: ");
         overviewGrid.add(teamSize, 0, 1);
         overviewGrid.add(sizeField, 1, 1);
+        sizeField.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                client.send(getStateForNewClient());
+            }
+        });
         Text teamNumber = new Text("Max. number of teams: ");
         overviewGrid.add(teamNumber, 2, 1, 2, 1);
         overviewGrid.add(numberOfTeams, 4, 1, 2, 1);
-        applyButton = new Button("Apply Settings");
-        overviewGrid.add(applyButton, 4, 2);
-        applyButton.setOnAction(e -> {
-            // the team configuration will be shown when clients join
-            client.send(getStateForNewClient());
+        numberOfTeams.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                client.send(getStateForNewClient());
+            }
         });
         Text chooseMapText = new Text("Map:");
         overviewGrid.add(chooseMapText, 0, 2);
@@ -160,6 +167,11 @@ public class NetLobby extends Application implements Networkable {
         }
         mapChooser.getSelectionModel().selectFirst();
         overviewGrid.add(mapChooser, 1, 2);
+        mapChooser.valueProperty().addListener(new ChangeListener<String>() {
+            public void changed(ObservableValue ov, String value, String new_value) {
+                client.send(getStateForNewClient());
+            }
+        });
 
         Text enter = new Text ("Enter the quantity of projectiles for each weapon:");
         enter.setFont(Font.font(14));
@@ -241,6 +253,7 @@ public class NetLobby extends Application implements Networkable {
             public void handle(ActionEvent e) {
                 ready.setText("Waiting …");
                 ready.setDisable(true);
+                disableForbiddenSettings(-1);
                 client.send("CLIENT_READY " + toJson());
 //                ready2.setText("Ready");
             }
@@ -328,11 +341,10 @@ public class NetLobby extends Application implements Networkable {
     }
 
     public void fromJson(JSONObject json) {
-        for (int i=0; i<=3 ;i++) {
+        for (int i=0; i<=3 ;i++) {          //remove all teams first when sending state to new client
             removeTeam(i, false);
         }
         teamsCreated = 0;
-
         if(json.has("numberOfTeams")) {
             numberOfTeams.setText(json.getString("numberOfTeams"));
         }
@@ -373,11 +385,6 @@ public class NetLobby extends Application implements Networkable {
         teamsCreated++;
         Text team = new Text("Team " + (number+1));
         hboxes.add(new HBox(20));                   //HBox makes it easier remove a player
-        Button rmTeam = new Button("X");
-        rmTeam.getStyleClass().add("removeButton");
-        rmTeam.setOnAction(e -> {
-            removePlayer(number);
-        });
         readys.get(number).setText("not ready");
         // TODO Shouldn't we just change the visibility, instead of adding/removing it all the time (less risk for exceptions)?
         if (hboxes.get(number).getChildren().size() != 0) {
@@ -385,7 +392,7 @@ public class NetLobby extends Application implements Networkable {
                     ", so we wanted to add a team which already exists.");
             return;
         }
-        hboxes.get(number).getChildren().addAll(team, names.get(number), colorPickers.get(number), readys.get(number), rmTeam);
+        hboxes.get(number).getChildren().addAll(team, names.get(number), colorPickers.get(number), readys.get(number), removeButtons.get(number));
         overviewGrid.add(hboxes.get(number), 0, number + 10, 5, 1);
         start.setDisable(!Server.teamsAreReady());
     }
@@ -457,6 +464,12 @@ public class NetLobby extends Application implements Networkable {
             names.add(new TextField());
             colorPickers.add(new ColorPicker());
             readys.add(new Text("ready"));
+            removeButtons.add(new Button("X"));
+            removeButtons.get(i).getStyleClass().add("removeButton");
+            final int finalI = i;
+            removeButtons.get(i).setOnAction(e -> {
+                removePlayer(finalI);
+            });
         }
     }
 
@@ -519,6 +532,7 @@ public class NetLobby extends Application implements Networkable {
         for (int i=0; i<=3; i++) {
             names.get(i).setDisable(i != team);
             colorPickers.get(i).setDisable(i != team);
+            removeButtons.get(i).setDisable(true);
         }
         ready.setDisable(team == -1);
     }

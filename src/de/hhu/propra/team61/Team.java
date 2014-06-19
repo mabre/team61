@@ -23,10 +23,12 @@ public class Team extends StackPane {
     private ArrayList<Figure> figures;
     private ArrayList<Weapon> weapons;
     private Color color;
+    private String name;
 
-    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Weapon> weapons, Color color) {
+    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Weapon> weapons, Color color, String name) {
         this.weapons = weapons;
         this.color = color;
+        this.name = name;
         figures = new ArrayList<>();
         for (Point2D sp : spawnPoints) {
             Figure f = new Figure("Max"+(int)(Math.random()*100), 100, 100, false, false, false); // TODO @Kegny create sensible default constructor
@@ -44,6 +46,7 @@ public class Team extends StackPane {
      */
     public Team(JSONObject state) {
         color = Color.web(state.getString("color"));
+        name = state.getString("name");
         figures = new ArrayList<>();
         JSONArray figuresArray = state.getJSONArray("figures");
         for(int i=0; i<figuresArray.length(); i++) {
@@ -109,6 +112,10 @@ public class Team extends StackPane {
 
     public Figure getCurrentFigure() {
         return figures.get(currentFigure);
+    }
+
+    public String getName(){
+        return this.name;
     }
 
     public int getNumberOfLivingFigures() {

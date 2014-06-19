@@ -37,6 +37,6 @@ public class OptionsWindow extends Application {
 	}
 
 	@Override
-	public void start(Stage ostage) { }
+	public void start(Stage filler) { }
  
 }

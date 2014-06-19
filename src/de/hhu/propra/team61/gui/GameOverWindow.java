@@ -30,7 +30,7 @@ public class GameOverWindow extends Application {
         launch(args);
     }
 
-    public void showWinner(SceneController sceneController, int currentTeam, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public void showWinner(SceneController sceneController, int winnerTeam, String winnerName, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         BorderPane root = new BorderPane();
         this.sceneController = sceneController;
         this.server = server;
@@ -49,10 +49,10 @@ public class GameOverWindow extends Application {
         gridBox.getChildren().add(overGrid);
         root.setRight(gridBox);
         Text winner = new Text();
-        if (currentTeam == 0) {
+        if (winnerTeam == 0) {
             winner.setText("A tie! You're both winners!");
         } else {
-            winner.setText("The winner is team " + (currentTeam + 1) + ".");
+            winner.setText("The winner is team " +winnerName+ ".");
         }
         winner.setFont(Font.font("Verdana", 20));
         overGrid.add(winner, 0, 0, 2, 1);

@@ -1,6 +1,11 @@
 package de.hhu.propra.team61.gui;
 
+import de.hhu.propra.team61.gui.SceneController;
+import de.hhu.propra.team61.io.Options;
+import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Slider;
 
 /**
  * Created by Jessypet on 04.06.14.
@@ -9,9 +14,12 @@ import javafx.fxml.FXML;
 public class OptionController {
 
     SceneController sceneController;
+    @FXML private CheckBox fullscreen;
+    @FXML private Slider volume;
+    @FXML private Slider gamma;
 
     public OptionController() {
-        //loadSavedSettings();
+        loadSavedSettings();
     }
 
     public void setSceneController(SceneController sceneController) {
@@ -20,22 +28,22 @@ public class OptionController {
 
     @FXML
     public void handleOptionExit() {
-        //Options.save(toJson());
+        Options.save(toJson());
         System.out.println("OptionsWindow: saved settings");
         sceneController.switchToMenue();
     }
 
-    /*private void loadSavedSettings() {
+    public void loadSavedSettings() {
         JSONObject savedSettings = Options.getSavedSettings();
-        if(savedSettings.has("volume")) {
+        if(savedSettings.has("volume")) {                   //TODO throws NullPointerException?!
             volume.setValue(savedSettings.getDouble("volume"));
         }
         if(savedSettings.has("fullscreen")) {
             fullscreen.setSelected(savedSettings.getBoolean("fullscreen"));
         }
-        if(savedSettings.has("resolution")) {
+        /*if(savedSettings.has("resolution")) {
             resolution.setValue(savedSettings.getString("resolution"));
-        }
+        }*/
         if(savedSettings.has("gamma")) {
             gamma.setValue(savedSettings.getDouble("gamma"));
         }
@@ -45,8 +53,8 @@ public class OptionController {
         JSONObject output = new JSONObject();
         output.put("volume", volume.getValue());
         output.put("fullscreen", fullscreen.isSelected());
-        output.put("resolution", resolution.getValue());
+        //output.put("resolution", resolution.getValue());
         output.put("gamma", gamma.getValue());
         return output;
-    }*/
+    }
 }
