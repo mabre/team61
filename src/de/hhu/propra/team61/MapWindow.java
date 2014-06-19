@@ -784,6 +784,7 @@ public class MapWindow extends Application implements Networkable {
                 System.out.println("Ate my spinach.");
                 break;
             default:
+                client.sendChatMessage("<<< Haw-haw! This user failed to cheat … >>> " + cmd);
                 System.out.println("No cheating, please!");
         }
     }
