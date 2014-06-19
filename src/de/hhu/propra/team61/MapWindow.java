@@ -11,6 +11,10 @@ import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
 import de.hhu.propra.team61.objects.*;
+import de.hhu.propra.team61.objects.weapontypes.Bazooka;
+import de.hhu.propra.team61.objects.weapontypes.Grenade;
+import de.hhu.propra.team61.objects.weapontypes.PoisonedArrow;
+import de.hhu.propra.team61.objects.weapontypes.Shotgun;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
@@ -66,6 +70,9 @@ public class MapWindow extends Application implements Networkable {
     private int levelCounter = 0;
     private int teamquantity;
     private int teamsize;
+
+
+    private ArrayList<Crate> supplyDrops;
 
     /** power/energy projectile is shot with */
     private int power = 0;
@@ -200,6 +207,8 @@ public class MapWindow extends Application implements Networkable {
         scrollPane.setPrefSize(1000, 550);
         centerPane.getChildren().add(scrollPane);
         rootPane.setBottom(centerPane);
+
+        supplyDrops = new ArrayList<>();
 
         for(Team team: teams) {
             fieldPane.getChildren().add(team);
@@ -384,12 +393,6 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        //ToDo Wait until no objectmovements
-
-        turnCount++; // TODO timing issue
-        server.sendCommand("SET_TURN_COUNT " + turnCount);
-
-
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -424,8 +427,19 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        //supplydrop(100); TODO
+        // TODO give this an true probability, set by Customize? //Remove own supplyDrops Variable?
+        if(true){
+            //supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(),""));
+            //supplyDrops.get(supplyDrops.size()-1).fall();
 
+
+            server.sendCommand("DROP_SUPPLY"+" "+200+" "+"ToDo"); //ToDo
+        }
+
+        //ToDo Wait until no objectmovements
+
+        turnCount++; // TODO timing issue
+        server.sendCommand("SET_TURN_COUNT " + turnCount);
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
@@ -565,6 +579,11 @@ public class MapWindow extends Application implements Networkable {
                 if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
                 terrain.replaceBlock(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),cmd[3].charAt(0));
                 break;
+            case "DROP_SUPPLY":
+                supplyDrops.add(new Crate((int)Double.parseDouble(cmd[1]),cmd[2]));
+                fieldPane.getChildren().add(fieldPane.getChildren().size()-1,supplyDrops.get(supplyDrops.size()-1));
+
+                break;
             case "RELOAD_TERRAIN":
                 terrain.load(terrain.toArrayList());
                 break;
@@ -596,8 +615,8 @@ public class MapWindow extends Application implements Networkable {
                     case "POISON":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
                         break;
-                    case "FIRE":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsBurning(true);
+                    case "PARALYZE":
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsParalyzed(true);
                         break;
                     case "STUCK":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);

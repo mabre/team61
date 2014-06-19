@@ -45,6 +45,7 @@ public class Terrain extends GridPane {
     private ArrayList<ArrayList<Character>> terrain;
     private ArrayList<Point2D> spawnPoints;
     private ArrayList<Figure> figures;
+    private ArrayList<Crate> supplyDrops = new ArrayList<>();
 
     /**
      * @param terrain 2-D-ArrayList containing the terrain to be displayed
@@ -307,16 +308,18 @@ public class Terrain extends GridPane {
             case 'L': return RESISTANCE_OF_FLUIDS;
             case '/':
             case '\\'://Slants are depending on blocks below
-                      if(terrain.size() > y + 1){ return getResistance(x,y + 1) * MODIFIER_FOR_SLANTS; }
+                      if(terrain.size() > y + 1){
+                          if(getResistance(x,y + 1) != RESISTANCE_OF_FLUIDS) { //Avoid indestructible slants
+                              return getResistance(x, y + 1) * MODIFIER_FOR_SLANTS;
+                          } else { return RESISTANCE_OF_SKY; }
+                      }
                       else{ return RESISTANCE_OF_SKY; } // Return an at least somewhat useful information
             case 'S': return RESISTANCE_OF_STONE;
             case 'E': return RESISTANCE_OF_EARTH;
             case 'I': return RESISTANCE_OF_ICE;
-            case 'A': //ToDo change that
-                return RESISTANCE_OF_SNOW;
-            case 'B': //ToDo change that
-                return RESISTANCE_OF_SAND;
-            default: return RESISTANCE_OF_SKY;
+            case 'i': return RESISTANCE_OF_SNOW;
+            case 's': return RESISTANCE_OF_SAND;
+            default:  return RESISTANCE_OF_SKY;
         }
     }
 
@@ -345,7 +348,7 @@ public class Terrain extends GridPane {
             if (explosionPower >= resistanceOfBlock) { // Enough destructive force
 
                 //Print Debugging-MSG to console:
-                //System.out.println("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
+                debugLog("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
@@ -367,7 +370,7 @@ public class Terrain extends GridPane {
                 if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && resistanceOfBlock != RESISTANCE_OF_SKY){ // BUT do not create slants out of air
 
                     //Print Debugging-MSG to console:
-                    //System.out.println("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
+                    debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
 
                     if(blockX > 0 && blockX < terrain.get(blockY).size()){
@@ -395,7 +398,9 @@ public class Terrain extends GridPane {
         int blockY = (int)impactPoint.getY() / BLOCK_SIZE;
         
         ArrayList<String> commands = new ArrayList<String>();
-        explode(commands,blockX,blockY,explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
+        if(blockX >= 0 && blockX < terrain.get(0).size() && blockY >= 0 && blockY < terrain.size()){
+            explode(commands,blockX,blockY,explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
+        }
         commands.add("RELOAD_TERRAIN"); //Tell Clients to update Map for visibility;
 
         return commands;

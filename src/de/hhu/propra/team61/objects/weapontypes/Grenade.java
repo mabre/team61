@@ -1,6 +1,8 @@
-package de.hhu.propra.team61.objects;
+package de.hhu.propra.team61.objects.weapontypes;
 
 import de.hhu.propra.team61.Team;
+import de.hhu.propra.team61.objects.Terrain;
+import de.hhu.propra.team61.objects.Weapon;
 import javafx.geometry.Rectangle2D;
 
 import java.util.ArrayList;
@@ -12,7 +14,7 @@ public class Grenade extends Weapon {
     private final static String  NAME           = "Grenade";
     private final static String  DESCRIPTION    = "Another classic.";
 
-    private final static String  PROJECTILE_IMG = "file:resources/weapons/temp2.png";
+    private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/temp2.png";
     private final static String  DAMAGETYPE     = "Explosiondamage";
     private final static int     DAMAGE         =  40;

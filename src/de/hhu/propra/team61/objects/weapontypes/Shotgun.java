@@ -1,6 +1,8 @@
-package de.hhu.propra.team61.objects;
+package de.hhu.propra.team61.objects.weapontypes;
 
 import de.hhu.propra.team61.Team;
+import de.hhu.propra.team61.objects.Terrain;
+import de.hhu.propra.team61.objects.Weapon;
 import javafx.geometry.Rectangle2D;
 
 import java.util.ArrayList;
@@ -15,8 +17,8 @@ public class Shotgun extends Weapon { //ToDo Override shoot to make two shots po
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/temp3.png";
     private final static String  DAMAGETYPE     = "Physicaldamage";
-    private final static int     DAMAGE         =  30;
-    private final static int     EXPLOSIONPOWER =  20;
+    private final static int     DAMAGE         =  25;
+    private final static int     EXPLOSIONPOWER =  40;
     private final static int     SHOCKWAVE      =   0;
     private final static int     DELAY          =  -1; // ToDo somehow tell it's on collision
 
