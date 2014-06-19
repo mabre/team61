@@ -2,6 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.Chat;
 import de.hhu.propra.team61.gui.GameOverWindow;
+import de.hhu.propra.team61.gui.WindIndicator;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
@@ -57,6 +58,7 @@ public class MapWindow extends Application implements Networkable {
     /** contains fieldPane */
     private ScrollPane scrollPane;
     private Terrain terrain;
+    private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
@@ -237,6 +239,8 @@ public class MapWindow extends Application implements Networkable {
         sceneController.switchToMapwindow();
 
         terrain.rewind();
+        windIndicator.setWindForce(terrain.getWindMagnitude());
+        rootPane.setCenter(windIndicator);
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
@@ -394,6 +398,7 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
 
         terrain.rewind();
+        windIndicator.setWindForce(terrain.getWindMagnitude());
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
         if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
@@ -751,6 +756,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "rewind": // sets wind to given value
                 terrain.setWind(Double.parseDouble(cmd[1]));
+                windIndicator.setWindForce(terrain.getWindMagnitude());
                 System.out.println("It’s windy.");
                 break;
             default:

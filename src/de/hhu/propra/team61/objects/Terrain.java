@@ -202,9 +202,16 @@ public class Terrain extends GridPane {
     public void rewind() {
         double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
         double windSpeed = Math.random() * maxWindSpeed - maxWindSpeed / 2;
-        if (Math.random() > .75) windSpeed *= 2; // make higher speed less probable
-        wind = new Point2D(windSpeed, 0); // TODO recheck interval / rounding; man kann nicht mehr iw drauf springen! [Windschutz?]
+        if (Math.random() > .5) windSpeed *= 2; // make higher speed less probable
+        wind = new Point2D(windSpeed, 0);
         System.out.println("new wind: " + windSpeed);
+    }
+
+    /**
+     * @return the magnitude of the current wind vector, the sign indicates wind direction
+     */
+    public double getWindMagnitude() {
+        return wind.magnitude()*Math.signum(wind.getX());
     }
 
     /**
