@@ -436,6 +436,7 @@ public class MapWindow extends Application implements Networkable {
         }
 
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
+        teams.get(currentTeam).endRound();
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
 
@@ -529,7 +530,9 @@ public class MapWindow extends Application implements Networkable {
                 scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
                 break;
             case "CURRENT_TEAM_END_ROUND":
-                teams.get(Integer.parseInt(cmd[1])).endRound();
+                if(server == null) { // already done on server
+                    teams.get(Integer.parseInt(cmd[1])).endRound();
+                }
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 break;
             case "CURRENT_FIGURE_ANGLE_DOWN":
