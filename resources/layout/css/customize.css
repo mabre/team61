@@ -4,3 +4,10 @@
     -fx-background-image: url("file:resources/layout/back.png");
     -fx-background-position: top left;
 }
+
+#removeButton {
+    -fx-background-color: linear-gradient(#ff5400, #be1d00);
+    -fx-background-radius: 30;
+    -fx-background-insets: 50;
+    -fx-text-fill: #cc0100;
+}

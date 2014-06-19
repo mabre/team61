@@ -16,10 +16,9 @@ public class OptionController {
     SceneController sceneController;
     @FXML private CheckBox fullscreen;
     @FXML private Slider volume;
-    @FXML private Slider gamma;
 
     public OptionController() {
-        loadSavedSettings();
+        //loadSavedSettings();
     }
 
     public void setSceneController(SceneController sceneController) {
@@ -28,12 +27,12 @@ public class OptionController {
 
     @FXML
     public void handleOptionExit() {
-        Options.save(toJson());
+        //Options.save(toJson());
         System.out.println("OptionsWindow: saved settings");
         sceneController.switchToMenue();
     }
 
-    public void loadSavedSettings() {
+    /*public void loadSavedSettings() {
         JSONObject savedSettings = Options.getSavedSettings();
         if(savedSettings.has("volume")) {                   //TODO throws NullPointerException?!
             volume.setValue(savedSettings.getDouble("volume"));
@@ -41,11 +40,8 @@ public class OptionController {
         if(savedSettings.has("fullscreen")) {
             fullscreen.setSelected(savedSettings.getBoolean("fullscreen"));
         }
-        /*if(savedSettings.has("resolution")) {
+        if(savedSettings.has("resolution")) {
             resolution.setValue(savedSettings.getString("resolution"));
-        }*/
-        if(savedSettings.has("gamma")) {
-            gamma.setValue(savedSettings.getDouble("gamma"));
         }
     }
 
@@ -54,7 +50,6 @@ public class OptionController {
         output.put("volume", volume.getValue());
         output.put("fullscreen", fullscreen.isSelected());
         //output.put("resolution", resolution.getValue());
-        output.put("gamma", gamma.getValue());
         return output;
-    }
+    }*/
 }

@@ -112,11 +112,11 @@ public class MapWindow extends Application implements Networkable {
         JSONArray weaponsArray = settings.getJSONArray("weapons");
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Bazooka(settings.getInt("weapon1")));
-            weapons.add(new Grenade(settings.getInt("weapon2")));
-            weapons.add(new Shotgun(settings.getInt("weapon3")));
-            weapons.add(new PoisonedArrow(4)); //ToDo replace with: settings.getInt("weapon4"))
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
+            weapons.add(new Bazooka(weaponsArray.getJSONObject(0).getInt("weapon1")));
+            weapons.add(new Grenade(weaponsArray.getJSONObject(1).getInt("weapon2")));
+            weapons.add(new Shotgun(weaponsArray.getJSONObject(2).getInt("weapon3")));
+            weapons.add(new PoisonedArrow(weaponsArray.getJSONObject(3).getInt("weapon4")));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
         }
 
         initialize();
@@ -348,7 +348,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     @Deprecated
-    public void cheatMode() {
+    /*public void cheatMode() {
         try {
             levelCounter++;
             terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
@@ -361,14 +361,14 @@ public class MapWindow extends Application implements Networkable {
                 ArrayList<Weapon> weapons = new ArrayList<>();
                 weapons.add(new Bazooka(2));
                 weapons.add(new Grenade(2));
-                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE);
+                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE, "player");
                 teams.add(team);
                 fieldPane.getChildren().add(team);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     public int getNumberOfLivingTeams() {
         int livingTeams = 0;

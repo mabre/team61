@@ -36,19 +36,17 @@ public class CustomizeWindow extends Application {
     CustomGrid newGameStyleGrid = new CustomGrid();
     CustomGrid weaponsGrid = new CustomGrid();
     CustomGrid editGrid;
+    CustomGrid newMapGrid = new CustomGrid();
     ArrayList<TextField> figureNames = new ArrayList<>();
     ArrayList<String> weaponNames = new ArrayList<>();
     ArrayList<CheckBox> weaponCheckBoxes = new ArrayList<>();
     ArrayList<Slider> weaponSliders = new ArrayList<>();
     TextField name = new TextField("player");
     ColorPicker color = new ColorPicker(Color.web("#FF00FF"));
-    ToggleGroup figure = new ToggleGroup();
-    RadioButton penguin = new RadioButton("Penguin");
-    RadioButton unicorn = new RadioButton("Unicorn");
+    ChoiceBox<String> figureChooser = new ChoiceBox<>();
     TextField styleNameField = new TextField("Custom");
     TextField sizeField = new TextField("4");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
-    ArrayList<String> availableTeams = new ArrayList<>();
 
 
     public CustomizeWindow(SceneController sceneController) {
@@ -57,6 +55,7 @@ public class CustomizeWindow extends Application {
         createEditGrid();
         createNewTeamGrid();
         createNewGameStyleGrid();
+        createNewMapGrid();
         createTopBox();
         root.setLeft(editGrid);
         Scene customizeScene = new Scene(root, 1000, 600);
@@ -65,9 +64,9 @@ public class CustomizeWindow extends Application {
         sceneController.switchToCustomize();
     }
 
-    public void createTopBox() {
+    private void createTopBox() {
         HBox topBox = new HBox(20);
-        Button edit = new Button("Edit an existing team/game style");
+        Button edit = new Button("Edit team/game style/map");
         edit.setOnAction(e -> {
             root.getChildren().remove(weaponsGrid);
             createEditGrid();
@@ -84,16 +83,20 @@ public class CustomizeWindow extends Application {
             refresh();
             root.setLeft(newGameStyleGrid);
         });
+        Button newMap = new Button("Create new map");
+        newMap.setOnAction(e -> {
+            root.setLeft(newMapGrid);
+        });
         Button backToMenue = new Button("Go back to menue");
         backToMenue.setOnAction(e -> {
             sceneController.switchToMenue();
         });
-        topBox.getChildren().addAll(edit, newTeam, newGameStyle, backToMenue);
+        topBox.getChildren().addAll(edit, newTeam, newGameStyle, newMap, backToMenue);
         topBox.setAlignment(Pos.CENTER);
         root.setTop(topBox);
     }
 
-    public void createEditGrid() {
+    private void createEditGrid() {
         editGrid = new CustomGrid();
         Text whatToDoHere = new Text("Here you can edit or remove an existing team or game style.");
         editGrid.add(whatToDoHere, 0, 2, 3, 1);
@@ -107,7 +110,7 @@ public class CustomizeWindow extends Application {
         getGameStyles();
     }
 
-    public void createNewTeamGrid() {
+    private void createNewTeamGrid() {
         Text wormNamesText = new Text("Figures (enter names):");
         wormNamesText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(wormNamesText, 0, 2);
@@ -122,11 +125,9 @@ public class CustomizeWindow extends Application {
         Text figureText = new Text("Figure");
         figureText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(figureText, 2, 6);
-        penguin.setToggleGroup(figure);
-        penguin.setSelected(true);
-        unicorn.setToggleGroup(figure);
-        newTeamGrid.add(penguin, 2, 7);
-        newTeamGrid.add(unicorn, 3, 7);
+        figureChooser.getItems().addAll("Penguin", "Unicorn");
+        figureChooser.getSelectionModel().selectFirst();
+        newTeamGrid.add(figureChooser, 2, 7);
         Button saveTeam = new Button("Save");
         saveTeam.setOnAction(e -> {
             CustomizeManager.save(teamToJson(), "teams/"+name.getText());
@@ -137,7 +138,8 @@ public class CustomizeWindow extends Application {
         newTeamGrid.add(saveTeam, 0, 10);
     }
 
-    public void createNewGameStyleGrid() {
+
+    private void createNewGameStyleGrid() {
         Text styleName = new Text("Style-Name:");
         styleName.setFont(Font.font("Verdana", 15));
         newGameStyleGrid.add(styleName, 0, 2);
@@ -178,6 +180,10 @@ public class CustomizeWindow extends Application {
         weaponsGrid.add(enter, 0, 3, 3, 1);
     }
 
+    private void createNewMapGrid() {
+
+    }
+
     private void editTeam(String teamName) {
         fromJson(teamName, true);
         root.setLeft(newTeamGrid);
@@ -188,12 +194,12 @@ public class CustomizeWindow extends Application {
         root.setLeft(newGameStyleGrid);
     }
 
-    public ArrayList<String> getLevels() {
+    private ArrayList<String> getLevels() {
         ArrayList<String> levels = TerrainManager.getAvailableTerrains();
         return levels;
     }
 
-    public void getTeams() {
+    private void getTeams() {
         ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
         for (int i=0; i<availableTeams.size(); i++) {
             Button chooseTeamToEdit = new Button(availableTeams.get(i));
@@ -204,6 +210,7 @@ public class CustomizeWindow extends Application {
             });
             editGrid.add(chooseTeamToEdit, 0, i+5);
             Button remove = new Button("X");
+            remove.setId("removeButton");
             remove.setOnAction(e -> {
                 deleteFile("teams/" + chooseTeamToEdit.getText());
             });
@@ -211,7 +218,7 @@ public class CustomizeWindow extends Application {
         }
     }
 
-    public void getGameStyles() {
+    private void getGameStyles() {
         ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
         for (int i=0; i<availableGameStyles.size(); i++) {
             Button chooseStyleToEdit = new Button(availableGameStyles.get(i));
@@ -222,6 +229,7 @@ public class CustomizeWindow extends Application {
             });
             editGrid.add(chooseStyleToEdit, 3, i+5);
             Button remove = new Button("X");
+            remove.setId("removeButton");
             remove.setOnAction(e -> {
                 deleteFile("gamestyles/"+chooseStyleToEdit.getText());
             });
@@ -229,7 +237,7 @@ public class CustomizeWindow extends Application {
         }
     }
 
-    public void deleteFile(String fileName) {
+    private void deleteFile(String fileName) {
         File file = new File("resources/"+fileName);
         if (file.delete()){
             System.out.println("File "+fileName+" deleted.");
@@ -238,20 +246,20 @@ public class CustomizeWindow extends Application {
         root.setLeft(editGrid);
     }
 
-    public JSONObject teamToJson() {
+    private JSONObject teamToJson() {
         JSONObject output = new JSONObject();
         output.put("name", name.getText());
         output.put("color", toHex(color.getValue()));
-        output.put("figure", figure.getSelectedToggle());
+        output.put("figure", figureChooser.getValue());
         JSONObject figureNamesJson = new JSONObject();
         for (int i=0; i<6; i++) {
-            figureNamesJson.put("figure"+(i+1), figureNames.get(i).getText());
+            figureNamesJson.put("figure"+i, figureNames.get(i).getText());
         }
         output.put("figure-names", figureNamesJson);
         return output;
     }
 
-    public JSONObject styleToJson() {
+    private JSONObject styleToJson() {
         JSONObject output = new JSONObject();
         output.put("name", styleNameField.getText());
         output.put("team-size", sizeField.getText());
@@ -266,7 +274,7 @@ public class CustomizeWindow extends Application {
         return output;
     }
 
-    public void fromJson(String file, Boolean choseTeam) {
+    private void fromJson(String file, Boolean choseTeam) {
         if (choseTeam) {
             JSONObject savedTeam = CustomizeManager.getSavedSettings("teams/" + file);
             if (savedTeam.has("name")) {
@@ -275,11 +283,13 @@ public class CustomizeWindow extends Application {
             if (savedTeam.has("color")) {
                 color.setValue(Color.web(savedTeam.getString("color")));
             }
-            //TODO load chosen figure
+            if (savedTeam.has("figure")) {
+                figureChooser.setValue(savedTeam.getString("figure"));
+            }
             if (savedTeam.has("figure-names")) {
                 JSONObject figureNamesJson = savedTeam.getJSONObject("figure-names");
                 for (int i = 0; i < 6; i++) {
-                    figureNames.get(i).setText(figureNamesJson.getString("figure" + (i + 1)));
+                    figureNames.get(i).setText(figureNamesJson.getString("figure"+i));
                 }
             }
         } else {
@@ -303,7 +313,7 @@ public class CustomizeWindow extends Application {
         }
     }
 
-    public void initializeArrayLists() {
+    private void initializeArrayLists() {
         for (int i=0; i<6; i++) {
             figureNames.add(new TextField("Character" + (i+1)));
             newTeamGrid.add(figureNames.get(i), 0, i+3);
@@ -336,7 +346,7 @@ public class CustomizeWindow extends Application {
         }
     }
 
-    public void refresh() {
+    private void refresh() {
         name.setText("player");
         color.setValue(Color.web("#FF00FF"));
         for (int i=0; i<6; i++) {

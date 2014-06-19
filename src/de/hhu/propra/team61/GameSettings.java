@@ -141,12 +141,14 @@ public class GameSettings extends Application {
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
         output.put("team-size", styleObject.getString("team-size")); //save size of teams
         output.put("map", styleObject.getString("map"));
-        JSONArray weapons = styleObject.getJSONArray("weapons");
-        for(int i=0; i<weapons.length(); i++) {
+        JSONArray weaponsStyle = styleObject.getJSONArray("weapons");
+        JSONArray weaponsSettings = new JSONArray();
+        for(int i=0; i<weaponsStyle.length(); i++) {
             JSONObject weapon = new JSONObject();
-            weapon.put("weapon"+(i+1), weapons.getJSONObject(i).getInt("weapon"+(i+1)));
+            weapon.put("weapon"+(i+1), weaponsStyle.getJSONObject(i).getInt("weapon"+(i+1)));
+            weaponsSettings.put(weapon);
         }
-        output.put("weapons", weapons);
+        output.put("weapons", weaponsSettings);
         JSONArray teamsArray = new JSONArray();
         JSONObject team1 = getJsonForTeam(teams.get(0).getValue());
         teamsArray.put(team1);
@@ -169,11 +171,15 @@ public class GameSettings extends Application {
         JSONObject team = new JSONObject();
         team.put("name", teamObject.getString("name"));
         team.put("color", teamObject.getString("color"));
-        JSONObject figureNames = new JSONObject();
+        team.put("figure", teamObject.getString("figure"));
+        JSONArray figureNames = new JSONArray();
         JSONObject figureNamesObject = teamObject.getJSONObject("figure-names");
         for (int i=0; i<6; i++) {
-            figureNames.put("figure"+(i+1), figureNamesObject.getString("figure"+(i + 1)));
+            JSONObject figure = new JSONObject();
+            figure.put("figure", figureNamesObject.getString("figure"+i));
+            figureNames.put(figure);
         }
+        team.put("figure-names", figureNames);
         return team;
     }
 

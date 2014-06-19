@@ -31,6 +31,7 @@ public class Figure extends StackPane {
     private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
+    private String chosenFigure;
     private int health;
     private int armor;
 
@@ -56,8 +57,9 @@ public class Figure extends StackPane {
     private Label hpLabel;
 
     // In and Out
-    public Figure(String name, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+    public Figure(String name, String chosenFigure, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
         this.name   = name;
+        this.chosenFigure = chosenFigure;
         this.health = hp;
         this.armor  = armor;
 
@@ -115,7 +117,8 @@ public class Figure extends StackPane {
 
         hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        Image image = new Image("file:resources/figures/pin.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+        System.out.println("Chosen figure: "+chosenFigure);
+        Image image = new Image("file:resources/figures/"+chosenFigure+".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         figureImage.setImage(image);
         getChildren().add(figureImage);
 

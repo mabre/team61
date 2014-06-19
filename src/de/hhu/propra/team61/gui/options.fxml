@@ -12,8 +12,6 @@
         <Slider fx:id="volume" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="2" ShowTickMarks="true" ShowTickLabels="true"/>
         <Text text="Resolution: " GridPane.columnIndex="0" GridPane.rowIndex="2" />
         <CheckBox fx:id="fullscreen" text="Full Screen" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-        <Text text="Gamma: " GridPane.columnIndex="0" GridPane.rowIndex="3" />
-        <Slider fx:id="gamma" GridPane.columnIndex="1" GridPane.rowIndex="3" GridPane.columnSpan="2" ShowTickMarks="true" ShowTickLabels="true"/>
         <Button text="Close" onAction="#handleOptionExit" GridPane.columnIndex="1" GridPane.rowIndex="6" GridPane.halignment="CENTER"/>
     </children>
     <padding>
