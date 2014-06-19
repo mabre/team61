@@ -345,9 +345,11 @@ public class Terrain extends GridPane {
         if(wind.getX() > 0) {
             minX = (int) Math.floor(position.getX() / BLOCK_SIZE - 1);
             maxX = (int) Math.floor(position.getX() / BLOCK_SIZE);
+            if(wind.getX() < 3.5) maxX += 1; // +1 to prevent figures from being pressed at terrain and staying in the air
         } else {
             minX = (int) Math.floor((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
             maxX = (int) Math.floor((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE + 1);
+            if(wind.getX() > -3.5) minX -= (int) (Figure.NORMED_OBJECT_SIZE / BLOCK_SIZE) + 1; // prevent figures from being pressed at terrain and staying in the air
         }
 
         for (int y = minY; y <= maxY; y++) {

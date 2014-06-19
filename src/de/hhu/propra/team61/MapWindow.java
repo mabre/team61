@@ -141,6 +141,7 @@ public class MapWindow extends Application implements Networkable {
 
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
+        terrain.setWind(input.getInt("windForce"));
 
         initialize();
     }
@@ -165,6 +166,7 @@ public class MapWindow extends Application implements Networkable {
 
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
+        terrain.setWind(input.getInt("windForce"));
 
         initialize();
 
@@ -238,7 +240,7 @@ public class MapWindow extends Application implements Networkable {
         sceneController.setGameScene(drawing);
         sceneController.switchToMapwindow();
 
-        terrain.rewind();
+        if(server != null) terrain.rewind();
         windIndicator.setWindForce(terrain.getWindMagnitude());
         rootPane.setCenter(windIndicator);
 
@@ -332,6 +334,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
         output.put("terrain", TerrainManager.toString(terrain.toArrayList()));
+        output.put("windForce", terrain.getWindMagnitude());
         return output;
     }
 
@@ -398,7 +401,7 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
 
         terrain.rewind();
-        windIndicator.setWindForce(terrain.getWindMagnitude());
+        server.sendCommand("WIND_FORCE " + terrain.getWindMagnitude());
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
         if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
@@ -618,6 +621,9 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
+                break;
+            case "WIND_FORCE":
+                windIndicator.setWindForce(Double.parseDouble(cmd[1]));
                 break;
             default:
                 System.out.println("handleKeyEventOnClient: no event for key " + command);
