@@ -370,19 +370,18 @@ public class Terrain extends GridPane {
             if (explosionPower >= resistanceOfBlock) { // Enough destructive force
 
                 //Print Debugging-MSG to console:
-                //System.out.println("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
-
+                debugLog("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
                 replaceBlock(blockX,blockY,replacement); //Mark as destroyed
 
                 // Recursively continue destruction for all directions unless OutOfBounds
-                if (blockY < terrain.size()){  explode(commands, blockX, blockY + 1, explosionPower); }
+                if (blockY+1 < terrain.size()){ explode(commands, blockX, blockY + 1, explosionPower); }
 
                 if (blockX > 0) { explode(commands, blockX - 1, blockY, explosionPower); }
-                if (blockX < terrain.get(blockY).size()) {  explode(commands, blockX + 1, blockY, explosionPower); }
+                if (blockX+1 < terrain.get(blockY).size()) { explode(commands, blockX + 1, blockY, explosionPower); }
 
-                if (blockY > 0) { explode(commands, blockX, blockY-1,explosionPower); }
+                if (blockY > 0) { explode(commands, blockX, blockY-1, explosionPower); }
 
                 // Add destruction of actual Block to commandlist
                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + replacement);// ' ' is impossible due to the Client/Server-MSG-System
@@ -391,9 +390,7 @@ public class Terrain extends GridPane {
                 resistanceOfBlock = getResistance(blockX,blockY); // Check if partially enough destructive Force
                 if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && resistanceOfBlock != RESISTANCE_OF_SKY){ // BUT do not create slants out of air
 
-                    //Print Debugging-MSG to console:
-                    //System.out.println("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
-
+                    debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                     if(blockX > 0 && blockX < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1) != '#' && terrain.get(blockY).get(blockX-1) != ' '){

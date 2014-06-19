@@ -11,6 +11,9 @@ import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
 import de.hhu.propra.team61.objects.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
@@ -28,6 +31,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -56,6 +60,9 @@ public class MapWindow extends Application implements Networkable {
     private StackPane fieldPane;
     /** contains fieldPane */
     private ScrollPane scrollPane;
+    private Timeline scrollPaneTimeline = null;
+    private final static int SCROLL_ANIMATION_DURATION = 1000;
+    private final static int SCROLL_ANIMATION_DELAY = 500;
     private Terrain terrain;
     private Label teamLabel;
     //Team related variables
@@ -252,7 +259,6 @@ public class MapWindow extends Application implements Networkable {
                                 System.out.println("CollisionException, let's do this!");
                                 final Projectile collidingProjectile = flyingProjectile;
                                 flyingProjectile = null; // we remove it here to prevent timing issues
-                                fieldPane.getChildren().remove(flyingProjectile);
                                 Platform.runLater(() -> {
 //                                    } catch (DeathException de) { // TODO that change was somewhat important I think (or not?) ... (see handleCollision in Weapon)
 //                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
@@ -262,6 +268,7 @@ public class MapWindow extends Application implements Networkable {
                                     //Get series of commands to send to the clients from
                                     //Collisionhandling done by the weapon causing this exception
                                     ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
+                                    fieldPane.getChildren().remove(collidingProjectile);
                                     for(String command : commandList){ server.sendCommand(command); } //Send commands+
                                     endTurn();
                                 });
@@ -460,15 +467,34 @@ public class MapWindow extends Application implements Networkable {
      * @param width the width of the object
      * @param height the height if the object
      */
-    private void scrollTo(double x, double y, double width, double height) {
+    private void scrollTo(double x, double y, double width, double height, boolean animate) {
         final double paneWidth = scrollPane.getWidth();
         final double paneHeight = scrollPane.getHeight();
 
         final double contentWidth = terrain.getWidth();
         final double contentHeight = terrain.getHeight();
 
-        scrollPane.setHvalue((x - paneWidth / 2 + width / 2) / (contentWidth - paneWidth));
-        scrollPane.setVvalue((y - paneHeight / 2 + height / 2) / (contentHeight - paneHeight));
+        final double newHvalue = (x - paneWidth / 2 + width / 2) / (contentWidth - paneWidth);
+        final double newVvalue = (y - paneHeight / 2 + height / 2) / (contentHeight - paneHeight);
+
+        if(scrollPaneTimeline != null) scrollPaneTimeline.stop(); // stop animation when scrolling to new position
+
+        if(animate) {
+            scrollPaneTimeline = new Timeline();
+
+            final KeyValue kvH = new KeyValue(scrollPane.hvalueProperty(), newHvalue);
+            final KeyFrame kfH = new KeyFrame(Duration.millis(SCROLL_ANIMATION_DURATION), kvH);
+
+            final KeyValue kvV = new KeyValue(scrollPane.vvalueProperty(), newVvalue);
+            final KeyFrame kfV = new KeyFrame(Duration.millis(SCROLL_ANIMATION_DURATION), kvV);
+
+            scrollPaneTimeline.getKeyFrames().addAll(kfH, kfV);
+            scrollPaneTimeline.setDelay(new Duration(SCROLL_ANIMATION_DELAY));
+            scrollPaneTimeline.play();
+        } else {
+            scrollPane.setHvalue(newHvalue);
+            scrollPane.setVvalue(newVvalue);
+        }
     }
 
     @Override
@@ -497,7 +523,7 @@ public class MapWindow extends Application implements Networkable {
             case "ACTIVATE_FIGURE":
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
-                scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE);
+                scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
                 break;
             case "CURRENT_TEAM_END_ROUND":
                 teams.get(Integer.parseInt(cmd[1])).endRound();
@@ -560,7 +586,7 @@ public class MapWindow extends Application implements Networkable {
                     f.setPosition(position); // TODO alternative setter
                 }
                 if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
-                    scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE);
+                    scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
                 break;
             case "REPLACE_BLOCK":
