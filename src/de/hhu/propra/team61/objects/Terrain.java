@@ -3,6 +3,7 @@ package de.hhu.propra.team61.objects;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -34,8 +35,8 @@ public class Terrain extends GridPane {
     private final double RESISTANCE_OF_FLUIDS = 99999999;
     //Blocks
     private final double RESISTANCE_OF_EARTH = 25;
-    private final double RESISTANCE_OF_SAND  = 20;
-    private final double RESISTANCE_OF_SNOW  = 20;
+    private final double RESISTANCE_OF_SAND = 20;
+    private final double RESISTANCE_OF_SNOW = 20;
     private final double RESISTANCE_OF_STONE = 35;
     private final double RESISTANCE_OF_ICE = 30;
     //Modifiers
@@ -70,40 +71,45 @@ public class Terrain extends GridPane {
         for (int i = 0; i < terrain.size(); i++) {
             for (int j = 0; j < terrain.get(i).size(); j++) {
                 char terraintype = terrain.get(i).get(j);
-                switch (terraintype) {
-                    case ' ':
-                        add(new ImageView(SKY_IMAGE), j, i);
-                        break;
-                    case 'S':
-                        add(new ImageView(STONES_IMAGE), j, i);
-                        break;
-                    case 'E':
-                        add(new ImageView(EARTH_IMAGE), j, i);
-                        break;
-                    case 'I':
-                        add(new ImageView(ICE_IMAGE), j, i);
-                        break;
-                    case '/':
-                        add(new ImageView(SLANT_RI_IMAGE), j, i);
-                        break;
-                    case '\\':
-                        add(new ImageView(SLANT_LE_IMAGE), j, i);
-                        break;
-                    case 'W':
-                        add(new ImageView(WATER_IMAGE), j, i);
-                        break;
-                    case 'L':
-                        add(new ImageView(LAVE_IMAGE), j, i);
-                        break;
-                    case 'P': // special case: spawn point, add to list and draw sky
-                        spawnPoints.add(new Point2D(j * BLOCK_SIZE, i * BLOCK_SIZE));
-                        terrain.get(i).set(j, ' ');
-                    default:
-                        add(new ImageView(SKY_IMAGE), j, i);
-                }
+                renderTerrainBlock(terraintype, j, i);
                 //terrainGrid.setConstraints(content,j,i);
             }
         }
+    }
+
+    private void renderTerrainBlock(char type, int column, int row) {
+        switch(type) {
+            case ' ':
+                add(new ImageView(SKY_IMAGE), column, row);
+                break;
+            case 'S':
+                add(new ImageView(STONES_IMAGE), column, row);
+                break;
+            case 'E':
+                add(new ImageView(EARTH_IMAGE), column, row);
+                break;
+            case 'I':
+                add(new ImageView(ICE_IMAGE), column, row);
+                break;
+            case '/':
+                add(new ImageView(SLANT_RI_IMAGE), column, row);
+                break;
+            case '\\':
+                add(new ImageView(SLANT_LE_IMAGE), column, row);
+                break;
+            case 'W':
+                add(new ImageView(WATER_IMAGE), column, row);
+                break;
+            case 'L':
+                add(new ImageView(LAVE_IMAGE), column, row);
+                break;
+            case 'P': // special case: spawn point, add to list and draw sky
+                spawnPoints.add(new Point2D(column * BLOCK_SIZE, row * BLOCK_SIZE));
+                terrain.get(row).set(column, ' ');
+            default:
+                add(new ImageView(SKY_IMAGE), column, row);
+        }
+
     }
 
     /**
@@ -190,6 +196,10 @@ public class Terrain extends GridPane {
         }
     }
 
+    /**
+     * prints message to stdout if DEBUG==true
+     * @param msg the message to be printed
+     */
     private static void debugLog(String msg) {
         if(DEBUG) System.out.println(msg);
     }
@@ -322,6 +332,21 @@ public class Terrain extends GridPane {
 
     public void replaceBlock(int blockX, int blockY, char replacement){
         terrain.set(blockY,terrain.get(blockY)).set(blockX,replacement);
+        removeTerrainBlock(blockX, blockY);
+        renderTerrainBlock(replacement, blockX, blockY);
+    }
+
+    private void removeTerrainBlock(int column, int row) {
+        for (Node node: getChildren()) {
+            int currentRow = GridPane.getRowIndex(node);
+            if (currentRow == row) {
+                int currentColumn = GridPane.getColumnIndex(node);
+                if (currentColumn == column) {
+                    getChildren().removeAll(node);
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -396,7 +421,6 @@ public class Terrain extends GridPane {
         
         ArrayList<String> commands = new ArrayList<String>();
         explode(commands,blockX,blockY,explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
-        commands.add("RELOAD_TERRAIN"); //Tell Clients to update Map for visibility;
 
         return commands;
     }

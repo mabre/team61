@@ -3,10 +3,10 @@ package de.hhu.propra.team61;
 import de.hhu.propra.team61.gui.Chat;
 import de.hhu.propra.team61.gui.GameOverWindow;
 import de.hhu.propra.team61.io.GameState;
-import de.hhu.propra.team61.io.json.JSONArray;
-import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.io.json.JSONArray;
+import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -250,6 +250,9 @@ public class MapWindow extends Application implements Networkable {
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                             } catch (CollisionException e) {
                                 System.out.println("CollisionException, let's do this!");
+                                final Projectile collidingProjectile = flyingProjectile;
+                                flyingProjectile = null; // we remove it here to prevent timing issues
+                                fieldPane.getChildren().remove(flyingProjectile);
                                 Platform.runLater(() -> {
 //                                    } catch (DeathException de) { // TODO that change was somewhat important I think (or not?) ... (see handleCollision in Weapon)
 //                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
@@ -258,7 +261,7 @@ public class MapWindow extends Application implements Networkable {
 //                                    }
                                     //Get series of commands to send to the clients from
                                     //Collisionhandling done by the weapon causing this exception
-                                    ArrayList<String> commandList = flyingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
+                                    ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
                                     for(String command : commandList){ server.sendCommand(command); } //Send commands+
                                     endTurn();
                                 });
@@ -464,8 +467,8 @@ public class MapWindow extends Application implements Networkable {
         final double contentWidth = terrain.getWidth();
         final double contentHeight = terrain.getHeight();
 
-        scrollPane.setHvalue((x-paneWidth/2+width/2) / (contentWidth-paneWidth));
-        scrollPane.setVvalue((y-paneHeight/2+height/2) / (contentHeight-paneHeight));
+        scrollPane.setHvalue((x - paneWidth / 2 + width / 2) / (contentWidth - paneWidth));
+        scrollPane.setVvalue((y - paneHeight / 2 + height / 2) / (contentHeight - paneHeight));
     }
 
     @Override
@@ -559,12 +562,10 @@ public class MapWindow extends Application implements Networkable {
                 if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
                     scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE);
                 }
+                break;
             case "REPLACE_BLOCK":
                 if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
-                terrain.replaceBlock(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),cmd[3].charAt(0));
-                break;
-            case "RELOAD_TERRAIN":
-                terrain.load(terrain.toArrayList());
+                terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
                 break;
             case "DEACTIVATE_FIGURE":
                 shootingIsAllowed = true;
@@ -579,8 +580,10 @@ public class MapWindow extends Application implements Networkable {
                 if(server==null) flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
                 break;
             case "REMOVE_FLYING_PROJECTILE":
-                fieldPane.getChildren().remove(flyingProjectile);
-                flyingProjectile = null;
+                if(flyingProjectile != null) {
+                    fieldPane.getChildren().remove(flyingProjectile);
+                    flyingProjectile = null;
+                }
                 break;
             case "SET_CURRENT_TEAM":
                 teams.get(currentTeam).getCurrentFigure().setActive(false);
