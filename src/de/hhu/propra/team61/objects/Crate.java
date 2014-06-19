@@ -13,7 +13,7 @@ import javafx.scene.image.ImageView;
 public class Crate extends ImageView {
     private static final int NORMED_OBJECT_SIZE = 16;
     private static final int NORMED_BLOCK_SIZE  = 8;
-    private static final String IMGSRC = "file:/resources/weapons/crate.png";
+    private static final String IMGSRC = "file:resources/weapons/crate.png";
 
     private static final int MASS               = 1000;
     private static final int EXPLOSIONPOWER     = 30;
