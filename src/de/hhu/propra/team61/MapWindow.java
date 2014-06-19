@@ -254,6 +254,7 @@ public class MapWindow extends Application implements Networkable {
                                 newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
                                 flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                 flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
+                                scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
                                 server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                             } catch (CollisionException e) {
                                 System.out.println("CollisionException, let's do this!");
@@ -479,22 +480,24 @@ public class MapWindow extends Application implements Networkable {
 
         if(scrollPaneTimeline != null) scrollPaneTimeline.stop(); // stop animation when scrolling to new position
 
-        if(animate) {
-            scrollPaneTimeline = new Timeline();
+        Platform.runLater(() -> {
+            if (animate) {
+                scrollPaneTimeline = new Timeline();
 
-            final KeyValue kvH = new KeyValue(scrollPane.hvalueProperty(), newHvalue);
-            final KeyFrame kfH = new KeyFrame(Duration.millis(SCROLL_ANIMATION_DURATION), kvH);
+                final KeyValue kvH = new KeyValue(scrollPane.hvalueProperty(), newHvalue);
+                final KeyFrame kfH = new KeyFrame(Duration.millis(SCROLL_ANIMATION_DURATION), kvH);
 
-            final KeyValue kvV = new KeyValue(scrollPane.vvalueProperty(), newVvalue);
-            final KeyFrame kfV = new KeyFrame(Duration.millis(SCROLL_ANIMATION_DURATION), kvV);
+                final KeyValue kvV = new KeyValue(scrollPane.vvalueProperty(), newVvalue);
+                final KeyFrame kfV = new KeyFrame(Duration.millis(SCROLL_ANIMATION_DURATION), kvV);
 
-            scrollPaneTimeline.getKeyFrames().addAll(kfH, kfV);
-            scrollPaneTimeline.setDelay(new Duration(SCROLL_ANIMATION_DELAY));
-            scrollPaneTimeline.play();
-        } else {
-            scrollPane.setHvalue(newHvalue);
-            scrollPane.setVvalue(newVvalue);
-        }
+                scrollPaneTimeline.getKeyFrames().addAll(kfH, kfV);
+                scrollPaneTimeline.setDelay(new Duration(SCROLL_ANIMATION_DELAY));
+                scrollPaneTimeline.play();
+            } else {
+                scrollPane.setHvalue(newHvalue);
+                scrollPane.setVvalue(newVvalue);
+            }
+        });
     }
 
     @Override
@@ -603,7 +606,12 @@ public class MapWindow extends Application implements Networkable {
                 gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
-                if(server==null) flyingProjectile.setPosition(new Point2D(Double.parseDouble(cmd[1]), Double.parseDouble(cmd[2])));
+                if(server==null) { // TODO code duplication should be avoided
+                    final double x = Double.parseDouble(cmd[1]);
+                    final double y = Double.parseDouble(cmd[2]);
+                    flyingProjectile.setPosition(new Point2D(x, y));
+                    scrollTo(x, y, 0, 0, false);
+                }
                 break;
             case "REMOVE_FLYING_PROJECTILE":
                 if(flyingProjectile != null) {
