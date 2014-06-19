@@ -39,4 +39,8 @@ public abstract class Item extends ImageView{ //ToDo give this a makeover
         this.setTranslateX(-1000);
         this.setTranslateY(-1000);
     }
+
+    public String getName() {
+        return name;
+    }
 }

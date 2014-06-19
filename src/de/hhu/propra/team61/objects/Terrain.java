@@ -15,7 +15,7 @@ import java.util.ArrayList;
  * Created by markus on 17.05.14.
  */
 public class Terrain extends GridPane {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final boolean GRID_ENABLED = false;
 
     private static String imgPath = "file:resources/";

@@ -172,6 +172,7 @@ public abstract class Weapon extends Item {
         commandList.addAll(terrain.handleExplosion(new Point2D(impactArea.getMinX(),impactArea.getMinY()), explosionpower));
 
         // 3. Send Figures flying
+        // ToDo use explosioncenter and figures pos to make vector substract and addvelocity
         //ToDo commandList.addAll();
 
         return commandList;
@@ -181,6 +182,8 @@ public abstract class Weapon extends Item {
     public ImageView getCrosshair() { return crosshair; }
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
+
+    public void refill(){ munition++; }
 
 
     //----------------------------------Crosshair-Related Functions---------------------------------

@@ -133,6 +133,12 @@ public class Team extends StackPane {
     public Weapon getWeapon(int i) {
         return weapons.get(i);
     }
+    public Weapon getWeapon(String s) {
+        for(Weapon w : weapons){
+            if(w.getName().equals(s)){  return w; }
+        }
+        return null; // If not found; To avoid
+    }
 
     public int getNumberOfWeapons() {
         return weapons.size();

@@ -2,10 +2,13 @@ package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.io.json.JSONObject;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+
+import java.io.File;
 
 /**
  * Created by kevin on 17.06.14.
@@ -17,7 +20,7 @@ public class Crate extends ImageView {
 
     private static final int MASS               = 1000;
     private static final int EXPLOSIONPOWER     = 30;
-    private static final int DAMAGERSISTANCE    = 10;
+    private static final int DAMAGERESISTANCE   = 10;
 
 
         public  static final int JUMP_SPEED = 18 + (int)(MapWindow.GRAVITY.getY() * MASS);
@@ -26,7 +29,7 @@ public class Crate extends ImageView {
 
 
         /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
-        private Point2D velocity = new Point2D(0,0);
+        private Point2D velocity = new Point2D(0,10);
         /** the maximal speed (absolute value) in y direction since last call of resetVelocity, used to limit jump speed */
         private double maxYSpeed = 0;
 
@@ -34,20 +37,59 @@ public class Crate extends ImageView {
 
     private String content;
 
-        // In and Out
-        public Crate(int x, String content){
-            // TODO set Content
+    public Crate(int xSize, String contentw){
+        setImage(new Image(IMGSRC,NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
+        setTranslateX(Math.random()*xSize*NORMED_BLOCK_SIZE);
+        setTranslateY(0);
 
-            setImage(new Image(IMGSRC,NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
-            setTranslateX(100*8);//TODO add random
-            setTranslateY(20*8);
+        // TODO set Content
+        File f = new File("src/de/hhu/propra/team61/objects/weapontypes/");
+        String[] options = f.list();
+        System.out.println(options);
+        content = options[(int)Math.random()*options.length]; //ToDo remove fileending
+        content = content.substring(0,content.indexOf("."));
 
-            hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(),NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE);
+        hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(),NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE);
 
-            velocity = new Point2D(0,0);
 
-            //ToDo fall to the ground + Wind(?)
+        //ToDo add yourself to terrain
 
-            //ToDo add yourself to terrain
         }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setPosition(Point2D pos) {
+        Platform.runLater(() -> {
+            setTranslateX(pos.getX());
+            setTranslateY(pos.getY());
+        });
+        hitRegion = new Rectangle2D(pos.getX(), pos.getY(), hitRegion.getWidth(), hitRegion.getHeight());
+    }
+    /**
+     * @return position in px
+     */
+    public Point2D getPosition() {
+        return new Point2D(getTranslateX(), getTranslateY());
+    }
+    public Rectangle2D getHitRegion() {
+        return hitRegion;
+    }
+
+    
+    public Point2D getVelocity() {
+        return velocity;
+    }
+    public void resetVelocity() {
+        velocity =  new Point2D(0,10);
+    }
+    public void nullifyVelocity() {
+        velocity =  new Point2D(0,0);
+    }
+
+    public int getMass() {
+        return MASS;
+    }
+
 }

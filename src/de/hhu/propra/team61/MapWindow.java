@@ -33,6 +33,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
@@ -115,12 +116,18 @@ public class MapWindow extends Application implements Networkable {
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
+/* TODO
+        //Get all implemented Weapons/Items
+        File f = new File("src/de/hhu/propra/team61/objects/weapontypes/");
+        String[] weaponListArray = f.list();
+        */
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Weapon> weapons = new ArrayList<>();
+
             weapons.add(new Bazooka(settings.getInt("weapon1")));
             weapons.add(new Grenade(settings.getInt("weapon2")));
             weapons.add(new Shotgun(settings.getInt("weapon3")));
-            weapons.add(new PoisonedArrow(4)); //ToDo replace with: settings.getInt("weapon4"))
+            weapons.add(new PoisonedArrow(1)); //ToDo replace with: settings.getInt("weapon4"))
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
         }
 
@@ -273,9 +280,21 @@ public class MapWindow extends Application implements Networkable {
                                 });
                             }
                         }
-                        for(Team team: teams) {
-                            for(Figure figure: team.getFigures()) {
+                        for(int t = 0; t < teams.size(); t++) {
+                            Team team = teams.get(t);
+                            for(int f = 0; f < team.getFigures().size(); f++) {
+                                Figure figure = team.getFigures().get(f);
                                 if(figure.getHealth() > 0) {
+                                    //Check if figure collides with an Crate TODO: Ask if I should move that somewhere else
+                                    for(int i = 0; i < supplyDrops.size(); i++){
+                                        if(figure.getHitRegion().intersects(supplyDrops.get(i).getHitRegion())){
+                                            //ToDo add crate's content into inventory of team
+                                            server.sendCommand("SUPPLY_PICKED_UP" + " " + t + " " + supplyDrops.get(i).getContent());
+                                            server.sendCommand("REMOVE_SUPPLY " + i); //TodO Redudance?
+
+                                        }
+                                    }
+
                                     final boolean scrollToFigure = (figure == teams.get(currentTeam).getCurrentFigure());
                                     final Point2D oldPos = new Point2D(figure.getPosition().getX(), figure.getPosition().getY());
                                     try {
@@ -305,6 +324,25 @@ public class MapWindow extends Application implements Networkable {
                                         }
                                     }
                                 }
+                            }
+                        }
+                        for(int i = 0; i < supplyDrops.size(); i++){
+                            Crate supply = supplyDrops.get(i);
+                            supply.resetVelocity();
+                            final Point2D oldPos = new Point2D(supply.getPosition().getX(), supply.getPosition().getY());
+                            try {
+                                final Point2D newPos; // TODO code duplication
+                                newPos = terrain.getPositionForDirection(oldPos, supply.getVelocity(), supply.getHitRegion(), false, true, false);
+                                if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                    supply.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
+                                    server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (newPos.getX()) + " " + (newPos.getY()));
+                                }
+                            } catch (CollisionException e) {
+                                if (!e.getLastGoodPosition().equals(oldPos)) {
+                                    supply.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                                    server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                }
+                                supply.nullifyVelocity();
                             }
                         }
 
@@ -433,7 +471,7 @@ public class MapWindow extends Application implements Networkable {
             //supplyDrops.get(supplyDrops.size()-1).fall();
 
 
-            server.sendCommand("DROP_SUPPLY"+" "+200+" "+"ToDo"); //ToDo
+            server.sendCommand("DROP_SUPPLY"+" "+"ToDo:200"+" "+"ToDo:Content"); //ToDo
         }
 
         //ToDo Wait until no objectmovements
@@ -580,9 +618,15 @@ public class MapWindow extends Application implements Networkable {
                 terrain.replaceBlock(Integer.parseInt(cmd[1]),Integer.parseInt(cmd[2]),cmd[3].charAt(0));
                 break;
             case "DROP_SUPPLY":
-                supplyDrops.add(new Crate((int)Double.parseDouble(cmd[1]),cmd[2]));
-                fieldPane.getChildren().add(fieldPane.getChildren().size()-1,supplyDrops.get(supplyDrops.size()-1));
-
+                supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(),cmd[2]));
+                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size()-1));
+                break;
+            case "REMOVE_SUPPLY":
+                fieldPane.getChildren().remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                supplyDrops.remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                break;
+            case "SUPPLY_PICKED_UP":
+                teams.get(Integer.parseInt(cmd[1])).getWeapon(cmd[2]).refill();
                 break;
             case "RELOAD_TERRAIN":
                 terrain.load(terrain.toArrayList());
