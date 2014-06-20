@@ -414,7 +414,8 @@ public class Terrain extends GridPane {
 
         for(int row = 0; row < terrain.size(); row++) {
             for(int col = 0; col <= column; col ++) {
-                replaceBlock(col, row, '@'); // TODO special terrain type?
+//                replaceBlock(col, row, '@'); // TODO special terrain type?
+                terrain.get(row).set(col, '@'); // TODO index check
             }
         }
 
@@ -429,14 +430,14 @@ public class Terrain extends GridPane {
         for(int i=0; i<=column; i++) {
             ImageView riftImage = new ImageView("file:resources/animations/boss_rift.png");
             riftImage.setTranslateX(i*BLOCK_SIZE);
-            SpriteAnimation riftAnimation = new SpriteAnimation(riftImage, 500, 10, 1);
+            SpriteAnimation riftAnimation = new SpriteAnimation(riftImage, 500, 11, 1);
 //          add(riftImage, 10, 0);
             ((StackPane) getParent()).getChildren().add(riftImage); // TODO bad cast
 //            riftAnimation.setOnFinished((e) -> {
 //                ((StackPane) getParent()).getChildren().removeAll(riftImage);
 //            });
             riftImage.setFitHeight(terrain.size()*BLOCK_SIZE);
-            riftAnimation.setDelay(new Duration((column-i)*50));
+            riftAnimation.setDelay(new Duration((column-i)*40));
             riftAnimation.play();
         }
     }
