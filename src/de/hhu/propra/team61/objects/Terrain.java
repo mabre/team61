@@ -10,6 +10,8 @@ import javafx.scene.layout.GridPane;
 
 import java.util.ArrayList;
 
+import static de.hhu.propra.team61.objects.Figure.*;
+
 /**
  * A GridPane representing a terrain.
  * The class has methods for getting spawn points, walkability checks and destroying terrain
@@ -19,16 +21,16 @@ public class Terrain extends GridPane {
     private static final boolean DEBUG = false;
     private static final boolean GRID_ENABLED = false;
 
-    private static String imgPath = "file:resources/";
-    private static int BLOCK_SIZE = 8;
-    private static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
-    private static Image ICE_IMAGE = new Image(imgPath + "ice.png");
-    private static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
-    private static Image SKY_IMAGE = new Image(imgPath + "sky.png");
-    private static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
-    private static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
-    private static Image STONES_IMAGE = new Image(imgPath + "stones.png");
-    private static Image WATER_IMAGE = new Image(imgPath + "water.png");
+    private final static String imgPath = "file:resources/";
+    private final static int BLOCK_SIZE = 8;
+    private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
+    private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
+    private final static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
+    private final static Image SKY_IMAGE = new Image(imgPath + "sky.png");
+    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
+    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
+    private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
+    private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
 
     //Technical Blocks/Special Cases
     private final double RESISTANCE_OF_SKY = 15;
@@ -46,6 +48,10 @@ public class Terrain extends GridPane {
     private ArrayList<ArrayList<Character>> terrain;
     private ArrayList<Point2D> spawnPoints;
     private ArrayList<Figure> figures;
+
+    private Point2D wind = new Point2D(0,0);
+    private final static double MAX_WIND_SPEED_NORMAL = Figure.WALK_SPEED*.8;
+    private final static double MAX_WIND_SPEED_HARD = Figure.WALK_SPEED*1.2;
 
     /**
      * @param terrain 2-D-ArrayList containing the terrain to be displayed
@@ -169,9 +175,9 @@ public class Terrain extends GridPane {
                 return false;
             case '/':
                 Point2D p;
-                for (int i = 0; i < 8; i++) { //ToDo Replace with BLOCK_SIZE ?
-                    int px = x * 8 + i;
-                    int py = y * 8 + 8 - i;
+                for (int i = 0; i < BLOCK_SIZE; i++) { //ToDo Replace with BLOCK_SIZE ?
+                    int px = x * BLOCK_SIZE + i;
+                    int py = y * BLOCK_SIZE + BLOCK_SIZE - i;
                     p = new Point2D(px, py);
                     if(hitRegion.contains(p)) {
                         debugLog("diagonal / intersection at " + px + "x" + py + "px");
@@ -180,9 +186,9 @@ public class Terrain extends GridPane {
                 }
                 return false;
             case '\\':
-                for(int i=0; i<8; i++) {
-                    int px = x*8+i;
-                    int py = y*8+1+i;
+                for(int i=0; i<BLOCK_SIZE; i++) {
+                    int px = x*BLOCK_SIZE+i;
+                    int py = y*BLOCK_SIZE+1+i;
                     p = new Point2D(px, py);
                     if(hitRegion.contains(p)) {
                         debugLog("diagonal / intersection at " + px + "x" + py + "px");
@@ -191,9 +197,35 @@ public class Terrain extends GridPane {
                 }
                 return false;
             default:
-                Rectangle2D rec = new Rectangle2D(x * 8, y * 8, 8, 8);
+                Rectangle2D rec = new Rectangle2D(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
                 return hitRegion.intersects(rec);
         }
+    }
+
+    /**
+     * creates new random wind
+     */
+    public void rewind() {
+        double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
+        double windSpeed = Math.random() * maxWindSpeed - maxWindSpeed / 2;
+        if (Math.random() > .5) windSpeed *= 2; // make higher speed less probable
+        wind = new Point2D(windSpeed, 0);
+        System.out.println("new wind: " + windSpeed);
+    }
+
+    /**
+     * @return the magnitude of the current wind vector, the sign indicates wind direction
+     */
+    public double getWindMagnitude() {
+        return wind.magnitude()*Math.signum(wind.getX());
+    }
+
+    /**
+     * Sets the wind to the given value
+     * @param wind wind speed in x direction
+     */
+    public void setWind(double wind) {
+        this.wind = new Point2D(wind, 0);
     }
 
     /**
@@ -215,11 +247,13 @@ public class Terrain extends GridPane {
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
      * @param canWalkThroughFigures when true, the object is able to walk through figures (no CollisionWithFigureException will be thrown) TODO therefore, have a wrapper function which does not throw this exception
      * @param snapToPx when true, the positions returned are rounded to whole px
+     * @param influencedByWind if false, the wind is not considered when calculating the new position
      * @return new position of the object
      * @throws CollisionException thrown when hitting terrain or a figure
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx) throws CollisionException {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
+        if(influencedByWind && !isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
         Point2D normalizedDirection = direction.normalize();
 
         debugLog("start position: " + oldPosition);
@@ -244,10 +278,10 @@ public class Terrain extends GridPane {
                 triedDiagonal = false;
 
                 // calculate indices of fields which are touched by hitRegion
-                int minY = (int) Math.floor(hitRegion.getMinY() / 8); //ToDo Replace with BLOCK_SIZE ?
-                int maxY = (int) Math.ceil(hitRegion.getMaxY() / 8);
-                int minX = (int) Math.floor(hitRegion.getMinX() / 8);
-                int maxX = (int) Math.ceil(hitRegion.getMaxX() / 8);
+                int minY = (int) Math.floor(hitRegion.getMinY() / BLOCK_SIZE);
+                int maxY = (int) Math.ceil(hitRegion.getMaxY() / BLOCK_SIZE);
+                int minX = (int) Math.floor(hitRegion.getMinX() / BLOCK_SIZE);
+                int maxX = (int) Math.ceil(hitRegion.getMaxX() / BLOCK_SIZE);
 
                 for (int y = minY; y <= maxY && !triedDiagonal; y++) { // TODO recheck necessity of <=
                     for (int x = minX; x <= maxX && !triedDiagonal; x++) {
@@ -303,6 +337,46 @@ public class Terrain extends GridPane {
             newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
         }
         return newPosition;
+    }
+
+    /**
+     * @param position the position to be checked
+     * @param direction we do not apply wind to vertical movements near the ground (makes jumping easier)
+     * @return true when the given position is not influenced by wind (ie. is right behind a piece of terrain)
+     */
+    private boolean isInWindbreak(Point2D position, Point2D direction) {
+        if(wind.getX() == 0) return true;
+
+        boolean movingVertical = (direction.getX()==0);
+
+        int minY, maxY, minX, maxX;
+        minY = (int) Math.floor(position.getY() / BLOCK_SIZE - 1);
+        maxY = (int) Math.floor((position.getY() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE - 1);
+        if(movingVertical) maxY += (int) Math.floor(Figure.JUMP_SPEED / BLOCK_SIZE);
+        if(wind.getX() > 0) {
+            minX = (int) Math.floor(position.getX() / BLOCK_SIZE - 1);
+            maxX = (int) Math.floor(position.getX() / BLOCK_SIZE);
+            if(wind.getX() < 3.5) maxX += 1; // +1 to prevent figures from being pressed at terrain and staying in the air
+        } else {
+            minX = (int) Math.floor((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+            maxX = (int) Math.floor((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE + 1);
+            if(wind.getX() > -3.5) minX -= (int) (Figure.NORMED_OBJECT_SIZE / BLOCK_SIZE) + 1; // prevent figures from being pressed at terrain and staying in the air
+        }
+
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                try {
+                    if (terrain.get(y).get(x) != ' ') {
+                        return true;
+                    }
+                } catch (IndexOutOfBoundsException e) {
+                    return true;
+                }
+            }
+        }
+
+        System.out.println("not covered");
+        return false;
     }
 
     public void addFigures(ArrayList<Figure> figures) {

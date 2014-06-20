@@ -2,6 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.Chat;
 import de.hhu.propra.team61.gui.GameOverWindow;
+import de.hhu.propra.team61.gui.WindIndicator;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
@@ -64,6 +65,7 @@ public class MapWindow extends Application implements Networkable {
     private final static int SCROLL_ANIMATION_DURATION = 1000;
     private final static int SCROLL_ANIMATION_DELAY = 500;
     private Terrain terrain;
+    private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
@@ -146,6 +148,7 @@ public class MapWindow extends Application implements Networkable {
 
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
+        terrain.setWind(input.getInt("windForce"));
 
         initialize();
     }
@@ -170,6 +173,7 @@ public class MapWindow extends Application implements Networkable {
 
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
+        terrain.setWind(input.getInt("windForce"));
 
         initialize();
 
@@ -243,6 +247,10 @@ public class MapWindow extends Application implements Networkable {
         sceneController.setGameScene(drawing);
         sceneController.switchToMapwindow();
 
+        if(server != null) terrain.rewind();
+        windIndicator.setWindForce(terrain.getWindMagnitude());
+        rootPane.setCenter(windIndicator);
+
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
                 try {
@@ -251,7 +259,7 @@ public class MapWindow extends Application implements Networkable {
                         if (flyingProjectile != null) {
                             try {
                                 final Point2D newPos;
-                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false);
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
                                 flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                 flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
                                 scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
@@ -283,7 +291,7 @@ public class MapWindow extends Application implements Networkable {
                                     try {
                                         final Point2D newPos; // TODO code duplication
                                         figure.addVelocity(GRAVITY.multiply(figure.getMass()));
-                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false);
+                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false, true);
                                         if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
                                             figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
                                             server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
@@ -337,6 +345,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
         output.put("terrain", TerrainManager.toString(terrain.toArrayList()));
+        output.put("windForce", terrain.getWindMagnitude());
         return output;
     }
 
@@ -400,8 +409,10 @@ public class MapWindow extends Application implements Networkable {
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
-
         server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
+
+        terrain.rewind();
+        server.sendCommand("WIND_FORCE " + terrain.getWindMagnitude());
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
         if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
@@ -651,6 +662,9 @@ public class MapWindow extends Application implements Networkable {
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
                 break;
+            case "WIND_FORCE":
+                windIndicator.setWindForce(Double.parseDouble(cmd[1]));
+                break;
             default:
                 System.out.println("handleKeyEventOnClient: no event for key " + command);
         }
@@ -671,7 +685,7 @@ public class MapWindow extends Application implements Networkable {
             }
             return;
         } else if(keyCode.startsWith("CHEAT ")) {
-            executeCheat(extractPart(keyCode, "CHEAT "));
+            executeCheat(extractPart(keyCode, "CHEAT ").split(" "));
             return;
         }
 
@@ -770,8 +784,8 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
-    private void executeCheat(String cmd) {
-        switch (cmd) {
+    private void executeCheat(String[] cmd) {
+        switch (cmd[0]) {
             case "1fig": // kills every figure except the first figure of the first team and prevents game over window from being shown
                 for (int i = 1; i < teams.size(); i++) {
                     teams.get(i).suddenDeath();
@@ -785,6 +799,11 @@ public class MapWindow extends Application implements Networkable {
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
+                break;
+            case "rewind": // sets wind to given value
+                terrain.setWind(Double.parseDouble(cmd[1]));
+                windIndicator.setWindForce(terrain.getWindMagnitude());
+                System.out.println("It’s windy.");
                 break;
             default:
                 client.sendChatMessage("<<< Haw-haw! This user failed to cheat … >>> " + cmd);
@@ -802,7 +821,7 @@ public class MapWindow extends Application implements Networkable {
         Rectangle2D hitRegion = f.getHitRegion();
         Point2D newPos = null;
         try {
-            newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true);
+            newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
         } catch (CollisionException e) {
             System.out.println("CollisionException, stopped movement");
             newPos = e.getLastGoodPosition();
