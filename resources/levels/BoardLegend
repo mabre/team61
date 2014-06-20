@@ -1,10 +1,9 @@
 Board-Legend
 
-"P"= penguin (player spawnpoint: each worm spawns on a random spawnpoint)
-"_"= ground (walkable: You can walk on ground)
-"/" and "\" = slant ground (walkable: You can walk on slant ground up to 60°)
-"|" = wall (not walkable: You can't walk through and on a wall)
-"W" = water (Not walkable: You also drown if your hitbox is 3/4 in water)
+"P"= player (player spawnpoint: each player spawns on a random spawnpoint)
+"/" and "\" = slant ground (walkable)
+"W" = water (Not walkable: You also drown if your hitbox is 3/4 in water) // TODO not yet
+"L" = lava  (Not walkable: You also drown if your hitbox is 3/4 in lava)
 "S" = stone (graphic/design)
 "E" = earth (graphic/design)
 "I" = ice   (graphic/design)

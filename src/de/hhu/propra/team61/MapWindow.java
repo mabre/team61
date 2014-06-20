@@ -138,7 +138,7 @@ public class MapWindow extends Application implements Networkable {
         client.registerCurrentNetworkable(this);
 
         // TODO implement fromJson (code duplication) -> bring the two json formats into line (weapons are team properties)
-        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
+        this.terrain = new Terrain(input.getJSONObject("terrain"));
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
@@ -149,7 +149,6 @@ public class MapWindow extends Application implements Networkable {
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
         terrain.setWind(input.getInt("windForce"));
-
         initialize();
     }
 
@@ -162,7 +161,7 @@ public class MapWindow extends Application implements Networkable {
         this.serverThread = serverThread;
         if(server != null) server.registerCurrentNetworkable(this);
 
-        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
+        this.terrain = new Terrain(input.getJSONObject("terrain"));
 
         JSONObject settings = Settings.getSavedSettings(file);
         teams = new ArrayList<>();
@@ -344,7 +343,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("teams", teamsArray);
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
-        output.put("terrain", TerrainManager.toString(terrain.toArrayList()));
+        output.put("terrain", terrain.toJson());
         output.put("windForce", terrain.getWindMagnitude());
         return output;
     }
@@ -806,7 +805,7 @@ public class MapWindow extends Application implements Networkable {
                 System.out.println("It’s windy.");
                 break;
             default:
-                client.sendChatMessage("<<< Haw-haw! This user failed to cheat … >>> " + cmd);
+                client.sendChatMessage("<<< Haw-haw! This user failed to cheat … >>> " + arrayToString(cmd, 0));
                 System.out.println("No cheating, please!");
         }
     }

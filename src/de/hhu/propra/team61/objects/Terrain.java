@@ -1,5 +1,7 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.io.json.JSONArray;
+import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -8,6 +10,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 
+import javax.sound.sampled.AudioSystem;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.objects.Figure.*;
@@ -56,19 +59,25 @@ public class Terrain extends GridPane {
     /**
      * @param terrain 2-D-ArrayList containing the terrain to be displayed
      */
-    public Terrain(ArrayList<ArrayList<Character>> terrain) {
+    public Terrain(JSONObject terrain) {
         load(terrain);
         figures = new ArrayList<>();
     }
 
-    public void load(ArrayList<ArrayList<Character>> terrain) {
+//TODO    private void fromArray(JSONObject String?){}
+
+    public void load(JSONObject terrainObject) {
         getChildren().clear();
-
-        this.terrain = terrain;
-
-        spawnPoints = new ArrayList<Point2D>();
-
-        //Draw Terrain
+        JSONArray terrainAsJSON = terrainObject.getJSONArray("terrain");
+        this.terrain = new ArrayList<ArrayList<Character>>(); // Initialize terrain
+        //ToDo transformer schreiben
+        for (int i = 0; i < terrainAsJSON.length(); i++) {
+            this.terrain.add(new ArrayList<Character>()); // add "underarraylists" to terrain
+            for (int j = 0; j < terrainAsJSON.getString(0).length(); j++) {
+                this.terrain.get(i).add(j, terrainAsJSON.getString(i).charAt(j));
+            }
+        }
+        spawnPoints = new ArrayList</*Point2D*/>();
         setAlignment(Pos.TOP_LEFT);
         setGridLinesVisible(GRID_ENABLED);
 
@@ -175,7 +184,7 @@ public class Terrain extends GridPane {
                 return false;
             case '/':
                 Point2D p;
-                for (int i = 0; i < BLOCK_SIZE; i++) { //ToDo Replace with BLOCK_SIZE ?
+                for (int i = 0; i < BLOCK_SIZE; i++) {
                     int px = x * BLOCK_SIZE + i;
                     int py = y * BLOCK_SIZE + BLOCK_SIZE - i;
                     p = new Point2D(px, py);
@@ -375,7 +384,7 @@ public class Terrain extends GridPane {
             }
         }
 
-        System.out.println("not covered");
+        debugLog("not covered");
         return false;
     }
 
@@ -487,12 +496,30 @@ public class Terrain extends GridPane {
      */
     public ArrayList<String> handleExplosion(Point2D impactPoint, int explosionPower) {
         // Get Block, which is center of explosion, from Point2D
-        int blockX = (int)impactPoint.getX() / BLOCK_SIZE;
-        int blockY = (int)impactPoint.getY() / BLOCK_SIZE;
-        
+        int blockX = (int) impactPoint.getX() / BLOCK_SIZE;
+        int blockY = (int) impactPoint.getY() / BLOCK_SIZE;
+
         ArrayList<String> commands = new ArrayList<String>();
-        explode(commands,blockX,blockY,explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
+        explode(commands, blockX, blockY, explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
 
         return commands;
+    }
+
+    /**
+     * @return a JSONObject containing the current state of the terrain
+     */
+    public JSONObject toJson() {
+        JSONObject save = new JSONObject();
+        JSONArray jsonTerrain = new JSONArray();
+        //String[] arr;
+        for (int i = 0; i < terrain.size(); i++) {
+            StringBuilder builder = new StringBuilder();
+            for (int j = 0; j < terrain.get(i).size(); j++) { //forming a String from Array[i]
+                builder.append(terrain.get(i).get(j));
+            }
+            jsonTerrain.put(builder.toString());
+        }
+        save.put("terrain", jsonTerrain);
+        return save;
     }
 }
