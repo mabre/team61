@@ -408,18 +408,37 @@ public class Terrain extends GridPane {
         return commands;
     }
 
-    public void destroyColumn(Point2D position) {
-        int column = (int)(position.getX() / BLOCK_SIZE);
-        if(column > getTerrainWidth()) column = getTerrainWidth();
+    /**
+     * destroys columns between the left or right side of the board and a given figure position (usually the boss)
+     * @param position the position of the figure
+     * @param fromLeft whether to start from the left (true) or right (false)
+     * @param movedBy absolute value of x-position change in px since last call of this function
+     */
+    public void destroyColumns(Point2D position, boolean fromLeft, int movedBy) {
+        movedBy = movedBy / BLOCK_SIZE;
 
-        for(int row = 0; row < terrain.size(); row++) {
-            for(int col = 0; col <= column; col ++) {
-//                replaceBlock(col, row, '@'); // TODO special terrain type?
-                terrain.get(row).set(col, '@'); // TODO index check
+        int column = (int)(position.getX() / BLOCK_SIZE + (fromLeft ? 0 : Figure.NORMED_OBJECT_SIZE / BLOCK_SIZE));
+        if(column >= terrain.get(0).size()) column = terrain.get(0).size() - 1;
+
+        int colStart = (fromLeft ? 0 : column);
+        int colEnd = (fromLeft ? column-1 : terrain.get(0).size()-1);
+        if(colEnd >= terrain.get(0).size()) colEnd = terrain.get(0).size() - 1;
+
+        int lastAlreadyDestroyedColumn = (fromLeft ? -1 : terrain.get(0).size());
+
+        for (int col = colStart; col <= colEnd; col++) {
+            if(terrain.get(0).get(col) == '@') { // column already destroyed
+                if(fromLeft || lastAlreadyDestroyedColumn == terrain.get(0).size()) {
+                    lastAlreadyDestroyedColumn = col;
+                }
+            } else {
+                for (int row = 0; row < terrain.size(); row++) {
+                    terrain.get(row).set(col, '@'); // TODO special terrain type?
+                }
             }
         }
 
-        Rectangle2D destroyedTerrain = new Rectangle2D(0, 0, column*BLOCK_SIZE, terrain.size()*BLOCK_SIZE+BLOCK_SIZE);
+        Rectangle2D destroyedTerrain = new Rectangle2D(colStart*BLOCK_SIZE, 0, (colEnd + (fromLeft?1:0))*BLOCK_SIZE, terrain.size()*BLOCK_SIZE+BLOCK_SIZE);
 
         for(Figure figure: figures) {
             if(figure.getHitRegion().intersects(destroyedTerrain)) {
@@ -427,7 +446,14 @@ public class Terrain extends GridPane {
             }
         }
 
-        for(int i=0; i<=column; i++) {
+        // do not play destroy animation for all columns
+        if(fromLeft) {
+            colStart = Math.max(0, lastAlreadyDestroyedColumn - 3 * movedBy + 1);
+        } else {
+            colEnd = Math.min(terrain.get(0).size() -1, lastAlreadyDestroyedColumn + 3 * movedBy - 1);
+        }
+
+        for(int i=colStart; i<=colEnd; i++) {
             ImageView riftImage = new ImageView("file:resources/animations/boss_rift.png");
             riftImage.setTranslateX(i*BLOCK_SIZE);
             SpriteAnimation riftAnimation = new SpriteAnimation(riftImage, 500, 11, 1);
@@ -437,7 +463,7 @@ public class Terrain extends GridPane {
 //                ((StackPane) getParent()).getChildren().removeAll(riftImage);
 //            });
             riftImage.setFitHeight(terrain.size()*BLOCK_SIZE);
-            riftAnimation.setDelay(new Duration((column-i)*40));
+            riftAnimation.setDelay(new Duration((fromLeft ? colEnd-i : i-colStart)*40));
             riftAnimation.play();
         }
     }

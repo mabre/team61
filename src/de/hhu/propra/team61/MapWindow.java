@@ -84,6 +84,7 @@ public class MapWindow extends Application implements Networkable {
     private Thread clientThread;
 
     private Figure boss = null;
+    private boolean bossSpawnedLeft;
 
     private String map; // TODO do we need this?
     private Chat chat;
@@ -447,14 +448,20 @@ public class MapWindow extends Application implements Networkable {
 
     private void spawnBoss() {
         String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar"); // similarity to Vel’Koz and Kog’Maw is purely coincidental
+        bossSpawnedLeft = (Math.random() > .5);
         boss = new Figure(bossName, 1000000, 1000000, false, false, false, "boss.png"); // TODO short-hand constructor
-        boss.setPosition(new Point2D(0, 0));
+        boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
         fieldPane.getChildren().add(boss);
     }
 
     private void moveBoss() {
-        boss.setPosition(boss.getPosition().add(terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS, 0));
-        terrain.destroyColumn(boss.getPosition());
+        final int moveBy = terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS;
+        if(bossSpawnedLeft) {
+            boss.setPosition(boss.getPosition().add(moveBy, 0));
+        } else {
+            boss.setPosition(boss.getPosition().subtract(moveBy, 0));
+        }
+        terrain.destroyColumns(boss.getPosition(), bossSpawnedLeft, moveBy);
         terrain.load(terrain.toArrayList());
     }
 
@@ -772,6 +779,9 @@ public class MapWindow extends Application implements Networkable {
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
+                break;
+            case "gameover": // ends the game by showing game over window
+                Platform.runLater(() -> handleOnClient("GAME_OVER -1"));
                 break;
             default:
                 System.out.println("No cheating, please!");
