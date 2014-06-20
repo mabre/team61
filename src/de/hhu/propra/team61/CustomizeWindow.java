@@ -47,6 +47,8 @@ public class CustomizeWindow extends Application {
     TextField styleNameField = new TextField("Custom");
     TextField sizeField = new TextField("4");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
+    ChoiceBox<String> musicChooser = new ChoiceBox<>();
+    ChoiceBox<String> imageChooser = new ChoiceBox<>();
 
 
     public CustomizeWindow(SceneController sceneController) {
@@ -99,15 +101,19 @@ public class CustomizeWindow extends Application {
     private void createEditGrid() {
         editGrid = new CustomGrid();
         Text whatToDoHere = new Text("Here you can edit or remove an existing team or game style.");
-        editGrid.add(whatToDoHere, 0, 2, 3, 1);
+        editGrid.add(whatToDoHere, 0, 2, 15, 1);
         Text teamsText = new Text("Teams:");
         teamsText.setFont(Font.font("Verdana", 20));
         editGrid.add(teamsText, 0, 4, 2, 1);
+        getTeams();
         Text stylesText = new Text("Game Styles:");
         stylesText.setFont(Font.font("Verdana", 20));
-        editGrid.add(stylesText, 3, 4, 2, 1);
-        getTeams();
+        editGrid.add(stylesText, 5, 4, 2, 1);
         getGameStyles();
+        Text mapsText = new Text("Maps:");
+        mapsText.setFont(Font.font("Verdana", 20));
+        editGrid.add(mapsText, 10, 4, 2, 1);
+        getMaps();
     }
 
     private void createNewTeamGrid() {
@@ -181,7 +187,13 @@ public class CustomizeWindow extends Application {
     }
 
     private void createNewMapGrid() {
-
+        Text music = new Text("Background music:");
+        newMapGrid.add(music, 0, 2);
+        newMapGrid.add(musicChooser, 1, 2);
+        Text image = new Text("Background image:");
+        newMapGrid.add(image, 2, 2);
+        getBackgroundImages();
+        newMapGrid.add(imageChooser, 3, 2);
     }
 
     private void editTeam(String teamName) {
@@ -197,6 +209,14 @@ public class CustomizeWindow extends Application {
     private ArrayList<String> getLevels() {
         ArrayList<String> levels = TerrainManager.getAvailableTerrains();
         return levels;
+    }
+
+    private void getBackgroundImages() {
+        ArrayList<String> backgroundImages = CustomizeManager.getAvailableBackgrounds();
+        for (int i=0; i<backgroundImages.size(); i++) {
+            imageChooser.getItems().add(backgroundImages.get(i));
+        }
+        imageChooser.getSelectionModel().selectFirst();
     }
 
     private void getTeams() {
@@ -227,15 +247,35 @@ public class CustomizeWindow extends Application {
                 refresh();
                 editStyle(availableGameStyles.get(finalI));
             });
-            editGrid.add(chooseStyleToEdit, 3, i+5);
+            editGrid.add(chooseStyleToEdit, 5, i+5);
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
                 deleteFile("gamestyles/"+chooseStyleToEdit.getText());
             });
-            editGrid.add(remove, 4, i+5);
+            editGrid.add(remove, 6, i+5);
         }
     }
+
+    private void getMaps() {
+        ArrayList<String> availableMaps = CustomizeManager.getAvailableMaps();
+        for (int i=0; i<availableMaps.size(); i++) {
+            Button chooseMapToEdit = new Button(availableMaps.get(i));
+            final int finalI = i;
+            chooseMapToEdit.setOnAction(e -> {
+                refresh();
+                editTeam(availableMaps.get(finalI));
+            });
+            editGrid.add(chooseMapToEdit, 10, i+5);
+            Button remove = new Button("X");
+            remove.setId("removeButton");
+            remove.setOnAction(e -> {
+                deleteFile("levels/" + chooseMapToEdit.getText());
+            });
+            editGrid.add(remove, 11, i+5);
+        }
+    }
+
 
     private void deleteFile(String fileName) {
         File file = new File("resources/"+fileName);

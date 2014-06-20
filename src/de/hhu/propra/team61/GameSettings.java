@@ -67,7 +67,6 @@ public class GameSettings extends Application {
         stylesText.setFont(Font.font("Verdana", 18));
         settingGrid.add(stylesText, 3, 1);
         style = new ChoiceBox<>(FXCollections.observableArrayList(getStyles()));
-        List styles = style.getItems();
         style.getSelectionModel().selectFirst();
         settingGrid.add(style, 3, 2);
         settingGrid.add(map, 3, 3);
