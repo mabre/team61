@@ -207,7 +207,7 @@ public class MapWindow extends Application implements Networkable {
                         anchorPane.setPrefSize(Math.max(fieldPane.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(fieldPane.getBoundsInParent().getMaxY(), newBounds.getHeight()))
         );
         scrollPane.setContent(anchorPane);
-        scrollPane.setPrefSize(1000, 550);
+        scrollPane.setPrefSize(1000, 530);
         centerPane.getChildren().add(scrollPane);
         rootPane.setBottom(centerPane);
 
