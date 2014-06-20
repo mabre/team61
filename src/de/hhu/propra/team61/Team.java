@@ -91,6 +91,7 @@ public class Team extends StackPane {
         }
         output.put("weapons", weaponsArray);
         output.put("color", toHex(color));
+        output.put("name", name);
         output.put("currentFigure", currentFigure);
         return output;
     }

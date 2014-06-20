@@ -31,7 +31,7 @@ public class Figure extends StackPane {
     private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
 
     private String name;
-    private String chosenFigure;
+    private String figureType;
     private int health;
     private int armor;
 
@@ -57,9 +57,9 @@ public class Figure extends StackPane {
     private Label hpLabel;
 
     // In and Out
-    public Figure(String name, String chosenFigure, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+    public Figure(String name, String figureType, int hp, int armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
         this.name   = name;
-        this.chosenFigure = chosenFigure;
+        this.figureType = figureType;
         this.health = hp;
         this.armor  = armor;
 
@@ -79,6 +79,7 @@ public class Figure extends StackPane {
         figureImage.setTranslateY(position.getY());
 
         this.name = input.getString("name");
+        this.figureType = input.getString("figureType");
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
         this.isBurning  = input.getBoolean("isBurning");
@@ -91,6 +92,7 @@ public class Figure extends StackPane {
         initialize();
     }
 
+    @Deprecated
     public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
         figureImage = new ImageView();
         position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
@@ -98,6 +100,7 @@ public class Figure extends StackPane {
         figureImage.setTranslateY(position.getY());
 
         this.name = name;
+        this.figureType = input.getString("figureType");
         this.health = input.getInt("health");
         this.armor  = input.getInt("armor");
         this.isBurning  = input.getBoolean("isBurning");
@@ -117,8 +120,8 @@ public class Figure extends StackPane {
 
         hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        System.out.println("Chosen figure: "+chosenFigure);
-        Image image = new Image("file:resources/figures/"+chosenFigure+".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+        System.out.println("Chosen figure: "+ figureType);
+        Image image = new Image("file:resources/figures/"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         figureImage.setImage(image);
         getChildren().add(figureImage);
 
@@ -133,6 +136,7 @@ public class Figure extends StackPane {
     public JSONObject toJson(){
         JSONObject output = new JSONObject();
         output.put("name", name);
+        output.put("figureType", figureType);
         output.put("health", health);
         output.put("armor", armor);
         output.put("position.x", position.getX()); // TODO save as array
