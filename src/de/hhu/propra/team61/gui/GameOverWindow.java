@@ -3,7 +3,6 @@ package de.hhu.propra.team61.gui;
 import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Server;
-import de.hhu.propra.team61.SceneController;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -31,7 +30,7 @@ public class GameOverWindow extends Application {
         launch(args);
     }
 
-    public void showWinner(SceneController sceneController, int currentTeam, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public void showWinner(SceneController sceneController, int winnerTeam, String winnerName, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         BorderPane root = new BorderPane();
         this.sceneController = sceneController;
         this.server = server;
@@ -49,7 +48,12 @@ public class GameOverWindow extends Application {
         gridBox.setId("gridBox");
         gridBox.getChildren().add(overGrid);
         root.setRight(gridBox);
-        Text winner = new Text("The winner is team " + (currentTeam+1) + ".");
+        Text winner = new Text();
+        if (winnerTeam == 0) {
+            winner.setText("A tie! You're both winners!");
+        } else {
+            winner.setText("The winner is team " +winnerName+ ".");
+        }
         winner.setFont(Font.font("Verdana", 20));
         overGrid.add(winner, 0, 0, 2, 1);
         Text whatNext = new Text("What do you want to do next?");

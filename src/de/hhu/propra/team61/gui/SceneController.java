@@ -1,4 +1,4 @@
-package de.hhu.propra.team61;
+package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.gui.BigStage;
 import javafx.scene.Scene;
@@ -16,6 +16,7 @@ public class SceneController {
     public Scene lobbyScene;
     public Scene gameScene;
     public Scene gameOverScene;
+    public Scene customizeScene;
 
     public void setStage(BigStage mainwindow) {
         this.mainwindow = mainwindow;
@@ -49,6 +50,10 @@ public class SceneController {
         this.gameOverScene = gameOverScene;
     }
 
+    public void setCustomizeScene(Scene customizeScene) {
+        this.customizeScene = customizeScene;
+    }
+
     public void switchToMenue() {
         mainwindow.setScene(menueScene);
         mainwindow.setTitle("Unicorns and penguins <3");
@@ -77,5 +82,10 @@ public class SceneController {
     public void switchToGameOver() {
         mainwindow.setScene(gameOverScene);
         mainwindow.setTitle("Game over");
+    }
+
+    public void switchToCustomize() {
+        mainwindow.setScene(customizeScene);
+        mainwindow.setTitle("Customize");
     }
 }

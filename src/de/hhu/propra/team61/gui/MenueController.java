@@ -1,12 +1,9 @@
 package de.hhu.propra.team61.gui;
 
-import de.hhu.propra.team61.GameSettings;
+import de.hhu.propra.team61.*;
 import de.hhu.propra.team61.io.GameState;
-import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Server;
-import de.hhu.propra.team61.OptionsWindow;
-import de.hhu.propra.team61.SceneController;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 
@@ -51,6 +48,11 @@ public class MenueController {
             clientThread.start();
         }));
         serverThread.start();
+    }
+
+    @FXML
+    public void handleCustomize() {
+        CustomizeWindow customizeWindow = new CustomizeWindow(sceneController);
     }
 
     @FXML

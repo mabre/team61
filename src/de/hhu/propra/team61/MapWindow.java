@@ -2,6 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.Chat;
 import de.hhu.propra.team61.gui.GameOverWindow;
+import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.gui.WindIndicator;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
@@ -28,7 +29,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -117,13 +117,14 @@ public class MapWindow extends Application implements Networkable {
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
+        JSONArray weaponsArray = settings.getJSONArray("weapons");
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Bazooka(settings.getInt("weapon1")));
-            weapons.add(new Grenade(settings.getInt("weapon2")));
-            weapons.add(new Shotgun(settings.getInt("weapon3")));
-            weapons.add(new PoisonedArrow(4)); //ToDo replace with: settings.getInt("weapon4"))
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
+            weapons.add(new Bazooka(weaponsArray.getJSONObject(0).getInt("weapon1")));
+            weapons.add(new Grenade(weaponsArray.getJSONObject(1).getInt("weapon2")));
+            weapons.add(new Shotgun(weaponsArray.getJSONObject(2).getInt("weapon3")));
+            weapons.add(new PoisonedArrow(weaponsArray.getJSONObject(3).getInt("weapon4")));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
         }
 
         initialize();
@@ -215,7 +216,7 @@ public class MapWindow extends Application implements Networkable {
             fieldPane.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
-        teamLabel = new Label("Team" + currentTeam + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
 
@@ -365,7 +366,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     @Deprecated
-    public void cheatMode() {
+    /*public void cheatMode() {
         try {
             levelCounter++;
             terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
@@ -378,14 +379,14 @@ public class MapWindow extends Application implements Networkable {
                 ArrayList<Weapon> weapons = new ArrayList<>();
                 weapons.add(new Bazooka(2));
                 weapons.add(new Grenade(2));
-                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE);
+                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE, "player");
                 teams.add(team);
                 fieldPane.getChildren().add(team);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     public int getNumberOfLivingTeams() {
         int livingTeams = 0;
@@ -450,7 +451,7 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
 
-        String teamLabelText = "Turn: " + turnCount + " It’s Team " + (currentTeam+1) + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        String teamLabelText = "Turn " + turnCount + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
     }
@@ -616,7 +617,7 @@ public class MapWindow extends Application implements Networkable {
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
                 GameOverWindow gameOverWindow = new GameOverWindow();
-                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), teams.get(Integer.parseInt(cmd[1])).getName(), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 if(server==null) { // TODO code duplication should be avoided
@@ -829,16 +830,14 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
     }
 
-    public Pane drawBackgroundImage() {
-        Pane backgroundPane = new Pane();
-        String img = "file:resources/levelback1.png";
+    public ImageView drawBackgroundImage() {
+        String img = "file:resources/board.png";
         Image image = new Image(img);
         ImageView background = new ImageView();
         background.setImage(image);
-        backgroundPane.getChildren().add(background);
-        return backgroundPane;
+        return background;
     }
-
+    
     @Override
     public String getStateForNewClient() {
         return "STATUS MAPWINDOW " + this.toJson().toString();
