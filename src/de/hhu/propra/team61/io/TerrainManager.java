@@ -48,29 +48,11 @@ public class TerrainManager {
     public static JSONObject/*ArrayList<ArrayList<Character>>*/ load(int levelnumber) throws FileNotFoundException {
         return load(getAvailableTerrains().get(levelnumber));
     }
-
-    /**
-     * @param levelstring string representation of a level
-     * @return 2-D JSONObject representing the given level
-     */
-    public static JSONObject /*ArrayList<ArrayList<Character>>*/ loadFromString(String levelstring) {
-        /*ArrayList<ArrayList<Character>>*/JSONObject level = new /*ArrayList<>()*/ JSONObject();
-        return level;
-    }
-
-    /**
-     * @param level 2-D list representing a level
-     * @return a string without newline representing the level, literal "0xA" separates lines
-     */
-    public static String toString(/*ArrayList<ArrayList<Character>>*/JSONObject level) {
-        StringBuilder levelString = new StringBuilder();
-        return levelString.toString().substring(0, levelString.length()-3); // remove final "0xA"
-    }
     // TODO move to unit tests
     public static void main(String[] args) {
         try {
             /*ArrayList<ArrayList<Character>>*/JSONObject t = TerrainManager.load(0);
-            System.out.println(toString(t));
+            //System.out.println(toString(t));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

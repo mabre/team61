@@ -108,7 +108,7 @@ public class MapWindow extends Application implements Networkable {
         client.registerCurrentNetworkable(this);
 
         // TODO implement fromJson (code duplication) -> bring the two json formats into line (weapons are team properties)
-        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
+        this.terrain = new Terrain(input.getJSONObject("terrain"));
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
@@ -118,7 +118,7 @@ public class MapWindow extends Application implements Networkable {
 
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
-
+// notiz für mich!!!!: matrix mit den komplexen zahlen = jordan normalform
         initialize();
     }
 
@@ -131,7 +131,7 @@ public class MapWindow extends Application implements Networkable {
         this.serverThread = serverThread;
         if(server != null) server.registerCurrentNetworkable(this);
 
-        this.terrain = new Terrain(TerrainManager.loadFromString(input.getString("terrain")));
+        this.terrain = new Terrain(input.getJSONObject("terrain"));
 
         JSONObject settings = Settings.getSavedSettings(file);
         teams = new ArrayList<>();
@@ -263,7 +263,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("teams", teamsArray);
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
-        output.put("terrain", terrain);
+        output.put("terrain", terrain.toJson());
         return output;
     }
 

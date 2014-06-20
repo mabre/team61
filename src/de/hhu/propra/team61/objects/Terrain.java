@@ -39,42 +39,51 @@ public class Terrain extends GridPane {
         JSONArray terrainAsJSON = terrainObject.getJSONArray("terrain");
         this.terrain = new ArrayList<ArrayList<Character>>(); // Initialize terrain
         //ToDo transformer schreiben
-        for (int i=0;i<terrainAsJSON.length();i++){
+        for (int i = 0; i < terrainAsJSON.length(); i++) {
             this.terrain.add(new ArrayList<Character>()); // add "underarraylists" to terrain
-            for(int j=0; j<terrainAsJSON.getString(0).length();j++){
-               this.terrain.get(i).set(j,terrainAsJSON.getString(i).charAt(j));
+            for (int j = 0; j < terrainAsJSON.getString(0).length(); j++) {
+                this.terrain.get(i).add(j, terrainAsJSON.getString(i).charAt(j));
             }
-
         }
         spawnPoints = new ArrayList</*Point2D*/>();
         setAlignment(Pos.TOP_LEFT);
         String img;
-        for(int i=0; i < terrain.size(); i++){
-            for(int j=0; j < terrain.get(i).size(); j++){
+        for (int i = 0; i < terrain.size(); i++) {
+            for (int j = 0; j < terrain.get(i).size(); j++) {
                 char terraintype = terrain.get(i).get(j);
-                switch(terraintype) {
-                    case '_': img = "plain_ground.png";
+                switch (terraintype) {
+                    case '_':
+                        img = "plain_ground.png";
                         break;
-                    case '/': img = "slant_ground_ri.png";
+                    case '/':
+                        img = "slant_ground_ri.png";
                         break;
-                    case '\\': img = "slant_ground_le.png";
+                    case '\\':
+                        img = "slant_ground_le.png";
                         break;
-                    case '|': img = "wall_le.png";
+                    case '|':
+                        img = "wall_le.png";
                         break;
-                    case 'S': img = "stones.png";
+                    case 'S':
+                        img = "stones.png";
                         break;
-                    case 'E': img = "earth.png";
+                    case 'E':
+                        img = "earth.png";
                         break;
-                    case 'W': img = "water.png";
+                    case 'W':
+                        img = "water.png";
                         break;
-                    case 'I': img = "ice.png";
+                    case 'I':
+                        img = "ice.png";
                         break;
-                    case 'L': img = "lava.png";
+                    case 'L':
+                        img = "lava.png";
                         break;
                     case 'P': // special case: spawn point, add to list and draw sky
                         spawnPoints.add(new Point2D(j, i));
                         terrain.get(i).set(j, ' ');
-                    default : img = "sky.png";
+                    default:
+                        img = "sky.png";
                 }
                 Image image = new Image(imgPath + img);
                 ImageView content = new ImageView();
@@ -95,13 +104,14 @@ public class Terrain extends GridPane {
 
     /**
      * get a spawn point and remove it from the list of available spawn points
+     *
      * @return a random spawn point, or null if there are no more spawn points
      */
     public Point2D getRandomSpawnPoint() {
-        if(spawnPoints.isEmpty()) {
+        if (spawnPoints.isEmpty()) {
             return null;
         }
-        int index = (int) (Math.random()*spawnPoints.size());
+        int index = (int) (Math.random() * spawnPoints.size());
         Point2D spawnPoint = spawnPoints.get(index);
         spawnPoints.remove(index);
         System.out.println("TERRAIN: returning spawn point #" + index + " " + spawnPoint + " (" + spawnPoints.size() + " left)");
@@ -115,49 +125,49 @@ public class Terrain extends GridPane {
      */
     public ArrayList<Point2D> getRandomSpawnPoints(int n) {
         ArrayList<Point2D> spawnPoints = new ArrayList<>();
-        for(int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
             Point2D sp = getRandomSpawnPoint();
-            if(sp != null) spawnPoints.add(sp);
+            if (sp != null) spawnPoints.add(sp);
         }
         return spawnPoints;
     }
 
     /**
      * @param hitRegion of a figure or whatever
-     * @param x column of the field
-     * @param y row of the field
+     * @param x         column of the field
+     * @param y         row of the field
      * @return true, when hitRegion intersects with the field
      */
     private boolean intersects(Rectangle2D hitRegion, int x, int y) {
         char c;
         try {
             c = terrain.get(y).get(x);
-        } catch(IndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             // this means we "collided" with the end of the terrain, pretend that it is stone
             c = 'S';
         }
 
-        switch(c) {
+        switch (c) {
             case ' ':
                 return false;
             case '/':
                 Point2D p;
-                for(int i=0; i<8; i++) {
-                    int px = x*8+i;
-                    int py = y*8+8-i;
+                for (int i = 0; i < 8; i++) {
+                    int px = x * 8 + i;
+                    int py = y * 8 + 8 - i;
                     p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
+                    if (hitRegion.contains(p)) {
                         System.out.println("diagonal / intersection at " + px + "x" + py + "px");
                         return true;
                     }
                 }
                 return false;
             case '\\':
-                for(int i=0; i<8; i++) {
-                    int px = x*8+i;
-                    int py = y*8+i;
+                for (int i = 0; i < 8; i++) {
+                    int px = x * 8 + i;
+                    int py = y * 8 + i;
                     p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
+                    if (hitRegion.contains(p)) {
                         System.out.println("diagonal / intersection at " + px + "x" + py + "px");
                         return true;
                     }
@@ -173,15 +183,16 @@ public class Terrain extends GridPane {
      * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
      * When canWalkAlongDiagonals is true, the movement continues at slopes in diagonal direction (used for figures);
      * otherwise, the movement is stopped (used for projectiles)
-     * @param oldPosition old position of the object
-     * @param direction direction vector of the object
-     * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
+     *
+     * @param oldPosition           old position of the object
+     * @param direction             direction vector of the object
+     * @param hitRegion             a rectangle describing the area where the object can collide with terrain etc.
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
      * @param canWalkThroughFigures when true, the object is able to walk through figures (no CollisionWithFigureException will be thrown) TODO therefore, have a wrapper function which does not throw this exception
-     * @param hasMass when true, the object is moved down to the ground TODO temporary, till real physics is there
-     * @param snapToPx when true, the positions returned are rounded to whole px
+     * @param hasMass               when true, the object is moved down to the ground TODO temporary, till real physics is there
+     * @param snapToPx              when true, the positions returned are rounded to whole px
      * @return new position of the object
-     * @throws CollisionWithFigureException thrown when hitting a figure
+     * @throws CollisionWithFigureException  thrown when hitting a figure
      * @throws CollisionWithTerrainException thrown when hitting terrain
      */
     public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean hasMass, boolean snapToPx) throws CollisionWithTerrainException, CollisionWithFigureException {
@@ -192,16 +203,16 @@ public class Terrain extends GridPane {
         System.out.println("start position: " + oldPosition);
         System.out.println("normalized velocity: " + normalizedDirection);
 
-        final int runs = (int)direction.magnitude();
+        final int runs = (int) direction.magnitude();
 
-        for(int i=0; i<runs; i++) {
+        for (int i = 0; i < runs; i++) {
             // move position by 1px
             newPosition = newPosition.add(normalizedDirection);
 
             // calculate moved hitRegion
-            hitRegion = new Rectangle2D(hitRegion.getMinX()+normalizedDirection.getX(), hitRegion.getMinY()+normalizedDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
+            hitRegion = new Rectangle2D(hitRegion.getMinX() + normalizedDirection.getX(), hitRegion.getMinY() + normalizedDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
 
-            System.out.println("checking new position for collision: " + newPosition + " (" + (i+1) + "/" + runs +")" + " " + hitRegion);
+            System.out.println("checking new position for collision: " + newPosition + " (" + (i + 1) + "/" + runs + ")" + " " + hitRegion);
 
             // check if hitRegion intersects with non-walkable terrain
             boolean triedDiagonal = false;
@@ -221,7 +232,7 @@ public class Terrain extends GridPane {
                         //System.out.println(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
                         boolean intersects = intersects(hitRegion, x, y);
                         Figure intersectingFigure = null;
-                        if(!canWalkThroughFigures && !intersects) {
+                        if (!canWalkThroughFigures && !intersects) {
                             for (Figure figure : figures) {
                                 if (hitRegion.intersects(figure.getHitRegion())) {
                                     intersects = true;
@@ -232,27 +243,28 @@ public class Terrain extends GridPane {
                         if (intersects) {
                             try {
                                 System.out.println("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
-                                if(intersectingFigure != null) System.out.println("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
-                            } catch(IndexOutOfBoundsException e) {
+                                if (intersectingFigure != null)
+                                    System.out.println("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
+                            } catch (IndexOutOfBoundsException e) {
                                 System.out.println("intersection at " + x + " " + y + " out of bounds");
                             }
                             if (canWalkAlongDiagonals && tries == 0 && intersectingFigure == null) {
                                 diagonalDirection = new Point2D(Math.signum(normalizedDirection.getX()), -2);
                                 Point2D positionOnSlope = newPosition.subtract(normalizedDirection).add(diagonalDirection);
-                                hitRegion = new Rectangle2D(hitRegion.getMinX()-normalizedDirection.getX()+diagonalDirection.getX(), hitRegion.getMinY()-normalizedDirection.getY()+diagonalDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
+                                hitRegion = new Rectangle2D(hitRegion.getMinX() - normalizedDirection.getX() + diagonalDirection.getX(), hitRegion.getMinY() - normalizedDirection.getY() + diagonalDirection.getY(), hitRegion.getWidth(), hitRegion.getHeight());
                                 newPosition = positionOnSlope;
                                 triedDiagonal = true;
                                 System.out.println("trying to walk diagonal along " + diagonalDirection + " to " + newPosition + " " + hitRegion);
                             } else {
-                                if(diagonalDirection.magnitude() == 0) { // did not go diagonal
+                                if (diagonalDirection.magnitude() == 0) { // did not go diagonal
                                     newPosition = newPosition.subtract(normalizedDirection);
                                 } else {
                                     newPosition = newPosition.subtract(diagonalDirection);
                                 }
-                                if(snapToPx) {
+                                if (snapToPx) {
                                     newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
                                 }
-                                if(intersectingFigure == null) {
+                                if (intersectingFigure == null) {
                                     throw new CollisionWithTerrainException(newPosition);
                                 } else {
                                     throw new CollisionWithFigureException(newPosition, intersectingFigure);
@@ -261,9 +273,9 @@ public class Terrain extends GridPane {
                         }
                     }
                 } // for each field
-            } while(triedDiagonal && ++tries<2);
+            } while (triedDiagonal && ++tries < 2);
 
-            if(hasMass) {
+            if (hasMass) {
                 System.out.println("beforehitground: " + newPosition + " " + hitRegion);
                 boolean hitGround = false;
                 tries = 0;
@@ -302,7 +314,7 @@ public class Terrain extends GridPane {
 
         } // for i<runs
 
-        if(snapToPx) {
+        if (snapToPx) {
             newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
         }
         return newPosition;
@@ -310,5 +322,24 @@ public class Terrain extends GridPane {
 
     public void addFigures(ArrayList<Figure> figures) {
         this.figures.addAll(figures);
+    }
+
+
+    /**
+     *Read from current lvl and write in a JSONObject
+     */
+    public JSONObject toJson() {
+        JSONObject save = new JSONObject();
+        JSONArray jsonTerrain = new JSONArray();
+        //String[] arr;
+        for (int i = 0; i < terrain.size(); i++) {
+            StringBuilder builder = new StringBuilder(); // :( recrate object here
+            for (int j = 0; j < terrain.get(i).size(); j++) { //forming a String from Array[i]
+                builder.append(terrain.get(i).get(j)); // :( nicht append(i)
+            }
+            jsonTerrain.put(builder.toString()); // :( nicht out(builder)
+        }
+        save.put("terrain", jsonTerrain);
+        return save; // TODO Umkehrfunktion zum einlesen (Erstelle eine .lvl datei)
     }
 }
