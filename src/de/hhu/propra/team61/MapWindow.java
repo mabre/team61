@@ -50,6 +50,9 @@ public class MapWindow extends Application implements Networkable {
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
+    private final static int DIGITATION_MIN_HEALTH = 65;
+    private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
+    private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
 
     //JavaFX related variables
     private Scene drawing;
@@ -406,6 +409,8 @@ public class MapWindow extends Application implements Networkable {
 
         //ToDo Wait until no objectmovements
 
+        teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
+
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
@@ -446,6 +451,12 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
+        if(turnCount == teams.size() * teams.get(0).getFigures().size() * 2) {
+            doDigitations();
+        } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
+            undoDigitations();
+        }
+
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         teams.get(currentTeam).endRound();
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
@@ -454,6 +465,38 @@ public class MapWindow extends Application implements Networkable {
         String teamLabelText = "Turn " + turnCount + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
+    }
+
+    private int collectRecentlyCausedDamage() {
+        int recentlyCausedDamage = 0;
+        for(Team team: teams) {
+            for(Figure figure: team.getFigures()) {
+                recentlyCausedDamage += figure.popRecentlySufferedDamage();
+            }
+        }
+        return recentlyCausedDamage;
+    }
+
+    private void doDigitations() {
+        for(Team team: teams) {
+            for(Figure figure: team.getFigures()) {
+                if(figure.getHealth() >= DIGITATION_MIN_HEALTH && figure.getCausedHpDamage() >= DIGITATION_MIN_CAUSED_DAMAGE) {
+                    figure.digitate();
+                    server.sendCommand("DIGITATE " + getFigureId(figure));
+                }
+            }
+        }
+    }
+
+    private void undoDigitations() {
+        for(Team team: teams) {
+            for(Figure figure: team.getFigures()) {
+                if(figure.getHealth() < DEDIGITATION_HEALTH_THRESHOLD) {
+                    figure.dedigitate();
+                    server.sendCommand("DEDIGITATE " + getFigureId(figure));
+                }
+            }
+        }
     }
 
     /**
@@ -595,6 +638,16 @@ public class MapWindow extends Application implements Networkable {
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                break;
+            case "DEDIGITATE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).dedigitate();
+                }
+                break;
+            case "DIGITATE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).digitate();
+                }
                 break;
             case "FIGURE_SET_POSITION":
                 Point2D position = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
@@ -800,13 +853,28 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
                 break;
+            case "dedigitate": // calls undoDigitations() method
+                undoDigitations();
+                System.out.println("Returning to Baby I");
+                break;
+            case "digitate": // calls doDigitations() method
+                doDigitations();
+                System.out.println("Digitation.");
+                break;
+            case "forcedig": // forces digitation of all figures
+                for(Team team: teams) {
+                    for (Figure figure : team.getFigures()) {
+                        figure.digitate();
+                    }
+                }
+                System.out.println("Mass-Digitation.");
+                break;
             case "rewind": // sets wind to given value
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
                 System.out.println("It’s windy.");
-                break;
             default:
-                client.sendChatMessage("<<< Haw-haw! This user failed to cheat … >>> " + arrayToString(cmd, 0));
+                client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
                 System.out.println("No cheating, please!");
         }
     }
