@@ -58,7 +58,7 @@ public class Figure extends StackPane {
     private String type="penguin"; // TODO IMPORTANT better done on other branch?
     // properties for digitation
     private boolean digitated = false;
-    private int maxYSpeedMultiplier = 1;
+    private double massFactor = 1;
     private int jumpDuringFallThreshold = 0;
     private double armor = 0;
     private int causedHpDamage = 0;
@@ -90,7 +90,7 @@ public class Figure extends StackPane {
         this.armor  = input.getDouble("armor");
         this.digitated = input.getBoolean("digitated");
         this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
-        this.maxYSpeedMultiplier = input.getInt("maxYSpeedMultiplier");
+        this.massFactor = input.getDouble("massFactor");
         this.causedHpDamage = input.getInt("causedHpDamage");
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
@@ -113,7 +113,7 @@ public class Figure extends StackPane {
         this.armor  = input.getDouble("armor");
         this.digitated = input.getBoolean("digitated");
         this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
-        this.maxYSpeedMultiplier = input.getInt("maxYSpeedMultiplier");
+        this.massFactor = input.getDouble("massFactor");
         this.causedHpDamage = input.getInt("causedHpDamage");
         this.isBurning  = input.getBoolean("isBurning");
         this.isPoisoned = input.getBoolean("isPoisoned");
@@ -151,7 +151,7 @@ public class Figure extends StackPane {
         output.put("armor", armor);
         output.put("digitated", digitated);
         output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
-        output.put("maxYSpeedMultiplier", maxYSpeedMultiplier);
+        output.put("massFactor", massFactor);
         output.put("causedHpDamage", causedHpDamage);
         output.put("position.x", position.getX()); // TODO save as array
         output.put("position.y", position.getY());
@@ -300,7 +300,7 @@ public class Figure extends StackPane {
      * resets the velocity vector to 0 and - depending on the speed - the figure suffers fall damage
      */
     public void resetVelocity() throws DeathException {
-        int fallDamage = (int)(velocity.magnitude() - FALL_DAMAGE_THRESHOLD*maxYSpeedMultiplier);
+        int fallDamage = (int)(velocity.magnitude() - FALL_DAMAGE_THRESHOLD);
 
         if(!velocity.equals(MapWindow.GRAVITY.multiply(MASS))) { // do not print when "default gravity" is applied when figures are standing on ground
             System.out.println("v="+velocity.magnitude() + ", fall damage: " + fallDamage);
@@ -327,11 +327,12 @@ public class Figure extends StackPane {
                 return;
             } else {
                 System.out.println("oops, digitated, you can!");
+                maxYSpeed = velocity.getY(); // allow further acceleration
             }
         }
-        if(maxYSpeed < MAX_Y_SPEED*maxYSpeedMultiplier) { // figure cannot accelerate further when y-speed was greater than MAX_Y_SPEED during the current jump
+        if(maxYSpeed < MAX_Y_SPEED) { // figure cannot accelerate further when y-speed was greater than MAX_Y_SPEED during the current jump
             addVelocity(new Point2D(0, -JUMP_SPEED));
-            if(maxYSpeed > MAX_Y_SPEED*maxYSpeedMultiplier) { // if figure is now faster than MAX_Y_SPEED, slow it down
+            if(maxYSpeed > MAX_Y_SPEED) { // if figure is now faster than MAX_Y_SPEED, slow it down
                 velocity = new Point2D(velocity.getX(), -MAX_Y_SPEED);
                 System.out.println("jump speed limit reached (cut): " + maxYSpeed);
             }
@@ -341,16 +342,18 @@ public class Figure extends StackPane {
     }
 
     public int getMass() {
-        return MASS;
+        return (int)(MASS*massFactor);
     }
 
     public void digitate() { // similarity to digivolution is purely coincidental
         switch(type) {
             case "penguin":
-                maxYSpeedMultiplier = 2;
-                jumpDuringFallThreshold = MAX_Y_SPEED;
+                massFactor = .5;
+                jumpDuringFallThreshold = MAX_Y_SPEED/2;
+                armor = .2;
 //                break; // TODO IMPORTANT
             case "unicorn":
+                massFactor = .9;
                 armor = .5;
         }
         digitated = true;
@@ -369,7 +372,7 @@ public class Figure extends StackPane {
     }
 
     public void dedigitate() {
-        maxYSpeedMultiplier = 1;
+        massFactor = 1;
         jumpDuringFallThreshold = 0;
         armor = 0;
         digitated = false;
