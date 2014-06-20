@@ -237,12 +237,13 @@ public class Terrain extends GridPane {
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
      * @param canWalkThroughFigures when true, the object is able to walk through figures (no CollisionWithFigureException will be thrown) TODO therefore, have a wrapper function which does not throw this exception
      * @param snapToPx when true, the positions returned are rounded to whole px
+     * @param influencedByWind if false, the wind is not considered when calculating the new position
      * @return new position of the object
      * @throws CollisionException thrown when hitting terrain or a figure
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx) throws CollisionException {
+    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
-        if(!isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
+        if(influencedByWind && !isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
         Point2D normalizedDirection = direction.normalize();
 
         debugLog("start position: " + oldPosition);
