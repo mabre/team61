@@ -473,7 +473,6 @@ public class MapWindow extends Application implements Networkable {
             boss.setPosition(boss.getPosition().subtract(moveBy, 0));
         }
         terrain.destroyColumns(boss.getPosition(), bossSpawnedLeft, moveBy);
-        terrain.load(terrain.toArrayList()); // TODO ??
     }
 
     /**

@@ -456,14 +456,14 @@ public class Terrain extends GridPane {
         for(int i=colStart; i<=colEnd; i++) {
             ImageView riftImage = new ImageView("file:resources/animations/boss_rift.png");
             riftImage.setTranslateX(i*BLOCK_SIZE);
-            SpriteAnimation riftAnimation = new SpriteAnimation(riftImage, 500, 11, 1);
+            SpriteAnimation riftAnimation = new SpriteAnimation(riftImage, 500, 12, 1);
 //          add(riftImage, 10, 0);
             ((StackPane) getParent()).getChildren().add(riftImage); // TODO bad cast
 //            riftAnimation.setOnFinished((e) -> {
 //                ((StackPane) getParent()).getChildren().removeAll(riftImage);
 //            });
             riftImage.setFitHeight(terrain.size()*BLOCK_SIZE);
-            riftAnimation.setDelay(new Duration((fromLeft ? colEnd-i : i-colStart)*40));
+            riftAnimation.setDelay(new Duration((fromLeft ? colEnd-i : i-colStart)*40 + 500));
             riftAnimation.play();
         }
     }
