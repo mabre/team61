@@ -6,14 +6,16 @@ import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.objects.Terrain;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -36,6 +38,7 @@ public class CustomizeWindow extends Application {
     CustomGrid newGameStyleGrid = new CustomGrid();
     CustomGrid weaponsGrid = new CustomGrid();
     CustomGrid editGrid;
+    BorderPane newMapPane = new BorderPane();
     CustomGrid newMapGrid = new CustomGrid();
     ArrayList<TextField> figureNames = new ArrayList<>();
     ArrayList<String> weaponNames = new ArrayList<>();
@@ -49,15 +52,25 @@ public class CustomizeWindow extends Application {
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     ChoiceBox<String> musicChooser = new ChoiceBox<>();
     ChoiceBox<String> imageChooser = new ChoiceBox<>();
+    ChoiceBox<String> fluidChooser = new ChoiceBox<>();
+    ScrollPane scrollPane;
+    Terrain levelTerrain;
+    StackPane levelPane;
+    Pane background = new Pane();
+    CustomGrid selectionGrid = new CustomGrid();
+    char chosenTerrainType;
+    private static int BLOCK_SIZE = 8;
+    private static int MAP_HEIGHT = 60;
+    private static int MAP_WIDTH = 130;
 
 
     public CustomizeWindow(SceneController sceneController) {
         this.sceneController = sceneController;
         initializeArrayLists();
         createEditGrid();
-        createNewTeamGrid();
-        createNewGameStyleGrid();
-        createNewMapGrid();
+        createTeam();
+        createGameStyle();
+        createMap("editor/basic.lvl");
         createTopBox();
         root.setLeft(editGrid);
         Scene customizeScene = new Scene(root, 1000, 600);
@@ -87,7 +100,9 @@ public class CustomizeWindow extends Application {
         });
         Button newMap = new Button("Create new map");
         newMap.setOnAction(e -> {
-            root.setLeft(newMapGrid);
+            root.getChildren().remove(weaponsGrid);
+            refresh();
+            root.setLeft(newMapPane);
         });
         Button backToMenue = new Button("Go back to menue");
         backToMenue.setOnAction(e -> {
@@ -116,7 +131,7 @@ public class CustomizeWindow extends Application {
         getMaps();
     }
 
-    private void createNewTeamGrid() {
+    private void createTeam() {
         Text wormNamesText = new Text("Figures (enter names):");
         wormNamesText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(wormNamesText, 0, 2);
@@ -144,8 +159,7 @@ public class CustomizeWindow extends Application {
         newTeamGrid.add(saveTeam, 0, 10);
     }
 
-
-    private void createNewGameStyleGrid() {
+    private void createGameStyle() {
         Text styleName = new Text("Style-Name:");
         styleName.setFont(Font.font("Verdana", 15));
         newGameStyleGrid.add(styleName, 0, 2);
@@ -186,14 +200,128 @@ public class CustomizeWindow extends Application {
         weaponsGrid.add(enter, 0, 3, 3, 1);
     }
 
-    private void createNewMapGrid() {
+    private void createMap(String file) {
         Text music = new Text("Background music:");
-        newMapGrid.add(music, 0, 2);
-        newMapGrid.add(musicChooser, 1, 2);
+        newMapGrid.add(music, 0, 0);
+        newMapGrid.add(musicChooser, 1, 0);
         Text image = new Text("Background image:");
-        newMapGrid.add(image, 2, 2);
+        newMapGrid.add(image, 2, 0);
         getBackgroundImages();
-        newMapGrid.add(imageChooser, 3, 2);
+        newMapGrid.add(imageChooser, 3, 0);
+        Text fluid = new Text("Fluid:");
+        newMapGrid.add(fluid, 4, 0);
+        fluidChooser.getItems().addAll("Water", "Lava");
+        fluidChooser.getSelectionModel().selectFirst();
+        newMapGrid.add(fluidChooser, 5, 0);
+        fluidChooser.valueProperty().addListener(new ChangeListener<String>() {
+            public void changed(ObservableValue ov, String value, String new_value) {
+                if (new_value.equals("Water")) {
+                    for (int i = 0; i <= 129; i++) {
+                        levelTerrain.replaceBlock(i, 59, 'W');
+                    }
+                } else {
+                    for (int i = 0; i <= 129; i++) {
+                        levelTerrain.replaceBlock(i, 59, 'L');
+                    }
+                }
+                levelTerrain.load(levelTerrain.toArrayList());
+            }
+        });
+        newMapPane.setTop(newMapGrid);
+        initializeLevelEditor(file);
+        Button stone = new Button("Stone");
+        stone.setOnAction(e -> {
+            chosenTerrainType = 'S';
+        });
+        selectionGrid.add(stone, 0, 0);
+        Button soil = new Button("Soil");
+        soil.setOnAction(e -> {
+            chosenTerrainType = 'E';
+        });
+        selectionGrid.add(soil, 0, 1);
+        Button sand = new Button("Sand");
+        sand.setOnAction(e -> {
+            chosenTerrainType = 's';
+        });
+        selectionGrid.add(sand, 0, 2);
+        Button ice = new Button("Ice");
+        ice.setOnAction(e -> {
+            chosenTerrainType = 'I';
+        });
+        selectionGrid.add(ice, 0, 3);
+        Button snow = new Button("Snow");
+        snow.setOnAction(e -> {
+            chosenTerrainType = 'i';
+        });
+        selectionGrid.add(snow, 0, 4);
+        Button eraser = new Button("Eraser");
+        eraser.setOnAction(e -> {
+            chosenTerrainType = ' ';
+        });
+        selectionGrid.add(eraser, 0, 5);
+        Button spawnpoint = new Button("Spawn point");
+        spawnpoint.setOnAction(e -> {
+            chosenTerrainType = 'P';
+        });
+        selectionGrid.add(spawnpoint, 0, 9);
+        Button clear = new Button("Clear");
+        clear.setOnAction(e -> {
+            initializeLevelEditor(file);
+        });
+        selectionGrid.add(clear, 0, 10);
+        chosenTerrainType = 'S';
+        newMapPane.setRight(selectionGrid);
+    }
+
+    private void initializeLevelEditor(String file) {
+        try {
+            levelTerrain = new Terrain(TerrainManager.load(file));
+            scrollPane = new ScrollPane();
+            scrollPane.setPrefSize(750, 560);
+            scrollPane.setMaxHeight(560);
+            scrollPane.setFitToWidth(false);
+
+            //anchor the editor to the bottom left corner (ScrollPane cannot do that)
+            final AnchorPane anchorPane = new AnchorPane();
+            AnchorPane.setBottomAnchor(levelTerrain, 0.0);
+            AnchorPane.setLeftAnchor(levelTerrain, 0.0);
+            anchorPane.getChildren().add(levelTerrain);
+            scrollPane.setId("scrollPane");
+            scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
+                            anchorPane.setPrefSize(Math.max(levelTerrain.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(levelTerrain.getBoundsInParent().getMaxY(), newBounds.getHeight()))
+            );
+            scrollPane.setContent(anchorPane);
+            background.setId("background");
+            levelPane = new StackPane();
+            //TODO draw background image dynamically
+            levelPane.getChildren().addAll(background, scrollPane);
+            newMapPane.setLeft(levelPane);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        levelTerrain.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle (MouseEvent mouseEvent) {
+                int x = (int)mouseEvent.getX()/BLOCK_SIZE;
+                int y = (int)mouseEvent.getY()/BLOCK_SIZE;
+                //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing water
+                if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
+                    levelTerrain.replaceBlock(x, y, chosenTerrainType);
+                    levelTerrain.load(levelTerrain.toArrayList());
+                }
+            }
+        });
+        levelTerrain.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                int x = (int) mouseEvent.getX() / BLOCK_SIZE;
+                int y = (int) mouseEvent.getY() / BLOCK_SIZE;
+                if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
+                    levelTerrain.replaceBlock(x, y, chosenTerrainType);
+                    levelTerrain.load(levelTerrain.toArrayList());
+                }
+            }
+        });
     }
 
     private void editTeam(String teamName) {
