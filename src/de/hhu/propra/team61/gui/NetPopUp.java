@@ -32,11 +32,9 @@ public class NetPopUp extends Application {
 
         Text enterName = new Text("Enter your name/team-name:");
         popGrid.add(enterName, 0, 0, 2, 1);
-        popGrid.add(nameField, 2, 0);
         Text ipError = new Text();
         popGrid.add(ipError, 0, 6);
         Button hostGame = new Button("Host a game");
-        popGrid.add(hostGame, 0, 1);
         hostGame.setOnAction(e -> {
             if (nameField.getText().length() > 0) {
                 netpopup.close();
@@ -46,7 +44,6 @@ public class NetPopUp extends Application {
             }
         });
         Button joinGame = new Button("Join a game");
-        popGrid.add(joinGame, 0, 2);
         joinGame.setOnAction(e -> {
             if (ipField.getText().length() > 0 && nameField.getText().length() > 0) {
                 netpopup.close();
@@ -58,12 +55,16 @@ public class NetPopUp extends Application {
         });
         ipField.setPromptText("Enter the IP-Address.");
         ipField.setText("localhost");
+        popGrid.add(nameField, 2, 0); // keep tab order in mind
         popGrid.add(ipField, 1, 2);
+        popGrid.add(hostGame, 0, 1);
+        popGrid.add(joinGame, 0, 2);
         Text note = new Text("Note: If you’re on the same computer as the host,\ntype in “localhost”.");
         popGrid.add(note, 1, 3, 2, 1);
         Scene popScene = new Scene(popGrid);
         netpopup.setScene(popScene);
         netpopup.show();
+        nameField.requestFocus();
     }
 
     @Override
