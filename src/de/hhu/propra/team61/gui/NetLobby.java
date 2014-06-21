@@ -296,12 +296,10 @@ public class NetLobby extends Application implements Networkable {
         output.put("team-size", sizeField.getText()); //save size of teams
         output.put("map", mapChooser.getValue());
         JSONArray weaponsSettings = new JSONArray();
-        for(int i=0; i<4; i++) {
-            JSONObject weapon = new JSONObject();
-            weapon.put("weapon"+(i+1), 50);
-            weaponsSettings.put(weapon);
+        for(int i=0; i<weapons.size(); i++) {
+            weaponsSettings.put(weapons.get(i));
         }
-        output.put("weapons", weaponsSettings);
+        output.put("inventory", weaponsSettings);
         JSONArray teams = new JSONArray();
         JSONObject team1 = getJsonForTeam(teamChoosers.get(0).getValue(), readys.get(0));
         teams.put(team1);

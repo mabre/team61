@@ -3,6 +3,7 @@ package de.hhu.propra.team61.objects;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.Team;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -52,7 +53,8 @@ public abstract class Weapon extends Item {
     private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
 
     private double angle;       // Angle it is aimed at; 0 <=> Horizontal; +90 <=> straight upwards
-    protected ImageView crosshair;
+    protected ImageView crosshairImage;
+    protected ImageView weaponImage;
 
     /**
      * Constructor for deriving classes.
@@ -101,12 +103,14 @@ public abstract class Weapon extends Item {
     private void initialize() {
         this.angle = 0;
 
-        Image weaponImage = new Image(weaponImg, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
-        setImage(weaponImage);
+        weaponImage = new ImageView(new Image(weaponImg, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
+        this.getChildren().add(weaponImage);
 
-        Image crosshairImage = new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true);
-        crosshair = new ImageView(crosshairImage);
+        crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
+        this.getChildren().add(crosshairImage);
         angleDraw(true);
+
+        setAlignment(Pos.TOP_LEFT);
     }
 
     @Override
@@ -119,7 +123,7 @@ public abstract class Weapon extends Item {
             Image image = new Image(projectileImg,NORMED_OBJECT_SIZE / 4, NORMED_OBJECT_SIZE / 4,true,true);
             int yOffset = (int)(NORMED_OBJECT_SIZE-image.getHeight())/2;
             int xOffset = (int)(NORMED_OBJECT_SIZE-image.getWidth())/2;
-            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+xOffset, getTranslateY()+yOffset), new Point2D(getCrosshair().getTranslateX()+xOffset, getCrosshair().getTranslateY()+yOffset), speed, this);
+            Projectile shot = new Projectile(image, new Point2D(weaponImage.getTranslateX()+xOffset, weaponImage.getTranslateY()+yOffset), new Point2D(crosshairImage.getTranslateX()+xOffset, crosshairImage.getTranslateY()+yOffset), speed, this);
 
             munition--;
             System.out.println("munition left: " + munition);
@@ -182,12 +186,16 @@ public abstract class Weapon extends Item {
     }
 
     //Getter and Setter
-    public ImageView getCrosshair() { return crosshair; }
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
-
     public boolean getDrifts() {
         return drifts;
+    }
+
+
+    public void setPosition(Point2D pos) {
+        weaponImage.setTranslateX(pos.getX());
+        weaponImage.setTranslateY(pos.getY());
     }
 
     //----------------------------------Crosshair-Related Functions---------------------------------
@@ -210,15 +218,15 @@ public abstract class Weapon extends Item {
     @Override
     public void angleDraw(boolean faces_right){ // Actually only sets the Point and changes facing of weapon; drawn in MapWindow
         if(faces_right){
-            crosshair.setTranslateX(getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
-            setScaleX(1); //Reverse mirroring
-            setRotate(-angle);
+            crosshairImage.setTranslateX(weaponImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
+            weaponImage.setScaleX(1); //Reverse mirroring
+            weaponImage.setRotate(-angle);
         }
         else{
-            crosshair.setTranslateX(getTranslateX() - Math.cos(toRadian(angle))* RADIUS);
-            setScaleX(-1); //Mirror Weapon, so its facing left
-            setRotate(angle);
+            crosshairImage.setTranslateX(weaponImage.getTranslateX() - Math.cos(toRadian (angle))* RADIUS);
+            weaponImage.setScaleX(-1); //Mirror Weapon, so its facing left
+            weaponImage.setRotate(angle);
         }
-        crosshair.setTranslateY(getTranslateY() - Math.sin(toRadian(angle))* RADIUS);
+        crosshairImage.setTranslateY(weaponImage.getTranslateY() - Math.sin(toRadian(angle)) * RADIUS);
     }
 }

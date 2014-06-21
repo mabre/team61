@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.MapWindow;
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
@@ -37,26 +38,24 @@ public class Crate extends ImageView {
 
     private String content;
 
-    public Crate(int xSize, String contentw){
+    public Crate(int xSize){
+        content = ItemManager.itemlist[(int)Math.random()*10*ItemManager.numberOfItems];
+        initialize(xSize);
+        }
+    public Crate(int xSize, String content) {
+        this.content = content;
+        initialize(xSize);
+    }
+
+    private void initialize(int xSize){
         setImage(new Image(IMGSRC,NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
         setTranslateX(Math.random()*xSize*NORMED_BLOCK_SIZE);
         setTranslateY(0);
 
-        // TODO set Content; FILE dingens funktioniert später nicht mehr; musst leider ne liste machen u pflegen
-        File f = new File("src/de/hhu/propra/team61/objects/itemtypes/");
-        String[] options = f.list();
-        System.out.println(options);
-        content = options[(int)Math.random()*options.length]; //ToDo remove fileending
-        content = content.substring(0,content.indexOf("."));
-
-        content = "PoisonedArrow";
-
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(),NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE);
 
-
         //ToDo add yourself to terrain
-
-        }
+    }
 
     public String getContent() {
         return content;

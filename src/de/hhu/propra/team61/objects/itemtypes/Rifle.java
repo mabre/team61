@@ -8,7 +8,7 @@ import javafx.scene.shape.Line;
  */
 public class Rifle extends Weapon {
     private final static String  NAME           = "Rifle";
-    private final static String  DESCRIPTION    = "Weak. Lacks Aim-Bot";
+    private final static String  DESCRIPTION    = "Camper!";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/temp2.png";
@@ -23,7 +23,7 @@ public class Rifle extends Weapon {
     private final static boolean BLOCKS        = false; // toggle isStuck
 
     private final static int     MASS          =    0;
-    private final static int     SPEED         =   30;
+    private final static int     SPEED         =   36;
     private final static boolean DRIFTS        = false;
 
     //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
@@ -35,19 +35,16 @@ public class Rifle extends Weapon {
     @Override
     public void angleDraw(boolean faces_right){ // Actually only sets the Point and changes facing of weapon; drawn in MapWindow
         //Hide original crosshair
-        crosshair.setTranslateX(-1000);
-        crosshair.setTranslateY(-1000);
+        crosshairImage.setTranslateX(-1000);
+        crosshairImage.setTranslateY(-1000);
 
-        if(faces_right){
-            Line redDot = new Line();
-            redDot.setStartX(getTranslateX());
-            redDot.setStartY(getTranslateY());
+        //TODO: this.getChildren().remove?;
+        //Draw redDot instead
+        Line redDot = new Line();
+        redDot.setStartX(getTranslateX());
+        redDot.setStartY(getTranslateY());
 
-           // setRotate(-angle);
-        }
-        else{
-            setScaleX(-1); //Mirror Weapon, so its facing left
-          //  setRotate(angle);
-        }
+
+        this.getChildren().add(redDot);
     }
 }

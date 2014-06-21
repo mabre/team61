@@ -467,11 +467,9 @@ public class MapWindow extends Application implements Networkable {
 
         // TODO give this an true probability, set by Customize? //Remove own supplyDrops Variable?
         if(true){
-            //supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(),""));
-            //supplyDrops.get(supplyDrops.size()-1).fall();
-
-
-            server.sendCommand("DROP_SUPPLY"+" "+"ToDo:200"+" "+"ToDo:Content"); //ToDo
+            supplyDrops.add(new Crate(terrain.toArrayList().get(0).size()));
+            server.sendCommand("DROP_SUPPLY"+" "+terrain.toArrayList().get(0).size()+" "+supplyDrops.get(supplyDrops.size()-1).getContent());
+            supplyDrops.remove(supplyDrops.size()-1); //Remove yourself again to avoid problems on client+server
         }
         
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
@@ -618,12 +616,10 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getItem(Integer.parseInt(cmd[1]) - 1));
                 fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
@@ -652,7 +648,6 @@ public class MapWindow extends Application implements Networkable {
                     System.out.println("no munition");
                     break;
                 }
-                fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;

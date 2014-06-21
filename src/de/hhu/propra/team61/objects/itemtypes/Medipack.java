@@ -44,7 +44,7 @@ public class Medipack extends Weapon {
             munition--;
             System.out.println("munition left: " + munition);
 
-            return new Projectile(getImage(), new Point2D(getTranslateX(), getTranslateY()), new Point2D(getTranslateX(), getTranslateY()-0.1), 1, this);
+            return new Projectile(new Image(WEAPON_IMG), new Point2D(getTranslateX(), getTranslateY()), new Point2D(getTranslateX(), getTranslateY()-0.1), 1, this);
         } else {
             throw new NoMunitionException();
         }
