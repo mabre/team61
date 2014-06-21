@@ -416,4 +416,8 @@ public class Figure extends StackPane {
         System.out.println("Position: " + testwurm.getPosition());
         System.out.println();
     }
+
+    public int getDamageByLiquid() {
+        return (digitated ? 1 : 2);
+    }
 }

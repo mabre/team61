@@ -590,4 +590,22 @@ public class Terrain extends GridPane {
         if(terrain == null || terrain.size() == 0) return 0;
         return terrain.get(0).size() * BLOCK_SIZE;
     }
+
+    public boolean standingOnLiquid(Point2D position) {
+        final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
+        final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int y = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+
+        if(y >= terrain.size()) {
+            return false;
+        }
+
+        for(int x=minX; x < maxX && x < terrain.get(y).size(); x++) {
+            if(terrain.get(y).get(x).equals('L') || terrain.get(y).get(x).equals('W')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

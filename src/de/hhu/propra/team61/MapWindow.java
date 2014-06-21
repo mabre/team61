@@ -313,6 +313,10 @@ public class MapWindow extends Application implements Networkable {
                                         int oldHp = figure.getHealth();
                                         try {
                                             figure.resetVelocity();
+                                            if(terrain.standingOnLiquid(figure.getPosition())) {
+                                                System.out.println(figure.getName() + " standing on liquid");
+                                                figure.sufferDamage(figure.getDamageByLiquid());
+                                            }
                                         } catch (DeathException de) {
                                             if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
                                                 endTurn();
