@@ -30,6 +30,18 @@ public class GameOverWindow extends Application {
         launch(args);
     }
 
+    /**
+     * displays a game over window
+     * @param sceneController
+     * @param winnerTeam the number of the winner team (counting starts from 0, -1 means draw)
+     * @param winnerName the name of the winner team
+     * @param map
+     * @param file
+     * @param client the client object
+     * @param clientThread the thread managing the client connection
+     * @param server the server object
+     * @param serverThread the thread managing the server connection
+     */
     public void showWinner(SceneController sceneController, int winnerTeam, String winnerName, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         BorderPane root = new BorderPane();
         this.sceneController = sceneController;
@@ -49,7 +61,7 @@ public class GameOverWindow extends Application {
         gridBox.getChildren().add(overGrid);
         root.setRight(gridBox);
         Text winner = new Text();
-        if (winnerTeam == 0) {
+        if (winnerTeam == -1) {
             winner.setText("A tie! You're both winners!");
         } else {
             winner.setText("The winner is team " +winnerName+ ".");
