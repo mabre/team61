@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.animation.SpriteAnimation;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -31,6 +32,8 @@ public class Terrain extends GridPane {
     private static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
     private static Image STONES_IMAGE = new Image(imgPath + "stones.png");
     private static Image WATER_IMAGE = new Image(imgPath + "water.png");
+
+    private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
 
     //Technical Blocks/Special Cases
     private final double RESISTANCE_OF_SKY = 15;
@@ -454,16 +457,14 @@ public class Terrain extends GridPane {
         }
 
         for(int i=colStart; i<=colEnd; i++) {
-            ImageView riftImage = new ImageView("file:resources/animations/boss_rift.png");
-            riftImage.setTranslateX(i*BLOCK_SIZE);
-            SpriteAnimation riftAnimation = new SpriteAnimation(riftImage, 500, 12, 1);
-//          add(riftImage, 10, 0);
-            ((StackPane) getParent()).getChildren().add(riftImage); // TODO bad cast
-//            riftAnimation.setOnFinished((e) -> {
-//                ((StackPane) getParent()).getChildren().removeAll(riftImage);
-//            });
-            riftImage.setFitHeight(terrain.size()*BLOCK_SIZE);
-            riftAnimation.setDelay(new Duration((fromLeft ? colEnd-i : i-colStart)*40 + 500));
+            ImageView riftImageView = new ImageView(RIFT_IMAGE);
+            SpriteAnimation riftAnimation = new SpriteAnimation(riftImageView, 500, 12, 1);
+            final int col = i;
+            Platform.runLater(() -> {
+              add(riftImageView, col, 0, 1, terrain.size()); // TODO not rendered, as it is removed by terrain reload; should work on top of master, though
+            });
+            riftImageView.setFitHeight(terrain.size() * BLOCK_SIZE);
+            riftAnimation.setDelay(new Duration((fromLeft ? colEnd - i : i - colStart) * 40 + 500));
             riftAnimation.play();
         }
     }

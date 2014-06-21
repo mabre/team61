@@ -45,7 +45,7 @@ public class MapWindow extends Application implements Networkable {
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
-    private final static int ROUNDS_TILL_SUDDEN_DEATH = 0; // TODO IMPORTANT sensible values / pref?
+    private final static int ROUNDS_TILL_SUDDEN_DEATH = 30; // TODO pref?
     private final static int SUDDEN_DEATH_ROUNDS = 20;
 
     //JavaFX related variables
@@ -787,8 +787,9 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
-    private void executeCheat(String cmd) {
-        switch (cmd) {
+    private void executeCheat(String command) {
+        String[] cmd = command.split(" ");
+        switch (cmd[0]) {
             case "1fig": // kills every figure except the first figure of the first team and prevents game over window from being shown
                 for (int i = 1; i < teams.size(); i++) {
                     teams.get(i).suddenDeath();
@@ -805,6 +806,24 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "gameover": // ends the game by showing game over window
                 Platform.runLater(() -> handleOnClient("GAME_OVER -1"));
+                break;
+            case "sd": // starts/continues sudden death
+                Platform.runLater(() -> {
+                    switch (cmd[1]) {
+                        case "boss":
+                            if (cmd.length > 2) {
+                                bossSpawnedLeft = Boolean.parseBoolean(cmd[2]);
+                                initBoss("cheat");
+                            } else {
+                                if (boss == null) {
+                                    spawnBoss();
+                                } else {
+                                    moveBoss();
+                                }
+                            }
+                    }
+                });
+                System.out.println("Premature Death");
                 break;
             default:
                 System.out.println("No cheating, please!");
