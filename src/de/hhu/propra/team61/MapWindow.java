@@ -157,7 +157,7 @@ public class MapWindow extends Application implements Networkable {
 
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
-        terrain.setWind(input.getInt("windForce"));
+        terrain.setWind(input.getDouble("windForce"));
         initialize();
     }
 
@@ -181,7 +181,7 @@ public class MapWindow extends Application implements Networkable {
 
         turnCount = input.getInt("turnCount");
         currentTeam = input.getInt("currentTeam");
-        terrain.setWind(input.getInt("windForce"));
+        terrain.setWind(input.getDouble("windForce"));
 
         initialize();
 

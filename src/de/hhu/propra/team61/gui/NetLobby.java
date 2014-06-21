@@ -42,7 +42,7 @@ public class NetLobby extends Application implements Networkable {
     ArrayList<TextField> weapons = new ArrayList<>();
     /** number of figures per team */
     TextField sizeField = new TextField("4");
-    TextField numberOfTeams = new TextField("1");
+    TextField numberOfTeams = new TextField("2");
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     CustomGrid overviewGrid = new CustomGrid();
     int teamsCreated = 1;
