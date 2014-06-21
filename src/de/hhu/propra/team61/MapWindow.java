@@ -385,6 +385,11 @@ public class MapWindow extends Application implements Networkable {
         return livingTeams;
     }
 
+    /**
+     * increases turnCount, deactivates last active figure (ie. removes highlight), triggers sudden death,
+     *   calculates next team, activates next figure, and updates label with current team etc.
+     * only to be called on server
+     */
     public void endTurn() {
         if(turnCount == -42) { // cheat mode
             shootingIsAllowed = true;
@@ -403,6 +408,7 @@ public class MapWindow extends Application implements Networkable {
             spawnBoss();
         } else if(boss != null) {
             moveBoss();
+            server.sendCommand("SD BOSS MOVE");
         }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -449,7 +455,12 @@ public class MapWindow extends Application implements Networkable {
     private void spawnBoss() {
         String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar"); // similarity to Vel’Koz and Kog’Maw is purely coincidental
         bossSpawnedLeft = (Math.random() > .5);
-        boss = new Figure(bossName, 1000000, 1000000, false, false, false, "boss.png"); // TODO short-hand constructor
+        initBoss(bossName);
+        server.sendCommand("SD BOSS SPAWN " + bossName + " " + bossSpawnedLeft);
+    }
+
+    private void initBoss(String name) {
+        boss = new Figure(name, 1000000, 1000000, false, false, false, "boss.png"); // TODO short-hand constructor
         boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
         fieldPane.getChildren().add(boss);
     }
@@ -462,7 +473,7 @@ public class MapWindow extends Application implements Networkable {
             boss.setPosition(boss.getPosition().subtract(moveBy, 0));
         }
         terrain.destroyColumns(boss.getPosition(), bossSpawnedLeft, moveBy);
-        terrain.load(terrain.toArrayList());
+        terrain.load(terrain.toArrayList()); // TODO ??
     }
 
     /**
@@ -614,6 +625,19 @@ public class MapWindow extends Application implements Networkable {
                 if(flyingProjectile != null) {
                     fieldPane.getChildren().remove(flyingProjectile);
                     flyingProjectile = null;
+                }
+                break;
+            case "SD":
+                if(server == null) {
+                    switch (cmd[1]) {
+                        case "BOSS":
+                            if (cmd[2].equals("MOVE")) {
+                                moveBoss();
+                            } else if (cmd[2].equals("SPAWN")) {
+                                bossSpawnedLeft = Boolean.parseBoolean(cmd[4]);
+                                initBoss(cmd[3]);
+                            }
+                    }
                 }
                 break;
             case "SET_CURRENT_TEAM":
