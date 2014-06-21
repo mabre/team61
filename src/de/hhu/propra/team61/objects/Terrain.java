@@ -1,7 +1,9 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.animation.SpriteAnimation;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
+import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -9,6 +11,8 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 
 import javax.sound.sampled.AudioSystem;
 import java.util.ArrayList;
@@ -34,6 +38,8 @@ public class Terrain extends GridPane {
     private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
     private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
     private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
+
+    private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
 
     //Technical Blocks/Special Cases
     private final double RESISTANCE_OF_SKY = 15;
@@ -521,5 +527,71 @@ public class Terrain extends GridPane {
         }
         save.put("terrain", jsonTerrain);
         return save;
+    }
+
+    /**
+     * destroys columns between the left or right side of the board and a given figure position (usually the boss)
+     * @param position the position of the figure
+     * @param fromLeft whether to start from the left (true) or right (false)
+     * @param movedBy absolute value of x-position change in px since last call of this function
+     */
+    public void destroyColumns(Point2D position, boolean fromLeft, int movedBy) {
+        movedBy = movedBy / BLOCK_SIZE;
+
+        int column = (int)(position.getX() / BLOCK_SIZE + (fromLeft ? 0 : Figure.NORMED_OBJECT_SIZE / BLOCK_SIZE));
+        if(column >= terrain.get(0).size()) column = terrain.get(0).size() - 1;
+
+        int colStart = (fromLeft ? 0 : column);
+        int colEnd = (fromLeft ? column-1 : terrain.get(0).size()-1);
+        if(colEnd >= terrain.get(0).size()) colEnd = terrain.get(0).size() - 1;
+
+        int lastAlreadyDestroyedColumn = (fromLeft ? -1 : terrain.get(0).size());
+
+        for (int col = colStart; col <= colEnd; col++) {
+            if(terrain.get(0).get(col) == '@') { // column already destroyed
+                if(fromLeft || lastAlreadyDestroyedColumn == terrain.get(0).size()) {
+                    lastAlreadyDestroyedColumn = col;
+                }
+            } else {
+                for (int row = 0; row < terrain.size(); row++) {
+                    terrain.get(row).set(col, '@'); // TODO special terrain type?
+                }
+            }
+        }
+
+        Rectangle2D destroyedTerrain = new Rectangle2D(colStart*BLOCK_SIZE, 0, (colEnd + (fromLeft?1:0))*BLOCK_SIZE, terrain.size()*BLOCK_SIZE+BLOCK_SIZE);
+
+        for(Figure figure: figures) {
+            if(figure.getHitRegion().intersects(destroyedTerrain)) {
+                figure.setHealth(0);
+            }
+        }
+
+        // do not play destroy animation for all columns
+        if(fromLeft) {
+            colStart = Math.max(0, lastAlreadyDestroyedColumn - 3 * movedBy + 1);
+        } else {
+            colEnd = Math.min(terrain.get(0).size() -1, lastAlreadyDestroyedColumn + 3 * movedBy - 1);
+        }
+
+        for(int i=colStart; i<=colEnd; i++) {
+            ImageView riftImageView = new ImageView(RIFT_IMAGE);
+            SpriteAnimation riftAnimation = new SpriteAnimation(riftImageView, 500, 12, 1);
+            final int col = i;
+            Platform.runLater(() -> {
+              add(riftImageView, col, 0, 1, terrain.size()); // TODO not rendered, as it is removed by terrain reload; should work on top of master, though
+            });
+            riftImageView.setFitHeight(terrain.size() * BLOCK_SIZE);
+            riftAnimation.setDelay(new Duration((fromLeft ? colEnd - i : i - colStart) * 40 + 500));
+            riftAnimation.play();
+        }
+    }
+
+    /**
+     * @return the width of the terrain in px
+     */
+    public int getTerrainWidth() {
+        if(terrain == null || terrain.size() == 0) return 0;
+        return terrain.get(0).size() * BLOCK_SIZE;
     }
 }

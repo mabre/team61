@@ -53,6 +53,8 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
+    private final static int ROUNDS_TILL_SUDDEN_DEATH = 30; // TODO pref?
+    private final static int SUDDEN_DEATH_ROUNDS = 20;
 
     //JavaFX related variables
     private Scene drawing;
@@ -92,6 +94,9 @@ public class MapWindow extends Application implements Networkable {
     private Client client;
     private Thread serverThread;
     private Thread clientThread;
+
+    private Figure boss = null;
+    private boolean bossSpawnedLeft;
 
     private String map; // TODO do we need this?
     private Chat chat;
@@ -368,29 +373,6 @@ public class MapWindow extends Application implements Networkable {
         return id;
     }
 
-    @Deprecated
-    /*public void cheatMode() {
-        try {
-            levelCounter++;
-            terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
-            // quite bad hack to reload spawn points, but ok as it's a cheat anyway
-            for(Team team: teams) {
-                fieldPane.getChildren().remove(team);
-            }
-            teams.clear();
-            for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
-                ArrayList<Weapon> weapons = new ArrayList<>();
-                weapons.add(new Bazooka(2));
-                weapons.add(new Grenade(2));
-                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE, "player");
-                teams.add(team);
-                fieldPane.getChildren().add(team);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }*/
-
     public int getNumberOfLivingTeams() {
         int livingTeams = 0;
         for (Team team : teams) {
@@ -401,6 +383,11 @@ public class MapWindow extends Application implements Networkable {
         return livingTeams;
     }
 
+    /**
+     * increases turnCount, deactivates last active figure (ie. removes highlight), triggers sudden death,
+     *   calculates next team, activates next figure, and updates label with current team etc.
+     * only to be called on server
+     */
     public void endTurn() {
         if(turnCount == -42) { // cheat mode
             shootingIsAllowed = true;
@@ -418,6 +405,14 @@ public class MapWindow extends Application implements Networkable {
 
         terrain.rewind();
         server.sendCommand("WIND_FORCE " + terrain.getWindMagnitude());
+
+        if(turnCount % teams.size() >= ROUNDS_TILL_SUDDEN_DEATH && boss == null) {
+            System.out.println("sudden death is coming ..."); // TODO IMPORTANT network
+            spawnBoss();
+        } else if(boss != null) {
+            moveBoss();
+            server.sendCommand("SD BOSS MOVE");
+        }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
         if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
@@ -489,14 +484,37 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void undoDigitations() {
-        for(Team team: teams) {
-            for(Figure figure: team.getFigures()) {
-                if(figure.getHealth() < DEDIGITATION_HEALTH_THRESHOLD) {
+        for (Team team : teams) {
+            for (Figure figure : team.getFigures()) {
+                if (figure.getHealth() < DEDIGITATION_HEALTH_THRESHOLD) {
                     figure.dedigitate();
                     server.sendCommand("DEDIGITATE " + getFigureId(figure));
                 }
             }
         }
+    }
+
+    private void spawnBoss() {
+        String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar"); // similarity to Vel’Koz and Kog’Maw is purely coincidental
+        bossSpawnedLeft = (Math.random() > .5);
+        initBoss(bossName);
+        server.sendCommand("SD BOSS SPAWN " + bossName + " " + bossSpawnedLeft);
+    }
+
+    private void initBoss(String name) {
+        boss = new Figure(name, "boss", 1000000, 1000000, false, false, false); // TODO short-hand constructor
+        boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
+        fieldPane.getChildren().add(boss);
+    }
+
+    private void moveBoss() {
+        final int moveBy = terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS;
+        if(bossSpawnedLeft) {
+            boss.setPosition(boss.getPosition().add(moveBy, 0));
+        } else {
+            boss.setPosition(boss.getPosition().subtract(moveBy, 0));
+        }
+        terrain.destroyColumns(boss.getPosition(), bossSpawnedLeft, moveBy);
     }
 
     /**
@@ -686,12 +704,27 @@ public class MapWindow extends Application implements Networkable {
                     flyingProjectile = null;
                 }
                 break;
+            case "SD":
+                if(server == null) {
+                    switch (cmd[1]) {
+                        case "BOSS":
+                            if (cmd[2].equals("MOVE")) {
+                                moveBoss();
+                            } else if (cmd[2].equals("SPAWN")) {
+                                bossSpawnedLeft = Boolean.parseBoolean(cmd[4]);
+                                initBoss(cmd[3]);
+                            }
+                    }
+                }
+                break;
             case "SET_CURRENT_TEAM":
                 teams.get(currentTeam).getCurrentFigure().setActive(false);
                 currentTeam = Integer.parseInt(cmd[1]);
                 break;
             case "SET_HP":
-                teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+                }
                 break;
             case "CONDITION":
                 switch(cmd[1]){
@@ -873,6 +906,27 @@ public class MapWindow extends Application implements Networkable {
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
                 System.out.println("It’s windy.");
+            case "gameover": // ends the game by showing game over window
+                Platform.runLater(() -> handleOnClient("GAME_OVER -1"));
+                break;
+            case "sd": // starts/continues sudden death
+                Platform.runLater(() -> {
+                    switch (cmd[1]) {
+                        case "boss":
+                            if (cmd.length > 2) {
+                                bossSpawnedLeft = Boolean.parseBoolean(cmd[2]);
+                                initBoss("cheat");
+                            } else {
+                                if (boss == null) {
+                                    spawnBoss();
+                                } else {
+                                    moveBoss();
+                                }
+                            }
+                    }
+                });
+                System.out.println("Premature Death");
+                break;
             default:
                 client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
                 System.out.println("No cheating, please!");
