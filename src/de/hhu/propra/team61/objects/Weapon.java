@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * - for the Weaponimage/-facing
  * - shooting
  * - transmission of all the attributes by carrying them on a projectile
- * - OFFERS a default handleCollision(), which might prove suitable for most weapontypes
+ * - OFFERS a default handleCollision(), which might prove suitable for most itemtypes
  *   -> coordination of Figure.sufferDamage();
  *   -> Sending Figures flying // ToDo implement this
  *   -> coordination of terraindestruction
@@ -182,8 +182,6 @@ public abstract class Weapon extends Item {
     public ImageView getCrosshair() { return crosshair; }
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
-
-    public void refill(){ munition++; }
 
 
     //----------------------------------Crosshair-Related Functions---------------------------------

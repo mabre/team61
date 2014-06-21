@@ -1,6 +1,7 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.CustomGrid;
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
@@ -235,9 +236,16 @@ public class GameSettings extends Application {
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
         output.put("team-size", sizefield.getText()); //save size of teams
         output.put("map", mapChooser.getValue());
-        output.put("weapon1", weapon1.getText()); // TODO make array instead of using suffix
-        output.put("weapon2", weapon2.getText());
-        output.put("weapon3", weapon3.getText());
+
+        JSONArray inventory = new JSONArray();
+        inventory.put(Integer.parseInt(weapon1.getText()));
+        inventory.put(Integer.parseInt(weapon2.getText()));
+        inventory.put(Integer.parseInt(weapon3.getText()));
+        inventory.put(1); //ToDo add Weapon4
+        inventory.put(1); //ToDo add Weapon5
+
+        output.put("inventory",inventory);
+
         JSONArray teams = new JSONArray();
         JSONObject team1 = getJsonForTeam(name1.getText(), colorPicker1, figure1);
         teams.put(team1);

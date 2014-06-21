@@ -42,12 +42,14 @@ public class Crate extends ImageView {
         setTranslateX(Math.random()*xSize*NORMED_BLOCK_SIZE);
         setTranslateY(0);
 
-        // TODO set Content
-        File f = new File("src/de/hhu/propra/team61/objects/weapontypes/");
+        // TODO set Content; FILE dingens funktioniert später nicht mehr; musst leider ne liste machen u pflegen
+        File f = new File("src/de/hhu/propra/team61/objects/itemtypes/");
         String[] options = f.list();
         System.out.println(options);
         content = options[(int)Math.random()*options.length]; //ToDo remove fileending
         content = content.substring(0,content.indexOf("."));
+
+        content = "PoisonedArrow";
 
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(),NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE);
 

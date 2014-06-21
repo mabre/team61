@@ -3,6 +3,7 @@ package de.hhu.propra.team61;
 import de.hhu.propra.team61.gui.Chat;
 import de.hhu.propra.team61.gui.GameOverWindow;
 import de.hhu.propra.team61.io.GameState;
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
@@ -11,10 +12,6 @@ import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
 import de.hhu.propra.team61.objects.*;
-import de.hhu.propra.team61.objects.weapontypes.Bazooka;
-import de.hhu.propra.team61.objects.weapontypes.Grenade;
-import de.hhu.propra.team61.objects.weapontypes.PoisonedArrow;
-import de.hhu.propra.team61.objects.weapontypes.Shotgun;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
@@ -33,7 +30,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
@@ -116,19 +112,11 @@ public class MapWindow extends Application implements Networkable {
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
-/* TODO
-        //Get all implemented Weapons/Items
-        File f = new File("src/de/hhu/propra/team61/objects/weapontypes/");
-        String[] weaponListArray = f.list();
-        */
-        for(int i=0; i<teamsArray.length(); i++) {
-            ArrayList<Weapon> weapons = new ArrayList<>();
 
-            weapons.add(new Bazooka(settings.getInt("weapon1")));
-            weapons.add(new Grenade(settings.getInt("weapon2")));
-            weapons.add(new Shotgun(settings.getInt("weapon3")));
-            weapons.add(new PoisonedArrow(1)); //ToDo replace with: settings.getInt("weapon4"))
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color"))));
+        //ToDo: Prepare start inventory of all teams
+        for(int i=0; i<teamsArray.length(); i++) {
+            ArrayList<Item> inventory = ItemManager.generateInventory(settings.getJSONArray("inventory")); //ToDo add startInventory to settings
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color"))));
         }
 
         initialize();
@@ -392,29 +380,6 @@ public class MapWindow extends Application implements Networkable {
         return id;
     }
 
-    @Deprecated
-    public void cheatMode() {
-        try {
-            levelCounter++;
-            terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
-            // quite bad hack to reload spawn points, but ok as it's a cheat anyway
-            for(Team team: teams) {
-                fieldPane.getChildren().remove(team);
-            }
-            teams.clear();
-            for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
-                ArrayList<Weapon> weapons = new ArrayList<>();
-                weapons.add(new Bazooka(2));
-                weapons.add(new Grenade(2));
-                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE);
-                teams.add(team);
-                fieldPane.getChildren().add(team);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
     public int getNumberOfLivingTeams() {
         int livingTeams = 0;
         for (Team team : teams) {
@@ -569,7 +534,7 @@ public class MapWindow extends Application implements Networkable {
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(Integer.parseInt(cmd[1])-1));
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getItem(Integer.parseInt(cmd[1]) - 1));
                 fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
@@ -626,7 +591,7 @@ public class MapWindow extends Application implements Networkable {
                 supplyDrops.remove(supplyDrops.get(Integer.parseInt(cmd[1])));
                 break;
             case "SUPPLY_PICKED_UP":
-                teams.get(Integer.parseInt(cmd[1])).getWeapon(cmd[2]).refill();
+                teams.get(Integer.parseInt(cmd[1])).getItem(cmd[2]).refill();
                 break;
             case "RELOAD_TERRAIN":
                 terrain.load(terrain.toArrayList());
@@ -764,30 +729,22 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "1":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                 }
                 break;
             case "2":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                 }
                 break;
             case "3":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                 }
                 break;
             case "4":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                 }
                 break;
             default:

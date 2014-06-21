@@ -1,4 +1,4 @@
-package de.hhu.propra.team61.objects.weapontypes;
+package de.hhu.propra.team61.objects.itemtypes;
 
 import de.hhu.propra.team61.Team;
 import de.hhu.propra.team61.objects.Terrain;

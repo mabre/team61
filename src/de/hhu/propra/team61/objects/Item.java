@@ -43,4 +43,11 @@ public abstract class Item extends ImageView{ //ToDo give this a makeover
     public String getName() {
         return name;
     }
+
+    public int getMunition() {
+        return munition;
+    }
+
+    public void refill(){ munition++; }
+
 }
