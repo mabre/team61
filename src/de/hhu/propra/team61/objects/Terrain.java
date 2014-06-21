@@ -11,13 +11,9 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
-import javax.sound.sampled.AudioSystem;
 import java.util.ArrayList;
-
-import static de.hhu.propra.team61.objects.Figure.*;
 
 /**
  * A GridPane representing a terrain.
