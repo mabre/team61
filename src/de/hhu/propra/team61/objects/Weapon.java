@@ -149,13 +149,14 @@ public abstract class Weapon extends Item {
         ArrayList<String> commandList = new ArrayList<String>();
         commandList.add("REMOVE_FLYING_PROJECTILE");
 
-        // 1. Make Figures suffer and add necessary commands to list being sended
+        // 1. Make Figures suffer and add necessary commands to list being sent
         //ToDo add some kind of this sphere, that hurts less centered on impactPoint
         for(int t = 0; t < teams.size(); t++){
             for(int f = 0; f < teams.get(t).getFigures().size(); f++){
                 if(teams.get(t).getFigures().get(f).getHitRegion().intersects(impactArea)){
                     try {
                         teams.get(t).getFigures().get(f).sufferDamage(damage);
+                        teams.get(t).getFigures().get(f).addRecentlySufferedDamage(damage);
                     } catch (DeathException e) {
                         System.out.println("WARNING: unhandled death exception");
                         // TODO IMPORTANT

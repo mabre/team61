@@ -24,13 +24,17 @@ public class Team extends StackPane {
     private ArrayList<Figure> figures;
     private ArrayList<Item> inventory;
     private Color color;
+    private String name;
 
-    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Item> inventory, Color color) {
+    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Item> inventory, Color color, String name, String chosenFigure, JSONArray figureNames) {
+
         this.inventory = inventory;
         this.color = color;
+        this.name = name;
         figures = new ArrayList<>();
-        for (Point2D sp : spawnPoints) {
-            Figure f = new Figure("Max"+(int)(Math.random()*100), 100, 100, false, false, false); // TODO @Kegny create sensible default constructor
+        for (int j=0; j < spawnPoints.size(); j++) {
+            Point2D sp = spawnPoints.get(j);
+            Figure f = new Figure(figureNames.getJSONObject(j).getString("figure"), chosenFigure, 100, 0, false, false, false); // TODO @Kegny create sensible default constructor
             f.setColor(this.color);
             figures.add(f);
             f.setPosition(sp);
@@ -45,6 +49,7 @@ public class Team extends StackPane {
      */
     public Team(JSONObject state) {
         color = Color.web(state.getString("color"));
+        name = state.getString("name");
         figures = new ArrayList<>();
         JSONArray figuresArray = state.getJSONArray("figures");
         for(int i=0; i<figuresArray.length(); i++) {
@@ -71,6 +76,7 @@ public class Team extends StackPane {
         output.put("figures", figuresArray);
         output.put("inventory", ItemManager.inventoryToJsonArray(inventory));
         output.put("color", toHex(color));
+        output.put("name", name);
         output.put("currentFigure", currentFigure);
         return output;
     }
@@ -104,6 +110,10 @@ public class Team extends StackPane {
             }
         }
         return livingFigures;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public ArrayList<Figure> getFigures() {

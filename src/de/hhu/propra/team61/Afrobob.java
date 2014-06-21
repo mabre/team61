@@ -2,6 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.BigStage;
 import de.hhu.propra.team61.gui.MenueController;
+import de.hhu.propra.team61.gui.SceneController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

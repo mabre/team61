@@ -18,6 +18,8 @@ public class Chat extends VBox {
 
     boolean unobtrusive = false;
 
+    boolean recentlyOpened = false;
+
     private static final double OPACITY_UNOBTRUSIVE = .4;
     private static final double OPACITY_UNOBTRUSIVE_HOVER = .8;
 
@@ -49,19 +51,22 @@ public class Chat extends VBox {
             }
             input.clear();
         });
-        input.focusedProperty().addListener((observedValue, oldValue, newValue) -> {
-            if (newValue) {
-                if (input.getText().equals("c")) input.clear(); // TODO not working as expected
-                input.selectAll();
+        input.textProperty().addListener((observedValue, oldValue, newValue) -> {
+            if (recentlyOpened) {
+                if (input.getText().equals("c")) { // remove the c entered to open chat
+                    input.clear();
+                } else {
+                    input.selectAll();
+                }
+                recentlyOpened = false;
             }
         });
         this.getChildren().add(input);
 
         this.visibleProperty().addListener((observedValue, oldValue, newValue) -> {
-            if(newValue) {
+            if (newValue) {
+                recentlyOpened = true;
                 input.requestFocus();
-                if(input.getText().equals("c")) input.clear(); // TODO not working as expected
-                input.selectAll();
             }
         });
 
@@ -100,7 +105,7 @@ public class Chat extends VBox {
                 "/kickteam <team number>\n" +
                 "    Removes the given team (sudden death)\n" +
                 "    Only a member of that team and the host are allowed to kick a team.\n" +
-                "/kick <new name>\n" +
+                "/rename <new name>\n" +
                 "    Changes your name\n" +
                 "/rename <old name> <new name>\n" +
                 "    Changes a name\n" +

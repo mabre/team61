@@ -7,17 +7,17 @@ import de.hhu.propra.team61.io.json.JSONObject;
  */
 public class Options {
 
-    private static final String OPTIONS_FILE = "Afrobob.conf";
+    private static final String OPTIONS_FILE = "OPTIONS_FILE.conf";
 
     /**
-     * @param json is saved to SETTINGS_FILE
+     * @param json is saved to OPTIONS_FILE
      */
     public static void save(JSONObject json) {
         Json.save(json, OPTIONS_FILE);
     }
 
     /**
-     * @return game state from SAVE_STATE_FILE
+     * @return game state from OPTIONS_FILE
      */
     public static JSONObject getSavedSettings() {
         return Json.getFromFile(OPTIONS_FILE);
