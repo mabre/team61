@@ -264,7 +264,7 @@ public class MapWindow extends Application implements Networkable {
                         if (flyingProjectile != null) {
                             try {
                                 final Point2D newPos;
-                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
+                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, flyingProjectile.getDrifts());
                                 flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                 flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
                                 scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
@@ -296,10 +296,8 @@ public class MapWindow extends Application implements Networkable {
                                     //Check if figure collides with an Crate TODO: Ask if I should move that somewhere else
                                     for(int i = 0; i < supplyDrops.size(); i++){
                                         if(figure.getHitRegion().intersects(supplyDrops.get(i).getHitRegion())){
-                                            //ToDo add crate's content into inventory of team
                                             server.sendCommand("SUPPLY_PICKED_UP" + " " + t + " " + supplyDrops.get(i).getContent());
-                                            server.sendCommand("REMOVE_SUPPLY " + i); //TodO Redudance?
-
+                                            server.sendCommand("REMOVE_SUPPLY " + i);
                                         }
                                     }
 
@@ -678,6 +676,11 @@ public class MapWindow extends Application implements Networkable {
                     scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
                 break;
+            case "FIGURE_ADD_VELOCITY":
+                Point2D vector = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
+                Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
+                f.addVelocity(vector);
+                break;
             case "REPLACE_BLOCK":
                 if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
                 terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
@@ -727,13 +730,13 @@ public class MapWindow extends Application implements Networkable {
             case "CONDITION":
                 switch(cmd[1]){
                     case "POISON":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(Boolean.parseBoolean(cmd[4]));
                         break;
                     case "PARALYZE":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsParalyzed(true);
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsParalyzed(Boolean.parseBoolean(cmd[4]));
                         break;
                     case "STUCK":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(Boolean.parseBoolean(cmd[4]));
                         break;
                 }
                 break;
@@ -853,6 +856,31 @@ public class MapWindow extends Application implements Networkable {
             case "4":
                 if(shootingIsAllowed) {
                     server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
+                }
+                break;
+            case "5":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 5");
+                }
+                break;
+            case "6":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 6");
+                }
+                break;
+            case "7":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 7");
+                }
+                break;
+            case "8":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 8");
+                }
+                break;
+            case "9":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 9");
                 }
                 break;
             default:

@@ -17,6 +17,10 @@ import java.util.ArrayList;
 public class ItemManager {
     public final static int itemCount = 5;
 
+    /**
+     * @param inventory JSONArray OF INT being the munition value; Weapontype defined by position in Array
+     * @return ArrayList<Item> ready to use
+     */
     public static ArrayList<Item> generateInventory(JSONArray inventory){
         ArrayList<Item> items = new ArrayList<>();
 
@@ -26,6 +30,7 @@ public class ItemManager {
         items.add(new Shotgun(inventory.getInt(2)));
         items.add(new PoisonedArrow(inventory.getInt(3)));
         items.add(new Medipack(inventory.getInt(4)));
+        items.add(new Rifle(1)); //ToDo: Ask Jessi for more inputs in gui
         return items;
     }
 

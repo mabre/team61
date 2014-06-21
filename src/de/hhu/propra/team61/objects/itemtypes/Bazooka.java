@@ -14,15 +14,15 @@ public class Bazooka extends Weapon {
     private final static String  DAMAGETYPE     = "Explosiondamage";
     private final static int     DAMAGE         =  50;
     private final static int     EXPLOSIONPOWER = 100;
-    private final static int     SHOCKWAVE      =   0;
+    private final static int     SHOCKWAVE      =  20;
     private final static int     DELAY          =  -1; // ToDo somehow tell it's on collision
 
     private final static boolean POISONS       = false; // toggle isPoisoned
     private final static boolean PARALYZES     = false; // toggle isBurning
     private final static boolean BLOCKS        = false; // toggle isStuck
 
-    private final static int     MASS          =   15;
-    private final static int     SPEED         =   20;
+    private final static int     MASS          =   20;
+    private final static int     SPEED         =   15;
     private final static boolean DRIFTS        = true;
 
 //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow

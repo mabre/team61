@@ -29,8 +29,6 @@ public class Figure extends StackPane {
     private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
 
-    private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
-
     private String name;
     private String figureType;
     private int health;
@@ -353,7 +351,7 @@ public class Figure extends StackPane {
         });
     }
 
-    public void dedigitate() { // TODO degitate ?
+    public void dedigitate() {
         massFactor = 1;
         jumpDuringFallThreshold = 0;
         armor = 0;

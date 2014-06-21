@@ -19,7 +19,7 @@ public class Shotgun extends Weapon { //ToDo Override shoot to make two shots po
     private final static String  DAMAGETYPE     = "Physicaldamage";
     private final static int     DAMAGE         =  25;
     private final static int     EXPLOSIONPOWER =  40;
-    private final static int     SHOCKWAVE      =   0;
+    private final static int     SHOCKWAVE      =   5;
     private final static int     DELAY          =  -1; // ToDo somehow tell it's on collision
 
     private final static boolean POISONS       = false; // toggle isPoisoned

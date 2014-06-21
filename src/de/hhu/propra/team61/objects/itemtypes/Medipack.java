@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class Medipack extends Weapon {
 
     private final static String  NAME           = "Medipack";
-    private final static String  DESCRIPTION    = "Alternatively you could man up.";
+    private final static String  DESCRIPTION    = "Come on, that's just a flesh wound.";
 
     private final static String  PROJECTILE_IMG = "";
     private final static String  WEAPON_IMG     = "file:resources/weapons/temp0.png";
@@ -44,27 +44,28 @@ public class Medipack extends Weapon {
             munition--;
             System.out.println("munition left: " + munition);
 
-            return new Projectile(null, new Point2D(getTranslateX(), getTranslateY()), new Point2D(getTranslateX(), getTranslateY()), 0, this);
+            return new Projectile(getImage(), new Point2D(getTranslateX(), getTranslateY()), new Point2D(getTranslateX(), getTranslateY()-0.1), 1, this);
         } else {
             throw new NoMunitionException();
         }
     }
     @Override
     public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea) { //ToDo modify this to make use of a fuse
-        for(Team t : teams){
-            for(Figure f : t.getFigures()){
-                if(impactArea.intersects(f.getHitRegion())){
-                    f.setHealth(f.getHealth()-DAMAGE);
-                    f.setIsPoisoned(false);
-                    f.setIsParalyzed(false);
+        ArrayList<String> commands = new ArrayList<String>();
+        for(int t = 0; t < teams.size(); t++){
+            for(int f = 0; f < teams.get(t).getFigures().size(); f++){
+                if(impactArea.intersects(teams.get(t).getFigures().get(f).getHitRegion())){
+                    commands.add("SET_HP " + t + " " + f + " " + (teams.get(t).getFigures().get(f).getHealth()-DAMAGE));
+                    commands.add("CONDITION" + " " + "POISON" + " "  + t + " " + f + " " + "false");
+                    commands.add("CONDITION" + " " + "PARALYZE" + " " + t + " " + f + " " + "false");
                 }
             }
         }
-        return null;
+        return commands;
     }
 
 
-    //Override functions to disable them
+    //Override these functions to disable them, as they are of no use here
     @Override
     public void angleUp(boolean faces_right){}
     @Override

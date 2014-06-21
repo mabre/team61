@@ -19,7 +19,7 @@ public class Grenade extends Weapon {
     private final static String  DAMAGETYPE     = "Explosiondamage";
     private final static int     DAMAGE         =  40;
     private final static int     EXPLOSIONPOWER = 100;
-    private final static int     SHOCKWAVE      =   0;
+    private final static int     SHOCKWAVE      =  15;
     private final static int     DELAY          =   5;  // ToDo make this variable
 
     private final static boolean POISONS       = false; // toggle isPoisoned
