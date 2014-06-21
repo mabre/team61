@@ -14,6 +14,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -62,7 +63,8 @@ public class CustomizeWindow extends Application {
     private static int BLOCK_SIZE = 8;
     private static int MAP_HEIGHT = 60;
     private static int MAP_WIDTH = 130;
-
+    private String keysEntered;
+    private boolean cheatEnabled = false;
 
     public CustomizeWindow(SceneController sceneController) {
         this.sceneController = sceneController;
@@ -228,6 +230,37 @@ public class CustomizeWindow extends Application {
             }
         });
         newMapPane.setTop(newMapGrid);
+        newMapPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+            System.out.println("key pressed: " + keyEvent.getCode());
+            if(!cheatEnabled) {
+                switch (keyEvent.getCode()) {
+                    case UP:
+                    case RIGHT:
+                    case DOWN:
+                    case LEFT:
+                    case A:
+                    case B:
+                        keysEntered += keyEvent.getCode();
+                        if (keysEntered.equals("UPUPDOWNDOWNLEFTRIGHTLEFTRIGHTBA")) {
+                            cheatEnabled = true;
+                            System.out.println("What is this?");
+                            keysEntered = "";
+                        }
+                        break;
+                    default:
+                        keysEntered = "";
+                }
+            } else {
+                switch (keyEvent.getCode()) {
+                    case RIGHT:
+                    case DOWN:
+                    case LEFT:
+                        // move block
+                    default:
+                        cheatEnabled = false;
+                }
+            }
+        });
         initializeLevelEditor(file);
         Button stone = new Button("Stone");
         stone.setOnAction(e -> {
