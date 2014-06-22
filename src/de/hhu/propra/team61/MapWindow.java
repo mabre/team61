@@ -9,7 +9,6 @@ import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
-import de.hhu.propra.team61.io.json.JSONString;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -19,7 +18,6 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -74,7 +72,7 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
-    private Label weaponLabel;
+    private Label ingameLabel;
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
@@ -225,8 +223,10 @@ public class MapWindow extends Application implements Networkable {
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        ingameLabel = new Label();
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
+        rootPane.setRight(ingameLabel);
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -320,7 +320,7 @@ public class MapWindow extends Application implements Networkable {
                                         }
                                         if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                             server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
-                                            playSoundeffects("gotHit.wav");
+                                            playSoundeffects("fallDamage.wav");
                                         }
                                     }
                                 }
@@ -481,6 +481,7 @@ public class MapWindow extends Application implements Networkable {
                 recentlyCausedDamage += figure.popRecentlySufferedDamage();
             }
         }
+        if (recentlyCausedDamage >= 50) playSoundeffects("highDamage.wav");
         return recentlyCausedDamage;
     }
 
@@ -705,6 +706,7 @@ public class MapWindow extends Application implements Networkable {
                 switch(cmd[1]){
                     case "POISON":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
+                        playSoundeffects("poisoned.wav");
                         break;
                     case "FIRE":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsBurning(true);
@@ -817,9 +819,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
-                    weaponLabel = new Label("Bazooka: A classic one.");
-                    rootPane.setRight(weaponLabel);
-                    weaponLabel.setVisible(true);
+                    setGameComment("Bazooka: A classic one.");
                     playSoundeffects("changeWeapon.wav");
                 }
                 break;
@@ -828,10 +828,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
-                    weaponLabel = new Label("Granade: Now on SALE with wind!");
-                    rootPane.setRight(weaponLabel);
-                    weaponLabel.setVisible(true);
-                    playSoundeffects("dummieTwo.wav");
+                    setGameComment("Granade: Now on SALE with wind!");
+                    playSoundeffects("granade.wav");
                 }
                 break;
             case "3":
@@ -839,9 +837,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
-                    weaponLabel = new Label("Shootgun: Right into the face! - twice");
-                    rootPane.setRight(weaponLabel);
-                    weaponLabel.setVisible(true);
+                    setGameComment("Shootgun: Right into the face! - twice");
                     playSoundeffects("shotgun.wav");
                 }
                 break;
@@ -850,9 +846,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
-                    weaponLabel = new Label("Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
-                    rootPane.setRight(weaponLabel);
-                    weaponLabel.setVisible(true);
+                    setGameComment("Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
                     playSoundeffects("poisonArrow.wav");
                 }
                 break;
@@ -871,18 +865,22 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(0).getFigures().get(i).setHealth(0);
                 }
                 turnCount = -42; // prevents endTurn() from showing game over window
+                setGameComment("You are now alone.");
                 System.out.println("You are now alone.");
                 break;
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
+                setGameComment("Ate my spinach.");
                 System.out.println("Ate my spinach.");
                 break;
             case "dedigitate": // calls undoDigitations() method
                 undoDigitations();
+                setGameComment("Returning to Baby I");
                 System.out.println("Returning to Baby I");
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();
+                setGameComment("Digitation.");
                 System.out.println("Digitation.");
                 break;
             case "forcedig": // forces digitation of all figures
@@ -891,14 +889,17 @@ public class MapWindow extends Application implements Networkable {
                         figure.digitate();
                     }
                 }
+                setGameComment("Mass-Digitation");
                 System.out.println("Mass-Digitation.");
                 break;
             case "rewind": // sets wind to given value
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
+                setGameComment("It's windy.");
                 System.out.println("It’s windy.");
             default:
                 client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
+                setGameComment("No cheating, please!");
                 System.out.println("No cheating, please!");
         }
     }
@@ -952,5 +953,17 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
         AP.start(action);
+    }
+
+    void setGameComment(String content){
+        ingameLabel.setVisible(true);
+        ingameLabel.setText(content);
+
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                rootPane.setRight(ingameLabel); //javaFX operations should go here } }); }
+            }
+        });
     }
 }
