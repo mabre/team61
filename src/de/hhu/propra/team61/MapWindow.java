@@ -74,6 +74,7 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
+    private Label weaponLabel;
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
@@ -226,7 +227,6 @@ public class MapWindow extends Application implements Networkable {
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
-
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -236,6 +236,7 @@ public class MapWindow extends Application implements Networkable {
                     case C:
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
+                        playSoundeffects("chatBlop.wav");
                         break;
                     default:
                         client.sendKeyEvent(keyEvent.getCode());
@@ -319,6 +320,7 @@ public class MapWindow extends Application implements Networkable {
                                         }
                                         if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                             server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                            playSoundeffects("gotHit.wav");
                                         }
                                     }
                                 }
@@ -638,6 +640,7 @@ public class MapWindow extends Application implements Networkable {
                     //ToDo setRoundTimer down to 5sec
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
+                    playSoundeffects("reload.wav");
                     break;
                 }
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
@@ -814,6 +817,9 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
+                    weaponLabel = new Label("Bazooka: A classic one.");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
                     playSoundeffects("changeWeapon.wav");
                 }
                 break;
@@ -822,6 +828,9 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
+                    weaponLabel = new Label("Granade: Now on SALE with wind!");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
                     playSoundeffects("dummieTwo.wav");
                 }
                 break;
@@ -830,7 +839,10 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
-                    playSoundeffects("dummieThree.wav");
+                    weaponLabel = new Label("Shootgun: Right into the face! - twice");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
+                    playSoundeffects("shotgun.wav");
                 }
                 break;
             case "4":
@@ -838,6 +850,9 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
+                    weaponLabel = new Label("Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
                     playSoundeffects("poisonArrow.wav");
                 }
                 break;
