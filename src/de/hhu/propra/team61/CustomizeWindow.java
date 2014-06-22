@@ -415,13 +415,6 @@ public class CustomizeWindow extends Application {
                 //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing fluid
                 if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
                     levelTerrain.replaceBlock(x, y, chosenTerrainType);
-                    terrain = levelTerrain.toArrayList();
-                    for (int i = 0; i < terrain.size(); i++) {
-                        for (int j = 0; j < terrain.get(i).size(); j++) {
-                            char terraintype = terrain.get(i).get(j);
-                            levelTerrain.renderTerrainBlock(terraintype, j, i);
-                        }
-                    }
                 }
             }
         });
@@ -432,13 +425,6 @@ public class CustomizeWindow extends Application {
                 int y = (int) mouseEvent.getY() / BLOCK_SIZE;
                 if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
                     levelTerrain.replaceBlock(x, y, chosenTerrainType);
-                    terrain = levelTerrain.toArrayList();
-                    for (int i = 0; i < terrain.size(); i++) {
-                        for (int j = 0; j < terrain.get(i).size(); j++) {
-                            char terraintype = terrain.get(i).get(j);
-                            levelTerrain.renderTerrainBlock(terraintype, j, i);
-                        }
-                    }
                 }
             }
         });
