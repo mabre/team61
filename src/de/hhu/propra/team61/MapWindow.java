@@ -915,6 +915,7 @@ public class MapWindow extends Application implements Networkable {
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
                 System.out.println("It’s windy.");
+                break;
             case "gameover": // ends the game by showing game over window
                 Platform.runLater(() -> handleOnClient("GAME_OVER -1"));
                 break;

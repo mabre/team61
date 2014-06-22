@@ -670,7 +670,7 @@ public class CustomizeWindow extends Application {
         return output;
     }
 
-    private JSONObject mapToJson() {
+    private JSONObject mapToJson() { // TODO code duplication
         JSONObject output = new JSONObject();
         output.put("background", imageChooser.getValue());
         output.put("music", musicChooser.getValue());
