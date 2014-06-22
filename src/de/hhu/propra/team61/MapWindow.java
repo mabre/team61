@@ -9,6 +9,7 @@ import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.io.json.JSONString;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -18,6 +19,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -33,8 +35,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import sun.audio.*;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
@@ -42,7 +47,6 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by kevin on 08.05.14.
- * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application implements Networkable {
@@ -72,6 +76,7 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
+    private Label weaponLabel;
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
@@ -227,7 +232,6 @@ public class MapWindow extends Application implements Networkable {
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
-
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -237,6 +241,7 @@ public class MapWindow extends Application implements Networkable {
                     case C:
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
+                        playSoundeffects("chatBlop.wav");
                         break;
                     default:
                         client.sendKeyEvent(keyEvent.getCode());
@@ -327,6 +332,7 @@ public class MapWindow extends Application implements Networkable {
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                                 server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                                playSoundeffects("gotHit.wav");
                                             }
                                         }
                                     }
@@ -441,6 +447,7 @@ public class MapWindow extends Application implements Networkable {
             }
             if (currentTeam == oldCurrentTeam) {
                 server.sendCommand("GAME_OVER " + currentTeam);
+
                 return;
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
@@ -659,6 +666,7 @@ public class MapWindow extends Application implements Networkable {
                     //ToDo setRoundTimer down to 5sec
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
+                    playSoundeffects("reload.wav");
                     break;
                 }
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
@@ -851,6 +859,10 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
+                    weaponLabel = new Label("Bazooka: A classic one.");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
+                    playSoundeffects("changeWeapon.wav");
                 }
                 break;
             case "2":
@@ -858,6 +870,10 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
+                    weaponLabel = new Label("Granade: Now on SALE with wind!");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
+                    playSoundeffects("dummieTwo.wav");
                 }
                 break;
             case "3":
@@ -865,6 +881,10 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
+                    weaponLabel = new Label("Shootgun: Right into the face! - twice");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
+                    playSoundeffects("shotgun.wav");
                 }
                 break;
             case "4":
@@ -872,6 +892,10 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
+                    weaponLabel = new Label("Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
+                    rootPane.setRight(weaponLabel);
+                    weaponLabel.setVisible(true);
+                    playSoundeffects("poisonArrow.wav");
                 }
                 break;
             default:
@@ -915,6 +939,7 @@ public class MapWindow extends Application implements Networkable {
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
                 System.out.println("It’s windy.");
+                break;
             case "gameover": // ends the game by showing game over window
                 Platform.runLater(() -> handleOnClient("GAME_OVER -1"));
                 break;
@@ -974,4 +999,22 @@ public class MapWindow extends Application implements Networkable {
         return "STATUS MAPWINDOW " + this.toJson().toString();
     }
 
+    /**
+     * method to play BackgroundMusic (BGM)
+     */
+
+    public static void playSoundeffects(String sfxName){
+        AudioPlayer AP = AudioPlayer.player;
+        AudioStream SFX;
+        AudioData AD;
+        AudioDataStream action = null;
+        try {
+            SFX = new AudioStream(new FileInputStream("resources/audio/SFX/" + sfxName));
+            AD = SFX.getData();
+            action = new AudioDataStream(AD);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        AP.start(action);
+    }
 }
