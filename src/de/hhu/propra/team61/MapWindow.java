@@ -9,6 +9,7 @@ import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.io.json.JSONString;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -33,8 +34,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import sun.audio.*;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
@@ -42,7 +46,6 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by kevin on 08.05.14.
- * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application implements Networkable {
@@ -911,4 +914,10 @@ public class MapWindow extends Application implements Networkable {
         return "STATUS MAPWINDOW " + this.toJson().toString();
     }
 
+    /**
+     * method to play SoundEffects (SFX)
+     */
+    public void playSoundEffects() {
+        final String SFX_DIR = "resources/audio/SFX/";
+    }
 }

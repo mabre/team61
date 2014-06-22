@@ -10,10 +10,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 
-import javax.sound.sampled.AudioSystem;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
-import static de.hhu.propra.team61.objects.Figure.*;
+import sun.audio.*;
 
 /**
  * A GridPane representing a terrain.
@@ -61,6 +62,7 @@ public class Terrain extends GridPane {
      */
     public Terrain(JSONObject terrain) {
         load(terrain);
+        playBackgroundMusic(terrain.getString("music"));
         figures = new ArrayList<>();
     }
 
@@ -522,4 +524,24 @@ public class Terrain extends GridPane {
         save.put("terrain", jsonTerrain);
         return save;
     }
+
+    /**
+     * method to play BackgroundMusic (BGM)
+     */
+
+    public static void playBackgroundMusic(String bgmName){
+        AudioPlayer AP = AudioPlayer.player;
+        AudioStream BGM;
+        AudioData AD;
+        ContinuousAudioDataStream loop = null;
+        try {
+            BGM = new AudioStream(new FileInputStream("resources/audio/BGM/" + bgmName));
+            AD = BGM.getData();
+            loop = new ContinuousAudioDataStream(AD);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        AP.start(loop);
+    }
+
 }
