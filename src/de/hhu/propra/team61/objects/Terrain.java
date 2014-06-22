@@ -28,6 +28,7 @@ public class Terrain extends GridPane {
     private static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
     private static Image STONES_IMAGE = new Image(imgPath + "stones.png");
     private static Image WATER_IMAGE = new Image(imgPath + "water.png");
+    private static Image SPAWN_POINT = new Image(imgPath + "spawn.png");
 
     //Technical Blocks/Special Cases
     private final double RESISTANCE_OF_SKY = 15;
@@ -98,6 +99,9 @@ public class Terrain extends GridPane {
                     case 'P': // special case: spawn point, add to list and draw sky
                         spawnPoints.add(new Point2D(j * BLOCK_SIZE, i * BLOCK_SIZE));
                         terrain.get(i).set(j, ' ');
+                    case 'p': // special case: spawn point to be shown in level editor
+                        add(new ImageView(SPAWN_POINT), j, i);
+                        break;
                     default:
                         add(new ImageView(SKY_IMAGE), j, i);
                 }
