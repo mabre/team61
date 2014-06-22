@@ -24,7 +24,11 @@ public class CustomizeManager {
     }
 
     public static void saveMap(JSONObject json, String file) {
-        Json.save(json, CUSTOMIZE_DIR+file+LVL_FILE_EXTENSION);
+        if (file.endsWith(".lvl")) {
+            Json.save(json, CUSTOMIZE_DIR+file);
+        } else {
+            Json.save(json, CUSTOMIZE_DIR + file + LVL_FILE_EXTENSION);
+        }
     }
 
     /**

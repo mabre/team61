@@ -110,6 +110,7 @@ public class CustomizeWindow extends Application {
         });
         Button newMap = new Button("Create new map");
         newMap.setOnAction(e -> {
+            refresh();
             root.getChildren().remove(weaponsGrid);
             chosenMap = "editor/basic.lvl";
             initializeLevelEditor();
@@ -342,7 +343,7 @@ public class CustomizeWindow extends Application {
         selectionGrid.add(eraser, 0, 11);
         Button spawnPoint = new Button("Spawn point");
         spawnPoint.setOnAction(e -> {
-            chosenTerrainType = 'p';
+            chosenTerrainType = 'Q';
         });
         mouseOverTerrain(spawnPoint, "Set a spawn point.");
         selectionGrid.add(spawnPoint, 0, 12);
@@ -513,6 +514,7 @@ public class CustomizeWindow extends Application {
                 refresh();
                 chosenMap = availableMaps.get(finalI);
                 initializeLevelEditor();
+                mapNameField.setText(chosenMap);
                 root.setLeft(newMapPane);
             });
             editGrid.add(chooseMapToEdit, 10, i+5);
@@ -571,6 +573,9 @@ public class CustomizeWindow extends Application {
         for (int i = 0; i < terrain.size(); i++) {
             StringBuilder builder = new StringBuilder();
             for (int j = 0; j < terrain.get(i).size(); j++) {
+                if (terrain.get(i).get(j) == 'Q') {
+                    terrain.get(i).set(j, 'P');
+                }
                 builder.append(terrain.get(i).get(j));
             }
             jsonTerrain.put(builder.toString());
@@ -664,6 +669,7 @@ public class CustomizeWindow extends Application {
             weaponCheckBoxes.get(i).setSelected(true);
             weaponSliders.get(i).setValue(50);
         }
+        mapNameField.setText("Custom map");
     }
 
     @Override
