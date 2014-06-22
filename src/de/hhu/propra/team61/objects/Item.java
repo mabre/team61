@@ -8,7 +8,7 @@ import javafx.scene.layout.StackPane;
  * Created by kevin on 21.05.14.
  * Abstract class implementing all methods which Items have in common
  */
-public abstract class Item extends StackPane{ //ToDo give this a makeover
+public abstract class Item extends StackPane{
     protected String name;
     protected String description;
     protected int munition; // Item can only be used when munition > 0
