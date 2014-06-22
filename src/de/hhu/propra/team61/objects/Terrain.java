@@ -23,7 +23,9 @@ import java.util.ArrayList;
 public class Terrain extends GridPane {
     private static final boolean DEBUG = false;
     private static final boolean GRID_ENABLED = false;
-
+    private static final double ICE_FRICTION = 2;
+    private static final double EARTH_FRICTION = 1;
+    private static final double SAND_FRICTION = 0.5;
     private final static String imgPath = "file:resources/";
     private final static int BLOCK_SIZE = 8;
     private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
@@ -265,8 +267,8 @@ public class Terrain extends GridPane {
     public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         if(influencedByWind && !isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
+        direction = direction.multiply(getFriction(oldPosition));
         Point2D normalizedDirection = direction.normalize();
-
         debugLog("start position: " + oldPosition);
         debugLog("normalized velocity: " + normalizedDirection);
 
@@ -389,7 +391,19 @@ public class Terrain extends GridPane {
         debugLog("not covered");
         return false;
     }
-
+    /*gets Friction based on Block directly below the given Position*/
+    public double getFriction (Point2D pos){
+        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)-1).get((int)(pos.getX()/BLOCK_SIZE));
+        switch (block) {
+            case 's':
+                return SAND_FRICTION;
+            case 'I':
+                return ICE_FRICTION;
+            case 'E':
+                return EARTH_FRICTION;
+            default : return 1;
+        }
+    }
     public void addFigures(ArrayList<Figure> figures) {
         this.figures.addAll(figures);
     }
