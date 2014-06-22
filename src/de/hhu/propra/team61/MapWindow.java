@@ -284,10 +284,30 @@ public class MapWindow extends Application implements Networkable {
                                     ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
                                     fieldPane.getChildren().remove(collidingProjectile);
                                     for(String command : commandList){ server.sendCommand(command); } //Send commands+
-                                    endTurn();
                                 });
                             }
                         }
+
+                        for(int i = 0; i < supplyDrops.size(); i++){
+                            Crate supply = supplyDrops.get(i);
+                            supply.resetVelocity();
+                            final Point2D oldPos = new Point2D(supply.getPosition().getX(), supply.getPosition().getY());
+                            try {
+                                final Point2D newPos; // TODO code duplication
+                                newPos = terrain.getPositionForDirection(oldPos, supply.getVelocity(), supply.getHitRegion(), false, true, false, false); //ToDo change last false to true? I am doing that later
+                                if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                    supply.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
+                                    server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (newPos.getX()) + " " + (newPos.getY()));
+                                }
+                            } catch (CollisionException e) {
+                                if (!e.getLastGoodPosition().equals(oldPos)) {
+                                    supply.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                                    server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                }
+                                supply.nullifyVelocity();
+                            }
+                        }
+
                         for(int t = 0; t < teams.size(); t++) {
                             Team team = teams.get(t);
                             for(int f = 0; f < team.getFigures().size(); f++) {
@@ -322,7 +342,7 @@ public class MapWindow extends Application implements Networkable {
                                             figure.resetVelocity();
                                         } catch (DeathException de) {
                                             if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
-                                                endTurn();
+                                                server.sendCommand("END_TURN");
                                             }
                                         }
                                         if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
@@ -330,25 +350,6 @@ public class MapWindow extends Application implements Networkable {
                                         }
                                     }
                                 }
-                            }
-                        }
-                        for(int i = 0; i < supplyDrops.size(); i++){
-                            Crate supply = supplyDrops.get(i);
-                            supply.resetVelocity();
-                            final Point2D oldPos = new Point2D(supply.getPosition().getX(), supply.getPosition().getY());
-                            try {
-                                final Point2D newPos; // TODO code duplication
-                                newPos = terrain.getPositionForDirection(oldPos, supply.getVelocity(), supply.getHitRegion(), false, true, false, false); //ToDo change last false to true? I am doing that later
-                                if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
-                                    supply.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
-                                    server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (newPos.getX()) + " " + (newPos.getY()));
-                                }
-                            } catch (CollisionException e) {
-                                if (!e.getLastGoodPosition().equals(oldPos)) {
-                                    supply.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
-                                    server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
-                                }
-                                supply.nullifyVelocity();
                             }
                         }
 
@@ -416,6 +417,7 @@ public class MapWindow extends Application implements Networkable {
         }
 
         //ToDo Wait until no objectmovements
+        while(flyingProjectile != null){} //ToDo makeover
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
 
@@ -467,9 +469,8 @@ public class MapWindow extends Application implements Networkable {
 
         // TODO give this an true probability, set by Customize? //Remove own supplyDrops Variable?
         if(true){
-            supplyDrops.add(new Crate(terrain.toArrayList().get(0).size()));
-            server.sendCommand("DROP_SUPPLY"+" "+terrain.toArrayList().get(0).size()+" "+supplyDrops.get(supplyDrops.size()-1).getContent());
-            supplyDrops.remove(supplyDrops.size()-1); //Remove yourself again to avoid problems on client+server
+            Crate drop = new Crate(terrain.toArrayList().get(0).size()-1);
+            server.sendCommand("DROP_SUPPLY"+" "+drop.getPosition().getX()+" "+drop.getContent());
         }
         
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
@@ -598,6 +599,9 @@ public class MapWindow extends Application implements Networkable {
                 Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
                 scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
                 break;
+            case "END_TURN":
+                endTurn();
+                break;
             case "CURRENT_TEAM_END_ROUND":
                 if(server == null) { // already done on server
                     teams.get(Integer.parseInt(cmd[1])).endRound();
@@ -635,15 +639,14 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_SHOOT":
                 try {
-                     /* ToDo
-                    power = power + 5;
-                    Sleep/Wait if more ShootCommands are incoming, count them by incrementing THEN create projectile
-                     */
-                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(power);
-                    flyingProjectile = projectile;
-                    fieldPane.getChildren().add(flyingProjectile);
-                    shootingIsAllowed = false;
-                    //ToDo setRoundTimer down to 5sec
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                    if(projectile != null){ //Only weapons need projectiles
+                        flyingProjectile = projectile;
+                        fieldPane.getChildren().add(flyingProjectile);
+                        shootingIsAllowed = false;
+                    } else { //Treatment for "true" Items
+                        fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    }
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
                     break;
@@ -688,10 +691,15 @@ public class MapWindow extends Application implements Networkable {
             case "DROP_SUPPLY":
                 supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(),cmd[2]));
                 fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size()-1));
+                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size()-1).getContentDisplay());
                 break;
             case "REMOVE_SUPPLY":
                 fieldPane.getChildren().remove(supplyDrops.get(Integer.parseInt(cmd[1])));
                 supplyDrops.remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                break;
+            case "SUPPLY_SET_POSITION":
+                position = new Point2D(Double.parseDouble(cmd[2]), Double.parseDouble(cmd[3]));
+                supplyDrops.get(Integer.parseInt(cmd[1])).setPosition(position);
                 break;
             case "SUPPLY_PICKED_UP":
                 teams.get(Integer.parseInt(cmd[1])).getItem(cmd[2]).refill();

@@ -10,7 +10,7 @@ public class Bazooka extends Weapon {
     private final static String  DESCRIPTION    = "A classic.";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
-    private final static String  WEAPON_IMG     = "file:resources/weapons/temp1.png";
+    private final static String  WEAPON_IMG     = "file:resources/weapons/bazooka.png";
     private final static String  DAMAGETYPE     = "Explosiondamage";
     private final static int     DAMAGE         =  50;
     private final static int     EXPLOSIONPOWER = 100;

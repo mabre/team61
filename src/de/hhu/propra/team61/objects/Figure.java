@@ -213,9 +213,6 @@ public class Figure extends StackPane {
         return selectedItem;
     }
     public void setSelectedItem(Item select){
-        if(selectedItem != null) {
-            selectedItem.hide();
-        }
         selectedItem = select;
         if(selectedItem != null) {
             select.setPosition(new Point2D(position.getX(), position.getY()));
@@ -267,9 +264,8 @@ public class Figure extends StackPane {
         return hitRegion;
     }
 
-    public Projectile shoot(int power) throws NoMunitionException {
-        // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
-        return selectedItem.shoot(power);
+    public Projectile shoot() throws NoMunitionException {
+        return selectedItem.use(this);
     }
 
     public Point2D getVelocity() {

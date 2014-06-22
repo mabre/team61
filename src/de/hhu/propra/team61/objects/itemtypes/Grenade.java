@@ -15,7 +15,7 @@ public class Grenade extends Weapon {
     private final static String  DESCRIPTION    = "Another classic.";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
-    private final static String  WEAPON_IMG     = "file:resources/weapons/temp2.png";
+    private final static String  WEAPON_IMG     = "file:resources/weapons/grenade.png";
     private final static String  DAMAGETYPE     = "Explosiondamage";
     private final static int     DAMAGE         =  40;
     private final static int     EXPLOSIONPOWER = 100;

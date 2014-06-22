@@ -108,12 +108,16 @@ public abstract class Weapon extends Item {
 
         crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
         this.getChildren().add(crosshairImage);
-        angleDraw(true);
+        //angleDraw(true);
 
         setAlignment(Pos.TOP_LEFT);
     }
 
     @Override
+    public Projectile use(Figure user) throws NoMunitionException{
+        return shoot(0); //ToDo implement power and replace 0
+    }
+
     /**
      * This function is a default offered. It should prove suitable for most weapons, but some may override.
      * If there is enough munition it returns a Projectile
@@ -158,7 +162,7 @@ public abstract class Weapon extends Item {
                 Figure treatedFigure = teams.get(t).getFigures().get(f);
                 int distance = (int)impactCenter.distance(treatedFigure.getPosition());
                 //If close to a or a hit
-                if(distance < NORMED_BLOCK_SIZE*8){
+                if(distance < NORMED_BLOCK_SIZE*4){
                     //1.1 make them suffer
                     try {
                         treatedFigure.sufferDamage(damage-distance/NORMED_BLOCK_SIZE);
@@ -182,6 +186,7 @@ public abstract class Weapon extends Item {
                 }
             }
         }
+        commandList.add("END_TURN"); //ToDo setRoundTimer down to 5sec, THEN make End_turn only called by exceptions and timer
         return commandList;
     }
 

@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.io.CustomizeManager;
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
@@ -295,11 +296,18 @@ public class NetLobby extends Application implements Networkable {
         output.put("teamsCreated", teamsCreated);       //save current number of players
         output.put("team-size", sizeField.getText()); //save size of teams
         output.put("map", mapChooser.getValue());
+
+        //TODO Here was originally some code reading out the weapons ArrayList<Textfield> which then had been put into the json
         JSONArray weaponsSettings = new JSONArray();
-        for(int i=0; i<weapons.size(); i++) {
-            weaponsSettings.put(weapons.get(i));
-        }
+        weaponsSettings.put(5);
+        weaponsSettings.put(4);
+        weaponsSettings.put(3);
+        weaponsSettings.put(2);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+
         output.put("inventory", weaponsSettings);
+
         JSONArray teams = new JSONArray();
         JSONObject team1 = getJsonForTeam(teamChoosers.get(0).getValue(), readys.get(0));
         teams.put(team1);
