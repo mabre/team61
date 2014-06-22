@@ -71,6 +71,8 @@ public class CustomizeWindow extends Application {
     Text terrainType = new Text();
     Button stone = new Button();
     String chosenMap = new String("editor/basic.lvl");
+    ArrayList<ArrayList<Character>> terrain = new ArrayList<>();
+    TextField mapNameField = new TextField("Custom map");
 
     public CustomizeWindow(SceneController sceneController) {
         this.sceneController = sceneController;
@@ -212,6 +214,8 @@ public class CustomizeWindow extends Application {
     private void createMap() {
         Text music = new Text("Background music:");
         newMapGrid.add(music, 0, 0);
+        musicChooser.getItems().add("dummy");
+        musicChooser.getSelectionModel().selectFirst();
         newMapGrid.add(musicChooser, 1, 0);
         Text image = new Text("Background image:");
         newMapGrid.add(image, 2, 0);
@@ -238,9 +242,16 @@ public class CustomizeWindow extends Application {
                         levelTerrain.replaceBlock(i, 59, 'L');
                     }
                 }
-                levelTerrain.load(levelTerrain.toArrayList());
+                try {
+                    levelTerrain.load(TerrainManager.load(chosenMap));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         });
+        Text mapName = new Text("Name:");
+        newMapGrid.add(mapName, 6, 0);
+        newMapGrid.add(mapNameField, 7, 0);
         newMapPane.setTop(newMapGrid);
         newMapPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             System.out.println("key pressed: " + keyEvent.getCode());
@@ -343,7 +354,11 @@ public class CustomizeWindow extends Application {
         mouseOverTerrain(reset, "Remove your masterpiece :(");
         selectionGrid.add(reset, 0, 13);
         Button save = new Button("Save");
-        save.setOnAction(e -> {});
+        save.setOnAction(e -> {
+            CustomizeManager.saveMap(mapToJson(), "levels/" + mapNameField.getText());
+            createEditGrid();
+            root.setLeft(editGrid);
+        });
         mouseOverTerrain(save, "Save the map.");
         selectionGrid.add(save, 0, 14);
         chosenTerrainType = 'S';
@@ -369,15 +384,7 @@ public class CustomizeWindow extends Application {
 
     private void initializeLevelEditor() {
         try {
-            ArrayList<ArrayList<Character>> map = TerrainManager.load(chosenMap);
-            for (int i=0; i<map.size(); i++) {
-                for (int j=0; j<map.get(i).size(); j++) {
-                    if (map.get(i).get(j) == 'P') {
-                        map.get(i).set(j, 'p');
-                    }
-                }
-            }
-            levelTerrain = new Terrain(map);
+            levelTerrain = new Terrain(TerrainManager.load(chosenMap));
             scrollPane = new ScrollPane();
             scrollPane.setPrefSize(750, 560);
             scrollPane.setMaxHeight(560);
@@ -407,7 +414,13 @@ public class CustomizeWindow extends Application {
                 //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing fluid
                 if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
                     levelTerrain.replaceBlock(x, y, chosenTerrainType);
-                    levelTerrain.load(levelTerrain.toArrayList());
+                    terrain = levelTerrain.toArrayList();
+                    for (int i = 0; i < terrain.size(); i++) {
+                        for (int j = 0; j < terrain.get(i).size(); j++) {
+                            char terraintype = terrain.get(i).get(j);
+                            levelTerrain.renderTerrainBlock(terraintype, j, i);
+                        }
+                    }
                 }
             }
         });
@@ -418,7 +431,13 @@ public class CustomizeWindow extends Application {
                 int y = (int) mouseEvent.getY() / BLOCK_SIZE;
                 if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
                     levelTerrain.replaceBlock(x, y, chosenTerrainType);
-                    levelTerrain.load(levelTerrain.toArrayList());
+                    terrain = levelTerrain.toArrayList();
+                    for (int i = 0; i < terrain.size(); i++) {
+                        for (int j = 0; j < terrain.get(i).size(); j++) {
+                            char terraintype = terrain.get(i).get(j);
+                            levelTerrain.renderTerrainBlock(terraintype, j, i);
+                        }
+                    }
                 }
             }
         });
@@ -540,6 +559,23 @@ public class CustomizeWindow extends Application {
             weapons.put(weapon);
         }
         output.put("weapons", weapons);
+        return output;
+    }
+
+    private JSONObject mapToJson() {
+        JSONObject output = new JSONObject();
+        output.put("background", imageChooser.getValue());
+        output.put("music", musicChooser.getValue());
+        JSONArray jsonTerrain = new JSONArray();
+        terrain = levelTerrain.toArrayList();
+        for (int i = 0; i < terrain.size(); i++) {
+            StringBuilder builder = new StringBuilder();
+            for (int j = 0; j < terrain.get(i).size(); j++) {
+                builder.append(terrain.get(i).get(j));
+            }
+            jsonTerrain.put(builder.toString());
+        }
+        output.put("terrain", jsonTerrain);
         return output;
     }
 

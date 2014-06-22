@@ -1,60 +1,66 @@
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-                                                                                                                                  
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+{
+    "background": "board.png",
+    "music": "like_board.ogg",
+    "terrain": [
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"                                                                                                                                  ",
+"WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+  ]
+}

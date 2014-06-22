@@ -1,7 +1,9 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.MapWindow;
+import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.network.Client;
+import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -15,11 +17,13 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import static de.hhu.propra.team61.JavaFxUtils.extractPart;
+
 /**
  * Created by Jessypet on 28.05.14.
  */
 
-public class GameOverWindow extends Application {
+public class GameOverWindow extends Application implements Networkable {
 
     Server server;
     Client client;
@@ -30,6 +34,18 @@ public class GameOverWindow extends Application {
         launch(args);
     }
 
+    /**
+     * displays a game over window
+     * @param sceneController
+     * @param winnerTeam the number of the winner team (counting starts from 0, -1 means draw)
+     * @param winnerName the name of the winner team
+     * @param map
+     * @param file
+     * @param client the client object
+     * @param clientThread the thread managing the client connection
+     * @param server the server object
+     * @param serverThread the thread managing the server connection
+     */
     public void showWinner(SceneController sceneController, int winnerTeam, String winnerName, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         BorderPane root = new BorderPane();
         this.sceneController = sceneController;
@@ -49,7 +65,7 @@ public class GameOverWindow extends Application {
         gridBox.getChildren().add(overGrid);
         root.setRight(gridBox);
         Text winner = new Text();
-        if (winnerTeam == 0) {
+        if (winnerTeam == -1) {
             winner.setText("A tie! You're both winners!");
         } else {
             winner.setText("The winner is team " +winnerName+ ".");
@@ -62,19 +78,19 @@ public class GameOverWindow extends Application {
         Text revengeText = new Text("Play another game with the same settings.");
         overGrid.add(revenge, 0, 3);
         overGrid.add(revengeText, 1, 3);
-        revenge.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                MapWindow mapwindow = new MapWindow(map, file, client, clientThread, server, serverThread, sceneController);
-            }
+        revenge.setOnAction(e -> {
+            MapWindow mapwindow = new MapWindow(map, file, client, clientThread, server, serverThread, sceneController);
         });
+        if(server != null) {
+            server.registerCurrentNetworkable(this);
+        } else {
+            revenge.setDisable(true);
+        }
+        client.registerCurrentNetworkable(this);
         Button end = new Button("End");
-        end.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                shutdown();
-                sceneController.switchToMenue();
-            }
+        end.setOnAction(e -> {
+            shutdown();
+            sceneController.switchToMenue();
         });
         overGrid.add(end, 0, 4);
         Scene overScene = new Scene(root);
@@ -94,5 +110,27 @@ public class GameOverWindow extends Application {
         client.stop();
         if(server != null) server.stop();
         System.out.println("GameOverWindow: client/server (if any) stopped");
+    }
+
+    @Override
+    public void handleOnClient(String command) {
+        if(command.startsWith("STATUS MAPWINDOW")) {
+            JSONObject state = new JSONObject(extractPart(command, "STATUS MAPWINDOW "));
+            new MapWindow(state, client, clientThread, sceneController);
+//        } else if(command.contains("CHAT ")) { // TODO add chat ?
+//            chatBox.processChatCommand(command);
+        } else {
+            System.out.println("NetLobby: unknown command " + command);
+        }
+    }
+
+    @Override
+    public void handleKeyEventOnServer(String keyCode) {
+
+    }
+
+    @Override
+    public String getStateForNewClient() {
+        return null;
     }
 }
