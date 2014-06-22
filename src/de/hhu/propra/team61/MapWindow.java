@@ -264,66 +264,70 @@ public class MapWindow extends Application implements Networkable {
                 try {
                     long before = System.currentTimeMillis(), now, sleep;
                     while (true) {
-                        if (flyingProjectile != null) {
-                            try {
-                                final Point2D newPos;
-                                newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
-                                flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
-                                flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
-                                scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
-                                server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
-                            } catch (CollisionException e) {
-                                System.out.println("CollisionException, let's do this!");
-                                final Projectile collidingProjectile = flyingProjectile;
-                                flyingProjectile = null; // we remove it here to prevent timing issues
-                                Platform.runLater(() -> {
+                        if (!pause) {
+                            if (flyingProjectile != null) {
+                                try {
+                                    final Point2D newPos;
+                                    newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
+                                    flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
+                                    flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
+                                    scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
+                                    server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                                } catch (CollisionException e) {
+                                    System.out.println("CollisionException, let's do this!");
+                                    final Projectile collidingProjectile = flyingProjectile;
+                                    flyingProjectile = null; // we remove it here to prevent timing issues
+                                    Platform.runLater(() -> {
 //                                    } catch (DeathException de) { // TODO that change was somewhat important I think (or not?) ... (see handleCollision in Weapon)
 //                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
 //                                            endTurn();
 //                                        }
 //                                    }
-                                    //Get series of commands to send to the clients from
-                                    //Collisionhandling done by the weapon causing this exception
-                                    ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
-                                    fieldPane.getChildren().remove(collidingProjectile);
-                                    for(String command : commandList){ server.sendCommand(command); } //Send commands+
-                                    endTurn();
-                                });
+                                        //Get series of commands to send to the clients from
+                                        //Collisionhandling done by the weapon causing this exception
+                                        ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
+                                        fieldPane.getChildren().remove(collidingProjectile);
+                                        for (String command : commandList) {
+                                            server.sendCommand(command);
+                                        } //Send commands+
+                                        endTurn();
+                                    });
+                                }
                             }
-                        }
-                        for(Team team: teams) {
-                            for(Figure figure: team.getFigures()) {
-                                if(figure.getHealth() > 0) {
-                                    final boolean scrollToFigure = (figure == teams.get(currentTeam).getCurrentFigure());
-                                    final Point2D oldPos = new Point2D(figure.getPosition().getX(), figure.getPosition().getY());
-                                    try {
-                                        final Point2D newPos; // TODO code duplication
-                                        figure.addVelocity(GRAVITY.multiply(figure.getMass()));
-                                        newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false, true);
-                                        if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
-                                            figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
-                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
-                                        }
-                                    } catch (CollisionException e) {
-                                        if (!e.getLastGoodPosition().equals(oldPos)) {
-                                            System.out.println("CollisionWithTerrainException");
-                                            figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
-                                            server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
-                                        }
-                                        int oldHp = figure.getHealth();
+                            for (Team team : teams) {
+                                for (Figure figure : team.getFigures()) {
+                                    if (figure.getHealth() > 0) {
+                                        final boolean scrollToFigure = (figure == teams.get(currentTeam).getCurrentFigure());
+                                        final Point2D oldPos = new Point2D(figure.getPosition().getX(), figure.getPosition().getY());
                                         try {
-                                            figure.resetVelocity();
-                                            if(terrain.standingOnLiquid(figure.getPosition())) {
-                                                System.out.println(figure.getName() + " standing on liquid");
-                                                figure.sufferDamage(figure.getDamageByLiquid());
+                                            final Point2D newPos; // TODO code duplication
+                                            figure.addVelocity(GRAVITY.multiply(figure.getMass()));
+                                            newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false, true);
+                                            if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                                figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
+                                                server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
                                             }
-                                        } catch (DeathException de) {
-                                            if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
-                                                endTurn();
+                                        } catch (CollisionException e) {
+                                            if (!e.getLastGoodPosition().equals(oldPos)) {
+                                                System.out.println("CollisionWithTerrainException");
+                                                figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                                                server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                             }
-                                        }
-                                        if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
-                                            server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                            int oldHp = figure.getHealth();
+                                            try {
+                                                figure.resetVelocity();
+                                                if (terrain.standingOnLiquid(figure.getPosition())) {
+                                                    System.out.println(figure.getName() + " standing on liquid");
+                                                    figure.sufferDamage(figure.getDamageByLiquid());
+                                                }
+                                            } catch (DeathException de) {
+                                                if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+                                                    endTurn();
+                                                }
+                                            }
+                                            if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
+                                                server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                            }
                                         }
                                     }
                                 }
