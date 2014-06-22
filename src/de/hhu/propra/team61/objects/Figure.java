@@ -50,7 +50,7 @@ public class Figure extends StackPane {
 
     private Item selectedItem;
 
-    private Rectangle hitRegionDebug;
+//    private Rectangle hitRegionDebug; // TODO doesn't work
     private Rectangle2D hitRegion;
     private ImageView figureImage;
     private Label nameTag;
@@ -213,11 +213,11 @@ public class Figure extends StackPane {
 
         position = new Point2D(newPosition.getX(), newPosition.getY());
         hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
-        getChildren().removeAll(hitRegionDebug);
-        hitRegionDebug = new Rectangle(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
-        hitRegionDebug.setTranslateX(position.getX());
-        hitRegionDebug.setTranslateY(position.getY());
-        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
+//        getChildren().removeAll(hitRegionDebug);
+//        hitRegionDebug = new Rectangle(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
+//        hitRegionDebug.setTranslateX(position.getX());
+//        hitRegionDebug.setTranslateY(position.getY());
+//        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
         //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
         Platform.runLater(() -> {
             figureImage.setTranslateX(Math.round(position.getX()));
