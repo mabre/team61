@@ -6,11 +6,15 @@ import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.objects.CollisionException;
+import de.hhu.propra.team61.objects.Figure;
 import de.hhu.propra.team61.objects.Terrain;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -24,8 +28,12 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
@@ -58,6 +66,7 @@ public class CustomizeWindow extends Application {
     ChoiceBox<String> imageChooser = new ChoiceBox<>();
     ChoiceBox<String> fluidChooser = new ChoiceBox<>();
     ScrollPane scrollPane;
+    AnchorPane anchorPane = new AnchorPane();
     Terrain levelTerrain;
     StackPane levelPane;
     Pane background = new Pane();
@@ -66,8 +75,11 @@ public class CustomizeWindow extends Application {
     private static int BLOCK_SIZE = 8;
     private static int MAP_HEIGHT = 60;
     private static int MAP_WIDTH = 130;
-    private String keysEntered;
+    private String keysEntered = "";
     private boolean cheatEnabled = false;
+    private Figure block = null;
+    private Thread moveBlockThread = null;
+    Clip clip = null;
     Text terrainType = new Text();
     Button stone = new Button();
     String chosenMap = new String("editor/basic.lvl");
@@ -118,6 +130,7 @@ public class CustomizeWindow extends Application {
         });
         Button backToMenue = new Button("Go back to menue");
         backToMenue.setOnAction(e -> {
+            stopCheat();
             sceneController.switchToMenue();
         });
         topBox.getChildren().addAll(edit, newTeam, newGameStyle, newMap, backToMenue);
@@ -265,10 +278,11 @@ public class CustomizeWindow extends Application {
                     case A:
                     case B:
                         keysEntered += keyEvent.getCode();
-                        if (keysEntered.equals("UPUPDOWNDOWNLEFTRIGHTLEFTRIGHTBA")) {
-                            cheatEnabled = true;
-                            System.out.println("What is this?");
+                        if (!"UPUPDOWNDOWNLEFTRIGHTLEFTRIGHTBA".startsWith(keysEntered)) {
                             keysEntered = "";
+                        } else if (keysEntered.equals("UPUPDOWNDOWNLEFTRIGHTLEFTRIGHTBA")) {
+                            System.out.println("What is this?");
+                            startCheat();
                         }
                         break;
                     default:
@@ -277,12 +291,28 @@ public class CustomizeWindow extends Application {
             } else {
                 switch (keyEvent.getCode()) {
                     case RIGHT:
+                        if(block.getPosition().getX()+8 < levelTerrain.getTerrainWidth())
+                            block.setPosition(block.getPosition().add(8, 0));
+                        break;
                     case DOWN:
+                        Point2D direction = new Point2D(0, 16);
+                        final Point2D oldPos = block.getPosition();
+                        try {
+                            Point2D newPos = levelTerrain.getPositionForDirection(oldPos, direction, block.getHitRegion(), false, false, false, false);
+                            block.setPosition(new Point2D(newPos.getX(), newPos.getY()));
+                        } catch (CollisionException e) {
+                            System.out.println("CollisionWithTerrainException");
+                            block.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                        }
+                        break;
                     case LEFT:
-                        // move block
+                        if(block.getPosition().getX() > 8)
+                            block.setPosition(block.getPosition().add(-8, 0));
+                        break;
                     default:
-                        cheatEnabled = false;
+                        stopCheat();
                 }
+                keyEvent.consume();
             }
         });
         initializeLevelEditor();
@@ -365,6 +395,97 @@ public class CustomizeWindow extends Application {
         chosenTerrainType = 'S';
         newMapPane.setRight(selectionGrid);
         ToolTipManager.sharedInstance().setInitialDelay(0);
+        scrollPane.requestFocus();
+    }
+
+    private void startCheat() {
+        moveBlockThread = new Thread(() -> {
+            try {
+                long before = System.currentTimeMillis(), now, sleep;
+                while (true) {
+                    if(block != null) {
+                        final Point2D oldPos = block.getPosition();
+                        try {
+                            Point2D newPos = levelTerrain.getPositionForDirection(oldPos, new Point2D(0, 8), block.getHitRegion(), false, true, false, true);
+                            block.setPosition(new Point2D(newPos.getX(), newPos.getY()));
+                        } catch (CollisionException e) {
+                            System.out.println("CollisionWithTerrainException");
+                            final Figure oldBlock = block;
+                            block = null; // do not continue with moving this block
+                            oldBlock.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                            Platform.runLater(() -> {
+                                int minX = (int) oldBlock.getPosition().getX() / 8;
+                                int maxX = (int) oldBlock.getPosition().getX() / 8 + 1;
+                                int minY = (int) oldBlock.getPosition().getY() / 8;
+                                int maxY = (int) oldBlock.getPosition().getY() / 8 + 1;
+                                anchorPane.getChildren().removeAll(oldBlock);
+                                spawnBlock();
+                                for (int x = minX; x <= maxX; x++) {
+                                    for (int y = minY; y <= maxY; y++) {
+                                        levelTerrain.replaceBlock(x, y, oldBlock.getName().charAt(0));
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    // sleep thread, and assure constant frame rate
+                    now = System.currentTimeMillis();
+                    sleep = Math.max(0, (int)(1000 / (90.0 / 60)) - (now - before)); // 90 BPM
+                    Thread.sleep(sleep);
+                    before = System.currentTimeMillis();
+                }
+            } catch (InterruptedException e) {
+                System.out.println("moveObjectsThread shut down");
+            }
+        });
+        cheatEnabled = true;
+        keysEntered = "";
+        playRussianFolkSong();
+        spawnBlock();
+        moveBlockThread.start();
+    }
+
+    private void stopCheat() {
+        cheatEnabled = false;
+        if(moveBlockThread != null) moveBlockThread.interrupt();
+        if(clip != null) clip.stop();
+        if(block != null) anchorPane.getChildren().removeAll(block);
+    }
+
+    private void spawnBlock() {
+        String path;
+        switch((int)(Math.random()*3)) {
+            case 0:
+                chosenTerrainType = 'S';
+                path = "../stones";
+                break;
+            case 1:
+                chosenTerrainType = 'E';
+                path = "../earth";
+                break;
+            default:
+                chosenTerrainType = 'I';
+                path = "../ice";
+                break;
+        }
+        Platform.runLater(() -> {
+            block = new Figure(chosenTerrainType+"", path, 100, 0, false, false, false);
+            block.setPosition(new Point2D(512, 16));
+            anchorPane.getChildren().add(block);
+        });
+    }
+
+    private void playRussianFolkSong() {
+        try {
+            clip = AudioSystem.getClip();
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("resources/audio/BGM/korobeiniki.wav"));
+            clip.open(inputStream);
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+            clip.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void mouseOverTerrain(Button terrainButton, String terrain) {
@@ -391,7 +512,6 @@ public class CustomizeWindow extends Application {
             scrollPane.setMaxHeight(560);
 
             //anchor the editor to the bottom left corner (ScrollPane cannot do that)
-            final AnchorPane anchorPane = new AnchorPane();
             AnchorPane.setBottomAnchor(levelTerrain, 0.0);
             AnchorPane.setLeftAnchor(levelTerrain, 0.0);
             anchorPane.getChildren().add(levelTerrain);
