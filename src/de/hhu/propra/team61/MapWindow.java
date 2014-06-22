@@ -19,6 +19,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -441,6 +442,7 @@ public class MapWindow extends Application implements Networkable {
             }
             if (currentTeam == oldCurrentTeam) {
                 server.sendCommand("GAME_OVER " + currentTeam);
+
                 return;
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
@@ -812,6 +814,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
+                    playSoundeffects("changeWeapon.wav");
                 }
                 break;
             case "2":
@@ -819,6 +822,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
+                    playSoundeffects("dummieTwo.wav");
                 }
                 break;
             case "3":
@@ -826,6 +830,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
+                    playSoundeffects("dummieThree.wav");
                 }
                 break;
             case "4":
@@ -833,6 +838,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
+                    playSoundeffects("poisonArrow.wav");
                 }
                 break;
             default:
@@ -915,9 +921,21 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * method to play SoundEffects (SFX)
+     * method to play BackgroundMusic (BGM)
      */
-    public void playSoundEffects() {
-        final String SFX_DIR = "resources/audio/SFX/";
+
+    public static void playSoundeffects(String sfxName){
+        AudioPlayer AP = AudioPlayer.player;
+        AudioStream SFX;
+        AudioData AD;
+        AudioDataStream action = null;
+        try {
+            SFX = new AudioStream(new FileInputStream("resources/audio/SFX/" + sfxName));
+            AD = SFX.getData();
+            action = new AudioDataStream(AD);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        AP.start(action);
     }
 }
