@@ -33,7 +33,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
 import sun.audio.*;
+import javax.sound.sampled.*;
+
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -942,6 +945,30 @@ public class MapWindow extends Application implements Networkable {
      */
 
     public static void playSoundeffects(String sfxName){
+        Clip clip = null;
+        try {
+            clip = AudioSystem.getClip();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
+        AudioInputStream inputStream = null;
+        try {
+            inputStream = AudioSystem.getAudioInputStream(MapWindow.class.getResourceAsStream("resource/audio/SFX" + sfxName));
+        } catch (UnsupportedAudioFileException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            clip.open(inputStream);
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        clip.start();
+
+        /*
         AudioPlayer AP = AudioPlayer.player;
         AudioStream SFX;
         AudioData AD;
@@ -954,7 +981,13 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
         AP.start(action);
+        */
     }
+
+    /**
+     * Method to change ingame comments in right upper corner.
+     *
+     */
 
     void setGameComment(String content){
         ingameLabel.setVisible(true);
