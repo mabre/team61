@@ -34,6 +34,9 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+
 import sun.audio.*;
 import javax.sound.sampled.*;
 
@@ -948,37 +951,13 @@ public class MapWindow extends Application implements Networkable {
         Clip clip = null;
         try {
             clip = AudioSystem.getClip();
-            AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("resources/audio/BGM/"+sfxName));
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("resources/audio/SFX/"+sfxName));
             clip.open(inputStream);
             clip.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        /*
-        Clip clip = null;
-        try {
-            clip = AudioSystem.getClip();
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        }
-        AudioInputStream inputStream = null;
-        try {
-            inputStream = AudioSystem.getAudioInputStream(MapWindow.class.getResourceAsStream("resource/audio/SFX" + sfxName));
-        } catch (UnsupportedAudioFileException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            clip.open(inputStream);
-        } catch (LineUnavailableException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        clip.start();
-*/
         /*
         AudioPlayer AP = AudioPlayer.player;
         AudioStream SFX;
