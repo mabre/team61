@@ -1,4 +1,4 @@
-package de.hhu.propra.team61.objects;
+package de.hhu.propra.team61.objects; // TODO create own subpackage (after merging, otherwise resolving conflicts might become hard)
 
 import de.hhu.propra.team61.animation.SpriteAnimation;
 import de.hhu.propra.team61.io.json.JSONArray;
@@ -23,41 +23,20 @@ import java.util.ArrayList;
 public class Terrain extends GridPane {
     private static final boolean DEBUG = false;
     private static final boolean GRID_ENABLED = false;
-    private static final double ICE_FRICTION = 2;
-    private static final double EARTH_FRICTION = 1;
-    private static final double SAND_FRICTION = 0.5;
-    private final static String imgPath = "file:resources/";
-    private final static int BLOCK_SIZE = 8;
-    private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
-    private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
-    private final static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
-    private final static Image SKY_IMAGE = new Image(imgPath + "sky.png");
-    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
-    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
-    private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
-    private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
+    final static int BLOCK_SIZE = 8;
 
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
-    private final static Image SPAWN_POINT = new Image(imgPath + "spawn.png");
 
-    //Technical Blocks/Special Cases
-    private final double RESISTANCE_OF_SKY = 15;
-    private final double RESISTANCE_OF_FLUIDS = 99999999;
-    //Blocks
-    private final double RESISTANCE_OF_EARTH = 25;
-    private final double RESISTANCE_OF_SAND = 20;
-    private final double RESISTANCE_OF_SNOW = 20;
-    private final double RESISTANCE_OF_STONE = 35;
-    private final double RESISTANCE_OF_ICE = 30;
     //Modifiers
-    private final double MODIFIER_FOR_SLANTS = 0.30;
+    final static double MODIFIER_FOR_SLANTS = 0.30;
 
     //ArrayLists
-    private ArrayList<ArrayList<Character>> terrain;
+    private ArrayList<ArrayList<TerrainBlock>> terrain;
     private ArrayList<Point2D> spawnPoints;
     private ArrayList<Figure> figures;
 
     private Point2D wind = new Point2D(0,0);
+    private final static double MAX_WIND_SPEED_EASY = Figure.WALK_SPEED*.6;
     private final static double MAX_WIND_SPEED_NORMAL = Figure.WALK_SPEED*.8;
     private final static double MAX_WIND_SPEED_HARD = Figure.WALK_SPEED*1.2;
 
@@ -69,83 +48,53 @@ public class Terrain extends GridPane {
         figures = new ArrayList<>();
     }
 
-//TODO    private void fromArray(JSONObject String?){}
-
     public void load(JSONObject terrainObject) {
         getChildren().clear();
         JSONArray terrainAsJSON = terrainObject.getJSONArray("terrain");
-        this.terrain = new ArrayList<ArrayList<Character>>(); // Initialize terrain
-        //ToDo transformer schreiben
-        for (int i = 0; i < terrainAsJSON.length(); i++) {
-            this.terrain.add(new ArrayList<Character>()); // add "underarraylists" to terrain
-            for (int j = 0; j < terrainAsJSON.getString(0).length(); j++) {
-                this.terrain.get(i).add(j, terrainAsJSON.getString(i).charAt(j));
+        this.terrain = new ArrayList<>();
+        spawnPoints = new ArrayList<>();
+        for (int row = 0; row < terrainAsJSON.length(); row++) {
+            this.terrain.add(new ArrayList<>());
+            final int length = terrainAsJSON.getString(0).length();
+            for (int column = 0; column < length; column++) {
+                char c = terrainAsJSON.getString(row).charAt(column);
+                if(c == 'P') { // special case: spawn point, add to list
+                    spawnPoints.add(new Point2D(column * BLOCK_SIZE, row * BLOCK_SIZE));
+                }
+                TerrainBlock block = new TerrainBlock(c, column, row);
+                if(row != 0) {
+                    block.setTopNeighbour(terrain.get(row-1).get(column));
+                    terrain.get(row-1).get(column).setBottomNeighbour(block);
+                }
+                if(column != 0) {
+                    block.setLeftNeighbour(terrain.get(row).get(column-1));
+                    terrain.get(row).get(column-1).setRightNeighbour(block);
+                }
+                this.terrain.get(row).add(column, block);
+                this.add(block, column, row);
             }
         }
-        spawnPoints = new ArrayList</*Point2D*/>();
         setAlignment(Pos.TOP_LEFT);
         setGridLinesVisible(GRID_ENABLED);
-
-        String img;
-
-        for (int i = 0; i < terrain.size(); i++) {
-            for (int j = 0; j < terrain.get(i).size(); j++) {
-                char terraintype = terrain.get(i).get(j);
-                renderTerrainBlock(terraintype, j, i);
-                //terrainGrid.setConstraints(content,j,i);
-            }
-        }
-    }
-
-    public void renderTerrainBlock(char type, int column, int row) {
-        switch(type) {
-            case ' ':
-                add(new ImageView(SKY_IMAGE), column, row);
-                break;
-            case 'S':
-                add(new ImageView(STONES_IMAGE), column, row);
-                break;
-            case 'E':
-                add(new ImageView(EARTH_IMAGE), column, row);
-                break;
-            case 'I':
-                add(new ImageView(ICE_IMAGE), column, row);
-                break;
-            case '/':
-                add(new ImageView(SLANT_RI_IMAGE), column, row);
-                break;
-            case '\\':
-                add(new ImageView(SLANT_LE_IMAGE), column, row);
-                break;
-            case 'W':
-                add(new ImageView(WATER_IMAGE), column, row);
-                break;
-            case 'L':
-                add(new ImageView(LAVE_IMAGE), column, row);
-                break;
-            case 'P': // special case: spawn point, add to list and draw sky
-                spawnPoints.add(new Point2D(column * BLOCK_SIZE, row * BLOCK_SIZE));
-                terrain.get(row).set(column, ' ');
-                break;
-            case 'Q': // special case: spawn point to be shown in level editor
-                add(new ImageView(SPAWN_POINT), column, row);
-                break;
-            default:
-                add(new ImageView(SKY_IMAGE), column, row);
-        }
-
     }
 
     /**
      * @return the 2-D-ArrayList representing the loaded terrain
      */
     public ArrayList<ArrayList<Character>> toArrayList() {
-        return terrain;
+        ArrayList<ArrayList<Character>> rows = new ArrayList<>();
+        for(ArrayList<TerrainBlock> row: terrain) {
+            ArrayList<Character> columns = new ArrayList<>();
+            for(TerrainBlock column: row) {
+                columns.add(column.getType());
+            }
+            rows.add(columns);
+        }
+        return rows;
     }
 
     /**
      * get a spawn point and remove it from the list of available spawn points
-     *
      * @return a random spawn point, or null if there are no more spawn points
      */
     public Point2D getRandomSpawnPoint() {
@@ -160,7 +109,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @param n
+     * @param n number of spawn points to be returned (might be less)
      * @return n random spawn points
      * @see #getRandomSpawnPoint()
      */
@@ -171,53 +120,6 @@ public class Terrain extends GridPane {
             if (sp != null) spawnPoints.add(sp);
         }
         return spawnPoints;
-    }
-
-    /**
-     * @param hitRegion of a figure or whatever
-     * @param x         column of the field
-     * @param y         row of the field
-     * @return true, when hitRegion intersects with the field
-     */
-    private boolean intersects(Rectangle2D hitRegion, int x, int y) {
-        char c;
-        try {
-            c = terrain.get(y).get(x);
-        } catch (IndexOutOfBoundsException e) {
-            // this means we "collided" with the end of the terrain, pretend that it is stone
-            c = 'S';
-        }
-
-        switch (c) {
-            case ' ':
-                return false;
-            case '/':
-                Point2D p;
-                for (int i = 0; i < BLOCK_SIZE; i++) {
-                    int px = x * BLOCK_SIZE + i;
-                    int py = y * BLOCK_SIZE + BLOCK_SIZE - i;
-                    p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
-                        debugLog("diagonal / intersection at " + px + "x" + py + "px");
-                        return true;
-                    }
-                }
-                return false;
-            case '\\':
-                for(int i=0; i<BLOCK_SIZE; i++) {
-                    int px = x*BLOCK_SIZE+i;
-                    int py = y*BLOCK_SIZE+1+i;
-                    p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
-                        debugLog("diagonal / intersection at " + px + "x" + py + "px");
-                        return true;
-                    }
-                }
-                return false;
-            default:
-                Rectangle2D rec = new Rectangle2D(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                return hitRegion.intersects(rec);
-        }
     }
 
     /**
@@ -250,7 +152,7 @@ public class Terrain extends GridPane {
      * prints message to stdout if DEBUG==true
      * @param msg the message to be printed
      */
-    private static void debugLog(String msg) {
+    static void debugLog(String msg) {
         if(DEBUG) System.out.println(msg);
     }
 
@@ -304,8 +206,13 @@ public class Terrain extends GridPane {
                 for (int y = minY; y <= maxY && !triedDiagonal; y++) { // TODO recheck necessity of <=
                     for (int x = minX; x <= maxX && !triedDiagonal; x++) {
                         //debugLog(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
-                        boolean intersects = intersects(hitRegion, x, y);
                         Figure intersectingFigure = null;
+                        boolean intersects = true;
+                        try {
+                            intersects = terrain.get(y).get(x).intersects(hitRegion);
+                        } catch (IndexOutOfBoundsException e) {
+                            debugLog("intersection at " + x + " " + y + " out of bounds");
+                        }
                         if (!canWalkThroughFigures && !intersects) {
                             for (Figure figure : figures) {
                                 if (hitRegion.intersects(figure.getHitRegion())) {
@@ -384,7 +291,7 @@ public class Terrain extends GridPane {
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 try {
-                    if (terrain.get(y).get(x) != ' ') {
+                    if (!terrain.get(y).get(x).isSky()) {
                         return true;
                     }
                 } catch (IndexOutOfBoundsException e) {
@@ -396,61 +303,23 @@ public class Terrain extends GridPane {
         debugLog("not covered");
         return false;
     }
-    /*gets Friction based on Block directly below the given Position*/
-    public double getFriction (Point2D pos){
-        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)+1).get((int)(pos.getX()/BLOCK_SIZE));
-        switch (block) {
-            case 's':
-                return SAND_FRICTION;
-            case 'I':
-                return ICE_FRICTION;
-            case 'E':
-                return EARTH_FRICTION;
-            default : return 1;
-        }
+
+    /**
+     * @param pos position of an object
+     * @return friction based on the block directly below the given position
+     */
+    public double getFriction (Point2D pos) {
+        int row = (int)(pos.getY()/BLOCK_SIZE)+1;
+        int column = (int)(pos.getX()/BLOCK_SIZE);
+        return terrain.get(row).get(column).getFriction();
     }
+
     public void addFigures(ArrayList<Figure> figures) {
         this.figures.addAll(figures);
     }
 
-    private double getResistance(int x, int y) {
-        char block = terrain.get(y).get(x);
-        switch (block) {
-            case ' ': return RESISTANCE_OF_SKY;
-            case 'W':
-            case 'L': return RESISTANCE_OF_FLUIDS;
-            case '/':
-            case '\\'://Slants are depending on blocks below
-                      if(terrain.size() > y + 1){ return getResistance(x,y + 1) * MODIFIER_FOR_SLANTS; }
-                      else{ return RESISTANCE_OF_SKY; } // Return an at least somewhat useful information
-            case 'S': return RESISTANCE_OF_STONE;
-            case 'E': return RESISTANCE_OF_EARTH;
-            case 'I': return RESISTANCE_OF_ICE;
-            case 'A': //ToDo change that
-                return RESISTANCE_OF_SNOW;
-            case 'B': //ToDo change that
-                return RESISTANCE_OF_SAND;
-            default: return RESISTANCE_OF_SKY;
-        }
-    }
-
-    public void replaceBlock(int blockX, int blockY, char replacement){
-        terrain.set(blockY,terrain.get(blockY)).set(blockX,replacement);
-        removeTerrainBlock(blockX, blockY);
-        renderTerrainBlock(replacement, blockX, blockY);
-    }
-
-    private void removeTerrainBlock(int column, int row) {
-        for (Node node: getChildren()) {
-            int currentRow = GridPane.getRowIndex(node);
-            if (currentRow == row) {
-                int currentColumn = GridPane.getColumnIndex(node);
-                if (currentColumn == column) {
-                    getChildren().removeAll(node);
-                    break;
-                }
-            }
-        }
+    public void replaceBlock(int blockX, int blockY, char replacement) {
+        terrain.get(blockY).get(blockX).setType(replacement);
     }
 
     /**
@@ -467,8 +336,8 @@ public class Terrain extends GridPane {
         final char destroyed = '#';
         char replacement = destroyed;
 
-        if (explosionPower > 0 && terrain.get(blockY).get(blockX) != '#') { //else abort recursion
-            double resistanceOfBlock = getResistance(blockX,blockY);
+        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != '#') { //else abort recursion
+            double resistanceOfBlock = terrain.get(blockY).get(blockX).getResistance();
 
             //Calc behaviour for current Block
             if (explosionPower >= resistanceOfBlock) { // Enough destructive force
@@ -490,17 +359,16 @@ public class Terrain extends GridPane {
                 // Add destruction of actual Block to commandlist
                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + replacement);// ' ' is impossible due to the Client/Server-MSG-System
 
-            } else {
-                resistanceOfBlock = getResistance(blockX,blockY); // Check if partially enough destructive Force
-                if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && resistanceOfBlock != RESISTANCE_OF_SKY){ // BUT do not create slants out of air
+            } else { // Check if partially enough destructive Force
+                if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && !terrain.get(blockY).get(blockX).isSky()){ // BUT do not create slants out of air
 
                     debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                     if(blockX > 0 && blockX < terrain.get(blockY).size()){
-                        if(terrain.get(blockY).get(blockX-1) != '#' && terrain.get(blockY).get(blockX-1) != ' '){
+                        if(terrain.get(blockY).get(blockX-1).getType() != '#' && terrain.get(blockY).get(blockX-1).getType() != ' '){
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
                         } else {
-                            if(terrain.get(blockY).get(blockX+1) != '#' && terrain.get(blockY).get(blockX+1) != ' '){
+                            if(terrain.get(blockY).get(blockX+1).getType() != '#' && terrain.get(blockY).get(blockX+1).getType() != ' '){
                                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                             }
                         }
@@ -563,13 +431,13 @@ public class Terrain extends GridPane {
         int lastAlreadyDestroyedColumn = (fromLeft ? -1 : terrain.get(0).size());
 
         for (int col = colStart; col <= colEnd; col++) {
-            if(terrain.get(0).get(col) == '@') { // column already destroyed
+            if(terrain.get(0).get(col).getType() == '@') { // column already destroyed
                 if(fromLeft || lastAlreadyDestroyedColumn == terrain.get(0).size()) {
                     lastAlreadyDestroyedColumn = col;
                 }
             } else {
                 for (int row = 0; row < terrain.size(); row++) {
-                    terrain.get(row).set(col, '@'); // TODO special terrain type?
+                    terrain.get(row).get(col).setType('@'); // TODO special terrain type?
                 }
             }
         }
@@ -620,7 +488,7 @@ public class Terrain extends GridPane {
         }
 
         for(int x=minX; x < maxX && x < terrain.get(y).size(); x++) {
-            if(terrain.get(y).get(x).equals('L') || terrain.get(y).get(x).equals('W')) {
+            if(terrain.get(y).get(x).isLiquid()) {
                 return true;
             }
         }
