@@ -416,7 +416,6 @@ public class MapWindow extends Application implements Networkable {
         //ToDo Wait until no objectmovements
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
-
         turnCount++; // TODO timing issue
         server.sendCommand("SET_TURN_COUNT " + turnCount);
 
@@ -444,17 +443,19 @@ public class MapWindow extends Application implements Networkable {
             }
             if (currentTeam == oldCurrentTeam) {
                 server.sendCommand("GAME_OVER " + currentTeam);
-
+                playSoundeffects("gameOver.wav");
                 return;
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         if (getNumberOfLivingTeams() == 0){
             server.sendCommand("GAME_OVER " + -1);
+            playSoundeffects("gameOver.wav");
             return;
         }
         if (getNumberOfLivingTeams() < 2){
             server.sendCommand("GAME_OVER " + currentTeam);
+            playSoundeffects("gameOver.wav");
             return;
         }
 
