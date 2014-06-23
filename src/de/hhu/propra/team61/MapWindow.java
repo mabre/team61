@@ -948,6 +948,17 @@ public class MapWindow extends Application implements Networkable {
         Clip clip = null;
         try {
             clip = AudioSystem.getClip();
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("resources/audio/BGM/"+sfxName));
+            clip.open(inputStream);
+            clip.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        /*
+        Clip clip = null;
+        try {
+            clip = AudioSystem.getClip();
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
@@ -967,7 +978,7 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
         clip.start();
-
+*/
         /*
         AudioPlayer AP = AudioPlayer.player;
         AudioStream SFX;
