@@ -366,7 +366,7 @@ public class CustomizeWindow extends Application {
         selectionGrid.add(eraser, 0, 11);
         Button spawnPoint = new Button("Spawn point");
         spawnPoint.setOnAction(e -> {
-            chosenTerrainType = 'Q';
+            chosenTerrainType = 'P';
         });
         mouseOverTerrain(spawnPoint, "Set a spawn point.");
         selectionGrid.add(spawnPoint, 0, 12);
@@ -688,22 +688,11 @@ public class CustomizeWindow extends Application {
         return output;
     }
 
-    private JSONObject mapToJson() { // TODO code duplication
+    private JSONObject mapToJson() {
         JSONObject output = new JSONObject();
         output.put("background", imageChooser.getValue());
         output.put("music", musicChooser.getValue());
-        JSONArray jsonTerrain = new JSONArray();
-        terrain = levelTerrain.toArrayList();
-        for (int i = 0; i < terrain.size(); i++) {
-            StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < terrain.get(i).size(); j++) {
-                if (terrain.get(i).get(j) == 'Q') {
-                    terrain.get(i).set(j, 'P');
-                }
-                builder.append(terrain.get(i).get(j));
-            }
-            jsonTerrain.put(builder.toString());
-        }
+        JSONArray jsonTerrain = levelTerrain.toJson().getJSONArray("terrain");
         output.put("terrain", jsonTerrain);
         return output;
     }

@@ -101,7 +101,7 @@ public class TerrainBlock extends ImageView {
             case 'L':
                 this.setImage(LAVE_IMAGE);
                 break;
-            case 'Q': // special case: spawn point to be shown in level editor
+            case 'P': // special case: spawn point to be shown in level editor
                 this.setImage(SPAWN_POINT);
                 break;
             default:

@@ -55,7 +55,7 @@ public class Terrain extends GridPane {
         spawnPoints = new ArrayList<>();
         for (int row = 0; row < terrainAsJSON.length(); row++) {
             this.terrain.add(new ArrayList<>());
-            final int length = terrainAsJSON.getString(0).length();
+            final int length = terrainAsJSON.getString(row).length();
             for (int column = 0; column < length; column++) {
                 char c = terrainAsJSON.getString(row).charAt(column);
                 if(c == 'P') { // special case: spawn point, add to list
@@ -205,7 +205,7 @@ public class Terrain extends GridPane {
 
                 for (int y = minY; y <= maxY && !triedDiagonal; y++) { // TODO recheck necessity of <=
                     for (int x = minX; x <= maxX && !triedDiagonal; x++) {
-                        //debugLog(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
+                        //debugLog(hitRegion + " " + terrain.get(y).get(x).getType() + " field: " + rec);
                         Figure intersectingFigure = null;
                         boolean intersects = true;
                         try {
@@ -223,7 +223,7 @@ public class Terrain extends GridPane {
                         }
                         if (intersects) {
                             try {
-                                debugLog("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
+                                debugLog("intersection at " + x + " " + y + " with " + terrain.get(y).get(x).getType());
                                 if (intersectingFigure != null)
                                     debugLog("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
                             } catch (IndexOutOfBoundsException e) {
@@ -400,11 +400,10 @@ public class Terrain extends GridPane {
     public JSONObject toJson() {
         JSONObject save = new JSONObject();
         JSONArray jsonTerrain = new JSONArray();
-        //String[] arr;
         for (int i = 0; i < terrain.size(); i++) {
             StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < terrain.get(i).size(); j++) { //forming a String from Array[i]
-                builder.append(terrain.get(i).get(j));
+            for (int j = 0; j < terrain.get(i).size(); j++) { // forming a String from Array[i]
+                builder.append(terrain.get(i).get(j).getType());
             }
             jsonTerrain.put(builder.toString());
         }
