@@ -16,6 +16,7 @@ public class Projectile extends ImageView {
     private Point2D velocity;
 
     private int mass;
+    private boolean drifts;
 
     double angle;  // Rotation of image to make then face direction TODO implement more than just this var
 
@@ -41,6 +42,7 @@ public class Projectile extends ImageView {
         this.source = shotBy;
         this.angle  = shotBy.getAngle();
         this.mass   = shotBy.getMass();
+        this.drifts = shotBy.getDrifts();
 
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), image.getWidth(), image.getHeight());
 
@@ -85,6 +87,10 @@ public class Projectile extends ImageView {
 
     public int getMass() {
         return mass;
+    }
+
+    public boolean getDrifts() {
+        return drifts;
     }
 
     /**

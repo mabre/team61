@@ -660,13 +660,11 @@ public class CustomizeWindow extends Application {
         output.put("name", styleNameField.getText());
         output.put("team-size", sizeField.getText());
         output.put("map", mapChooser.getValue());
-        JSONArray weapons = new JSONArray();
+        JSONArray inventory = new JSONArray();
         for (int i=0; i<weaponNames.size(); i++) {
-            JSONObject weapon = new JSONObject();
-            weapon.put("weapon"+(i+1), (int) weaponSliders.get(i).getValue());
-            weapons.put(weapon);
+            inventory.put((int)weaponSliders.get(i).getValue());
         }
-        output.put("weapons", weapons);
+        output.put("inventory", inventory);
         return output;
     }
 
@@ -720,10 +718,10 @@ public class CustomizeWindow extends Application {
                 mapChooser.setValue(savedStyle.getString("map"));
             }
             if (savedStyle.has("weapons")) {
-                JSONArray weapons = savedStyle.getJSONArray("weapons");
+                JSONArray weapons = savedStyle.getJSONArray("inventory");
                 for (int i=0; i<weaponNames.size(); i++) {
-                    weaponSliders.get(i).setValue(weapons.getJSONObject(i).getInt("weapon"+(i+1)));
-                    weaponCheckBoxes.get(i).setSelected(weapons.getJSONObject(i).getInt("weapon"+(i+1))>0);
+                    weaponSliders.get(i).setValue(weapons.getInt(i));
+                    weaponCheckBoxes.get(i).setSelected(weapons.getInt(i)>0);
                 }
             }
         }

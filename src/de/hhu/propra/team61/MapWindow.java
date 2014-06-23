@@ -5,11 +5,12 @@ import de.hhu.propra.team61.gui.GameOverWindow;
 import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.gui.WindIndicator;
 import de.hhu.propra.team61.io.GameState;
-import de.hhu.propra.team61.io.Settings;
-import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.json.JSONString;
+import de.hhu.propra.team61.io.Settings;
+import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -86,6 +87,8 @@ public class MapWindow extends Application implements Networkable {
     private int teamquantity;
     private int teamsize;
 
+    private ArrayList<Crate> supplyDrops;
+
     /** power/energy projectile is shot with */
     private int power = 0;
     /** used to disable shooting multiple times during one turn */
@@ -130,14 +133,11 @@ public class MapWindow extends Application implements Networkable {
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
-        JSONArray weaponsArray = settings.getJSONArray("weapons");
+
+        //ToDo: Prepare start inventory of all teams
         for(int i=0; i<teamsArray.length(); i++) {
-            ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Bazooka(weaponsArray.getJSONObject(0).getInt("weapon1")));
-            weapons.add(new Grenade(weaponsArray.getJSONObject(1).getInt("weapon2")));
-            weapons.add(new Shotgun(weaponsArray.getJSONObject(2).getInt("weapon3")));
-            weapons.add(new PoisonedArrow(weaponsArray.getJSONObject(3).getInt("weapon4")));
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
+            ArrayList<Item> inventory = ItemManager.generateInventory(settings.getJSONArray("inventory")); //ToDo add startInventory to settings
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
         }
 
         initialize();
@@ -225,6 +225,8 @@ public class MapWindow extends Application implements Networkable {
         centerPane.getChildren().add(scrollPane);
         rootPane.setBottom(centerPane);
 
+        supplyDrops = new ArrayList<>();
+
         for(Team team: teams) {
             fieldPane.getChildren().add(team);
             terrain.addFigures(team.getFigures());
@@ -299,9 +301,38 @@ public class MapWindow extends Application implements Networkable {
                                     });
                                 }
                             }
-                            for (Team team : teams) {
-                                for (Figure figure : team.getFigures()) {
+                            for (int i = 0; i < supplyDrops.size(); i++) {
+                                Crate supply = supplyDrops.get(i);
+                                supply.resetVelocity();
+                                final Point2D oldPos = new Point2D(supply.getPosition().getX(), supply.getPosition().getY());
+                                try {
+                                    final Point2D newPos; // TODO code duplication
+                                    newPos = terrain.getPositionForDirection(oldPos, supply.getVelocity(), supply.getHitRegion(), false, true, false, false); //ToDo change last false to true? I am doing that later
+                                    if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                        supply.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
+                                        server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (newPos.getX()) + " " + (newPos.getY()));
+                                    }
+                                } catch (CollisionException e) {
+                                    if (!e.getLastGoodPosition().equals(oldPos)) {
+                                        supply.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                                        server.sendCommand("SUPPLY_SET_POSITION " + i + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                    }
+                                    supply.nullifyVelocity();
+                                }
+                            }
+                            for (int t = 0; t < teams.size(); t++) {
+                                Team team = teams.get(t);
+                                for (int f = 0; f < team.getFigures().size(); f++) {
+                                    Figure figure = team.getFigures().get(f);
                                     if (figure.getHealth() > 0) {
+                                        //Check if figure collides with an Crate TODO: Ask if I should move that somewhere else
+                                        for (int i = 0; i < supplyDrops.size(); i++) {
+                                            if (figure.getHitRegion().intersects(supplyDrops.get(i).getHitRegion())) {
+                                                server.sendCommand("SUPPLY_PICKED_UP" + " " + t + " " + supplyDrops.get(i).getContent());
+                                                server.sendCommand("REMOVE_SUPPLY " + i);
+                                            }
+                                        }
+
                                         final boolean scrollToFigure = (figure == teams.get(currentTeam).getCurrentFigure());
                                         final Point2D oldPos = new Point2D(figure.getPosition().getX(), figure.getPosition().getY());
                                         try {
@@ -327,7 +358,7 @@ public class MapWindow extends Application implements Networkable {
                                                 }
                                             } catch (DeathException de) {
                                                 if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
-                                                    endTurn();
+                                                    server.sendCommand("END_TURN");
                                                 }
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
@@ -339,7 +370,6 @@ public class MapWindow extends Application implements Networkable {
                                 }
                             }
                         }
-
                         // sleep thread, and assure constant frame rate
                         now = System.currentTimeMillis();
                         sleep = Math.max(0, (1000 / FPS) - (now - before));
@@ -409,6 +439,7 @@ public class MapWindow extends Application implements Networkable {
         }
 
         //ToDo Wait until no objectmovements
+        while(flyingProjectile != null){} //ToDo makeover
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
 
@@ -467,6 +498,12 @@ public class MapWindow extends Application implements Networkable {
             undoDigitations();
         }
 
+        // TODO give this an true probability, set by Customize? //Remove own supplyDrops Variable?
+        if(true){
+            Crate drop = new Crate(terrain.toArrayList().get(0).size()-1);
+            server.sendCommand("DROP_SUPPLY"+" "+drop.getPosition().getX()+" "+drop.getContent());
+        }
+        
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         teams.get(currentTeam).endRound();
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
@@ -616,6 +653,9 @@ public class MapWindow extends Application implements Networkable {
                 Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
                 scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
                 break;
+            case "END_TURN":
+                endTurn();
+                break;
             case "CURRENT_TEAM_END_ROUND":
                 if(server == null) { // already done on server
                     teams.get(Integer.parseInt(cmd[1])).endRound();
@@ -634,12 +674,10 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(Integer.parseInt(cmd[1])-1));
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getItem(Integer.parseInt(cmd[1]) - 1));
                 fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
@@ -655,21 +693,19 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_SHOOT":
                 try {
-                     /* ToDo
-                    power = power + 5;
-                    Sleep/Wait if more ShootCommands are incoming, count them by incrementing THEN create projectile
-                     */
-                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(power);
-                    flyingProjectile = projectile;
-                    fieldPane.getChildren().add(flyingProjectile);
-                    shootingIsAllowed = false;
-                    //ToDo setRoundTimer down to 5sec
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                    if(projectile != null){ //Only weapons need projectiles
+                        flyingProjectile = projectile;
+                        fieldPane.getChildren().add(flyingProjectile);
+                        shootingIsAllowed = false;
+                    } else { //Treatment for "true" Items
+                        fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    }
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
                     playSoundeffects("reload.wav");
                     break;
                 }
-                fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
@@ -693,6 +729,11 @@ public class MapWindow extends Application implements Networkable {
                     scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
                 break;
+            case "FIGURE_ADD_VELOCITY":
+                Point2D vector = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
+                Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
+                f.addVelocity(vector);
+                break;
             case "REPLACE_BLOCK":
                 if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
                 terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
@@ -700,6 +741,23 @@ public class MapWindow extends Application implements Networkable {
             case "DEACTIVATE_FIGURE":
                 shootingIsAllowed = true;
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
+                break;
+
+            case "DROP_SUPPLY":
+                supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(),cmd[2]));
+                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size()-1));
+                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size()-1).getContentDisplay());
+                break;
+            case "REMOVE_SUPPLY":
+                fieldPane.getChildren().remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                supplyDrops.remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                break;
+            case "SUPPLY_SET_POSITION":
+                position = new Point2D(Double.parseDouble(cmd[2]), Double.parseDouble(cmd[3]));
+                supplyDrops.get(Integer.parseInt(cmd[1])).setPosition(position);
+                break;
+            case "SUPPLY_PICKED_UP":
+                teams.get(Integer.parseInt(cmd[1])).getItem(cmd[2]).refill();
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -746,13 +804,13 @@ public class MapWindow extends Application implements Networkable {
             case "CONDITION":
                 switch(cmd[1]){
                     case "POISON":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(Boolean.parseBoolean(cmd[4]));
                         break;
-                    case "FIRE":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsBurning(true);
+                    case "PARALYZE":
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsParalyzed(Boolean.parseBoolean(cmd[4]));
                         break;
                     case "STUCK":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(Boolean.parseBoolean(cmd[4]));
                         break;
                 }
                 break;
@@ -856,9 +914,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "1":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     weaponLabel = new Label("Bazooka: A classic one.");
                     rootPane.setRight(weaponLabel);
                     weaponLabel.setVisible(true);
@@ -867,9 +923,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "2":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     weaponLabel = new Label("Granade: Now on SALE with wind!");
                     rootPane.setRight(weaponLabel);
                     weaponLabel.setVisible(true);
@@ -878,9 +932,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "3":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     weaponLabel = new Label("Shootgun: Right into the face! - twice");
                     rootPane.setRight(weaponLabel);
                     weaponLabel.setVisible(true);
@@ -889,13 +941,36 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "4":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
-                    }
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     weaponLabel = new Label("Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
                     rootPane.setRight(weaponLabel);
                     weaponLabel.setVisible(true);
                     playSoundeffects("poisonArrow.wav");
+                }
+                break;
+            case "5":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 5");
+                }
+                break;
+            case "6":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 6");
+                }
+                break;
+            case "7":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 7");
+                }
+                break;
+            case "8":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 8");
+                }
+                break;
+            case "9":
+                if(shootingIsAllowed) {
+                    server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 9");
                 }
                 break;
             default:

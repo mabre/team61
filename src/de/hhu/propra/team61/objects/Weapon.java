@@ -3,6 +3,7 @@ package de.hhu.propra.team61.objects;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.Team;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
  * - for the Weaponimage/-facing
  * - shooting
  * - transmission of all the attributes by carrying them on a projectile
- * - OFFERS a default handleCollision(), which might prove suitable for most weapontypes
+ * - OFFERS a default handleCollision(), which might prove suitable for most itemtypes
  *   -> coordination of Figure.sufferDamage();
  *   -> Sending Figures flying // ToDo implement this
  *   -> coordination of terraindestruction
@@ -28,6 +29,7 @@ import java.util.ArrayList;
  */
 public abstract class Weapon extends Item {
     private final int NORMED_OBJECT_SIZE = 16; //ToDo Move this? Like in Projectile
+    private final int NORMED_BLOCK_SIZE  =  8;
     private final int RADIUS = 20; // Distance between Crosshair to Figure
 
     private String projectileImg;
@@ -41,7 +43,7 @@ public abstract class Weapon extends Item {
     private int shockwave;      // Throw Figures away from Collisionpoint
 
     private boolean poisons;    // toggle isPoisoned
-    private boolean ignites;    // toggle isBurning
+    private boolean paralyzes;    // toggle isBurning
     private boolean blocks;     // toggle isStuck
 
     private int     mass;       // toggle if gravity affects projectile
@@ -51,7 +53,8 @@ public abstract class Weapon extends Item {
     private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
 
     private double angle;       // Angle it is aimed at; 0 <=> Horizontal; +90 <=> straight upwards
-    private ImageView crosshair;
+    protected ImageView crosshairImage;
+    protected ImageView weaponImage;
 
     /**
      * Constructor for deriving classes.
@@ -68,12 +71,12 @@ public abstract class Weapon extends Item {
      * @param explosionpower Destructive force
      * @param shockwave Propulsion of Objects
      * @param poisons Does this poison a figure?
-     * @param ignites Does this ignite a figure?
+     * @param paralyzes Does this paralyze a figure?
      * @param blocks Does this block a figure?
      * @param mass used for ballistics
      * @param drifts toggle windaffection
      */
-    protected Weapon(String name, String description, int munition, String weaponImg, String projectileImg, int delay, String damagetype, int damage, int explosionpower, int shockwave, boolean poisons, boolean ignites, boolean blocks, int mass, boolean drifts, int speed){
+    protected Weapon(String name, String description, int munition, String weaponImg, String projectileImg, int delay, String damagetype, int damage, int explosionpower, int shockwave, boolean poisons, boolean paralyzes, boolean blocks, int mass, boolean drifts, int speed){
         super(name,description);
 
         this.munition = munition;
@@ -87,7 +90,7 @@ public abstract class Weapon extends Item {
         this.shockwave = shockwave;
 
         this.poisons = poisons;
-        this.ignites = ignites;
+        this.paralyzes = paralyzes;
         this.blocks = blocks;
 
         this.mass = mass;
@@ -100,24 +103,23 @@ public abstract class Weapon extends Item {
     private void initialize() {
         this.angle = 0;
 
-        Image weaponImage = new Image(weaponImg, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
-        setImage(weaponImage);
+        weaponImage = new ImageView(new Image(weaponImg, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
+        this.getChildren().add(weaponImage);
 
-        Image crosshairImage = new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true);
-        crosshair = new ImageView(crosshairImage);
-        angleDraw(true);
-    }
+        crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
+        this.getChildren().add(crosshairImage);
+        //angleDraw(true);
 
-    public JSONObject toJson() {
-        JSONObject json = new JSONObject();
-        json.put("name",name);
-        json.put("munition",munition);
-        return json;
+        setAlignment(Pos.TOP_LEFT);
     }
 
     @Override
+    public Projectile use(Figure user) throws NoMunitionException{
+        return shoot(0); //ToDo implement power and replace 0
+    }
+
     /**
-     * This function is a default offered. It should prove suitable for most weapons.
+     * This function is a default offered. It should prove suitable for most weapons, but some may override.
      * If there is enough munition it returns a Projectile
      */
     public Projectile shoot(int power) throws NoMunitionException{ //ToDo Actually use power OR calc Power and use
@@ -125,7 +127,7 @@ public abstract class Weapon extends Item {
             Image image = new Image(projectileImg,NORMED_OBJECT_SIZE / 4, NORMED_OBJECT_SIZE / 4,true,true);
             int yOffset = (int)(NORMED_OBJECT_SIZE-image.getHeight())/2;
             int xOffset = (int)(NORMED_OBJECT_SIZE-image.getWidth())/2;
-            Projectile shot = new Projectile(image, new Point2D(getTranslateX()+xOffset, getTranslateY()+yOffset), new Point2D(getCrosshair().getTranslateX()+xOffset, getCrosshair().getTranslateY()+yOffset), speed, this);
+            Projectile shot = new Projectile(image, new Point2D(weaponImage.getTranslateX()+xOffset, weaponImage.getTranslateY()+yOffset), new Point2D(crosshairImage.getTranslateX()+xOffset, crosshairImage.getTranslateY()+yOffset), speed, this);
 
             munition--;
             System.out.println("munition left: " + munition);
@@ -149,40 +151,57 @@ public abstract class Weapon extends Item {
         ArrayList<String> commandList = new ArrayList<String>();
         commandList.add("REMOVE_FLYING_PROJECTILE");
 
-        // 1. Make Figures suffer and add necessary commands to list being sent
-        //ToDo add some kind of this sphere, that hurts less centered on impactPoint
+        // 1. Destroy Terrain and add necessary commands to list being sent
+        commandList.addAll(terrain.handleExplosion(new Point2D(impactArea.getMinX(),impactArea.getMinY()), explosionpower));
+
+        // 2. Make Figures suffer/fly and add necessary commands to list being sent
+        Point2D impactCenter = new Point2D(impactArea.getMinX(),impactArea.getMinY());
         for(int t = 0; t < teams.size(); t++){
             for(int f = 0; f < teams.get(t).getFigures().size(); f++){
-                if(teams.get(t).getFigures().get(f).getHitRegion().intersects(impactArea)){
+                //Prep Variables
+                Figure treatedFigure = teams.get(t).getFigures().get(f);
+                int distance = (int)impactCenter.distance(treatedFigure.getPosition());
+                //If close to a or a hit
+                if(distance < NORMED_BLOCK_SIZE*4){
+                    //1.1 make them suffer
                     try {
-                        teams.get(t).getFigures().get(f).sufferDamage(damage);
-                        teams.get(t).getFigures().get(f).addRecentlySufferedDamage(damage);
+                        treatedFigure.sufferDamage(damage-distance/NORMED_BLOCK_SIZE);
+                        treatedFigure.addRecentlySufferedDamage(damage-distance/NORMED_BLOCK_SIZE);
                     } catch (DeathException e) {
                         System.out.println("WARNING: unhandled death exception");
                         // TODO IMPORTANT
                     }
-                    if(poisons){ commandList.add("CONDITION" + " " + "POISON" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
-                    if(ignites){ commandList.add("CONDITION" + " " + "FIRE" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
-                    if(blocks) { commandList.add("CONDITION" + " " + "STUCK" + " "  + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth()); }
-                    commandList.add("SET_HP " + t + " " + f + " " + teams.get(t).getFigures().get(f).getHealth());
+                    commandList.add("SET_HP " + t + " " + f + " " + treatedFigure.getHealth());
+
+                    //1.2 Set conditions
+                    if(poisons){ commandList.add("CONDITION" + " " + "POISON" + " "  + t + " " + f + " " + "true"); }
+                    if(paralyzes){ commandList.add("CONDITION" + " " + "PARALYZE" + " " + t + " " + f + " " + "true"); }
+                    if(blocks) { commandList.add("CONDITION" + " " + "STUCK" + " "  + t + " " + f + " " + "true"); }
+
+                    //1.3 make them fly depending on vector
+                    Point2D acceleration = treatedFigure.getPosition().subtract(impactCenter); //get direction to send figure flying
+                    acceleration = acceleration.normalize().multiply(shockwave); //set strength
+                    acceleration = acceleration.add(new Point2D(0,-10)); //avoid to early terraincollision
+                    commandList.add("FIGURE_ADD_VELOCITY" + " " + t + " " + f + " " + acceleration.getX() + " " + acceleration.getY());
                 }
             }
         }
-
-        // 2. Destroy Terrain and add necessary commands to list being sent
-        commandList.addAll(terrain.handleExplosion(new Point2D(impactArea.getMinX(),impactArea.getMinY()), explosionpower));
-
-        // 3. Send Figures flying
-        //ToDo commandList.addAll();
-
+        commandList.add("END_TURN"); //ToDo setRoundTimer down to 5sec, THEN make End_turn only called by exceptions and timer
         return commandList;
     }
 
     //Getter and Setter
-    public ImageView getCrosshair() { return crosshair; }
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
+    public boolean getDrifts() {
+        return drifts;
+    }
 
+
+    public void setPosition(Point2D pos) {
+        weaponImage.setTranslateX(pos.getX());
+        weaponImage.setTranslateY(pos.getY());
+    }
 
     //----------------------------------Crosshair-Related Functions---------------------------------
     public double toRadian(double grad) { // This function transforms angles to rad which are needed for sin/cos etc.
@@ -204,15 +223,15 @@ public abstract class Weapon extends Item {
     @Override
     public void angleDraw(boolean faces_right){ // Actually only sets the Point and changes facing of weapon; drawn in MapWindow
         if(faces_right){
-            crosshair.setTranslateX(getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
-            setScaleX(1); //Reverse mirroring
-            setRotate(-angle);
+            crosshairImage.setTranslateX(weaponImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
+            weaponImage.setScaleX(1); //Reverse mirroring
+            weaponImage.setRotate(-angle);
         }
         else{
-            crosshair.setTranslateX(getTranslateX() - Math.cos(toRadian(angle))* RADIUS);
-            setScaleX(-1); //Mirror Weapon, so its facing left
-            setRotate(angle);
+            crosshairImage.setTranslateX(weaponImage.getTranslateX() - Math.cos(toRadian (angle))* RADIUS);
+            weaponImage.setScaleX(-1); //Mirror Weapon, so its facing left
+            weaponImage.setRotate(angle);
         }
-        crosshair.setTranslateY(getTranslateY() - Math.sin(toRadian(angle))* RADIUS);
+        crosshairImage.setTranslateY(weaponImage.getTranslateY() - Math.sin(toRadian(angle)) * RADIUS);
     }
 }

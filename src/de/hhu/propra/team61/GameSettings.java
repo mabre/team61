@@ -3,9 +3,11 @@ package de.hhu.propra.team61;
 import de.hhu.propra.team61.gui.CustomGrid;
 import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.io.CustomizeManager;
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
+import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Server;
 import javafx.application.Application;
@@ -140,14 +142,12 @@ public class GameSettings extends Application {
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
         output.put("team-size", styleObject.getString("team-size")); //save size of teams
         output.put("map", styleObject.getString("map"));
-        JSONArray weaponsStyle = styleObject.getJSONArray("weapons");
+        JSONArray weaponsStyle = styleObject.getJSONArray("inventory");
         JSONArray weaponsSettings = new JSONArray();
         for(int i=0; i<weaponsStyle.length(); i++) {
-            JSONObject weapon = new JSONObject();
-            weapon.put("weapon"+(i+1), weaponsStyle.getJSONObject(i).getInt("weapon"+(i+1)));
-            weaponsSettings.put(weapon);
+            weaponsSettings.put(weaponsStyle.getInt(i));
         }
-        output.put("weapons", weaponsSettings);
+        output.put("inventory", weaponsSettings);
         JSONArray teamsArray = new JSONArray();
         JSONObject team1 = getJsonForTeam(teams.get(0).getValue());
         teamsArray.put(team1);

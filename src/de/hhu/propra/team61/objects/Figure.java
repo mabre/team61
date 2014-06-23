@@ -29,8 +29,6 @@ public class Figure extends StackPane {
     private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
 
-    private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
-
     private String name;
     private String figureType;
     private int health;
@@ -41,7 +39,7 @@ public class Figure extends StackPane {
     /** the maximal speed (absolute value) in y direction since last call of resetVelocity, used to limit jump speed */
     private double maxYSpeed = 0;
 
-    private boolean isBurning;
+    private boolean isParalyzed;
     private boolean isPoisoned;
     private boolean isStuck;
 
@@ -65,13 +63,13 @@ public class Figure extends StackPane {
     private int recentlySufferedDamage = 0;
 
     // In and Out
-    public Figure(String name, String figureType, int hp, double armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+    public Figure(String name, String figureType, int hp, double armor, boolean isParalyzed, boolean isPoisoned, boolean isStuck){
         this.name   = name;
         this.figureType = figureType;
         this.health = hp;
         this.armor  = armor;
 
-        this.isBurning  = isBurning;
+        this.isParalyzed = isParalyzed;
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
 
@@ -90,41 +88,17 @@ public class Figure extends StackPane {
         this.figureType = input.getString("figureType");
         this.health = input.getInt("health");
         this.armor  = input.getDouble("armor");
-        this.digitated = input.getBoolean("digitated");
+
         this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
         this.massFactor = input.getDouble("massFactor");
         this.causedHpDamage = input.getInt("causedHpDamage");
-        this.isBurning  = input.getBoolean("isBurning");
+
+        this.digitated = input.getBoolean("digitated");
+        this.isParalyzed = input.getBoolean("isParalyzed");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
 
         System.out.println("FIGURE created from json");
-        printAllAttributes(this);
-
-        initialize();
-    }
-
-    @Deprecated
-    public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
-        figureImage = new ImageView();
-        position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
-        figureImage.setTranslateX(position.getX());
-        figureImage.setTranslateY(position.getY());
-
-        this.name = name;
-        this.figureType = input.getString("figureType");
-        this.health = input.getInt("health");
-        this.armor  = input.getDouble("armor");
-        this.digitated = input.getBoolean("digitated");
-        this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
-        this.massFactor = input.getDouble("massFactor");
-        this.causedHpDamage = input.getInt("causedHpDamage");
-        this.isBurning  = input.getBoolean("isBurning");
-        this.isPoisoned = input.getBoolean("isPoisoned");
-        this.isStuck    = input.getBoolean("isStuck");
-
-        System.out.println("FIGURE created from OptionsJson");
-        printAllAttributes(this);
 
         initialize();
     }
@@ -162,7 +136,7 @@ public class Figure extends StackPane {
         output.put("position.x", position.getX()); // TODO save as array
         output.put("position.y", position.getY());
 
-        output.put("isBurning", isBurning);
+        output.put("isParalyzed", isParalyzed);
         output.put("isPoisoned", isPoisoned);
         output.put("isStuck", isStuck);
         return output;
@@ -179,8 +153,8 @@ public class Figure extends StackPane {
     public double getArmor() {return armor;}
 //    public void setArmor(double armor) {this.armor = armor;}
 
-    public boolean getIsBurning() {return isBurning;}
-    public void setIsBurning(boolean isBurning){this.isBurning = isBurning;}
+    public boolean getIsParalyzed() {return isParalyzed;}
+    public void setIsParalyzed(boolean isParalyzed){this.isParalyzed = isParalyzed;}
 
     public boolean getIsPoisoned() {return isPoisoned;}
     public void setIsPoisoned(boolean isPoisoned){this.isPoisoned = isPoisoned;}
@@ -239,9 +213,6 @@ public class Figure extends StackPane {
         return selectedItem;
     }
     public void setSelectedItem(Item select){
-        if(selectedItem != null) {
-            selectedItem.hide();
-        }
         selectedItem = select;
         if(selectedItem != null) {
             select.setPosition(new Point2D(position.getX(), position.getY()));
@@ -293,9 +264,8 @@ public class Figure extends StackPane {
         return hitRegion;
     }
 
-    public Projectile shoot(int power) throws NoMunitionException {
-        // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
-        return selectedItem.shoot(power);
+    public Projectile shoot() throws NoMunitionException {
+        return selectedItem.use(this);
     }
 
     public Point2D getVelocity() {
@@ -377,7 +347,7 @@ public class Figure extends StackPane {
         });
     }
 
-    public void dedigitate() { // TODO degitate ?
+    public void dedigitate() {
         massFactor = 1;
         jumpDuringFallThreshold = 0;
         armor = 0;
@@ -402,19 +372,6 @@ public class Figure extends StackPane {
         int rsd = recentlySufferedDamage;
         recentlySufferedDamage = 0;
         return rsd;
-    }
-
-    //For testing purposes only
-    private static void printAllAttributes(Figure testwurm){
-        System.out.println("Health  : " + testwurm.getHealth());
-        System.out.println("Armor   : " + testwurm.getArmor());
-        System.out.println("Name    : " + testwurm.getName());
-        System.out.println("Burning : " + testwurm.getIsBurning());
-        System.out.println("Poisoned: " + testwurm.getIsPoisoned());
-        System.out.println("Stuck   : " + testwurm.getIsStuck());
-
-        System.out.println("Position: " + testwurm.getPosition());
-        System.out.println();
     }
 
     public int getDamageByLiquid() {

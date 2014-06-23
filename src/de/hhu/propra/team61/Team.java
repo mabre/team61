@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.objects.*;
@@ -21,12 +22,13 @@ public class Team extends StackPane {
     private int i = 0;
     public int currentFigure = 0;
     private ArrayList<Figure> figures;
-    private ArrayList<Weapon> weapons;
+    private ArrayList<Item> inventory;
     private Color color;
     private String name;
 
-    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Weapon> weapons, Color color, String name, String chosenFigure, JSONArray figureNames) {
-        this.weapons = weapons;
+    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Item> inventory, Color color, String name, String chosenFigure, JSONArray figureNames) {
+
+        this.inventory = inventory;
         this.color = color;
         this.name = name;
         figures = new ArrayList<>();
@@ -56,21 +58,8 @@ public class Team extends StackPane {
             f.setColor(color);
             getChildren().add(f);
         }
-        weapons = new ArrayList<>();
-        JSONArray weaponsArray = state.getJSONArray("weapons");
-        for(int i=0; i<weaponsArray.length(); i++){
-            JSONObject w = weaponsArray.getJSONObject(i);
-            switch(w.getString("name")){
-                case "Bazooka": weapons.add(new Bazooka(w.getInt("munition")));
-                    break;
-                case "Grenade": weapons.add(new Grenade(w.getInt("munition")));
-                    break;
-                case "Shotgun": weapons.add(new Shotgun(w.getInt("munition")));
-                    break;
-                case "Poisoned Arrow": weapons.add(new PoisonedArrow(w.getInt("munition")));
-                    break;
-            }
-        }
+        JSONArray itemsArray = state.getJSONArray("inventory");
+        inventory = ItemManager.generateInventory(itemsArray);
         currentFigure = state.getInt("currentFigure");
         setAlignment(Pos.TOP_LEFT);
     }
@@ -85,11 +74,7 @@ public class Team extends StackPane {
             figuresArray.put(f.toJson());
         }
         output.put("figures", figuresArray);
-        JSONArray weaponsArray = new JSONArray();
-        for(Weapon w: weapons) {
-            weaponsArray.put(w.toJson());
-        }
-        output.put("weapons", weaponsArray);
+        output.put("inventory", ItemManager.inventoryToJsonArray(inventory));
         output.put("color", toHex(color));
         output.put("name", name);
         output.put("currentFigure", currentFigure);
@@ -105,9 +90,10 @@ public class Team extends StackPane {
             }
             currentFigure++;
             if (currentFigure == figures.size()) {
-                currentFigure = 0;
+                currentFigure = 0; // loop
             }
             i++;
+            if (figures.get(currentFigure).getIsParalyzed() && getNumberOfLivingFigures() > 1){currentFigure++; i++;} //Skip paralyzed figures IF not last man standing
         }
         while (figures.get(currentFigure).getHealth() == 0);
     }
@@ -134,12 +120,14 @@ public class Team extends StackPane {
         return figures;
     }
 
-    public Weapon getWeapon(int i) {
-        return weapons.get(i);
+    public Item getItem(int i) {
+        return inventory.get(i);
     }
-
-    public int getNumberOfWeapons() {
-        return weapons.size();
+    public Item getItem(String s) {
+        for(Item i : inventory){
+            if(i.getName().equals(s)){  return i; }
+        }
+        return null; // If not found; To avoid
     }
 
     public void suddenDeath() {
