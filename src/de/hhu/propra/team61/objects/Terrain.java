@@ -398,7 +398,7 @@ public class Terrain extends GridPane {
     }
     /*gets Friction based on Block directly below the given Position*/
     public double getFriction (Point2D pos){
-        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)-1).get((int)(pos.getX()/BLOCK_SIZE));
+        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)+1).get((int)(pos.getX()/BLOCK_SIZE));
         switch (block) {
             case 's':
                 return SAND_FRICTION;
