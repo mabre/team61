@@ -115,7 +115,7 @@ public class TerrainBlock extends ImageView {
             case 'W':
             case 'L': return RESISTANCE_OF_FLUIDS;
             case '/':
-            case '\\': // slants are depending on blocks below
+            case '\\': // slants are depending on blocks below // TODO what about slants at the ceiling?
                 if(neighbours.bottom != null) {
                     return neighbours.bottom.getResistance() * Terrain.MODIFIER_FOR_SLANTS;
                 } else {
@@ -141,31 +141,27 @@ public class TerrainBlock extends ImageView {
             case ' ':
                 return false;
             case '/':
-                Point2D p;
-                for (int i = 0; i < Terrain.BLOCK_SIZE; i++) {
+                for (int i = 1; i < Terrain.BLOCK_SIZE; i++) {
                     int px = x * Terrain.BLOCK_SIZE + i;
                     int py = y * Terrain.BLOCK_SIZE + Terrain.BLOCK_SIZE - i;
-                    p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
+                    if(hitRegion.contains(px, py)) {
                         Terrain.debugLog("diagonal / intersection at " + px + "x" + py + "px");
                         return true;
                     }
                 }
                 return false;
             case '\\':
-                for(int i=0; i<Terrain.BLOCK_SIZE; i++) {
-                    int px = x*Terrain.BLOCK_SIZE+i;
-                    int py = y*Terrain.BLOCK_SIZE+1+i;
-                    p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
+                for(int i = 1; i < Terrain.BLOCK_SIZE; i++) {
+                    int px = x * Terrain.BLOCK_SIZE + i;
+                    int py = y * Terrain.BLOCK_SIZE + 1 + i;
+                    if(hitRegion.contains(px, py)) {
                         Terrain.debugLog("diagonal / intersection at " + px + "x" + py + "px");
                         return true;
                     }
                 }
                 return false;
             default:
-                Rectangle2D rec = new Rectangle2D(x * Terrain.BLOCK_SIZE, y * Terrain.BLOCK_SIZE, Terrain.BLOCK_SIZE, Terrain.BLOCK_SIZE);
-                return hitRegion.intersects(rec);
+                return hitRegion.intersects(x * Terrain.BLOCK_SIZE, y * Terrain.BLOCK_SIZE, Terrain.BLOCK_SIZE, Terrain.BLOCK_SIZE);
         }
     }
 

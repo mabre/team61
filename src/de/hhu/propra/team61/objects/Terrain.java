@@ -203,8 +203,8 @@ public class Terrain extends GridPane {
                 int minX = (int) Math.floor(hitRegion.getMinX() / BLOCK_SIZE);
                 int maxX = (int) Math.ceil(hitRegion.getMaxX() / BLOCK_SIZE);
 
-                for (int y = minY; y <= maxY && !triedDiagonal; y++) { // TODO recheck necessity of <=
-                    for (int x = minX; x <= maxX && !triedDiagonal; x++) {
+                for (int y = minY; y < maxY && !triedDiagonal; y++) {
+                    for (int x = minX; x < maxX && !triedDiagonal; x++) {
                         //debugLog(hitRegion + " " + terrain.get(y).get(x).getType() + " field: " + rec);
                         Figure intersectingFigure = null;
                         boolean intersects = true;
