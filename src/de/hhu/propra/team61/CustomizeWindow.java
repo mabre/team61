@@ -127,6 +127,7 @@ public class CustomizeWindow extends Application {
             chosenMap = "editor/basic.lvl";
             initializeLevelEditor();
             root.setLeft(newMapPane);
+            scrollPane.requestFocus(); // to make cheat work right away
         });
         Button backToMenue = new Button("Go back to menue");
         backToMenue.setOnAction(e -> {
@@ -292,22 +293,14 @@ public class CustomizeWindow extends Application {
                 switch (keyEvent.getCode()) {
                     case RIGHT:
                         if(block.getPosition().getX()+8 < levelTerrain.getTerrainWidth())
-                            block.setPosition(block.getPosition().add(8, 0));
+                            moveBlock(8, 0);
                         break;
                     case DOWN:
-                        Point2D direction = new Point2D(0, 16);
-                        final Point2D oldPos = block.getPosition();
-                        try {
-                            Point2D newPos = levelTerrain.getPositionForDirection(oldPos, direction, block.getHitRegion(), false, false, false, false);
-                            block.setPosition(new Point2D(newPos.getX(), newPos.getY()));
-                        } catch (CollisionException e) {
-                            System.out.println("CollisionWithTerrainException");
-                            block.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
-                        }
+                        moveBlock(0, 16);
                         break;
                     case LEFT:
                         if(block.getPosition().getX() > 8)
-                            block.setPosition(block.getPosition().add(-8, 0));
+                            moveBlock(-8, 0);
                         break;
                     default:
                         stopCheat();
@@ -395,7 +388,6 @@ public class CustomizeWindow extends Application {
         chosenTerrainType = 'S';
         newMapPane.setRight(selectionGrid);
         ToolTipManager.sharedInstance().setInitialDelay(0);
-        scrollPane.requestFocus();
     }
 
     private void startCheat() {
@@ -466,13 +458,39 @@ public class CustomizeWindow extends Application {
             default:
                 chosenTerrainType = 'I';
                 path = "../ice";
+        }
+        int hp;
+        switch((int)(Math.random()*4)) {
+            case 0:
+                hp = 2;
                 break;
+            case 1:
+                hp = 42;
+                break;
+            case 2:
+                hp = 61;
+                break;
+            default:
+                hp = 1337;
         }
         Platform.runLater(() -> {
-            block = new Figure(chosenTerrainType+"", path, 100, 0, false, false, false);
+            block = new Figure(chosenTerrainType+"", path, hp, 0, false, false, false);
             block.setPosition(new Point2D(512, 16));
             anchorPane.getChildren().add(block);
         });
+    }
+
+    private void moveBlock(int dx, int dy) {
+        if(block == null) return;
+        final Point2D direction = new Point2D(dx, dy);
+        final Point2D oldPos = block.getPosition();
+        try {
+            Point2D newPos = levelTerrain.getPositionForDirection(oldPos, direction, block.getHitRegion(), false, false, false, false);
+            block.setPosition(new Point2D(newPos.getX(), newPos.getY()));
+        } catch (CollisionException e) {
+            System.out.println("CollisionWithTerrainException");
+            block.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+        }
     }
 
     private void playRussianFolkSong() {
