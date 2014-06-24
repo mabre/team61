@@ -56,3 +56,15 @@ command (or double-click if it works for you).
 3. If the maximum number of teams is not reached, you can now choose your team profile.
 4. Click on “Ready” to inform the server of the changes you made.
 5. Wait for the host to start the game.
+
+### How to set up a connection with a computer being connected using a patch cable (aka How to get an ip with a LAN connection)
+
+NB: Modern hardware does not require to use a crossover cable.
+
+1. Open the tool of your operating system for creating new network connections (connection editor or the like).
+2. Create a new cable connection.
+3. Set “cloned mac address” to the hardware address of your network card (eg. see `ifconfig`, section `ethX`).
+4. Set “IPv4 Method” to “Manual”.
+5. Add address “10.0.0.x” (x must be unique for each player), network mask “255.255.255.0”.
+6. Give the connection a sensible name, eg. “Afrobob”.
+7. Connect.

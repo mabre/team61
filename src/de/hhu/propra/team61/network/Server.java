@@ -18,25 +18,45 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
 
 /**
- * Created by markus on 15.05.14.
+ * Game Server which handles all events triggered on the client.
+ * <p>
+ * Only one server should run at the same time. To create a new thread running a game server, use
+ * {@code serverThread = new Thread(server = new Server(() -> {callbackFunkcion};} start the thread using
+ * {@code serverThread.start();}. After creating a new server object, {@link #registerCurrentNetworkable(Networkable)}
+ * should be called with {@code this} being the argument. Call {@link #stop()} to shut down the server thread properly.
+ * </p>
+ * The server understands the following commands:
+ * <ul>
+ * <li> TODO doc
+ * </ul>
  */
 public class Server implements Runnable {
+    /** port on which the server runs */
     static final int PORT = 61421;
 
+    /** list of connected clients */
     private static ArrayList<ClientConnection> clients = new ArrayList<>();
 
+    /** method to call when the server is up and running */
     Runnable readyListener;
 
+    /** listens for new client connections */
     ServerSocket listener;
+    /** the currently shown view, which can handle received commands */
     private static Networkable currentNetworkable;
 
     /**
+     * Creates a new server. Only one server should be running at the same time.
      * @param listener function which is called when server is set up, thus ready to accept connections
      */
     public Server(Runnable listener) {
         this.readyListener = listener;
     }
 
+    /**
+     * starts the server thread and listens for new client connections
+     */
+    @Override
     public void run() {
         try {
             listener = new ServerSocket(PORT);
@@ -56,6 +76,9 @@ public class Server implements Runnable {
         System.out.println("SERVER shut down");
     }
 
+    /**
+     * shuts down the server
+     */
     public void stop() {
         System.out.println("SERVER stopping");
         try {
@@ -67,72 +90,96 @@ public class Server implements Runnable {
         }
     }
 
+    /**
+     * Sets {@link #currentNetworkable}.
+     * @param networkable the view which will receive upcoming server commands
+     */
     public void registerCurrentNetworkable(Networkable networkable) {
         this.currentNetworkable = networkable;
     }
 
+    /**
+     * Sends the given command after prepending "COMMAND " to all connected clients.
+     * @param command the command to be sent
+     */
     public static void sendCommand(String command) {
         synchronized (clients) {
             for (int i=0; i< clients.size(); i++) {
-                String message = "COMMAND " + command;
+                String message = "COMMAND " + command; // TODO necessary?
                 clients.get(i).out.println(message);
                 System.out.println("SERVER sent command to " + clients.get(i).id+"/"+ clients.get(i).name + ": " + message);
             }
         }
     }
 
+    /**
+     * Checks if a client with the given id exists.
+     * @param id the id to be checked
+     * @return true if a client with the given id exists
+     */
     private static boolean clientIdExists(String id) {
-        boolean found = false;
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).id.equals(id)) {
-                    found = true;
-                    break;
+            for (ClientConnection client: clients) {
+                if (client.id.equals(id)) {
+                    return true;
                 }
             }
         }
-        return found;
+        return false;
     }
 
+    /**
+     * Checks if a client with the given name exists.
+     * @param name name to be checked
+     * @return true if a client with the given name exists
+     */
     private static boolean clientNameExists(String name) {
-        boolean found = false;
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).name.equals(name)) {
-                    found = true;
-                    break;
+            for (ClientConnection client : clients) {
+                if (client.name.equals(name)) {
+                    return true;
                 }
             }
         }
-        return found;
+        return false;
     }
 
+    /**
+     * Gets the id of the client with the given name.
+     * @param name the name of the client whose id is sought
+     * @return the id of the client with the given name, "" when no matching client is found
+     */
     private static String getIdFromName(String name) {
-        String id = "";
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).name.equals(name)) {
-                    id = clients.get(i).id;
-                    break;
+            for (ClientConnection client : clients) {
+                if (client.name.equals(name)) {
+                    return client.id;
                 }
             }
         }
-        return id;
+        return "";
     }
 
+    /**
+     * Gets the name of the client with the given id.
+     * @param id the id of the client whose name is sought
+     * @return the name of the client with the given id, "" when no matching client is found
+     */
     private static String getNameFromId(String id) {
-        String name = "";
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).id.equals(id)) {
-                    name = clients.get(i).name;
-                    break;
+            for (ClientConnection client : clients) {
+                if (client.id.equals(id)) {
+                    return client.name;
                 }
             }
         }
-        return name;
+        return "";
     }
 
+    /**
+     * Disconnects the client with the given name by closing its writer and reader.
+     * @param name the name of the client which shall be disconnected
+     */
     private static void disconnect(String name) {
         synchronized (clients) {
             try {
@@ -152,6 +199,8 @@ public class Server implements Runnable {
     }
 
     /**
+     * Get a list of connected client with their name and team as json.
+     * TODO doc example output
      * @return a JSONObject representing the connected clients, including associated team
      */
     private static String getClientListAsJson() {
@@ -165,14 +214,20 @@ public class Server implements Runnable {
                 spectatorsArray.put(player);
             }
         }
-        return json.put("spectators", spectatorsArray).toString();
+        return json.put("spectators", spectatorsArray).toString(); // TODO spectators still appropriate?
     }
 
+    /**
+     * Changes the name of a client.
+     * @param oldName the name of the client whose name should be changed
+     * @param newName the new name for the client
+     */
     private static void renameByName(String oldName, String newName) {
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).name.equals(oldName)) {
-                    clients.get(i).name = newName;
+            for (ClientConnection client: clients) {
+                if (client.name.equals(oldName)) {
+                    client.name = newName;
+                    return;
                 }
             }
         }
@@ -181,7 +236,6 @@ public class Server implements Runnable {
     /**
      * @return true when all teams are ready
      */
-
     public static boolean teamsAreReady() {
         for (ClientConnection client: clients) {
             if (!client.isReady) {
@@ -192,17 +246,17 @@ public class Server implements Runnable {
     }
 
     /**
-     * changes the team number associated with a client; informs all clients about the change by sending the current list of clients
+     * Changes the team number associated with a client; informs all clients about the change by sending the current list of connected clients.
      * @param id the id associated with the client
      * @param newTeam the new team number of the client (counting starts from 0=host, -1 means spectator)
      */
     public void changeTeamById(String id, int newTeam) {
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).id.equals(id)) {
-                    clients.get(i).associatedTeam = newTeam;
-                    clients.get(i).out.println("SET_TEAM_NUMBER " + newTeam);
-                    System.out.println(clients.get(i).id + "/" + clients.get(i).name + " associated with team " + newTeam);
+            for (ClientConnection client: clients) {
+                if (client.id.equals(id)) {
+                    client.associatedTeam = newTeam;
+                    client.out.println("SET_TEAM_NUMBER " + newTeam);
+                    System.out.println(client.id + "/" + client.name + " associated with team " + newTeam);
                     sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                     return;
                 }
@@ -212,7 +266,7 @@ public class Server implements Runnable {
     }
 
     /**
-     * changes the team number associated with a client; informs all clients about the change by sending the current list of clients
+     * Changes the team number associated with a client; informs all clients about the change by sending the current list of connected clients.
      * @param team the number of the team, counting starts from 0=host
      * @param newTeam the new team number of the client (counting starts from 0=host, -1 means spectator)
      */
@@ -222,11 +276,11 @@ public class Server implements Runnable {
             return;
         }
         synchronized (clients) {
-            for (int i = 0; i < clients.size(); i++) {
-                if (clients.get(i).associatedTeam == team) {
-                    clients.get(i).associatedTeam = newTeam;
-                    clients.get(i).out.println("SET_TEAM_NUMBER " + newTeam);
-                    System.out.println(clients.get(i).id + "/" + clients.get(i).name + " associated with team " + newTeam);
+            for (ClientConnection client: clients) {
+                if (client.associatedTeam == team) {
+                    client.associatedTeam = newTeam;
+                    client.out.println("SET_TEAM_NUMBER " + newTeam);
+                    System.out.println(client.id + "/" + client.name + " associated with team " + newTeam);
                     sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                     return;
                 }
@@ -235,14 +289,22 @@ public class Server implements Runnable {
         }
     }
 
-
+    /**
+     * Sets up a client connection.
+     */
     private static class ConnectionHandler implements Runnable {
         private Socket socket;
 
+        /**
+         * @param socket connection socket
+         */
         public ConnectionHandler(Socket socket) {
             this.socket = socket;
         }
 
+        /**
+         * Establishes connection with client by creating new {@link de.hhu.propra.team61.network.Server.ClientConnection}.
+         */
         @Override
         public void run() {
             try(ClientConnection connection = new ClientConnection(socket)) {
@@ -256,21 +318,41 @@ public class Server implements Runnable {
     }
 
 
+    /**
+     * This class represents a connected client and holds the input/output reader/writers.
+     */
     private static class ClientConnection implements AutoCloseable {
+        /** reader which receives the messages of the associated client */
         private final BufferedReader in;
+        /** writer which allows sending messages to the associated client */
         private final PrintWriter out;
+        /** the socket of the connection */
         private final Socket socket;
+        /** a random and unique id for identifying this client */
         private String id;
+        /** the name of the player sitting in front of the client */
         private String name;
+        /** the team associated with this client, counting starts from 0=host, -1=spectator */
         private int associatedTeam = -1;
+        /** indicates whether the client clicked on "ready" in the lobby */
         private boolean isReady = false;
 
+        /**
+         * Creates a new client connection by setting up the reader and writer using the given socket.
+         * @param socket the connection socket which provides reader and writer
+         * @throws IOException
+         */
         public ClientConnection(Socket socket) throws IOException {
             this.socket = socket;
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
         }
 
+        /**
+         * Asks the client for id and name (blocks if id (TODO name) is already used by another client), adds the client
+         *  to the list of connected clients, sends the list of connected players, and starts listening for messages from the client
+         * @throws IOException
+         */
         public void connect() throws IOException {
             getName();
             out.println("NAMEACCEPTED");
@@ -284,6 +366,10 @@ public class Server implements Runnable {
             }
         }
 
+        /**
+         * asks the client for id and name, blocks till an id which is not already used is given
+         * @throws IOException
+         */
         private void getName() throws IOException {
             while(true) {
                 out.println("SUBMITNAME");
@@ -293,7 +379,7 @@ public class Server implements Runnable {
                     System.out.println("SERVER: read null identifier");
                     return;
                 }
-                if(!clientIdExists(id)) {
+                if(!clientIdExists(id)) { // TODO ok, here seems to be sth wrong ...
                     id = identifier.split(" ", 2)[0];
                     name = identifier.split(" ", 2)[1];
                     if(Client.id.equals(id)) { // we are host
@@ -305,6 +391,10 @@ public class Server implements Runnable {
             }
         }
 
+        /**
+         * processes messages received from the client
+         * @throws IOException
+         */
         private void broadcast() throws IOException {
             try {
                 while(true) {
@@ -384,6 +474,10 @@ public class Server implements Runnable {
             }
         }
 
+        /**
+         * Removes this connection from the list of {@link #clients} list.
+         * @throws Exception
+         */
         @Override
         public void close() throws Exception {
             synchronized (clients) {
@@ -398,7 +492,7 @@ public class Server implements Runnable {
                 if (out != null) {
                     for (int i = 0; i < clients.size(); i++) {
                         if (clients.get(i).out == out) {
-                            clients.remove(i);
+                            clients.remove(i); // TODO huh?
                             break;
                         }
                     }
@@ -410,6 +504,10 @@ public class Server implements Runnable {
             }
         }
 
+        /**
+         * Sets the name of the player associated with this connection.
+         * @param name the name of the player
+         */
         public void setName(String name) {
             this.name = name;
         }
