@@ -15,7 +15,8 @@ import java.util.ArrayList;
  * ToDo write some more justifications
  */
 public class ItemManager {
-    public final static String[] itemlist = {"Bazooka","Grenade","Shotgun","PoisonedArrow","Medipack","Rifle"};
+    public final static String[] itemlist = {"Bazooka","Grenade","Shotgun","PoisonedArrow","Medipack","Rifle","Digivise",
+                                             "Bananabomb"};
     public final static int numberOfItems = itemlist.length;
 
     /**
@@ -32,6 +33,8 @@ public class ItemManager {
         items.add(new PoisonedArrow(inventory.getInt(3)));
         items.add(new Medipack(inventory.getInt(4)));
         items.add(new Rifle(1)); //ToDo: Ask Jessi for more inputs in gui
+        items.add(new Digivise(1));
+        //items.add(new Bananabomb(5));
         return items;
     }
 

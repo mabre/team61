@@ -305,6 +305,18 @@ public class NetLobby extends Application implements Networkable {
         weaponsSettings.put(2);
         weaponsSettings.put(1);
         weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1); // They are not all necessary, but before I forget that this also needs an long enough array
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
+        weaponsSettings.put(1);
 
         output.put("inventory", weaponsSettings);
 

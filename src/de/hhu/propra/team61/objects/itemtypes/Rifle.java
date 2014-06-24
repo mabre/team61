@@ -3,6 +3,7 @@ package de.hhu.propra.team61.objects.itemtypes;
 import de.hhu.propra.team61.objects.Weapon;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Line;
+import javafx.scene.transform.Translate;
 
 /**
  * Created by kevin on 21.06.14.
@@ -49,14 +50,15 @@ public class Rifle extends Weapon {
         int xOffset = NORMED_OBJECT_SIZE / 2;
         int yOffset = NORMED_OBJECT_SIZE / 2;
         //set absolute position
-        redDot.setTranslateX(weaponImage.getTranslateX()+xOffset);
-        redDot.setTranslateY(weaponImage.getTranslateY()+yOffset);
+        redDot.setTranslateX(weaponImage.getTranslateX());
+        redDot.setTranslateY(weaponImage.getTranslateY());
         //draw relatively from there
-        redDot.setStartX(0);
-        redDot.setStartY(0);
+        redDot.setStartX(xOffset);
+        redDot.setStartY(yOffset);
         redDot.setEndX(10);
-        redDot.setEndY(-10*Math.sin(toRadian(getAngle())));
+        redDot.setEndY(10 * Math.sin(toRadian(getAngle())));
 
+        System.out.println(redDot.toString()); // TODO this whole redDot-thing doesnt't work..
 /*
         //relative Endpoint
         if(faces_right){

@@ -94,7 +94,7 @@ public class MapWindow extends Application implements Networkable {
     private boolean shootingIsAllowed = true;
     private boolean pause = false;
     //Projectile-Moving-Thread related variables
-    private Projectile flyingProjectile = null;
+    private ArrayList<Projectile> flyingProjectiles = new ArrayList<>();
     private Thread moveObjectsThread;
     //Network
     private Server server;
@@ -109,6 +109,7 @@ public class MapWindow extends Application implements Networkable {
     private Chat chat;
     private SceneController sceneController;
 
+    private int k;
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.map = map;
@@ -273,14 +274,15 @@ public class MapWindow extends Application implements Networkable {
                     long before = System.currentTimeMillis(), now, sleep;
                     while (true) {
                         if (!pause) {
-                            if (flyingProjectile != null) {
+                            for(k = 0; k < flyingProjectiles.size(); k++) {
+                                Projectile flyingProjectile = flyingProjectiles.get(k);
                                 try {
                                     final Point2D newPos;
-                                    newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
+                                    newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, flyingProjectile.getDrifts());
                                     flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                     flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
                                     scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
-                                    server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                                    server.sendCommand("PROJECTILE_SET_POSITION " + k + " " + newPos.getX() + " " + newPos.getY());
                                 } catch (CollisionException e) {
                                     System.out.println("CollisionException, let's do this!");
                                     final Projectile collidingProjectile = flyingProjectile;
@@ -295,13 +297,16 @@ public class MapWindow extends Application implements Networkable {
                                         //Collisionhandling done by the weapon causing this exception
                                         ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
                                         fieldPane.getChildren().remove(collidingProjectile);
+                                        if (commandList.contains("REMOVE_FLYING_PROJECTILE")) {
+                                            commandList.set(0, "REMOVE_FLYING_PROJECTILE " + k);
+                                        }
                                         for (String command : commandList) {
                                             server.sendCommand(command);
                                         } //Send commands+
-                                        endTurn();
                                     });
                                 }
                             }
+
                             for (int i = 0; i < supplyDrops.size(); i++) {
                                 Crate supply = supplyDrops.get(i);
                                 supply.resetVelocity();
@@ -321,6 +326,7 @@ public class MapWindow extends Application implements Networkable {
                                     supply.nullifyVelocity();
                                 }
                             }
+
                             for (int t = 0; t < teams.size(); t++) {
                                 Team team = teams.get(t);
                                 for (int f = 0; f < team.getFigures().size(); f++) {
@@ -377,6 +383,7 @@ public class MapWindow extends Application implements Networkable {
                         Thread.sleep(sleep);
                         before = System.currentTimeMillis();
                     }
+
                 } catch (InterruptedException e) {
                     System.out.println("moveObjectsThread shut down");
                 }
@@ -440,7 +447,7 @@ public class MapWindow extends Application implements Networkable {
         }
 
         //ToDo Wait until no objectmovements
-        while(flyingProjectile != null){} //ToDo makeover
+        while(flyingProjectiles.size() > 0){} //ToDo makeover
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
         turnCount++; // TODO timing issue
@@ -698,8 +705,8 @@ public class MapWindow extends Application implements Networkable {
                 try {
                     Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
                     if(projectile != null){ //Only weapons need projectiles
-                        flyingProjectile = projectile;
-                        fieldPane.getChildren().add(flyingProjectile);
+                        flyingProjectiles.add(projectile);
+                        fieldPane.getChildren().add(projectile);
                         shootingIsAllowed = false;
                     } else { //Treatment for "true" Items
                         fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
@@ -770,16 +777,20 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 if(server==null) { // TODO code duplication should be avoided
-                    final double x = Double.parseDouble(cmd[1]);
-                    final double y = Double.parseDouble(cmd[2]);
-                    flyingProjectile.setPosition(new Point2D(x, y));
+                    final double x = Double.parseDouble(cmd[2]);
+                    final double y = Double.parseDouble(cmd[3]);
+                    flyingProjectiles.get(Integer.parseInt(cmd[1])).setPosition(new Point2D(x, y));
                     scrollTo(x, y, 0, 0, false);
                 }
                 break;
+            case "ADD_FLYING_PROJECTILE":
+          //      flyingProjectiles.add(projectile);
+          //      fieldPane.getChildren().add(projectile);
+                break;
             case "REMOVE_FLYING_PROJECTILE":
-                if(flyingProjectile != null) {
-                    fieldPane.getChildren().remove(flyingProjectile);
-                    flyingProjectile = null;
+                if(flyingProjectiles.size() >= Integer.parseInt(cmd[1])) {
+                    fieldPane.getChildren().remove(flyingProjectiles.get(Integer.parseInt(cmd[1])-1));
+                    flyingProjectiles.remove(Integer.parseInt(cmd[1])-1);
                 }
                 break;
             case "SD":
