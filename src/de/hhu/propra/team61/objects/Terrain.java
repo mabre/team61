@@ -17,40 +17,66 @@ import java.util.ArrayList;
 
 /**
  * A GridPane representing a terrain.
- * The class has methods for getting spawn points, walkability checks and destroying terrain
- * Created by markus on 17.05.14.
+ * <p>
+ * Use {@link #Terrain(JSONObject)} to load a new terrain. A valid json string representing a terrain can look like this:
+ * <pre>
+ * {@code
+ * {
+ *   "background": "cave.png",
+ *   "music": "like_cave.ogg",
+ *   "terrain": [
+ *     "                                        ",
+ *     "    P      P       P      P      P      ",
+ *     "                                        ",
+ *     "SSSSSSSSSSSSEE\\WWWWWWWWWWWWWWW/EESSSSSSS",
+ *   ]
+ * }
+ * }
+ * </pre>
+ * Only the {@code terrain} property is mandatory. If you also want to render spawn points (eg. in an editor), you can
+ * use the alternative {@link #Terrain(JSONObject, boolean)} constructor.
+ * <p>
+ * This class provides methods for manipulating terrain, getting spawn points, and collision handling.
  */
 public class Terrain extends GridPane {
+    /** set to {@code true} to get very verbose debug output from the collision handling methods */
     private static final boolean DEBUG = false;
+    /** set to {@code true} to true to see the terrain grid */
     private static final boolean GRID_ENABLED = false;
+    /** the size of a block within the terrain; you usually do NOT want to use this outside this class (notable exception: level editor) */
     final static int BLOCK_SIZE = 8;
 
+    /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
 
-    //Modifiers
-    final static double MODIFIER_FOR_SLANTS = 0.30;
-
     //ArrayLists
+    /** a list containing the terrain blocks which are rendered, [row][column], counting starts from [0][0] in the top left corner */
     private ArrayList<ArrayList<TerrainBlock>> terrain;
+    /** a list of unused spawn points */
     private ArrayList<Point2D> spawnPoints;
+    /** a list of figures with which objects can collide */
     private ArrayList<Figure> figures;
 
+    /** a vector representing wind force and direction */
     private Point2D wind = new Point2D(0,0);
+    /** maximum wind speed for difficulty "easy" */
     private final static double MAX_WIND_SPEED_EASY = Figure.WALK_SPEED*.6;
+    /** maximum wind speed for difficulty "normal" */
     private final static double MAX_WIND_SPEED_NORMAL = Figure.WALK_SPEED*.8;
+    /** maximum wind speed for difficulty "hard" */
     private final static double MAX_WIND_SPEED_HARD = Figure.WALK_SPEED*1.2;
 
     /**
-     * Creates a new terrain from the given JSONObject
-     * @param terrain 2-D-ArrayList containing the terrain to be displayed
+     * Creates a new terrain from the given JSONObject.
+     * @param terrain a JSONObject containing the level whose terrain shall be displayed
      */
     public Terrain(JSONObject terrain) {
         this(terrain, false);
     }
 
     /**
-     * Creates a new terrain from the given JSONObject
-     * @param terrain 2-D-ArrayList containing the terrain to be displayed
+     * Creates a new terrain from the given JSONObject, and allows rendering the spawn points.
+     * @param terrain a JSONObject containing the level whose terrain shall be displayed
      * @param renderSpawnPoints if true, the spawn points are rendered (used by level editor)
      */
     public Terrain(JSONObject terrain, boolean renderSpawnPoints) {
@@ -58,6 +84,11 @@ public class Terrain extends GridPane {
         figures = new ArrayList<>();
     }
 
+    /**
+     * Loads the given terrain into the {@link #terrain} list.
+     * @param terrainObject a JSONObject representing a level
+     * @param renderSpawnPoints if true, the spawn points are rendered (used by level editor)
+     */
     private void load(JSONObject terrainObject, boolean renderSpawnPoints) {
         getChildren().clear();
         JSONArray terrainAsJSON = terrainObject.getJSONArray("terrain");
@@ -90,7 +121,8 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @return the 2-D-ArrayList representing the loaded terrain
+     * Gets a 2D ArrayList of characters which represents the currently loaded terrain [row][column], including any destruction.
+     * @return a 2D ArrayList representing the loaded terrain
      */
     public ArrayList<ArrayList<Character>> toArrayList() {
         ArrayList<ArrayList<Character>> rows = new ArrayList<>();
@@ -105,8 +137,9 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * get a spawn point and remove it from the list of available spawn points
+     * Get a spawn point and remove it from the list of available spawn points.
      * @return a random spawn point, or null if there are no more spawn points
+     * @see #getRandomSpawnPoints(int)
      */
     public Point2D getRandomSpawnPoint() {
         if (spawnPoints.isEmpty()) {
@@ -120,6 +153,7 @@ public class Terrain extends GridPane {
     }
 
     /**
+     * Get up to n spawn points and remove them from the list of available spawn points.
      * @param n number of spawn points to be returned (might be less)
      * @return n random spawn points
      * @see #getRandomSpawnPoint()
@@ -135,6 +169,10 @@ public class Terrain extends GridPane {
 
     /**
      * creates new random wind
+     * <p>
+     * The maximum wind force depends on the settings chosen by the user. (TODO actually not) Lower wind forces are more
+     * probable.
+     * </p>
      */
     public void rewind() {
         double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
@@ -152,7 +190,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * Sets the wind to the given value
+     * Sets the wind to the given value.
      * @param wind wind speed in x direction
      */
     public void setWind(double wind) {
@@ -160,7 +198,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * prints message to stdout if DEBUG==true
+     * Prints a message to stdout if (@link DEBUG} is set to {@code true}.
      * @param msg the message to be printed
      */
     static void debugLog(String msg) {
@@ -168,19 +206,28 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
-     * When canWalkAlongDiagonals is true, the movement continues at slopes in diagonal direction (used for figures);
-     * otherwise, the movement is stopped (used for projectiles)
+     * Use this function to calculate the final position of a collision-aware movement.
+     * <p>
+     * This function adds the given direction to the given old (ie. current) position, but assures that the object to be
+     * moved does not walk/fly through terrain or other figures. When {@code canWalkAlongDiagonals} is {@code true}, the
+     * movement continues at slopes in diagonal direction (used for figures); otherwise, the movement is stopped (used
+     * for projectiles).
+     * <p>
+     * example:<br>
+     * Figure f at {@code (0,4)} wants to go to {@code (2,4)}, it can walk up slopes, go through other figures, and the movement is
+     * influenced by the wind:<br>
+     * {@code getPositionForDirection(f.getPosition(), new Point2D(2,0), f.getCollisionArea(), true, true, true)}<br>
      *
-     * @param oldPosition           old position of the object
-     * @param direction             direction vector of the object
-     * @param hitRegion             a rectangle describing the area where the object can collide with terrain etc.
+     * @param oldPosition old position of the object
+     * @param direction direction vector of the object
+     * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
-     * @param canWalkThroughFigures when true, the object is able to walk through figures (no CollisionWithFigureException will be thrown) TODO therefore, have a wrapper function which does not throw this exception
-     * @param snapToPx when true, the positions returned are rounded to whole px
+     * @param canWalkThroughFigures when true, the object is able to walk through figures
+     * @param snapToPx when true, the position returned is rounded to whole px // TODO remove
      * @param influencedByWind if false, the wind is not considered when calculating the new position
      * @return new position of the object
      * @throws CollisionException thrown when hitting terrain or a figure
+     * @see CollisionException
      */
     public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
@@ -276,8 +323,9 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @param position the position to be checked
-     * @param direction we do not apply wind to vertical movements near the ground (makes jumping easier)
+     * Determines whether a figure is in a windbreak, ie. is not influenced by wind.
+     * @param position the position (in px) to be checked
+     * @param direction if vertical, the function returns {@code true} (makes jumping easier)
      * @return true when the given position is not influenced by wind (ie. is right behind a piece of terrain)
      */
     private boolean isInWindbreak(Point2D position, Point2D direction) {
@@ -318,10 +366,14 @@ public class Terrain extends GridPane {
     /**
      * Gives the friction factor for the movement of the figure at the given position
      * example situation:
+     * <pre>
+     * {@code
      *   P
      *
      *  IIIII
-     * calling getFriction(P.getPosition()) will return a factor < 1 (ie. figures are quicker on ice)
+     * }
+     * </pre>
+     * calling {@code getFriction(P.getPosition())} will return a factor &lt; 1 (ie. figures are quicker on ice)
      * @param pos position (in px) of an object
      * @return friction based on the block directly below the given position; returns 1 if at bottom
      */
@@ -332,29 +384,39 @@ public class Terrain extends GridPane {
         return terrain.get(row).get(column).getFriction();
     }
 
+    /**
+     * Adds the given figures to the list of {@link figures} used for collision control.
+     * @param figures the figures to be added
+     */
     public void addFigures(ArrayList<Figure> figures) {
         this.figures.addAll(figures);
     }
 
+    /**
+     * Resets the type of the given block with the given type and re-renders this block
+     * @param blockX the x coordinate (in blocks) of the block to be changed
+     * @param blockY the x coordinate (in blocks) of the block to be changed
+     * @param replacement the new type of terrain
+     * @see TerrainBlock
+     */
     public void replaceBlock(int blockX, int blockY, char replacement) {
         terrain.get(blockY).get(blockX).setType(replacement);
     }
 
     /**
      * This function actually calculates the destroyed blocks recursively.
-     * First the Explosion expands to all directions depending on left explosionPower leaving out
+     * At first, the explosion expands to all directions depending on the explosion power left, leaving out
      * already destroyed blocks.
-     *
-     * @param commands ArrayList<String> of Commands to be executed on clients
+     * @param commands ArrayList of commands to be executed on clients // TODO @Kegny
      * @param blockX Used to move through terrain, which is a grid
      * @param blockY Used to move through terrain, which is a grid
      * @param explosionPower value to determine (int)if block (blockX,blockY) is destroyed
      */
     private void explode(ArrayList<String> commands, int blockX, int blockY, int explosionPower){
-        final char destroyed = '#';
-        char replacement = destroyed;
+        final char DESTROYED_TERRAIN = '#';
+        char replacement = DESTROYED_TERRAIN;
 
-        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != '#') { //else abort recursion
+        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN) { //else abort recursion
             double resistanceOfBlock = terrain.get(blockY).get(blockX).getResistance();
 
             //Calc behaviour for current Block
@@ -378,28 +440,29 @@ public class Terrain extends GridPane {
                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + replacement);// ' ' is impossible due to the Client/Server-MSG-System
 
             } else { // Check if partially enough destructive Force
-                if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && !terrain.get(blockY).get(blockX).isSky()){ // BUT do not create slants out of air
+                if(explosionPower > resistanceOfBlock * TerrainBlock.MODIFIER_FOR_SLANTS && !terrain.get(blockY).get(blockX).isSky()){ // BUT do not create slants out of air
 
                     debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                     if(blockX > 0 && blockX < terrain.get(blockY).size()){
-                        if(terrain.get(blockY).get(blockX-1).getType() != '#' && terrain.get(blockY).get(blockX-1).getType() != ' '){
+                        if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
                         } else {
-                            if(terrain.get(blockY).get(blockX+1).getType() != '#' && terrain.get(blockY).get(blockX+1).getType() != ' '){
+                            if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
                                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                             }
                         }
                     }
                 }
             }
-        }//recursion
-    }//explode()
+        } // recursion
+    }
 
     /**
-     *
+     * // TODO @Kegny
      * @param impactPoint
      * @param explosionPower
+     * @return
      */
     public ArrayList<String> handleExplosion(Point2D impactPoint, int explosionPower) {
         // Get Block, which is center of explosion, from Point2D
@@ -413,15 +476,16 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @return a JSONObject containing the current state of the terrain
+     * This function is the inverse function of {@link #Terrain(de.hhu.propra.team61.io.json.JSONObject)}.
+     * @return a JSONObject representing the loaded level, containing the current state of the terrain (ie. including destruction)
      */
     public JSONObject toJson() {
         JSONObject save = new JSONObject();
         JSONArray jsonTerrain = new JSONArray();
-        for (int i = 0; i < terrain.size(); i++) {
+        for (ArrayList<TerrainBlock> row : terrain) {
             StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < terrain.get(i).size(); j++) { // forming a String from Array[i]
-                builder.append(terrain.get(i).get(j).getType());
+            for (TerrainBlock block : row) { // forming a String from terrain[i]
+                builder.append(block.getType());
             }
             jsonTerrain.put(builder.toString());
         }
@@ -430,7 +494,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * destroys columns between the left or right side of the board and a given figure position (usually the boss)
+     * Destroys columns between the left or right side of the board and a given figure position (usually the boss).
      * @param position the position of the figure
      * @param fromLeft whether to start from the left (true) or right (false)
      * @param movedBy absolute value of x-position change in px since last call of this function
@@ -453,8 +517,8 @@ public class Terrain extends GridPane {
                     lastAlreadyDestroyedColumn = col;
                 }
             } else {
-                for (int row = 0; row < terrain.size(); row++) {
-                    terrain.get(row).get(col).setType('@'); // TODO special terrain type?
+                for (ArrayList<TerrainBlock> row : terrain) {
+                    row.get(col).setType('@'); // TODO special terrain type?
                 }
             }
         }
@@ -479,7 +543,7 @@ public class Terrain extends GridPane {
             SpriteAnimation riftAnimation = new SpriteAnimation(riftImageView, 500, 12, 1);
             final int col = i;
             Platform.runLater(() -> {
-              add(riftImageView, col, 0, 1, terrain.size()); // TODO not rendered, as it is removed by terrain reload; should work on top of master, though
+              add(riftImageView, col, 0, 1, terrain.size());
             });
             riftImageView.setFitHeight(terrain.size() * BLOCK_SIZE);
             riftAnimation.setDelay(new Duration((fromLeft ? colEnd - i : i - colStart) * 40 + 500));
@@ -503,6 +567,11 @@ public class Terrain extends GridPane {
         return terrain.size() * BLOCK_SIZE;
     }
 
+    /**
+     * Checks if the figure at the given position is standing on a liquid.
+     * @param position the position of the figure
+     * @return true if the figure at the given position is standing on a liquid
+     */
     public boolean standingOnLiquid(Point2D position) {
         final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
         final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
