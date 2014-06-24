@@ -423,11 +423,14 @@ public class MapWindow extends Application implements Networkable {
         }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
-        if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn
+        if(turnCount % teams.size() == 0) { //if(Round finished) //Round := all living Teams made a turn (not exactly true here - when a team died, this is wrong, but not that important here)
             for (Team t : teams) {
                 for (Figure f : t.getFigures()) {
                     if(f.getHealth() > 0) { //Avoid reviving the poisoned dead
-                        if (f.getIsPoisoned()) { f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON)); }
+                        if (f.getIsPoisoned()) {
+                            f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON));
+                            server.sendCommand("SET_HP " + getFigureId(f) + " " + f.getHealth());
+                        }
                     }
                 }
             }
