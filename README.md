@@ -79,7 +79,7 @@ You can download the free community edition of IntelliJ from [jetbrains.com/idea
 
 ##### Import Project
 1. Click on “File” → “Import Project…”
-2. Choose the folder which contains the `src` directory. Click on “Ok”.
+2. Choose the folder which contains the `src` directory. Click on “OK”.
 3. Choose “Create project from existing sources,” and click on “Next”.
 4. Leave the default project location, and click on “Next”.
 5. Make sure that `src` is detected as java source directory, and click on “Next”.
@@ -90,24 +90,39 @@ You can download the free community edition of IntelliJ from [jetbrains.com/idea
 ##### Change Project Settings
 1. Click on “File” → “Project Structure…”.
 2. Under “Project,” set language level to 8.0.
-3. Click on “Ok”.
+3. Click on “OK”.
 
-##### Create Build Configuration
+##### Create Run Configuration
 1. Click on “Run” → “Edit Configurations”.
 2. Click on “Add New Configuration” → “Application”.
 3. Set main class to `afrobob`.
-4. Click on “Ok”.
+4. Click on “OK”.
+
+##### Create .jar Build Configuration 
+1. Click on “File” → “Project Structure…”.
+2. Under “Artifacts”, click on “Add” → “Jar” → “From modules with decencies”.
+3. Choose “Afrobob” as “Main Class”.
+4. In both dialogs, click on “OK”.
+5. Click on “Build” → “Build artifacts…” → “Build”.
+6. Copy (or link) the `resources` directory to `out/artifacts/*_jar/`.
 
 #### other IDEs
 
 Please refer to the manual of your IDE. If you can provide step-by-step instructions for your favourite IDE, we are willing to add them here.
 
-### Generating JavaDoc (using IntelliJ)
+### Generating JavaDoc
+
+#### CLI
+
+1. `cd` to the `src` directory.
+2. Execute `javadoc -d ../doc -subpackages de -private -exclude de.hhu.propra.team61.io.json`.
+
+#### IntelliJ
 
 1. Click on “Tools” → “Generate JavaDoc…”.
-2. Choose “Custom Scope”.
-3. Include “Production Classes” recursively.
-4. Exclude “de.hhu.propra.team61.io.json” recursively. (The JavaDoc of this library is not well-formed.)
+2. (optional, to suppress some errors) Choose “Custom Scope”.
+3. (optional) Include “Production Classes” recursively.
+4. (optional) Exclude “de.hhu.propra.team61.io.json” recursively. (The JavaDoc of this library is not well-formed.)
 5. Choose a sensible output directory.
 6. You might want to chose output level “private” and check “Open generated documentation in browser”.
-7. Click on “Ok”.
+7. Click on “OK”.
