@@ -1,4 +1,4 @@
-package de.hhu.propra.team61.objects;
+package de.hhu.propra.team61.objects; // TODO create own subpackage (after merging, otherwise resolving conflicts might become hard)
 
 import de.hhu.propra.team61.animation.SpriteAnimation;
 import de.hhu.propra.team61.io.json.JSONArray;
@@ -17,136 +17,129 @@ import java.util.ArrayList;
 
 /**
  * A GridPane representing a terrain.
- * The class has methods for getting spawn points, walkability checks and destroying terrain
- * Created by markus on 17.05.14.
+ * <p>
+ * Use {@link #Terrain(JSONObject)} to load a new terrain. A valid json string representing a terrain can look like this:
+ * <pre>
+ * {@code
+ * {
+ *   "background": "cave.png",
+ *   "music": "like_cave.ogg",
+ *   "terrain": [
+ *     "                                        ",
+ *     "    P      P       P      P      P      ",
+ *     "                                        ",
+ *     "SSSSSSSSSSSSEE\\WWWWWWWWWWWWWWW/EESSSSSSS",
+ *   ]
+ * }
+ * }
+ * </pre>
+ * Only the {@code terrain} property is mandatory. If you also want to render spawn points (eg. in an editor), you can
+ * use the alternative {@link #Terrain(JSONObject, boolean)} constructor.
+ * <p>
+ * This class provides methods for manipulating terrain, getting spawn points, and collision handling.
  */
 public class Terrain extends GridPane {
+    /** set to {@code true} to get very verbose debug output from the collision handling methods */
     private static final boolean DEBUG = false;
+    /** set to {@code true} to true to see the terrain grid */
     private static final boolean GRID_ENABLED = false;
-    private static final double ICE_FRICTION = 2;
-    private static final double EARTH_FRICTION = 1;
-    private static final double SAND_FRICTION = 0.5;
-    private final static String imgPath = "file:resources/";
-    private final static int BLOCK_SIZE = 8;
-    private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
-    private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
-    private final static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
-    private final static Image SKY_IMAGE = new Image(imgPath + "sky.png");
-    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
-    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
-    private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
-    private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
+    /** the size of a block within the terrain; you usually do NOT want to use this outside this class (notable exception: level editor) */
+    final static int BLOCK_SIZE = 8;
 
+    /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
-    private final static Image SPAWN_POINT = new Image(imgPath + "spawn.png");
-
-    //Technical Blocks/Special Cases
-    private final double RESISTANCE_OF_SKY = 15;
-    private final double RESISTANCE_OF_FLUIDS = 99999999;
-    //Blocks
-    private final double RESISTANCE_OF_EARTH = 25;
-    private final double RESISTANCE_OF_SAND = 20;
-    private final double RESISTANCE_OF_SNOW = 20;
-    private final double RESISTANCE_OF_STONE = 35;
-    private final double RESISTANCE_OF_ICE = 30;
-    //Modifiers
-    private final double MODIFIER_FOR_SLANTS = 0.30;
 
     //ArrayLists
-    private ArrayList<ArrayList<Character>> terrain;
+    /** a list containing the terrain blocks which are rendered, [row][column], counting starts from [0][0] in the top left corner */
+    private ArrayList<ArrayList<TerrainBlock>> terrain;
+    /** a list of unused spawn points */
     private ArrayList<Point2D> spawnPoints;
+    /** a list of figures with which objects can collide */
     private ArrayList<Figure> figures;
 
+    /** a vector representing wind force and direction */
     private Point2D wind = new Point2D(0,0);
+    /** maximum wind speed for difficulty "easy" */
+    private final static double MAX_WIND_SPEED_EASY = Figure.WALK_SPEED*.6;
+    /** maximum wind speed for difficulty "normal" */
     private final static double MAX_WIND_SPEED_NORMAL = Figure.WALK_SPEED*.8;
+    /** maximum wind speed for difficulty "hard" */
     private final static double MAX_WIND_SPEED_HARD = Figure.WALK_SPEED*1.2;
 
     /**
-     * @param terrain 2-D-ArrayList containing the terrain to be displayed
+     * Creates a new terrain from the given JSONObject.
+     * @param terrain a JSONObject containing the level whose terrain shall be displayed
      */
     public Terrain(JSONObject terrain) {
-        load(terrain);
+        this(terrain, false);
+    }
+
+    /**
+     * Creates a new terrain from the given JSONObject, and allows rendering the spawn points.
+     * @param terrain a JSONObject containing the level whose terrain shall be displayed
+     * @param renderSpawnPoints if true, the spawn points are rendered (used by level editor)
+     */
+    public Terrain(JSONObject terrain, boolean renderSpawnPoints) {
+        load(terrain, renderSpawnPoints);
         figures = new ArrayList<>();
     }
 
-//TODO    private void fromArray(JSONObject String?){}
-
-    public void load(JSONObject terrainObject) {
+    /**
+     * Loads the given terrain into the {@link #terrain} list.
+     * @param terrainObject a JSONObject representing a level
+     * @param renderSpawnPoints if true, the spawn points are rendered (used by level editor)
+     */
+    private void load(JSONObject terrainObject, boolean renderSpawnPoints) {
         getChildren().clear();
         JSONArray terrainAsJSON = terrainObject.getJSONArray("terrain");
-        this.terrain = new ArrayList<ArrayList<Character>>(); // Initialize terrain
-        //ToDo transformer schreiben
-        for (int i = 0; i < terrainAsJSON.length(); i++) {
-            this.terrain.add(new ArrayList<Character>()); // add "underarraylists" to terrain
-            for (int j = 0; j < terrainAsJSON.getString(0).length(); j++) {
-                this.terrain.get(i).add(j, terrainAsJSON.getString(i).charAt(j));
+        this.terrain = new ArrayList<>();
+        spawnPoints = new ArrayList<>();
+        for (int row = 0; row < terrainAsJSON.length(); row++) {
+            this.terrain.add(new ArrayList<>());
+            final int length = terrainAsJSON.getString(row).length();
+            for (int column = 0; column < length; column++) {
+                char c = terrainAsJSON.getString(row).charAt(column);
+                TerrainBlock block = new TerrainBlock(c, column, row);
+                if(row != 0) {
+                    block.setTopNeighbour(terrain.get(row-1).get(column));
+                    terrain.get(row-1).get(column).setBottomNeighbour(block);
+                }
+                if(column != 0) {
+                    block.setLeftNeighbour(terrain.get(row).get(column-1));
+                    terrain.get(row).get(column-1).setRightNeighbour(block);
+                }
+                this.terrain.get(row).add(column, block);
+                this.add(block, column, row);
+                if(c == 'P') { // special case: spawn point, add to list
+                    spawnPoints.add(new Point2D(column * BLOCK_SIZE, row * BLOCK_SIZE));
+                    if(renderSpawnPoints) block.setType('P'); // renders the spawn point
+                }
             }
         }
-        spawnPoints = new ArrayList</*Point2D*/>();
         setAlignment(Pos.TOP_LEFT);
         setGridLinesVisible(GRID_ENABLED);
-
-        String img;
-
-        for (int i = 0; i < terrain.size(); i++) {
-            for (int j = 0; j < terrain.get(i).size(); j++) {
-                char terraintype = terrain.get(i).get(j);
-                renderTerrainBlock(terraintype, j, i);
-                //terrainGrid.setConstraints(content,j,i);
-            }
-        }
-    }
-
-    public void renderTerrainBlock(char type, int column, int row) {
-        switch(type) {
-            case ' ':
-                add(new ImageView(SKY_IMAGE), column, row);
-                break;
-            case 'S':
-                add(new ImageView(STONES_IMAGE), column, row);
-                break;
-            case 'E':
-                add(new ImageView(EARTH_IMAGE), column, row);
-                break;
-            case 'I':
-                add(new ImageView(ICE_IMAGE), column, row);
-                break;
-            case '/':
-                add(new ImageView(SLANT_RI_IMAGE), column, row);
-                break;
-            case '\\':
-                add(new ImageView(SLANT_LE_IMAGE), column, row);
-                break;
-            case 'W':
-                add(new ImageView(WATER_IMAGE), column, row);
-                break;
-            case 'L':
-                add(new ImageView(LAVE_IMAGE), column, row);
-                break;
-            case 'P': // special case: spawn point, add to list and draw sky
-                spawnPoints.add(new Point2D(column * BLOCK_SIZE, row * BLOCK_SIZE));
-                terrain.get(row).set(column, ' ');
-                break;
-            case 'Q': // special case: spawn point to be shown in level editor
-                add(new ImageView(SPAWN_POINT), column, row);
-                break;
-            default:
-                add(new ImageView(SKY_IMAGE), column, row);
-        }
-
     }
 
     /**
-     * @return the 2-D-ArrayList representing the loaded terrain
+     * Gets a 2D ArrayList of characters which represents the currently loaded terrain [row][column], including any destruction.
+     * @return a 2D ArrayList representing the loaded terrain
      */
     public ArrayList<ArrayList<Character>> toArrayList() {
-        return terrain;
+        ArrayList<ArrayList<Character>> rows = new ArrayList<>();
+        for(ArrayList<TerrainBlock> row: terrain) {
+            ArrayList<Character> columns = new ArrayList<>();
+            for(TerrainBlock column: row) {
+                columns.add(column.getType());
+            }
+            rows.add(columns);
+        }
+        return rows;
     }
 
     /**
-     * get a spawn point and remove it from the list of available spawn points
-     *
+     * Get a spawn point and remove it from the list of available spawn points.
      * @return a random spawn point, or null if there are no more spawn points
+     * @see #getRandomSpawnPoints(int)
      */
     public Point2D getRandomSpawnPoint() {
         if (spawnPoints.isEmpty()) {
@@ -160,7 +153,8 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @param n
+     * Get up to n spawn points and remove them from the list of available spawn points.
+     * @param n number of spawn points to be returned (might be less)
      * @return n random spawn points
      * @see #getRandomSpawnPoint()
      */
@@ -174,54 +168,11 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @param hitRegion of a figure or whatever
-     * @param x         column of the field
-     * @param y         row of the field
-     * @return true, when hitRegion intersects with the field
-     */
-    private boolean intersects(Rectangle2D hitRegion, int x, int y) {
-        char c;
-        try {
-            c = terrain.get(y).get(x);
-        } catch (IndexOutOfBoundsException e) {
-            // this means we "collided" with the end of the terrain, pretend that it is stone
-            c = 'S';
-        }
-
-        switch (c) {
-            case ' ':
-                return false;
-            case '/':
-                Point2D p;
-                for (int i = 0; i < BLOCK_SIZE; i++) {
-                    int px = x * BLOCK_SIZE + i;
-                    int py = y * BLOCK_SIZE + BLOCK_SIZE - i;
-                    p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
-                        debugLog("diagonal / intersection at " + px + "x" + py + "px");
-                        return true;
-                    }
-                }
-                return false;
-            case '\\':
-                for(int i=0; i<BLOCK_SIZE; i++) {
-                    int px = x*BLOCK_SIZE+i;
-                    int py = y*BLOCK_SIZE+1+i;
-                    p = new Point2D(px, py);
-                    if(hitRegion.contains(p)) {
-                        debugLog("diagonal / intersection at " + px + "x" + py + "px");
-                        return true;
-                    }
-                }
-                return false;
-            default:
-                Rectangle2D rec = new Rectangle2D(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                return hitRegion.intersects(rec);
-        }
-    }
-
-    /**
      * creates new random wind
+     * <p>
+     * The maximum wind force depends on the settings chosen by the user. (TODO actually not) Lower wind forces are more
+     * probable.
+     * </p>
      */
     public void rewind() {
         double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
@@ -239,7 +190,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * Sets the wind to the given value
+     * Sets the wind to the given value.
      * @param wind wind speed in x direction
      */
     public void setWind(double wind) {
@@ -247,27 +198,36 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * prints message to stdout if DEBUG==true
+     * Prints a message to stdout if (@link DEBUG} is set to {@code true}.
      * @param msg the message to be printed
      */
-    private static void debugLog(String msg) {
+    static void debugLog(String msg) {
         if(DEBUG) System.out.println(msg);
     }
 
     /**
-     * adds direction to oldPosition, but assures that we do not walk/fly through terrain or other figures
-     * When canWalkAlongDiagonals is true, the movement continues at slopes in diagonal direction (used for figures);
-     * otherwise, the movement is stopped (used for projectiles)
+     * Use this function to calculate the final position of a collision-aware movement.
+     * <p>
+     * This function adds the given direction to the given old (ie. current) position, but assures that the object to be
+     * moved does not walk/fly through terrain or other figures. When {@code canWalkAlongDiagonals} is {@code true}, the
+     * movement continues at slopes in diagonal direction (used for figures); otherwise, the movement is stopped (used
+     * for projectiles).
+     * <p>
+     * example:<br>
+     * Figure f at {@code (0,4)} wants to go to {@code (2,4)}, it can walk up slopes, go through other figures, and the movement is
+     * influenced by the wind:<br>
+     * {@code getPositionForDirection(f.getPosition(), new Point2D(2,0), f.getCollisionArea(), true, true, true)}<br>
      *
-     * @param oldPosition           old position of the object
-     * @param direction             direction vector of the object
-     * @param hitRegion             a rectangle describing the area where the object can collide with terrain etc.
+     * @param oldPosition old position of the object
+     * @param direction direction vector of the object
+     * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
-     * @param canWalkThroughFigures when true, the object is able to walk through figures (no CollisionWithFigureException will be thrown) TODO therefore, have a wrapper function which does not throw this exception
-     * @param snapToPx when true, the positions returned are rounded to whole px
+     * @param canWalkThroughFigures when true, the object is able to walk through figures
+     * @param snapToPx when true, the position returned is rounded to whole px // TODO remove
      * @param influencedByWind if false, the wind is not considered when calculating the new position
      * @return new position of the object
      * @throws CollisionException thrown when hitting terrain or a figure
+     * @see CollisionException
      */
     public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
@@ -301,11 +261,16 @@ public class Terrain extends GridPane {
                 int minX = (int) Math.floor(hitRegion.getMinX() / BLOCK_SIZE);
                 int maxX = (int) Math.ceil(hitRegion.getMaxX() / BLOCK_SIZE);
 
-                for (int y = minY; y <= maxY && !triedDiagonal; y++) { // TODO recheck necessity of <=
-                    for (int x = minX; x <= maxX && !triedDiagonal; x++) {
-                        //debugLog(hitRegion + " " + terrain.get(y).get(x) + " field: " + rec);
-                        boolean intersects = intersects(hitRegion, x, y);
+                for (int y = minY; y < maxY && !triedDiagonal; y++) {
+                    for (int x = minX; x < maxX && !triedDiagonal; x++) {
+                        //debugLog(hitRegion + " " + terrain.get(y).get(x).getType() + " field: " + rec);
                         Figure intersectingFigure = null;
+                        boolean intersects = true;
+                        try {
+                            intersects = terrain.get(y).get(x).intersects(hitRegion);
+                        } catch (IndexOutOfBoundsException e) {
+                            debugLog("intersection at " + x + " " + y + " out of bounds");
+                        }
                         if (!canWalkThroughFigures && !intersects) {
                             for (Figure figure : figures) {
                                 if (hitRegion.intersects(figure.getHitRegion())) {
@@ -316,7 +281,7 @@ public class Terrain extends GridPane {
                         }
                         if (intersects) {
                             try {
-                                debugLog("intersection at " + x + " " + y + " with " + terrain.get(y).get(x));
+                                debugLog("intersection at " + x + " " + y + " with " + terrain.get(y).get(x).getType());
                                 if (intersectingFigure != null)
                                     debugLog("intersecting with " + intersectingFigure.getName() + " at " + intersectingFigure.getPosition());
                             } catch (IndexOutOfBoundsException e) {
@@ -358,8 +323,9 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @param position the position to be checked
-     * @param direction we do not apply wind to vertical movements near the ground (makes jumping easier)
+     * Determines whether a figure is in a windbreak, ie. is not influenced by wind.
+     * @param position the position (in px) to be checked
+     * @param direction if vertical, the function returns {@code true} (makes jumping easier)
      * @return true when the given position is not influenced by wind (ie. is right behind a piece of terrain)
      */
     private boolean isInWindbreak(Point2D position, Point2D direction) {
@@ -384,7 +350,7 @@ public class Terrain extends GridPane {
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 try {
-                    if (terrain.get(y).get(x) != ' ') {
+                    if (!terrain.get(y).get(x).isSky()) {
                         return true;
                     }
                 } catch (IndexOutOfBoundsException e) {
@@ -396,79 +362,62 @@ public class Terrain extends GridPane {
         debugLog("not covered");
         return false;
     }
-    /*gets Friction based on Block directly below the given Position*/
-    public double getFriction (Point2D pos){
-        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)+1).get((int)(pos.getX()/BLOCK_SIZE));
-        switch (block) {
-            case 's':
-                return SAND_FRICTION;
-            case 'I':
-                return ICE_FRICTION;
-            case 'E':
-                return EARTH_FRICTION;
-            default : return 1;
-        }
+
+    /**
+     * Gives the friction factor for the movement of the figure at the given position
+     * example situation:
+     * <pre>
+     * {@code
+     *   P
+     *
+     *  IIIII
+     * }
+     * </pre>
+     * calling {@code getFriction(P.getPosition())} will return a factor &lt; 1 (ie. figures are quicker on ice)
+     * @param pos position (in px) of an object
+     * @return friction based on the block directly below the given position; returns 1 if at bottom
+     */
+    public double getFriction(Point2D pos) {
+        int row = (int)((pos.getY()+Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE);
+        int column = (int)(pos.getX()/BLOCK_SIZE);
+        if(row >= terrain.size() || column > terrain.get(0).size()) return 1;
+        return terrain.get(row).get(column).getFriction();
     }
+
+    /**
+     * Adds the given figures to the list of {@link figures} used for collision control.
+     * @param figures the figures to be added
+     */
     public void addFigures(ArrayList<Figure> figures) {
         this.figures.addAll(figures);
     }
 
-    private double getResistance(int x, int y) {
-        char block = terrain.get(y).get(x);
-        switch (block) {
-            case ' ': return RESISTANCE_OF_SKY;
-            case 'W':
-            case 'L': return RESISTANCE_OF_FLUIDS;
-            case '/':
-            case '\\'://Slants are depending on blocks below
-                      if(terrain.size() > y + 1){ return getResistance(x,y + 1) * MODIFIER_FOR_SLANTS; }
-                      else{ return RESISTANCE_OF_SKY; } // Return an at least somewhat useful information
-            case 'S': return RESISTANCE_OF_STONE;
-            case 'E': return RESISTANCE_OF_EARTH;
-            case 'I': return RESISTANCE_OF_ICE;
-            case 'A': //ToDo change that
-                return RESISTANCE_OF_SNOW;
-            case 'B': //ToDo change that
-                return RESISTANCE_OF_SAND;
-            default: return RESISTANCE_OF_SKY;
-        }
-    }
-
-    public void replaceBlock(int blockX, int blockY, char replacement){
-        terrain.set(blockY,terrain.get(blockY)).set(blockX,replacement);
-        removeTerrainBlock(blockX, blockY);
-        renderTerrainBlock(replacement, blockX, blockY);
-    }
-
-    private void removeTerrainBlock(int column, int row) {
-        for (Node node: getChildren()) {
-            int currentRow = GridPane.getRowIndex(node);
-            if (currentRow == row) {
-                int currentColumn = GridPane.getColumnIndex(node);
-                if (currentColumn == column) {
-                    getChildren().removeAll(node);
-                    break;
-                }
-            }
-        }
+    /**
+     * Resets the type of the given block with the given type and re-renders this block
+     * @param blockX the x coordinate (in blocks) of the block to be changed
+     * @param blockY the x coordinate (in blocks) of the block to be changed
+     * @param replacement the new type of terrain
+     * @see TerrainBlock
+     */
+    public void replaceBlock(int blockX, int blockY, char replacement) {
+        terrain.get(blockY).get(blockX).setType(replacement);
     }
 
     /**
      * This function actually calculates the destroyed blocks recursively.
-     * First the Explosion expands to all directions depending on left explosionPower leaving out
+     * At first, the explosion expands to all directions depending on the explosion power left, leaving out
      * already destroyed blocks.
-     *
-     * @param commands ArrayList<String> of Commands to be executed on clients
+     * @param commands ArrayList of commands to be executed on clients // TODO @Kegny
      * @param blockX Used to move through terrain, which is a grid
      * @param blockY Used to move through terrain, which is a grid
      * @param explosionPower value to determine (int)if block (blockX,blockY) is destroyed
      */
     private void explode(ArrayList<String> commands, int blockX, int blockY, int explosionPower){
-        final char destroyed = '#';
-        char replacement = destroyed;
+        final char DESTROYED_TERRAIN = '#';
+        char replacement = DESTROYED_TERRAIN;
 
-        if (explosionPower > 0 && terrain.get(blockY).get(blockX) != '#') { //else abort recursion
-            double resistanceOfBlock = getResistance(blockX,blockY);
+        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN) { //else abort recursion
+            double resistanceOfBlock = terrain.get(blockY).get(blockX).getResistance();
 
             //Calc behaviour for current Block
             if (explosionPower >= resistanceOfBlock) { // Enough destructive force
@@ -490,30 +439,30 @@ public class Terrain extends GridPane {
                 // Add destruction of actual Block to commandlist
                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + replacement);// ' ' is impossible due to the Client/Server-MSG-System
 
-            } else {
-                resistanceOfBlock = getResistance(blockX,blockY); // Check if partially enough destructive Force
-                if(explosionPower > resistanceOfBlock * MODIFIER_FOR_SLANTS && resistanceOfBlock != RESISTANCE_OF_SKY){ // BUT do not create slants out of air
+            } else { // Check if partially enough destructive Force
+                if(explosionPower > resistanceOfBlock * TerrainBlock.MODIFIER_FOR_SLANTS && !terrain.get(blockY).get(blockX).isSky()){ // BUT do not create slants out of air
 
                     debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                     if(blockX > 0 && blockX < terrain.get(blockY).size()){
-                        if(terrain.get(blockY).get(blockX-1) != '#' && terrain.get(blockY).get(blockX-1) != ' '){
+                        if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
                         } else {
-                            if(terrain.get(blockY).get(blockX+1) != '#' && terrain.get(blockY).get(blockX+1) != ' '){
+                            if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
                                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                             }
                         }
                     }
                 }
             }
-        }//recursion
-    }//explode()
+        } // recursion
+    }
 
     /**
-     *
+     * // TODO @Kegny
      * @param impactPoint
      * @param explosionPower
+     * @return
      */
     public ArrayList<String> handleExplosion(Point2D impactPoint, int explosionPower) {
         // Get Block, which is center of explosion, from Point2D
@@ -527,16 +476,16 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @return a JSONObject containing the current state of the terrain
+     * This function is the inverse function of {@link #Terrain(de.hhu.propra.team61.io.json.JSONObject)}.
+     * @return a JSONObject representing the loaded level, containing the current state of the terrain (ie. including destruction)
      */
     public JSONObject toJson() {
         JSONObject save = new JSONObject();
         JSONArray jsonTerrain = new JSONArray();
-        //String[] arr;
-        for (int i = 0; i < terrain.size(); i++) {
+        for (ArrayList<TerrainBlock> row : terrain) {
             StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < terrain.get(i).size(); j++) { //forming a String from Array[i]
-                builder.append(terrain.get(i).get(j));
+            for (TerrainBlock block : row) { // forming a String from terrain[i]
+                builder.append(block.getType());
             }
             jsonTerrain.put(builder.toString());
         }
@@ -545,7 +494,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * destroys columns between the left or right side of the board and a given figure position (usually the boss)
+     * Destroys columns between the left or right side of the board and a given figure position (usually the boss).
      * @param position the position of the figure
      * @param fromLeft whether to start from the left (true) or right (false)
      * @param movedBy absolute value of x-position change in px since last call of this function
@@ -563,13 +512,13 @@ public class Terrain extends GridPane {
         int lastAlreadyDestroyedColumn = (fromLeft ? -1 : terrain.get(0).size());
 
         for (int col = colStart; col <= colEnd; col++) {
-            if(terrain.get(0).get(col) == '@') { // column already destroyed
+            if(terrain.get(0).get(col).getType() == '@') { // column already destroyed
                 if(fromLeft || lastAlreadyDestroyedColumn == terrain.get(0).size()) {
                     lastAlreadyDestroyedColumn = col;
                 }
             } else {
-                for (int row = 0; row < terrain.size(); row++) {
-                    terrain.get(row).set(col, '@'); // TODO special terrain type?
+                for (ArrayList<TerrainBlock> row : terrain) {
+                    row.get(col).setType('@'); // TODO special terrain type?
                 }
             }
         }
@@ -594,7 +543,7 @@ public class Terrain extends GridPane {
             SpriteAnimation riftAnimation = new SpriteAnimation(riftImageView, 500, 12, 1);
             final int col = i;
             Platform.runLater(() -> {
-              add(riftImageView, col, 0, 1, terrain.size()); // TODO not rendered, as it is removed by terrain reload; should work on top of master, though
+              add(riftImageView, col, 0, 1, terrain.size());
             });
             riftImageView.setFitHeight(terrain.size() * BLOCK_SIZE);
             riftAnimation.setDelay(new Duration((fromLeft ? colEnd - i : i - colStart) * 40 + 500));
@@ -603,13 +552,26 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @return the width of the terrain in px
+     * @return the width of the terrain in px, 0 if no terrain loaded
      */
     public int getTerrainWidth() {
         if(terrain == null || terrain.size() == 0) return 0;
         return terrain.get(0).size() * BLOCK_SIZE;
     }
 
+    /**
+     * @return the height of the terrain in px, 0 if no terrain loaded
+     */
+    public int getTerrainHeight() {
+        if(terrain == null) return 0;
+        return terrain.size() * BLOCK_SIZE;
+    }
+
+    /**
+     * Checks if the figure at the given position is standing on a liquid.
+     * @param position the position of the figure
+     * @return true if the figure at the given position is standing on a liquid
+     */
     public boolean standingOnLiquid(Point2D position) {
         final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
         final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
@@ -620,7 +582,7 @@ public class Terrain extends GridPane {
         }
 
         for(int x=minX; x < maxX && x < terrain.get(y).size(); x++) {
-            if(terrain.get(y).get(x).equals('L') || terrain.get(y).get(x).equals('W')) {
+            if(terrain.get(y).get(x).isLiquid()) {
                 return true;
             }
         }

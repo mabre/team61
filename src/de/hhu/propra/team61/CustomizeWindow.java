@@ -72,7 +72,7 @@ public class CustomizeWindow extends Application {
     Pane background = new Pane();
     CustomGrid selectionGrid = new CustomGrid();
     char chosenTerrainType;
-    private static int BLOCK_SIZE = 8;
+    private static int BLOCK_SIZE = 8; // TODO grab from Terrain?
     private static int MAP_HEIGHT = 60;
     private static int MAP_WIDTH = 130;
     private String keysEntered = "";
@@ -177,7 +177,7 @@ public class CustomizeWindow extends Application {
         newTeamGrid.add(figureChooser, 2, 7);
         Button saveTeam = new Button("Save");
         saveTeam.setOnAction(e -> {
-            CustomizeManager.save(teamToJson(), "teams/"+name.getText());
+            CustomizeManager.save(teamToJson(), "teams/" + name.getText());
             createEditGrid();
             root.setLeft(editGrid);
             root.getChildren().remove(weaponsGrid);
@@ -246,21 +246,14 @@ public class CustomizeWindow extends Application {
         fluidChooser.getItems().addAll("Water", "Lava");
         fluidChooser.getSelectionModel().selectFirst();
         newMapGrid.add(fluidChooser, 5, 0);
-        fluidChooser.valueProperty().addListener(new ChangeListener<String>() {
-            public void changed(ObservableValue ov, String value, String new_value) {
-                if (new_value.equals("Water")) {
-                    for (int i = 0; i <= 129; i++) {
-                        levelTerrain.replaceBlock(i, 59, 'W');
-                    }
-                } else {
-                    for (int i = 0; i <= 129; i++) {
-                        levelTerrain.replaceBlock(i, 59, 'L');
-                    }
+        fluidChooser.valueProperty().addListener((ov, value, new_value) -> {
+            if (new_value.equals("Water")) {
+            } else {
+                for (int i = 0; i <= 129; i++) { // TODO what are these numbers? Throws exception when replacing water with lava in small board; use Terrain.getLevelHeight/Width
+                    levelTerrain.replaceBlock(i, 59, 'W');
                 }
-                try {
-                    levelTerrain.load(TerrainManager.load(chosenMap));
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                for (int i = 0; i <= 129; i++) {
+                    levelTerrain.replaceBlock(i, 59, 'L');
                 }
             }
         });
@@ -366,7 +359,7 @@ public class CustomizeWindow extends Application {
         selectionGrid.add(eraser, 0, 11);
         Button spawnPoint = new Button("Spawn point");
         spawnPoint.setOnAction(e -> {
-            chosenTerrainType = 'Q';
+            chosenTerrainType = 'P';
         });
         mouseOverTerrain(spawnPoint, "Set a spawn point.");
         selectionGrid.add(spawnPoint, 0, 12);
@@ -524,7 +517,7 @@ public class CustomizeWindow extends Application {
 
     private void initializeLevelEditor() {
         try {
-            levelTerrain = new Terrain(TerrainManager.load(chosenMap));
+            levelTerrain = new Terrain(TerrainManager.load(chosenMap), true);
             scrollPane = new ScrollPane();
             scrollPane.setPrefSize(750, 560);
             scrollPane.setMaxHeight(560);
@@ -535,7 +528,7 @@ public class CustomizeWindow extends Application {
             anchorPane.getChildren().add(levelTerrain);
             scrollPane.setId("scrollPane");
             scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
-                            anchorPane.setPrefSize(Math.max(levelTerrain.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(levelTerrain.getBoundsInParent().getMaxY(), newBounds.getHeight()))
+                anchorPane.setPrefSize(Math.max(levelTerrain.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(levelTerrain.getBoundsInParent().getMaxY(), newBounds.getHeight()))
             );
             scrollPane.setContent(anchorPane);
             background.setStyle("-fx-background-image: url('" + "file:resources/levels/board.png" + "')");
@@ -545,25 +538,19 @@ public class CustomizeWindow extends Application {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        levelTerrain.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle (MouseEvent mouseEvent) {
-                int x = (int)mouseEvent.getX()/BLOCK_SIZE;
-                int y = (int)mouseEvent.getY()/BLOCK_SIZE;
-                //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing fluid
-                if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
-                    levelTerrain.replaceBlock(x, y, chosenTerrainType);
-                }
+        levelTerrain.setOnMouseClicked(mouseEvent -> {
+            int x = (int)mouseEvent.getX()/BLOCK_SIZE;
+            int y = (int)mouseEvent.getY()/BLOCK_SIZE;
+            //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing fluid
+            if (y < levelTerrain.getTerrainHeight()/BLOCK_SIZE && x < levelTerrain.getTerrainWidth()/BLOCK_SIZE && y >= 0 && x >= 0) {
+                levelTerrain.replaceBlock(x, y, chosenTerrainType);
             }
         });
-        levelTerrain.setOnMouseDragged(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                int x = (int) mouseEvent.getX() / BLOCK_SIZE;
-                int y = (int) mouseEvent.getY() / BLOCK_SIZE;
-                if (y < (MAP_HEIGHT-1) && x < MAP_WIDTH && y >= 0 && x >= 00) {
-                    levelTerrain.replaceBlock(x, y, chosenTerrainType);
-                }
+        levelTerrain.setOnMouseDragged(mouseEvent -> { // TODO code duplication, move to function
+            int x = (int) mouseEvent.getX() / BLOCK_SIZE;
+            int y = (int) mouseEvent.getY() / BLOCK_SIZE;
+            if (y < levelTerrain.getTerrainHeight()/BLOCK_SIZE && x < levelTerrain.getTerrainWidth()/BLOCK_SIZE && y >= 0 && x >= 0) {
+                levelTerrain.replaceBlock(x, y, chosenTerrainType);
             }
         });
     }
@@ -688,22 +675,11 @@ public class CustomizeWindow extends Application {
         return output;
     }
 
-    private JSONObject mapToJson() { // TODO code duplication
+    private JSONObject mapToJson() {
         JSONObject output = new JSONObject();
         output.put("background", imageChooser.getValue());
         output.put("music", musicChooser.getValue());
-        JSONArray jsonTerrain = new JSONArray();
-        terrain = levelTerrain.toArrayList();
-        for (int i = 0; i < terrain.size(); i++) {
-            StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < terrain.get(i).size(); j++) {
-                if (terrain.get(i).get(j) == 'Q') {
-                    terrain.get(i).set(j, 'P');
-                }
-                builder.append(terrain.get(i).get(j));
-            }
-            jsonTerrain.put(builder.toString());
-        }
+        JSONArray jsonTerrain = levelTerrain.toJson().getJSONArray("terrain");
         output.put("terrain", jsonTerrain);
         return output;
     }
@@ -740,8 +716,8 @@ public class CustomizeWindow extends Application {
             if (savedStyle.has("weapons")) {
                 JSONArray weapons = savedStyle.getJSONArray("weapons");
                 for (int i=0; i<weaponNames.size(); i++) {
-                    weaponSliders.get(i).setValue(weapons.getJSONObject(i).getInt("weapon"+(i+1)));
-                    weaponCheckBoxes.get(i).setSelected(weapons.getJSONObject(i).getInt("weapon"+(i+1))>0);
+                    weaponSliders.get(i).setValue(weapons.getJSONObject(i).getInt("weapon" + (i + 1)));
+                    weaponCheckBoxes.get(i).setSelected(weapons.getJSONObject(i).getInt("weapon" + (i + 1))>0);
                 }
             }
         }

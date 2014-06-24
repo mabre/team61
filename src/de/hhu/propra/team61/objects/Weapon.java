@@ -18,9 +18,9 @@ import java.util.ArrayList;
  * - shooting
  * - transmission of all the attributes by carrying them on a projectile
  * - OFFERS a default handleCollision(), which might prove suitable for most weapontypes
- *   -> coordination of Figure.sufferDamage();
- *   -> Sending Figures flying // ToDo implement this
- *   -> coordination of terraindestruction
+ *   -&gt; coordination of Figure.sufferDamage();
+ *   -&gt; Sending Figures flying // ToDo implement this
+ *   -&gt; coordination of terraindestruction
  *
  *  Deriving classes:
  * - Have and set up nearly all attributes
