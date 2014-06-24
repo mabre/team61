@@ -41,14 +41,24 @@ public class Terrain extends GridPane {
     private final static double MAX_WIND_SPEED_HARD = Figure.WALK_SPEED*1.2;
 
     /**
+     * Creates a new terrain from the given JSONObject
      * @param terrain 2-D-ArrayList containing the terrain to be displayed
      */
     public Terrain(JSONObject terrain) {
-        load(terrain);
+        this(terrain, false);
+    }
+
+    /**
+     * Creates a new terrain from the given JSONObject
+     * @param terrain 2-D-ArrayList containing the terrain to be displayed
+     * @param renderSpawnPoints if true, the spawn points are rendered (used by level editor)
+     */
+    public Terrain(JSONObject terrain, boolean renderSpawnPoints) {
+        load(terrain, renderSpawnPoints);
         figures = new ArrayList<>();
     }
 
-    public void load(JSONObject terrainObject) {
+    private void load(JSONObject terrainObject, boolean renderSpawnPoints) {
         getChildren().clear();
         JSONArray terrainAsJSON = terrainObject.getJSONArray("terrain");
         this.terrain = new ArrayList<>();
@@ -58,9 +68,6 @@ public class Terrain extends GridPane {
             final int length = terrainAsJSON.getString(row).length();
             for (int column = 0; column < length; column++) {
                 char c = terrainAsJSON.getString(row).charAt(column);
-                if(c == 'P') { // special case: spawn point, add to list
-                    spawnPoints.add(new Point2D(column * BLOCK_SIZE, row * BLOCK_SIZE));
-                }
                 TerrainBlock block = new TerrainBlock(c, column, row);
                 if(row != 0) {
                     block.setTopNeighbour(terrain.get(row-1).get(column));
@@ -72,6 +79,10 @@ public class Terrain extends GridPane {
                 }
                 this.terrain.get(row).add(column, block);
                 this.add(block, column, row);
+                if(c == 'P') { // special case: spawn point, add to list
+                    spawnPoints.add(new Point2D(column * BLOCK_SIZE, row * BLOCK_SIZE));
+                    if(renderSpawnPoints) block.setType('P'); // renders the spawn point
+                }
             }
         }
         setAlignment(Pos.TOP_LEFT);
@@ -305,12 +316,19 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @param pos position of an object
-     * @return friction based on the block directly below the given position
+     * Gives the friction factor for the movement of the figure at the given position
+     * example situation:
+     *   P
+     *
+     *  IIIII
+     * calling getFriction(P.getPosition()) will return a factor < 1 (ie. figures are quicker on ice)
+     * @param pos position (in px) of an object
+     * @return friction based on the block directly below the given position; returns 1 if at bottom
      */
-    public double getFriction (Point2D pos) {
-        int row = (int)(pos.getY()/BLOCK_SIZE)+1;
+    public double getFriction(Point2D pos) {
+        int row = (int)((pos.getY()+Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE);
         int column = (int)(pos.getX()/BLOCK_SIZE);
+        if(row > terrain.size() || column > terrain.get(0).size()) return 1;
         return terrain.get(row).get(column).getFriction();
     }
 
@@ -470,11 +488,19 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * @return the width of the terrain in px
+     * @return the width of the terrain in px, 0 if no terrain loaded
      */
     public int getTerrainWidth() {
         if(terrain == null || terrain.size() == 0) return 0;
         return terrain.get(0).size() * BLOCK_SIZE;
+    }
+
+    /**
+     * @return the height of the terrain in px, 0 if no terrain loaded
+     */
+    public int getTerrainHeight() {
+        if(terrain == null) return 0;
+        return terrain.size() * BLOCK_SIZE;
     }
 
     public boolean standingOnLiquid(Point2D position) {
