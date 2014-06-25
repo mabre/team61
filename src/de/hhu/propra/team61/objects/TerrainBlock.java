@@ -47,6 +47,8 @@ public class TerrainBlock extends ImageView {
     private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
     /** image looking like water */
     private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
+    /** image looking like water with transparent region at the top */
+    private final static Image WATER_TOP_IMAGE = new Image(imgPath + "water_top.png");
     /** image indicating a spawn point */
     private final static Image SPAWN_POINT = new Image(imgPath + "spawn.png");
 
@@ -57,7 +59,7 @@ public class TerrainBlock extends ImageView {
     private final static double RESISTANCE_OF_LIQUIDS = 99999999;
     //Blocks
     /** damage resistance of earth */
-    private final static double RESISTANCE_OF_EARTH = 25;
+    private final static double RESISTANCE_OF_EARTH = 25; // TODO drop OF_ ?
     /** damage resistance of sand */
     private final static double RESISTANCE_OF_SAND = 20;
     /** damage resistance of snow */
@@ -71,11 +73,16 @@ public class TerrainBlock extends ImageView {
     final static double MODIFIER_FOR_SLANTS = 0.30;
 
     /** friction factor for ice */
-    private final static double ICE_FRICTION = 2;
+    private final static double ICE_FRICTION = 2; // TODO rename to FRICTION_ICE
     /** friction factor for earth */
     private final static double EARTH_FRICTION = 1;
     /** friction factor for sand */ // TODO higher value = less friction?
     private final static double SAND_FRICTION = 0.5;
+    /** friction factor for liquids */
+    private final static double LIQUID_FRICTION = 0.5;
+
+    /** distance in px by which a figure sinks into a liquid */
+    private final static int LIQUID_SINK_DISTANCE = Terrain.BLOCK_SIZE/2;
 
     /** terrain type of this block */
     private char type;
@@ -116,6 +123,7 @@ public class TerrainBlock extends ImageView {
      */
     public void setLeftNeighbour(TerrainBlock block) {
         neighbours.left = block;
+        drawImage();
     }
 
     /**
@@ -124,6 +132,10 @@ public class TerrainBlock extends ImageView {
      */
     public void setTopNeighbour(TerrainBlock block) {
         neighbours.top = block;
+        drawImage();
+        if(type == 'W') {
+            System.out.println();
+        }
     }
 
     /**
@@ -132,6 +144,7 @@ public class TerrainBlock extends ImageView {
      */
     public void setRightNeighbour(TerrainBlock block) {
         neighbours.right = block;
+        drawImage();
     }
 
     /**
@@ -140,12 +153,13 @@ public class TerrainBlock extends ImageView {
      */
     public void setBottomNeighbour(TerrainBlock block) {
         neighbours.bottom = block;
+        drawImage();
     }
 
     /**
-     * loads and draws the image fitting to the type of this terrain block
+     * Draws the image fitting to the type of this terrain block. The look might be influenced by the surrounding blocks.
      */
-    private void drawImage() {
+    public void drawImage() {
         switch(type) {
             case ' ':
                 this.setImage(SKY_IMAGE);
@@ -166,7 +180,11 @@ public class TerrainBlock extends ImageView {
                 this.setImage(SLANT_LE_IMAGE);
                 break;
             case 'W':
-                this.setImage(WATER_IMAGE);
+                if(neighbours.top == null || neighbours.top.isSky()) {
+                    this.setImage(WATER_TOP_IMAGE);
+                } else {
+                    this.setImage(WATER_IMAGE);
+                }
                 break;
             case 'L':
                 this.setImage(LAVE_IMAGE);
@@ -235,6 +253,9 @@ public class TerrainBlock extends ImageView {
                     }
                 }
                 return false;
+            case 'W':
+            case 'L':
+                return collisionArea.intersects(x * Terrain.BLOCK_SIZE, y * Terrain.BLOCK_SIZE + LIQUID_SINK_DISTANCE, Terrain.BLOCK_SIZE, Terrain.BLOCK_SIZE - LIQUID_SINK_DISTANCE);
             default:
                 return collisionArea.intersects(x * Terrain.BLOCK_SIZE, y * Terrain.BLOCK_SIZE, Terrain.BLOCK_SIZE, Terrain.BLOCK_SIZE);
         }
@@ -282,6 +303,9 @@ public class TerrainBlock extends ImageView {
                 return ICE_FRICTION;
             case 'E':
                 return EARTH_FRICTION;
+            case 'W':
+            case 'L':
+                return LIQUID_FRICTION;
             default : return 1;
         }
     }

@@ -223,7 +223,7 @@ public class Terrain extends GridPane {
      * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
      * @param canWalkThroughFigures when true, the object is able to walk through figures
-     * @param snapToPx when true, the position returned is rounded to whole px // TODO remove
+     * @param snapToPx when true, the position returned is rounded to whole px (needed by figures to really land on ground)
      * @param influencedByWind if false, the wind is not considered when calculating the new position
      * @return new position of the object
      * @throws CollisionException thrown when hitting terrain or a figure

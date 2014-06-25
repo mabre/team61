@@ -898,6 +898,10 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
                 break;
+            case "1up+": // 1000 live for first figure of first team
+                teams.get(0).getFigures().get(0).setHealth(1000);
+                System.out.println("Ate too much spinach.");
+                break;
             case "dedigitate": // calls undoDigitations() method
                 undoDigitations();
                 System.out.println("Returning to Baby I");
