@@ -81,8 +81,13 @@ public class GameSettings extends Application {
         });
         Text error = new Text();
         settingGrid.add(error, 0, 17, 5, 1);
+        Button edit = new Button("Edit settings");
+        edit.setOnAction(e -> {
+            CustomizeWindow customizeWindow = new CustomizeWindow(sceneController);
+        });
+        settingGrid.add(edit, 0, 16);
         Button cont = new Button("Continue");
-        settingGrid.add(cont, 0, 16);
+        settingGrid.add(cont, 1, 16);
         cont.setOnAction(e -> {
                 boolean differentColors = true;                     //Check if two players with same team or with same color
                 boolean differentTeams = true;
@@ -124,7 +129,7 @@ public class GameSettings extends Application {
                 }
         });
         Button back = new Button("Back");
-        settingGrid.add(back, 1, 16);
+        settingGrid.add(back, 2, 16);
         back.setOnAction(e -> {
             sceneController.switchToMenue();
         });

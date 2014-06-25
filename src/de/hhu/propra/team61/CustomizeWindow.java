@@ -14,6 +14,7 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -31,7 +32,6 @@ import javafx.stage.Stage;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -53,9 +53,9 @@ public class CustomizeWindow extends Application {
     BorderPane newMapPane = new BorderPane();
     CustomGrid newMapGrid = new CustomGrid();
     ArrayList<TextField> figureNames = new ArrayList<>();
-    ArrayList<String> weaponNames = new ArrayList<>();
-    ArrayList<CheckBox> weaponCheckBoxes = new ArrayList<>();
-    ArrayList<Slider> weaponSliders = new ArrayList<>();
+    ArrayList<String> itemNames = new ArrayList<>();
+    ArrayList<CheckBox> itemCheckBoxes = new ArrayList<>();
+    ArrayList<Slider> itemSliders = new ArrayList<>();
     TextField name = new TextField("player");
     ColorPicker color = new ColorPicker(Color.web("#FF00FF"));
     ChoiceBox<String> figureChooser = new ChoiceBox<>();
@@ -64,14 +64,15 @@ public class CustomizeWindow extends Application {
     ChoiceBox<String> mapChooser = new ChoiceBox<>();
     ChoiceBox<String> musicChooser = new ChoiceBox<>();
     ChoiceBox<String> imageChooser = new ChoiceBox<>();
-    ChoiceBox<String> fluidChooser = new ChoiceBox<>();
+    ChoiceBox<String> liquidChooser = new ChoiceBox<>();
     ScrollPane scrollPane;
-    AnchorPane anchorPane = new AnchorPane();
+    AnchorPane anchorPane;
     Terrain levelTerrain;
     StackPane levelPane;
     Pane background = new Pane();
     CustomGrid selectionGrid = new CustomGrid();
-    char chosenTerrainType;
+    private char chosenTerrainType = 'S';
+    private int chosenBrushWidth = 3;
     private static int BLOCK_SIZE = 8; // TODO grab from Terrain?
     private static int MAP_HEIGHT = 60;
     private static int MAP_WIDTH = 130;
@@ -85,6 +86,7 @@ public class CustomizeWindow extends Application {
     String chosenMap = new String("editor/basic.lvl");
     ArrayList<ArrayList<Character>> terrain = new ArrayList<>();
     TextField mapNameField = new TextField("Custom map");
+    Slider brushWidth = new Slider(1, 7, 3);
 
     public CustomizeWindow(SceneController sceneController) {
         this.sceneController = sceneController;
@@ -212,18 +214,19 @@ public class CustomizeWindow extends Application {
             root.getChildren().remove(weaponsGrid);
         });
         newGameStyleGrid.add(saveGameStyle, 0, 10);
-        Button changeWeapons = new Button("Change weapons");
-        newGameStyleGrid.add(changeWeapons, 0, 5);
-        changeWeapons.setOnAction(e -> {
+        Button changeItems = new Button("Change items");
+        newGameStyleGrid.add(changeItems, 0, 5);
+        changeItems.setOnAction(e -> {
             root.setRight(weaponsGrid);
         });
-        Text howToChangeWeapons = new Text("Add/remove/edit a certain weapon.");
-        newGameStyleGrid.add(howToChangeWeapons, 1, 5, 2, 1);
-        Label weapons = new Label("Weapons");
-        weapons.setFont(Font.font("Verdana", 20));
-        weaponsGrid.add(weapons, 0, 2);
-        Text enter = new Text ("Enter the quantity of projectiles for each weapon.");
-        weaponsGrid.add(enter, 0, 3, 3, 1);
+        Text whatIsChangeItems = new Text("Add/remove/edit weapons or other items.");
+        newGameStyleGrid.add(whatIsChangeItems, 1, 5, 2, 1);
+        Label items = new Label("Items");
+        items.setFont(Font.font("Verdana", 20));
+        weaponsGrid.add(items, 0, 2);
+        Text enter = new Text ("Enter the quantity of each item.\n " +
+                "(number of projectiles for weapons)");
+        weaponsGrid.add(enter, 0, 3, 2, 2);
     }
 
     private void createMap() {
@@ -241,19 +244,19 @@ public class CustomizeWindow extends Application {
                 background.setStyle("-fx-background-image: url('" + "file:resources/levels/"+new_value + "')");
             }
         });
-        Text fluid = new Text("Fluid:");
-        newMapGrid.add(fluid, 4, 0);
-        fluidChooser.getItems().addAll("Water", "Lava");
-        fluidChooser.getSelectionModel().selectFirst();
-        newMapGrid.add(fluidChooser, 5, 0);
-        fluidChooser.valueProperty().addListener((ov, value, new_value) -> {
+        Text liquid = new Text("Liquid:");
+        newMapGrid.add(liquid, 4, 0);
+        liquidChooser.getItems().addAll("Water", "Lava");
+        liquidChooser.getSelectionModel().selectFirst();
+        newMapGrid.add(liquidChooser, 5, 0);
+        liquidChooser.valueProperty().addListener((ov, value, new_value) -> {
             if (new_value.equals("Water")) {
             } else {
-                for (int i = 0; i <= 129; i++) { // TODO what are these numbers? Throws exception when replacing water with lava in small board; use Terrain.getLevelHeight/Width
-                    levelTerrain.replaceBlock(i, 59, 'W');
+                for (int i = 0; i < levelTerrain.getTerrainWidth()/BLOCK_SIZE; i++) {
+                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/BLOCK_SIZE-1, 'W');
                 }
-                for (int i = 0; i <= 129; i++) {
-                    levelTerrain.replaceBlock(i, 59, 'L');
+                for (int i = 0; i < levelTerrain.getTerrainWidth()/BLOCK_SIZE; i++) {
+                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/BLOCK_SIZE-1, 'L');
                 }
             }
         });
@@ -378,9 +381,22 @@ public class CustomizeWindow extends Application {
         });
         mouseOverTerrain(save, "Save the map.");
         selectionGrid.add(save, 0, 14);
-        chosenTerrainType = 'S';
+        Text brush = new Text("Brush width: ");
+        selectionGrid.add(brush, 1, 0);
+        brushWidth.setOrientation(Orientation.VERTICAL);
+        brushWidth.setShowTickLabels(true);
+        brushWidth.setShowTickMarks(true);
+        brushWidth.setMinorTickCount(0);
+        brushWidth.setMajorTickUnit(2);
+        brushWidth.setSnapToTicks(true);
+        brushWidth.valueProperty().addListener(new ChangeListener<Number>() {
+            public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
+                chosenBrushWidth = new_val.intValue();
+                System.out.println(chosenBrushWidth);
+            }
+        });
+        selectionGrid.add(brushWidth, 1, 1, 1, 4);
         newMapPane.setRight(selectionGrid);
-        ToolTipManager.sharedInstance().setInitialDelay(0);
     }
 
     private void startCheat() {
@@ -523,6 +539,7 @@ public class CustomizeWindow extends Application {
             scrollPane.setMaxHeight(560);
 
             //anchor the editor to the bottom left corner (ScrollPane cannot do that)
+            anchorPane = new AnchorPane();
             AnchorPane.setBottomAnchor(levelTerrain, 0.0);
             AnchorPane.setLeftAnchor(levelTerrain, 0.0);
             anchorPane.getChildren().add(levelTerrain);
@@ -538,21 +555,37 @@ public class CustomizeWindow extends Application {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        levelTerrain.setOnMouseClicked(mouseEvent -> {
-            int x = (int)mouseEvent.getX()/BLOCK_SIZE;
-            int y = (int)mouseEvent.getY()/BLOCK_SIZE;
-            //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing fluid
-            if (y < levelTerrain.getTerrainHeight()/BLOCK_SIZE && x < levelTerrain.getTerrainWidth()/BLOCK_SIZE && y >= 0 && x >= 0) {
-                levelTerrain.replaceBlock(x, y, chosenTerrainType);
+        levelTerrain.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                draw(mouseEvent);
             }
         });
-        levelTerrain.setOnMouseDragged(mouseEvent -> { // TODO code duplication, move to function
-            int x = (int) mouseEvent.getX() / BLOCK_SIZE;
-            int y = (int) mouseEvent.getY() / BLOCK_SIZE;
-            if (y < levelTerrain.getTerrainHeight()/BLOCK_SIZE && x < levelTerrain.getTerrainWidth()/BLOCK_SIZE && y >= 0 && x >= 0) {
-                levelTerrain.replaceBlock(x, y, chosenTerrainType);
+        levelTerrain.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                draw(mouseEvent);
             }
         });
+    }
+
+    private void draw(MouseEvent mouseEvent) {
+        int x = (int)mouseEvent.getX()/BLOCK_SIZE;
+        int y = (int)mouseEvent.getY()/BLOCK_SIZE;
+        //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing liquid
+        if (chosenTerrainType != 'P') {
+            for (int i = x - (chosenBrushWidth / 2); i <= x + (chosenBrushWidth / 2); i++) {
+                for (int j = y - (chosenBrushWidth / 2); j <= y + (chosenBrushWidth / 2); j++) {
+                    if (j < (levelTerrain.getTerrainHeight() - 1) / BLOCK_SIZE && i < levelTerrain.getTerrainWidth() / BLOCK_SIZE && j >= 0 && i >= 0) {
+                        levelTerrain.replaceBlock(i, j, chosenTerrainType);
+                    }
+                }
+            }
+        } else {
+            if (y < (levelTerrain.getTerrainHeight() - 1) / BLOCK_SIZE && x < levelTerrain.getTerrainWidth() / BLOCK_SIZE && y >= 0 && x >= 0) {
+                levelTerrain.replaceBlock(x, y, chosenTerrainType);
+            }
+        }
     }
 
     private void editTeam(String teamName) {
@@ -638,7 +671,6 @@ public class CustomizeWindow extends Application {
         }
     }
 
-
     private void deleteFile(String fileName) {
         File file = new File("resources/"+fileName);
         if (file.delete()){
@@ -667,8 +699,8 @@ public class CustomizeWindow extends Application {
         output.put("team-size", sizeField.getText());
         output.put("map", mapChooser.getValue());
         JSONArray inventory = new JSONArray();
-        for (int i=0; i<weaponNames.size(); i++) {
-            inventory.put((int)weaponSliders.get(i).getValue());
+        for (int i=0; i< itemNames.size(); i++) {
+            inventory.put((int) itemSliders.get(i).getValue());
         }
         output.put("inventory", inventory);
         return output;
@@ -712,11 +744,11 @@ public class CustomizeWindow extends Application {
             if (savedStyle.has("map")) {
                 mapChooser.setValue(savedStyle.getString("map"));
             }
-            if (savedStyle.has("weapons")) {
-                JSONArray weapons = savedStyle.getJSONArray("inventory");
-                for (int i=0; i<weaponNames.size(); i++) {
-                    weaponSliders.get(i).setValue(weapons.getInt(i));
-                    weaponCheckBoxes.get(i).setSelected(weapons.getInt(i)>0);
+            if (savedStyle.has("inventory")) {
+                JSONArray inventory = savedStyle.getJSONArray("inventory");
+                for (int i=0; i< itemNames.size(); i++) {
+                    itemSliders.get(i).setValue(inventory.getInt(i));
+                    itemCheckBoxes.get(i).setSelected(inventory.getInt(i)>0);
                 }
             }
         }
@@ -727,31 +759,35 @@ public class CustomizeWindow extends Application {
             figureNames.add(new TextField("Character" + (i+1)));
             newTeamGrid.add(figureNames.get(i), 0, i+3);
         }
-        weaponNames.add("Bazooka");
-        weaponNames.add("Grenade");
-        weaponNames.add("Pistol");
-        weaponNames.add("Poisoned arrow");
-        for (int i=0; i<weaponNames.size(); i++) {
-            weaponCheckBoxes.add(new CheckBox(weaponNames.get(i)));
-            weaponCheckBoxes.get(i).setSelected(true);
+        itemNames.add("Bazooka");
+        itemNames.add("Grenade");
+        itemNames.add("Pistol");
+        itemNames.add("Poisoned arrow");
+        itemNames.add("Medipack");
+        itemNames.add("Rifle");
+        itemNames.add("Banana-Bomb");
+        for (int i=0; i< itemNames.size(); i++) {
+            itemCheckBoxes.add(new CheckBox(itemNames.get(i)));
+            itemCheckBoxes.get(i).setSelected(true);
             final int finalI = i;
-            weaponCheckBoxes.get(i).selectedProperty().addListener(new ChangeListener<Boolean>() {
+            itemCheckBoxes.get(i).selectedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                     if (!newValue) {
-                        weaponSliders.get(finalI).setValue(0);
+                        itemSliders.get(finalI).setValue(0);
                     } else {
-                        weaponSliders.get(finalI).setValue(50);
+                        itemSliders.get(finalI).setValue(50);
                     }
                 }
             });
-            weaponsGrid.add(weaponCheckBoxes.get(i), 0, i + 5);
+            weaponsGrid.add(itemCheckBoxes.get(i), 0, i + 6);
         }
-        for (int i=0; i<weaponNames.size(); i++) {
-            weaponSliders.add(new Slider(0, 100, 50));
-            weaponSliders.get(i).setShowTickMarks(true);
-            weaponSliders.get(i).setShowTickLabels(true);
-            weaponsGrid.add(weaponSliders.get(i), 1, i+5);
+        for (int i=0; i<itemNames.size(); i++) {
+            itemSliders.add(new Slider(0, 100, 50));
+            itemSliders.get(i).setShowTickMarks(true);
+            itemSliders.get(i).setShowTickLabels(true);
+            itemSliders.get(i).setBlockIncrement(50);
+            weaponsGrid.add(itemSliders.get(i), 1, i+6, 3, 1);
         }
     }
 
@@ -764,9 +800,9 @@ public class CustomizeWindow extends Application {
         styleNameField.setText("Custom");
         sizeField.setText("4");
         mapChooser.getSelectionModel().selectFirst();
-        for (int i=0; i<weaponNames.size(); i++) {
-            weaponCheckBoxes.get(i).setSelected(true);
-            weaponSliders.get(i).setValue(50);
+        for (int i=0; i< itemNames.size(); i++) {
+            itemCheckBoxes.get(i).setSelected(true);
+            itemSliders.get(i).setValue(50);
         }
         mapNameField.setText("Custom map");
     }

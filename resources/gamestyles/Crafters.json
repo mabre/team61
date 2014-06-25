@@ -1,1 +1,1 @@
-{"team-size":"4","name":"Crafters","map":"Cave.lvl","weapons":[{"weapon1":50},{"weapon2":100},{"weapon3":50},{"weapon4":0}]}
+{"team-size":"4","name":"Crafters","inventory":[50,50,50,50,2,50,10],"map":"Cave.lvl"}
