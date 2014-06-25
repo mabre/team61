@@ -35,7 +35,8 @@ public class TerrainManager {
      * @return an ArrayList containing the board ([row][column])
      * How a valid board looks like is documented in BoardLegend
      */
-    public static /*ArrayList<ArrayList<Character>>*/ JSONObject load(String filename) throws FileNotFoundException {
+    public static JSONObject load(String filename) throws FileNotFoundException {
+        System.out.println("Loading level " + filename);
         //String dir = LEVEL_DIR;
         //if(filename.equals(SAVE_LEVEL_FILE)) dir = ""; //TODO Still necessary?
         return Json.getFromFile(LEVEL_DIR + filename);
@@ -45,9 +46,11 @@ public class TerrainManager {
      * @param levelnumber the index of the level in the JSONObject  returned by {@link #getAvailableTerrains() getAvailableTerrains}
      * @return an JSONObject containing the board ([row][column])
      */
-    public static JSONObject/*ArrayList<ArrayList<Character>>*/ load(int levelnumber) throws FileNotFoundException {
+    public static JSONObject load(int levelnumber) throws FileNotFoundException {
+        System.out.println("Loading level " + levelnumber);
         return load(getAvailableTerrains().get(levelnumber));
     }
+
     // TODO move to unit tests
     public static void main(String[] args) {
         try {

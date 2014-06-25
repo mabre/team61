@@ -14,12 +14,21 @@ public class CustomizeManager {
 
     private static final String CUSTOMIZE_DIR = "resources/";
     private static final String JSON_FILE_EXTENSION = ".json";
+    private static final String LVL_FILE_EXTENSION = ".lvl";
 
     /**
      * @param json is saved to CUSTOMIZE_DIR + wanted name + JSON_FILE_EXTENSION
      */
     public static void save(JSONObject json, String file) {
-        Json.save(json, CUSTOMIZE_DIR+file+ JSON_FILE_EXTENSION);
+        Json.save(json, CUSTOMIZE_DIR+file+JSON_FILE_EXTENSION);
+    }
+
+    public static void saveMap(JSONObject json, String file) {
+        if (file.endsWith(".lvl")) {
+            Json.save(json, CUSTOMIZE_DIR+file);
+        } else {
+            Json.save(json, CUSTOMIZE_DIR + file + LVL_FILE_EXTENSION);
+        }
     }
 
     /**

@@ -44,6 +44,11 @@ public abstract class Item extends StackPane{
     public String getName() {
         return name;
     }
+
+    public String getDescription() {
+        return description;
+    }
+
     public int getMunition() {
         return munition;
     }

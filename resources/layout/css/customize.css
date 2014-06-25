@@ -11,3 +11,15 @@
     -fx-background-insets: 50;
     -fx-text-fill: #cc0100;
 }
+
+#scrollPane  > .viewport {
+   -fx-background-color: transparent;
+}
+
+#scrollPane {
+   -fx-background-color: transparent;
+}
+
+#background {
+    -fx-background-image: url("file:resources/levels/board.png");
+}

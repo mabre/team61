@@ -17,7 +17,7 @@ import java.util.ArrayList;
 public class ItemManager {
     public final static String[] itemlist = {"Bazooka","Grenade","Shotgun","PoisonedArrow","Medipack","Rifle","Digivise",
                                              "Bananabomb"};
-    public final static int numberOfItems = itemlist.length;
+    public final static int numberOfItems = itemlist.length-1;
 
     /**
      * @param inventory JSONArray OF INT being the munition value; Weapontype defined by position in Array
