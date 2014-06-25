@@ -755,7 +755,9 @@ public class MapWindow extends Application implements Networkable {
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
             case "SUDDEN_DEATH":
-                teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+                int teamToKill = Integer.parseInt(cmd[1]);
+                teams.get(teamToKill).suddenDeath();
+                if(teamToKill == currentTeam) endTurn();
                 break;
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
@@ -770,15 +772,24 @@ public class MapWindow extends Application implements Networkable {
 
     @Override
     public void handleOnServer(String command) {
-        if (command.startsWith("/kickteam ")) {// TODO support team name
+        if (command.startsWith("/kickteam ")) {
+            String teamToKick = extractPart(command, "/kickteam ");
             try {
-                int teamNumber = Integer.parseInt(extractPart(command, "/kickteam "))-1;
+                int teamNumber = Integer.parseInt(teamToKick)-1; // user starts counting from 1, we count from 0
                 if(teamNumber >= teams.size()) throw new IndexOutOfBoundsException();
                 server.send("SUDDEN_DEATH " + teamNumber);
                 if(currentTeam == teamNumber) {
                     endTurn();
                 }
-            } catch(NumberFormatException | IndexOutOfBoundsException e) {
+            } catch(NumberFormatException e) {
+                // no team number given, try team name
+                for (int i = 0; i < teams.size(); i++) {
+                    if (teams.get(i).getName().equals(teamToKick)) {
+                        server.send("SUDDEN_DEATH " + i);
+                        break;
+                    }
+                }
+            } catch(IndexOutOfBoundsException e) {
                     System.out.println("malformed command " + command);
             }
             return;
