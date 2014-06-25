@@ -100,7 +100,7 @@ public class Client implements Runnable {
             while (true) {
                 String line = in.readLine();
                 if(line == null) {
-                    System.out.println("CLIENT RECEIVED NULL!?");
+                    System.err.println("CLIENT RECEIVED NULL!?");
                     return;
                 }
                 System.out.println("CLIENT RECEIVED: " + line);
@@ -117,11 +117,11 @@ public class Client implements Runnable {
                 } else {
                     // use runLater; otherwise, an exception will be thrown:
                     // Exception in thread "Thread-4" java.lang.IllegalStateException: Not on FX application thread; currentThread = Thread-4
-                    Platform.runLater(() -> currentNetworkable.handleOnClient(extractPart(line, "COMMAND ")));
+                    Platform.runLater(() -> currentNetworkable.handleOnClient(line));
                 }
             }
         } catch (SocketException e) {
-            System.out.println("CLIENT readLine() interrupted by SocketException: " + e.getMessage());
+            System.err.println("CLIENT readLine() interrupted by SocketException: " + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }
