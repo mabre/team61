@@ -108,10 +108,10 @@ public class Server implements Runnable {
      */
     public static void sendCommand(String command) {
         synchronized (clients) {
-            for (int i=0; i< clients.size(); i++) {
+            for (ClientConnection client : clients) {
                 String message = "COMMAND " + command; // TODO necessary?
-                clients.get(i).out.println(message);
-                System.out.println("SERVER sent command to " + clients.get(i).id+"/"+ clients.get(i).name + ": " + message);
+                client.out.println(message);
+                System.out.println("SERVER sent command to " + client.id + "/" + client.name + ": " + message);
             }
         }
     }
@@ -324,6 +324,7 @@ public class Server implements Runnable {
 
     /**
      * This class represents a connected client and holds the input/output reader/writers.
+     * Each connection has a unique id and player name. Each player (unless it is spectator) is associated with a team.
      */
     private static class ClientConnection implements AutoCloseable {
         /** reader which receives the messages of the associated client */
@@ -396,8 +397,8 @@ public class Server implements Runnable {
         }
 
         /**
-         * processes messages received from the client, and passes commands to {Networkable#handleKeyEventOnServer} of
-         * {#currentNetworkable}, if necessary.
+         * Processes messages received from the client, and passes commands to {Networkable#handleKeyEventOnServer} of {#currentNetworkable}, if necessary.
+         * Unknown commands are discarded.
          * @throws IOException
          */
         private void broadcast() throws IOException {
@@ -407,38 +408,39 @@ public class Server implements Runnable {
                     if (line == null) {
                         return;
                     }
-                    String clientId = line.split(" ", 2)[0]; // TODO equals this.id?
+                    System.out.println("SERVER RECEIVED message from " + id + ": " + line);
                     if (line.contains("CHAT ")) {
-                        String msg = line.split(" ", 3)[2];
+                        String msg = line.split(" ", 2)[1];
                         if (msg.startsWith("/kick ")) {
-                            String userToKick = msg.split(" ", 2)[1];
+                            String userToKick = msg.split(" ", 1)[0];
                             if(clientNameExists(userToKick)) {
-                                if(clientId.equals(Client.id) || clientId.equals(getIdFromName(userToKick))) {
+                                // host can kick every client, and the client itself can kick itself
+                                if(id.equals(Client.id) || id.equals(getIdFromName(userToKick))) { // first condition is true when client running on host sent this command // TODO condidtion to function
                                     disconnect(userToKick);
-                                    sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
+                                    sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(id) + ": " + msg);
                                     sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                                 } else {
-                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
+                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(id) + " " + msg);
                                 }
                             } else {
-                                sendCommand("SERVER CHAT command failed: No such user. cmd: " + getNameFromId(clientId) + " " + msg);
+                                sendCommand("SERVER CHAT command failed: No such user. cmd: " + getNameFromId(id) + " " + msg);
                             }
                         } else if (msg.startsWith("/kickteam ")) {
-                            if(clientId.equals(Client.id)) { // TODO team cannot surrender
+                            if(id.equals(Client.id)) { // TODO team cannot surrender
                                 currentNetworkable.handleKeyEventOnServer(msg);
-                                sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
+                                sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(id) + ": " + msg);
                             } else {
-                                sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
+                                sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(id) + " " + msg);
                             }
                         } else if (msg.startsWith("/rename ")) {
                             String names[] = msg.split(" ", 3);
                             if (names.length == 3) {
-                                if (clientId.equals(Client.id) || clientId.equals(getIdFromName(names[1]))) {
+                                if (id.equals(Client.id) || id.equals(getIdFromName(names[1]))) {
                                     sendCommand("SERVER CHAT command executed. cmd: " + names[1] + ": " + msg);
                                     renameByName(names[1], names[2]);
                                     sendCommand("SPECTATOR_LIST " + getClientListAsJson());
                                 } else {
-                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
+                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(id) + " " + msg);
                                 }
                             } else {
                                 sendCommand("SERVER CHAT command executed. cmd: " + name + ": " + msg);
@@ -450,22 +452,22 @@ public class Server implements Runnable {
                         } else if (msg.startsWith("/„") && msg.endsWith("”")) {
                             currentNetworkable.handleKeyEventOnServer("CHEAT " + removeLastChar(extractPart(msg, "/„")));
                         } else {
-                            sendCommand(getNameFromId(clientId) + " CHAT " + msg);
+                            sendCommand(getNameFromId(id) + " CHAT " + msg);
                         }
-                    } else if (line.contains("GET_STATUS")) {
+                    } else if (line.startsWith("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());
-                    } else if (line.contains("CLIENT_READY ")) {
+                    } else if (line.startsWith("CLIENT_READY ")) {
                         isReady = true;
-                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer("READY " + associatedTeam + " " + extractPart(line, "CLIENT_READY ")));
-                    } else if (line.contains("SPECTATOR ")) {
-                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(line + " " + associatedTeam));
-                    } else if (line.contains("KEYEVENT ")) {
+                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer("READY " + associatedTeam + " " + extractPart(line, "CLIENT_READY ")));// TODO still need extractPart?
+                    } else if (line.startsWith("SPECTATOR ")) {
+                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(id + " " + line + " " + associatedTeam));
+                    } else if (line.startsWith("KEYEVENT ")) {
                         Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(associatedTeam + " " + extractPart(line, "KEYEVENT ")));
-                    } else if (line.contains("STATUS ")) {
-                        if (clientId.equals(Client.id)) {
-                            sendCommand(extractPart(line, clientId+" "));
+                    } else if (line.startsWith("STATUS ")) {
+                        if (id.equals(Client.id)) {
+                            sendCommand(extractPart(line, id+" ")); // TODO why are we doing it like this?
                         } else {
-                            System.out.println("SERVER: operation not allowed for " + clientId + ": " + line);
+                            System.out.println("SERVER: operation not allowed for " + id + ": " + line);
                             System.out.println("    only allowed for " + Client.id);
                         }
                     } else {
@@ -518,7 +520,9 @@ public class Server implements Runnable {
         }
 
         /**
-         * @return associated team as formatted string (eg. "Specatator" instead of -1)
+         * Gets the associated team as formatted string.
+         *  (eg. "Spectator" instead of -1)
+         * @return associated team as formatted string
          */
         public String getAssociatedTeam() {
             if(associatedTeam == -1) return "Spectator";

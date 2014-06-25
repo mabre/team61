@@ -76,8 +76,7 @@ public class Client implements Runnable {
     /**
      * Convenience constructor for a client connecting with localhost in local mode, sets {@link #isLocalGame} to {@code true}.
      * This constructor should be used for the client running in a local game. This is NOT equivalent to calling
-     * {@code Client("127.0.0.1", HOST, listener);} since this construcot does not change {@link #isLocalGame}.
-     * @param name the name of the player creating sitting in front of this client
+     * {@code Client("127.0.0.1", HOST, listener);} since this constructor does not change {@link #isLocalGame}.
      * @param listener function which is called when the client successfully established a connection with the server
      * @see Client(String, String, Runnable)
      */
@@ -146,12 +145,12 @@ public class Client implements Runnable {
     }
 
     /**
-     * Sends the given message to the client, preceeded with the id of this client. // TODO do we need the id?
-     * @param message
+     * Sends the given message to the client.
+     * @param message the message being sent to the client
      */
     public void send(String message) {
-        System.out.println("CLIENT send: " + id + " " + message);
-        out.println(id + " " + message);
+        System.out.println("CLIENT " + id + " send: " + message);
+        out.println(message);
     }
 
     /**
