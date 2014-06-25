@@ -944,11 +944,11 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * method to play BackgroundMusic (BGM)
+     * Plays the given soundeffect (SFX)
+     * @param sfxName is the name of the played SoundEffect.
      */
-
     public static void playSoundeffects(String sfxName){
-        Clip clip = null;
+        Clip clip;
         try {
             clip = AudioSystem.getClip();
             AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("resources/audio/SFX/"+sfxName));
@@ -957,37 +957,18 @@ public class MapWindow extends Application implements Networkable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        /*
-        AudioPlayer AP = AudioPlayer.player;
-        AudioStream SFX;
-        AudioData AD;
-        AudioDataStream action = null;
-        try {
-            SFX = new AudioStream(new FileInputStream("resources/audio/SFX/" + sfxName));
-            AD = SFX.getData();
-            action = new AudioDataStream(AD);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        AP.start(action);
-        */
     }
 
     /**
-     * Method to change ingame comments in right upper corner.
-     *
+     * Shows the given label in right upper corner.
+     * @param content is the text shown in the Label.
      */
-
     void setGameComment(String content){
         ingameLabel.setVisible(true);
-        ingameLabel.setText(content);
 
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                rootPane.setRight(ingameLabel); //javaFX operations should go here } }); }
-            }
+        Platform.runLater(() -> {
+            ingameLabel.setText(content);
+            rootPane.setRight(ingameLabel);
         });
     }
 }
