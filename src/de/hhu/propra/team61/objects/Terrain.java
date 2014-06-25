@@ -26,16 +26,17 @@ public class Terrain extends GridPane {
     private static final double ICE_FRICTION = 2;
     private static final double EARTH_FRICTION = 1;
     private static final double SAND_FRICTION = 0.5;
+    private static final int NORM_WORM_SIZE = 2;
     private final static String imgPath = "file:resources/";
     private final static int BLOCK_SIZE = 8;
-    private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
-    private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
-    private final static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
-    private final static Image SKY_IMAGE = new Image(imgPath + "sky.png");
-    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
-    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
-    private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
-    private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
+    private final static Image EARTH_IMAGE = new Image(imgPath + "map/earth.png");
+    private final static Image ICE_IMAGE = new Image(imgPath + "map/ice.png");
+    private final static Image LAVE_IMAGE = new Image(imgPath + "map/lava.png");
+    private final static Image SKY_IMAGE = new Image(imgPath + "map/sky.png");
+    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "map/slant_ground_le.png");
+    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "map/slant_ground_ri.png");
+    private final static Image STONES_IMAGE = new Image(imgPath + "map/stones.png");
+    private final static Image WATER_IMAGE = new Image(imgPath + "map/water.png");
 
     private static Image RIFT_IMAGE = new Image(imgPath + "animations/boss_rift.png");
 
@@ -267,13 +268,11 @@ public class Terrain extends GridPane {
     public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         if(influencedByWind && !isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
-        direction = direction.multiply(getFriction(oldPosition));
         Point2D normalizedDirection = direction.normalize();
         debugLog("start position: " + oldPosition);
         debugLog("normalized velocity: " + normalizedDirection);
 
-        final int runs = (int) direction.magnitude();
-
+        final int runs = (int) (direction.magnitude()*getFriction(oldPosition));
         for (int i = 0; i < runs; i++) {
             // move position by 1px
             newPosition = newPosition.add(normalizedDirection);
@@ -391,9 +390,13 @@ public class Terrain extends GridPane {
         debugLog("not covered");
         return false;
     }
-    /*gets Friction based on Block directly below the given Position*/
-    public double getFriction (Point2D pos){
-        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)+1).get((int)(pos.getX()/BLOCK_SIZE));
+    /**
+     *
+     * @param pos position of worm
+     * @return friction of block below worm
+     */
+    private double getFriction (Point2D pos){
+        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)+NORM_WORM_SIZE).get((int)(pos.getX()/BLOCK_SIZE));
         switch (block) {
             case 's':
                 return SAND_FRICTION;
@@ -408,6 +411,12 @@ public class Terrain extends GridPane {
         this.figures.addAll(figures);
     }
 
+    /**
+     *
+     * @param x
+     * @param y
+     * @return
+     */
     private double getResistance(int x, int y) {
         char block = terrain.get(y).get(x);
         switch (block) {
@@ -435,6 +444,11 @@ public class Terrain extends GridPane {
         renderTerrainBlock(replacement, blockX, blockY);
     }
 
+    /**
+     *
+     * @param column
+     * @param row
+     */
     private void removeTerrainBlock(int column, int row) {
         for (Node node: getChildren()) {
             int currentRow = GridPane.getRowIndex(node);

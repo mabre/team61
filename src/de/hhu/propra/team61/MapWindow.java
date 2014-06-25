@@ -192,6 +192,8 @@ public class MapWindow extends Application implements Networkable {
      * creates the stage, so that everything is visible
      */
     private void initialize() {
+        //Thread leafs = new Thread(new Background(terrain));
+        //leafs.start();
         sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
             sceneController.switchToMenue();
