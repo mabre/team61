@@ -118,7 +118,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
-     * Sets the left neighbour of this block.
+     * Sets the left neighbour of this block and redraws it.
      * @param block a reference to the left neighbour of this block
      */
     public void setLeftNeighbour(TerrainBlock block) {
@@ -127,7 +127,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
-     * Sets the top neighbour of this block.
+     * Sets the top neighbour of this block and redraws it.
      * @param block a reference to the top neighbour of this block
      */
     public void setTopNeighbour(TerrainBlock block) {
@@ -139,7 +139,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
-     * Sets the right neighbour of this block.
+     * Sets the right neighbour of this block and redraws it.
      * @param block a reference to the right neighbour of this block
      */
     public void setRightNeighbour(TerrainBlock block) {
@@ -148,7 +148,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
-     * Sets the bottom neighbour of this block.
+     * Sets the bottom neighbour of this block and redraws it.
      * @param block a reference to the bottom neighbour of this block
      */
     public void setBottomNeighbour(TerrainBlock block) {
@@ -159,7 +159,7 @@ public class TerrainBlock extends ImageView {
     /**
      * Draws the image fitting to the type of this terrain block. The look might be influenced by the surrounding blocks.
      */
-    public void drawImage() {
+    private void drawImage() {
         switch(type) {
             case ' ':
                 this.setImage(SKY_IMAGE);
@@ -209,6 +209,7 @@ public class TerrainBlock extends ImageView {
             case '/':
             case '\\': // slants are depending on blocks below // TODO what about slants at the ceiling?
                 if(neighbours.bottom != null) {
+                    if(neighbours.bottom.isLiquid()) return RESISTANCE_OF_SKY; // do not return nearly infinite resistance for slants on liquids
                     return neighbours.bottom.getResistance() * MODIFIER_FOR_SLANTS;
                 } else {
                     return RESISTANCE_OF_SKY; // return an at least somewhat useful information
