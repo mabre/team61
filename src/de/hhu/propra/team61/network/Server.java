@@ -21,9 +21,10 @@ import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
  * Game Server which handles all events triggered on the client.
  * <p>
  * Only one server should run at the same time. To create a new thread running a game server, use
- * {@code serverThread = new Thread(server = new Server(() -> {callbackFunkcion};} start the thread using
- * {@code serverThread.start();}. After creating a new server object, {@link #registerCurrentNetworkable(Networkable)}
- * should be called with {@code this} being the argument. Call {@link #stop()} to shut down the server thread properly.
+ * {@code serverThread = new Thread(server = new Server(() -> {callbackFunkction};} and start the thread using
+ * {@code serverThread.start();}. When the server is ready to accept connection, the given callback function is callced.
+ * After creating a new server object, {@link #registerCurrentNetworkable(Networkable)} should be called with
+ * {@code this} being the argument. Call {@link #stop()} to shut down the server thread properly.
  * </p>
  * The server understands the following commands:
  * <ul>
@@ -37,16 +38,16 @@ public class Server implements Runnable {
     /** list of connected clients */
     private static ArrayList<ClientConnection> clients = new ArrayList<>();
 
-    /** method to call when the server is up and running */
-    Runnable readyListener;
+    /** method being called when the server is up and running */
+    private Runnable readyListener;
 
     /** listens for new client connections */
-    ServerSocket listener;
+    private ServerSocket listener;
     /** the currently shown view, which can handle received commands */
     private static Networkable currentNetworkable;
 
     /**
-     * Creates a new server. Only one server should be running at the same time.
+     * Creates a new server. Only one server should be running at the same time. Does not start listening for new connections, {@see run()}
      * @param listener function which is called when server is set up, thus ready to accept connections
      */
     public Server(Runnable listener) {
@@ -92,7 +93,10 @@ public class Server implements Runnable {
 
     /**
      * Sets {@link #currentNetworkable}.
-     * @param networkable the view which will receive upcoming server commands
+     * The given object should have a sensible implementation of {@link de.hhu.propra.team61.network.Networkable#handleKeyEventOnServer(String)},
+     * ie. must understand commands relevant to the view.
+     * @param networkable the view which will receive processed and filtered server commands
+     * @see de.hhu.propra.team61.network.Server.ClientConnection#broadcast()
      */
     public void registerCurrentNetworkable(Networkable networkable) {
         this.currentNetworkable = networkable;
@@ -392,7 +396,8 @@ public class Server implements Runnable {
         }
 
         /**
-         * processes messages received from the client
+         * processes messages received from the client, and passes commands to {Networkable#handleKeyEventOnServer} of
+         * {#currentNetworkable}, if necessary.
          * @throws IOException
          */
         private void broadcast() throws IOException {
