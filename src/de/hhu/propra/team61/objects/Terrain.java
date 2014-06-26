@@ -229,15 +229,19 @@ public class Terrain extends GridPane {
      * @throws CollisionException thrown when hitting terrain or a figure
      * @see CollisionException
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
+    public Point2D getPositionForDirection(final Point2D oldPosition, final Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
-        if(influencedByWind && !isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
-        direction = direction.multiply(getFriction(oldPosition));
-        Point2D normalizedDirection = direction.normalize();
+        Point2D directionAfterWind = direction;
+        if(influencedByWind && !isInWindbreak(oldPosition, direction)) directionAfterWind = direction.add(wind);
+        Point2D directionAfterFriction = directionAfterWind.multiply(getFriction(oldPosition));
+        if(directionAfterFriction.magnitude() < 1 && directionAfterWind.magnitude() > 1) {
+            directionAfterFriction = directionAfterWind.normalize(); // even with friction, move at least 1 px if movement >1px requested (eg. walking on water with medium wind)
+        }
+        Point2D normalizedDirection = directionAfterFriction.normalize();
         debugLog("start position: " + oldPosition);
         debugLog("normalized velocity: " + normalizedDirection);
 
-        final int runs = (int) direction.magnitude();
+        final int runs = (int) directionAfterFriction.magnitude();
 
         for (int i = 0; i < runs; i++) {
             // move position by 1px
