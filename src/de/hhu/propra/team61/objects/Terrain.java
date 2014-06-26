@@ -444,7 +444,7 @@ public class Terrain extends GridPane {
 
                     debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
-                    if(blockX > 0 && blockX < terrain.get(blockY).size()){
+                    if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
                         } else {
