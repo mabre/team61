@@ -211,7 +211,7 @@ public class Figure extends StackPane {
 
         int offset = NORMED_OBJECT_SIZE / 2;
 
-        position = new Point2D(newPosition.getX(), newPosition.getY());
+        position = new Point2D(Math.round(newPosition.getX()*10)/10.0, Math.round(newPosition.getY()*10)/10.0); // round position to one decimal place, see above (10.0 must be double)
         hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
 //        getChildren().removeAll(hitRegionDebug);
 //        hitRegionDebug = new Rectangle(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
@@ -220,12 +220,12 @@ public class Figure extends StackPane {
 //        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
         //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
         Platform.runLater(() -> {
-            figureImage.setTranslateX(Math.round(position.getX()));
+            figureImage.setTranslateX(Math.round(position.getX())); // round this position to prevent ugly subpixel rendering
             figureImage.setTranslateY(Math.round(position.getY()));
-            nameTag.setTranslateX(position.getX() + offset - nameTag.getWidth() / 2);
-            nameTag.setTranslateY(position.getY() - NORMED_OBJECT_SIZE * 2);
-            hpLabel.setTranslateX(position.getX() + offset - hpLabel.getWidth() / 2);
-            hpLabel.setTranslateY(position.getY() - NORMED_OBJECT_SIZE);
+            nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getWidth() / 2);
+            nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
+            hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getWidth() / 2);
+            hpLabel.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE);
 
             setSelectedItem(getSelectedItem()); // Update position of weapon
         });

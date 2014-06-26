@@ -230,14 +230,21 @@ public class Terrain extends GridPane {
      * @see CollisionException
      */
     public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
+//        snapToPx = false;
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         if(influencedByWind && !isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
         direction = direction.multiply(getFriction(oldPosition));
         Point2D normalizedDirection = direction.normalize();
+        if(snapToPx) normalizedDirection = direction.normalize().multiply(.1);
+        if(direction.getX() != 0) {
+            System.out.println();
+        }
         debugLog("start position: " + oldPosition);
         debugLog("normalized velocity: " + normalizedDirection);
 
-        final int runs = (int) direction.magnitude();
+        //todo final
+        int runs = (int) (direction.magnitude());
+        if(snapToPx) runs = (int) (direction.magnitude()*1/.1);
 
         for (int i = 0; i < runs; i++) {
             // move position by 1px
@@ -302,10 +309,14 @@ public class Terrain extends GridPane {
                                     newPosition = newPosition.subtract(diagonalDirection);
                                 }
                                 if (snapToPx) {
-                                    newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
+//                                    newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
                                 }
                                 if(intersectingFigure == null) {
-                                    throw new CollisionException("terrain", collidingPosition, newPosition);
+                                    if(!snapToPx) {
+//                                        System.out.println("retry pixelperf");
+//                                        return getPositionForDirection(oldPosition, direction, hitRegion, canWalkAlongDiagonals, canWalkThroughFigures, true, influencedByWind);
+                                    }
+                                    else throw new CollisionException("terrain", collidingPosition, newPosition);
                                 } else {
                                     throw new CollisionException("figure",collidingPosition, newPosition);
                                 }
@@ -317,7 +328,7 @@ public class Terrain extends GridPane {
         } // for each run
 
         if (snapToPx) {
-            newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
+//            newPosition = new Point2D(Math.floor(newPosition.getX()), Math.ceil(newPosition.getY())); // TODO code duplication
         }
         return newPosition;
     }
@@ -381,7 +392,11 @@ public class Terrain extends GridPane {
         int row = (int)((pos.getY()+Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE);
         int column = (int)(pos.getX()/BLOCK_SIZE);
         if(row >= terrain.size() || column > terrain.get(0).size()) return 1;
-        return terrain.get(row).get(column).getFriction();
+        try {
+            return terrain.get(row).get(column).getFriction();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return 1;
+        }
     }
 
     /**

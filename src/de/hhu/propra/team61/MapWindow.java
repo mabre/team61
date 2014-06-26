@@ -999,12 +999,12 @@ public class MapWindow extends Application implements Networkable {
         Rectangle2D hitRegion = f.getHitRegion();
         Point2D newPos = null;
         try {
-            newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, true, true);
+            newPos = terrain.getPositionForDirection(pos, v, hitRegion, true, true, false, true);
         } catch (CollisionException e) {
             System.out.println("CollisionException, stopped movement");
             newPos = e.getLastGoodPosition();
         }
-        f.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
+        f.setPosition(newPos); // needed to prevent timing issue when calculating new position before client is handled on server
         server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
     }
 
