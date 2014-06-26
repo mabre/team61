@@ -190,6 +190,10 @@ public class NetLobby extends Application implements Networkable {
         Button back = new Button("Back");
         bottomBox.getChildren().addAll(back, sameColor);
         back.setOnAction(e -> {
+            if(serverThread != null) serverThread.interrupt();
+            System.out.println("NetLobby server thread interrupted");
+            if(server != null) server.stop();
+            System.out.println("NetLobby server (if any) stopped");
             sceneController.switchToMenue();
         });
         bottomBox.setId("bottomBox");
