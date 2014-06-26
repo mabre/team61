@@ -13,52 +13,73 @@ import java.util.ArrayList;
 /**
  * Created by kevin on 21.05.14.
  *
- * This class is responsible:
- * - for the Crosshair
- * - for the Weaponimage/-facing
- * - shooting
- * - transmission of all the attributes by carrying them on a projectile
- * - OFFERS a default handleCollision(), which might prove suitable for most weapontypes
- *   -&gt; coordination of Figure.sufferDamage();
- *   -&gt; Sending Figures flying // ToDo implement this
+ * An instance of this class is represents a weapon, which is part of an Inventory of a @link #Team,
+ * which means that each @link #Team posses the reference to 1 Instance of each Weapontype.
+ * All weapons derive from this class and call {@link #Weapon(String, String, int, String, String, int, String, int, int, int, boolean, boolean, boolean, int, boolean, int)}
+ * setting up all the variables in here, which are actually constants to the specific types.
+ * This class also derives itself from @link #Item, note that @link #Item itself also derives from Stackpane
+ *
+ * Here are offered some standard functions, which should prove sufficient for most weapontypes, without
+ * special functionality. These are:
+ * - Laying the weaponimage over the figure equipping it
+ * - Placing the crosshair relatively to the weaponimage
+ * - Aiming
+ * - Shooting; Creating @link #projectiles depending and sending its own reference along with it
+ * - A default collision handling of the created projectile, which means:
+ *   -&gt; coordination of Figure.sufferDamage(); to all figures within a sphere reducing damage dealt with the distance
+ *   -&gt; Sending Figures flying
  *   -&gt; coordination of terraindestruction
  *
- *  Deriving classes:
- * - Have and set up nearly all attributes
- * - Override defaults if necessary
+ * Some or all of these might be overriden in deriving classes.
+ *
  */
 public abstract class Weapon extends Item {
+    /** Graphical constant sizes in px */
     private final int NORMED_OBJECT_SIZE = 16; //ToDo Move this? Like in Projectile
     private final int NORMED_BLOCK_SIZE  =  8;
     private final int RADIUS = 20; // Distance between Crosshair to Figure
-
+    /** Paths to the Images to be used for the overlay */
     private String projectileImg;
     private String weaponImg;
-
-    private int delay;          // Timedelay, Explode in x seconds etc.
-
-    private String damagetype;  // Firedamage etc.
-    private int damage;         // Damage to Figures
-    private int explosionpower; // Damage to environment
-    private int shockwave;      // Throw Figures away from Collisionpoint
-
-    private boolean poisons;    // toggle isPoisoned
-    private boolean paralyzes;    // toggle isBurning
-    private boolean blocks;     // toggle isStuck
-
-    private int     mass;       // toggle if gravity affects projectile
-    private int     speed;
-    private boolean drifts;     // toggle if wind affects projectile    //ToDo pass this to projectile
-
-    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
-
-    private double angle;       // Angle it is aimed at; 0 <=> Horizontal; +90 <=> straight upwards
+    /** Actual images used for the overlay */
     protected ImageView crosshairImage;
     protected ImageView weaponImage;
+
+    // ToDo
+    private int delay;          // Timedelay, Explode in x seconds etc.
+    /**  */
+    private String damagetype;  // Firedamage etc. //ToDo validate obsoleteness
+    /** Amount of Damage dealt to a Figure with armorrating of 0 with a direct hit */
+    private int damage;
+    /** Explosive force, which affects the enviromental destruction */
+    private int explosionpower;
+    /** Multiplyer multiplied on the vector from collisionpoint to figure */
+    private int shockwave;
+    /** Status conditions */
+    private boolean poisons;
+    private boolean paralyzes;
+    private boolean blocks;
+    /** Mass affects acceleration towards the ground of the projectile */
+    private int     mass;
+    /** Velocity of shot */
+    private int     speed;
+    /** Boolean to enable toggling affection of wind to projectiles shot by this weapon */
+    private boolean drifts;     //ToDo pass this to projectile
+
+    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
+    /**
+     * Angle aimed at (360° <=> 1 Circle)
+     *   0° <=> Horizontal
+     *  90° <=> Straight upwards
+     * -90° <=> Straight downwards
+     * Direction is determined by @link #figure using its getter
+     */
+    private double angle;       // Angle it is aimed at; 0 <=> Horizontal; +90 <=> straight upwards
 
     /**
      * Constructor for deriving classes.
      * Sets up the Constants of a Weapontype to this abstract class
+     * and places the weapon- and crosshairimages
      *
      * @param name
      * @param description
@@ -75,6 +96,7 @@ public abstract class Weapon extends Item {
      * @param blocks Does this block a figure?
      * @param mass used for ballistics
      * @param drifts toggle windaffection
+     * @param speed velocity of the shot
      */
     protected Weapon(String name, String description, int munition, String weaponImg, String projectileImg, int delay, String damagetype, int damage, int explosionpower, int shockwave, boolean poisons, boolean paralyzes, boolean blocks, int mass, boolean drifts, int speed){
         super(name,description);
@@ -96,28 +118,14 @@ public abstract class Weapon extends Item {
         this.mass = mass;
         this.speed = speed;
         this.drifts = drifts;
-
-        initialize(); //Draw Crosshair etc
-    }
-
-    /**
-     * ONLY DO BE USED FOR TRANSMISSIONS! NO CONSTRUCTING OR BUILDING UP FROM THIS
-     */
-    public Weapon(JSONObject input){
-        super("","");
-    }
-
-    public String getImage() { return projectileImg; } //TODO MOVE?
-
-    private void initialize() {
         this.angle = 0;
+
 
         weaponImage = new ImageView(new Image(weaponImg, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
         this.getChildren().add(weaponImage);
 
         crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
         this.getChildren().add(crosshairImage);
-        //angleDraw(true);
 
         setAlignment(Pos.TOP_LEFT);
     }
@@ -129,7 +137,10 @@ public abstract class Weapon extends Item {
 
     /**
      * This function is a default offered. It should prove suitable for most weapons, but some may override.
-     * If there is enough munition it returns a Projectile
+     * If there is enough munition it returns a Projectile else a NoMunitionException is thrown, which needs handling.
+     *
+     * The projectile is shot using a vector calculated from the imagepositions.
+     * Munition is also count down in here and the angle is reset, since the instance is not closed afterwards, but kept instead.
      */
     public Projectile shoot(int power) throws NoMunitionException{ //ToDo Actually use power OR calc Power and use
         if(munition > 0) {
@@ -200,6 +211,7 @@ public abstract class Weapon extends Item {
     }
 
     //Getter and Setter
+    public String getImage() { return projectileImg; } //TODO MOVE?
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
     public boolean getDrifts() {
@@ -213,24 +225,37 @@ public abstract class Weapon extends Item {
     }
 
     //----------------------------------Crosshair-Related Functions---------------------------------
+    /**
+     * Math.sin() uses Radian-Values[2*PI <=> 1 Circle], this function transforms angles [360° <=> 1Circle]
+     * into this scheme by aplying a basic function.
+     * @return the respective radianvalue
+     */
     public double toRadian(double grad) { // This function transforms angles to rad which are needed for sin/cos etc.
         return grad * Math.PI / 180;
     }
 
+    /** Resetting is necessary since, the instances are kept, until closing the game */
     public void resetAngle() { angle = 0; }
 
     @Override
+    /** Overriden from @link #Item; Enables aiming higher by adjusting angle, setting the maximum to +90° */
     public void angleUp(boolean faces_right){
         angle = Math.min(90,angle + 2);
         angleDraw(faces_right);
     }
     @Override
+    /** Overriden from @link #Item; Enables aiming lower by adjusting angle, setting the minimum to -90° */
     public void angleDown(boolean faces_right){
         angle = Math.max(-90, angle - 2);
         angleDraw(faces_right);
     }
     @Override
-    public void angleDraw(boolean faces_right){ // Actually only sets the Point and changes facing of weapon; drawn in MapWindow
+    /**
+     * Actually only sets the Point and changes facing of weapon. It is drawn in @link #MapWindow.
+     * The weaponimage is also mirrored in here to face the same direction, as the figure holding it.
+     * The crosshair is placed with a constant distance around the weaponimage depending on angle and faced direction
+     */
+    public void angleDraw(boolean faces_right){
         if(faces_right){
             crosshairImage.setTranslateX(weaponImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
             weaponImage.setScaleX(1); //Reverse mirroring
