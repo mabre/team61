@@ -1,6 +1,9 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.Team;
+import de.hhu.propra.team61.io.ItemManager;
+import de.hhu.propra.team61.io.json.JSONArray;
+import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
@@ -24,6 +27,8 @@ public class Projectile extends ImageView {
 
     private Rectangle2D hitRegion;
 
+    private boolean isShard;
+
     /**
      * @param image the image with which the projectile is drawn, hit region is extracted from its dimension
      * @param position of the weapon (ie position of figure)
@@ -45,12 +50,39 @@ public class Projectile extends ImageView {
         this.drifts = shotBy.getDrifts();
 
         hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), image.getWidth(), image.getHeight());
+        isShard = false;
 
         System.out.println("created projectile at " + getTranslateX() + " " + getTranslateY() + ", v=" + this.velocity);
 
         if(this.velocity.magnitude() == 0) {
             throw new IllegalArgumentException("Projectile with no speed was requested; position: " + position + ", firedAt " + firedAt + ", velocity " + velocity);
         }
+    }
+    public Projectile(JSONObject input){
+        setTranslateX(input.getInt("posX"));
+        setTranslateY(input.getInt("posY"));
+
+        this.velocity = new Point2D(input.getInt("vx"),input.getInt("vy"));
+
+        this.source = (Weapon)ItemManager.returnItem(input.getString("source"));
+        this.angle  = source.getAngle();
+        this.mass   = source.getMass();
+        this.drifts = source.getDrifts();
+        this.isShard = input.getBoolean("isShard");
+
+        setImage(new Image(source.getImage(),4,4,true,true));
+        hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(), getImage().getWidth(), getImage().getHeight());
+    }
+    public JSONObject toJson(){
+        JSONObject output = new JSONObject();
+        output.put("image",getImage());
+        output.put("posX",getPosition().getX());
+        output.put("posY",getPosition().getY());
+        output.put("vx",velocity.getX());
+        output.put("vy",velocity.getY());
+        output.put("source",source.getName());
+        output.put("isShard",isShard);
+        return output;
     }
 
     /**
@@ -93,6 +125,8 @@ public class Projectile extends ImageView {
         return drifts;
     }
 
+    public void setShard(){ isShard = true; }
+
     /**
      * calculates hitbox from position given and passes down the request to weaponclass with that additional information
      *
@@ -101,6 +135,6 @@ public class Projectile extends ImageView {
      * @param impactPoint NEEDed for a hitbox placed ON colliding position, NOT last "good" one
      */
     public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Point2D impactPoint){
-        return this.source.handleCollision(terrain,teams,new Rectangle2D(impactPoint.getX(),impactPoint.getY(),getImage().getWidth(),getImage().getHeight()));
+        return this.source.handleCollision(terrain,teams,new Rectangle2D(impactPoint.getX(),impactPoint.getY(),getImage().getWidth(),getImage().getHeight()),isShard);
     }
 }

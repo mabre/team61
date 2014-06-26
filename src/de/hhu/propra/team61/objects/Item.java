@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import javafx.geometry.Point2D;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 
@@ -20,6 +21,7 @@ public abstract class Item extends StackPane{
 
     // Implementation varies
     public abstract void angleDraw(boolean faces_right);
+
     public abstract void angleUp(boolean faces_right);
     public abstract void angleDown(boolean faces_right);
    // public abstract void angleLeft(boolean faces_right);
@@ -39,7 +41,6 @@ public abstract class Item extends StackPane{
     public abstract void setPosition(Point2D pos);
 
     public void refill(){ munition++; }
-
 
     public String getName() {
         return name;

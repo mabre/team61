@@ -100,6 +100,15 @@ public abstract class Weapon extends Item {
         initialize(); //Draw Crosshair etc
     }
 
+    /**
+     * ONLY DO BE USED FOR TRANSMISSIONS! NO CONSTRUCTING OR BUILDING UP FROM THIS
+     */
+    public Weapon(JSONObject input){
+        super("","");
+    }
+
+    public String getImage() { return projectileImg; } //TODO MOVE?
+
     private void initialize() {
         this.angle = 0;
 
@@ -147,7 +156,7 @@ public abstract class Weapon extends Item {
      * It coordinates damage and conditions caused to Figures and Terrain.
      * It returns a series of commands the server has to send to the clients
      */
-    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea){
+    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea, Boolean isShard){
         ArrayList<String> commandList = new ArrayList<String>();
         commandList.add("REMOVE_FLYING_PROJECTILE");
 
@@ -186,7 +195,7 @@ public abstract class Weapon extends Item {
                 }
             }
         }
-        commandList.add("END_TURN"); //ToDo setRoundTimer down to 5sec, THEN make End_turn only called by exceptions and timer
+        //ToDo setRoundTimer down to 5sec
         return commandList;
     }
 

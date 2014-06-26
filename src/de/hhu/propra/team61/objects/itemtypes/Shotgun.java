@@ -41,7 +41,7 @@ public class Shotgun extends Weapon { //ToDo Override shoot to make two shots po
      * This Function coordinates damage caused to Figures and Terrain.
      * It returns a series of commands the server has to send to the clients
      */
-    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea){
-        return super.handleCollision(terrain, teams, impactArea);
+    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea, Boolean isShard){
+        return super.handleCollision(terrain, teams, impactArea, isShard);
     }
 }

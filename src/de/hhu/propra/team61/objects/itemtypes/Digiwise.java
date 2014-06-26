@@ -12,19 +12,18 @@ import javafx.scene.image.ImageView;
 /**
  * Created by kevin on 22.06.14. as requested by markus along with the specific typo
  */
-public class Digivise extends Item {
+public class Digiwise extends Item {
     private final static int NORMED_OBJECT_SIZE = 16;
 
-    private final static String  NAME           = "Digivise"; //Yes, really with s not c
+    private final static String  NAME           = "Digiwise"; //Yes, it is supposed to be written this way. Blame markus
     private final static String  DESCRIPTION    = "Remember, if you need to force it, it's usually shit.";
 
-    private final static String  PROJECTILE_IMG = "";
-    private final static String  WEAPON_IMG     = "file:resources/weapons/digivise.png";
+    private final static String  WEAPON_IMG     = "file:resources/weapons/digiwise.png";
 
     private ImageView weaponImage;
 
     // ---------------------------------------------------------------------------------------------
-    public Digivise(int munition){
+    public Digiwise(int munition){
         super(NAME,DESCRIPTION);
         this.munition = munition;
 

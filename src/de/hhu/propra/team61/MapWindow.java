@@ -37,6 +37,8 @@ import javafx.util.Duration;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
@@ -81,12 +83,13 @@ public class MapWindow extends Application implements Networkable {
     private int levelCounter = 0;
     private int teamquantity;
     private int teamsize;
-
+    /** dynamic list containing all drops on the screen */
     private ArrayList<Crate> supplyDrops = new ArrayList<>();
-
     /** power/energy projectile is shot with */
-    private int power = 0;
+    private int power = 0; //ToDo implement or kick
     /** used to disable shooting multiple times during one turn */
+    private final static int TURN_TIME = 30;
+    private Timer turnTimer;
     private boolean shootingIsAllowed = true;
     private boolean pause = false;
     //Projectile-Moving-Thread related variables
@@ -278,8 +281,9 @@ public class MapWindow extends Application implements Networkable {
                             } catch (CollisionException e) {
                                 System.out.println("CollisionException, let's do this!");
                                 final Projectile collidingProjectile = flyingProjectile;
-                                flyingProjectile = null; // we remove it here to prevent timing issues
+                                flyingProjectiles.remove(flyingProjectile); // we remove it here to prevent timing issue
                                 Platform.runLater(() -> {
+                                    fieldPane.getChildren().remove(flyingProjectile);
 //                                    } catch (DeathException de) { // TODO that change was somewhat important I think (or not?) ... (see handleCollision in Weapon)
 //                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
 //                                            endTurn();
@@ -288,9 +292,13 @@ public class MapWindow extends Application implements Networkable {
                                     //Get series of commands to send to the clients from
                                     //Collisionhandling done by the weapon causing this exception
                                     ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
-                                    fieldPane.getChildren().remove(collidingProjectile);
-                                    if(commandList.contains("REMOVE_FLYING_PROJECTILE")){ commandList.set(0,"REMOVE_FLYING_PROJECTILE "+k); }
-                                    for(String command : commandList){ server.sendCommand(command); } //Send commands+
+                                    if (commandList.contains("REMOVE_FLYING_PROJECTILE")) {
+                                        commandList.set(0, "REMOVE_FLYING_PROJECTILE " + k);
+                                    }
+                                    for (String command : commandList) {
+                                        server.sendCommand(command);
+                                    } //Send commands+
+                                    if(!commandList.contains("ADD_FLYING_PROJECTILE") && flyingProjectiles.size() == 0){ endTurn(); }
                                 });
                             }
                         }
@@ -344,7 +352,6 @@ public class MapWindow extends Application implements Networkable {
                                             figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
                                             server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                         }
-                                        int oldHp = figure.getHealth();
                                         try {
                                             figure.resetVelocity();
                                         } catch (DeathException de) {
@@ -425,8 +432,7 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        //ToDo Wait until no objectmovements
-        while(flyingProjectiles.size() > 0){} //ToDo makeover
+        while(flyingProjectiles.size() > 0){} //Wait until no objectmovements
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
 
@@ -492,7 +498,7 @@ public class MapWindow extends Application implements Networkable {
             Crate drop = new Crate(terrain.toArrayList().get(0).size()-1);
             server.sendCommand("DROP_SUPPLY"+" "+drop.getPosition().getX()+" "+drop.getContent());
         }
-        
+
         server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
         teams.get(currentTeam).endRound();
         server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
@@ -642,9 +648,6 @@ public class MapWindow extends Application implements Networkable {
                 Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
                 scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
                 break;
-            case "END_TURN":
-                endTurn();
-                break;
             case "CURRENT_TEAM_END_ROUND":
                 if(server == null) { // already done on server
                     teams.get(Integer.parseInt(cmd[1])).endRound();
@@ -732,9 +735,8 @@ public class MapWindow extends Application implements Networkable {
                 break;
 
             case "DROP_SUPPLY":
-                supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(),cmd[2]));
-                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size()-1));
-                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size()-1).getContentDisplay());
+                supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(), cmd[2]));
+                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size() - 1));
                 break;
             case "REMOVE_SUPPLY":
                 fieldPane.getChildren().remove(supplyDrops.get(Integer.parseInt(cmd[1])));
@@ -762,13 +764,21 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "ADD_FLYING_PROJECTILE":
-          //      flyingProjectiles.add(projectile);
-          //      fieldPane.getChildren().add(projectile);
+                String puffer = "";
+                for(int i = 1; i < cmd.length; i++){ puffer += cmd[i]; }
+                JSONArray input = new JSONArray(puffer);
+                for(int i = 0; i < input.length(); i++){
+                    Projectile projectile = new Projectile(input.getJSONObject(i));
+                    flyingProjectiles.add(projectile);
+                    fieldPane.getChildren().add(projectile);
+                }
                 break;
             case "REMOVE_FLYING_PROJECTILE":
-                if(flyingProjectiles.size() >= Integer.parseInt(cmd[1])) {
-                    fieldPane.getChildren().remove(flyingProjectiles.get(Integer.parseInt(cmd[1])-1));
-                    flyingProjectiles.remove(Integer.parseInt(cmd[1])-1);
+                if(server == null) {
+                    if (flyingProjectiles.size() - 1 >= Integer.parseInt(cmd[1])) {
+                        fieldPane.getChildren().remove(flyingProjectiles.get(Integer.parseInt(cmd[1])));
+                        flyingProjectiles.remove(Integer.parseInt(cmd[1]));
+                    }
                 }
                 break;
             case "SD":
@@ -948,6 +958,9 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 9");
                 }
+                break;
+            case "E":
+                //inventory.toggleVisibility();
                 break;
             default:
                 System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
