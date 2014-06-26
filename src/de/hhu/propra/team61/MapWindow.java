@@ -53,7 +53,7 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
-    private final static int ROUNDS_TILL_SUDDEN_DEATH = 30; // TODO pref?
+    private final static int TURNS_TILL_SUDDEN_DEATH = 30; // TODO pref?
     private final static int SUDDEN_DEATH_ROUNDS = 20;
 
     //JavaFX related variables
@@ -447,7 +447,7 @@ public class MapWindow extends Application implements Networkable {
         terrain.rewind();
         server.sendCommand("WIND_FORCE " + terrain.getWindMagnitude());
 
-        if(turnCount % teams.size() >= ROUNDS_TILL_SUDDEN_DEATH && boss == null) {
+        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null) {
             System.out.println("sudden death is coming ..."); // TODO IMPORTANT network
             spawnBoss();
         } else if(boss != null) {

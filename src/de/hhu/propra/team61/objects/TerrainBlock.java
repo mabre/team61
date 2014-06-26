@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.objects;
 
+import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -157,44 +158,48 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
-     * Draws the image fitting to the type of this terrain block. The look might be influenced by the surrounding blocks.
+     * Draws the image fitting to the type of this terrain block.
+     * The look of the block might be influenced by surrounding blocks. It is save to call this function from non-JavaFX
+     * threads.
      */
     private void drawImage() {
-        switch(type) {
-            case ' ':
-                this.setImage(SKY_IMAGE);
-                break;
-            case 'S':
-                this.setImage(STONES_IMAGE);
-                break;
-            case 'E':
-                this.setImage(EARTH_IMAGE);
-                break;
-            case 'I':
-                this.setImage(ICE_IMAGE);
-                break;
-            case '/':
-                this.setImage(SLANT_RI_IMAGE);
-                break;
-            case '\\':
-                this.setImage(SLANT_LE_IMAGE);
-                break;
-            case 'W':
-                if(neighbours.top == null || neighbours.top.isSky()) {
-                    this.setImage(WATER_TOP_IMAGE);
-                } else {
-                    this.setImage(WATER_IMAGE);
-                }
-                break;
-            case 'L':
-                this.setImage(LAVE_IMAGE);
-                break;
-            case 'P': // special case: spawn point to be shown in level editor
-                this.setImage(SPAWN_POINT);
-                break;
-            default:
-                this.setImage(SKY_IMAGE);
-        }
+        Platform.runLater(() -> {
+            switch (type) {
+                case ' ':
+                    this.setImage(SKY_IMAGE);
+                    break;
+                case 'S':
+                    this.setImage(STONES_IMAGE);
+                    break;
+                case 'E':
+                    this.setImage(EARTH_IMAGE);
+                    break;
+                case 'I':
+                    this.setImage(ICE_IMAGE);
+                    break;
+                case '/':
+                    this.setImage(SLANT_RI_IMAGE);
+                    break;
+                case '\\':
+                    this.setImage(SLANT_LE_IMAGE);
+                    break;
+                case 'W':
+                    if (neighbours.top == null || neighbours.top.isSky()) {
+                        this.setImage(WATER_TOP_IMAGE);
+                    } else {
+                        this.setImage(WATER_IMAGE);
+                    }
+                    break;
+                case 'L':
+                    this.setImage(LAVE_IMAGE);
+                    break;
+                case 'P': // special case: spawn point to be shown in level editor
+                    this.setImage(SPAWN_POINT);
+                    break;
+                default:
+                    this.setImage(SKY_IMAGE);
+            }
+        });
     }
 
     /**
