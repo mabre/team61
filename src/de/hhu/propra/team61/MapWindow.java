@@ -77,9 +77,10 @@ public class MapWindow extends Application implements Networkable {
     private ArrayList<Team> teams;
     private int currentTeam = 0;
     private int turnCount = 0;
-    private int levelCounter = 0;
     private int teamquantity;
     private int teamsize;
+    private boolean autoScroll = true;
+    private boolean projectileFocused = false;
 
     /** power/energy projectile is shot with */
     private int power = 0;
@@ -238,6 +239,18 @@ public class MapWindow extends Application implements Networkable {
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
                         break;
+                    case Z:
+                        if(autoScroll) {
+                            autoScroll = false;
+                        } else {
+                            autoScroll = true;
+                            if(!projectileFocused) {
+                                Point2D figPos = teams.get(currentTeam).getCurrentFigure().getPosition();
+                                scrollTo(figPos.getX(), figPos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
+                            }
+                        }
+                        System.out.println("camera autoscroll: " + autoScroll);
+                        break;
                     default:
                         client.sendKeyEvent(keyEvent.getCode());
                 }
@@ -271,7 +284,7 @@ public class MapWindow extends Application implements Networkable {
                                     newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
                                     flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                     flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
-                                    scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
+                                    if(autoScroll && projectileFocused) scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
                                     server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                                 } catch (CollisionException e) {
                                     System.out.println("CollisionException, let's do this!");
@@ -366,19 +379,39 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * @param figure a figure object reference
+     * Gets a unique id of the given figure.
+     * The idea is the number of the team, followed by a space, followed by the number of the figure (counting starts
+     * from 0).
+     * @param figure a reference to the figure whose team and number are sought
      * @return team index + " " + figure index of the given figure
+     * @throws java.lang.IllegalArgumentException thrown when the given figure is not found
      */
-    private String getFigureId(Figure figure) {  //ToDo Probably not necessary anymore due to the movement of collisionhandling to the weaponclasses
-        String id = "";
+    private String getFigureId(Figure figure) throws IllegalArgumentException {
         for(int i=0; i<teams.size(); i++) {
             for(int j=0; j<teams.get(i).getFigures().size(); j++) {
                 if(teams.get(i).getFigures().get(j) == figure) {
-                    id = i+" "+j;
+                    return i+" "+j;
                 }
             }
         }
-        return id;
+        throw new IllegalArgumentException("Could not find figure" + figure);
+    }
+
+    /**
+     * Gets the number of the team of the given figure.
+     * @param figure a reference to the figure whose team is sought
+     * @return the index of the team of the figure
+     * @throws java.lang.IllegalArgumentException thrown when the given figure is not found
+     */
+    private int getTeamOfFigure(Figure figure) throws IllegalArgumentException {
+        for(int i=0; i<teams.size(); i++) {
+            for(int j=0; j<teams.get(i).getFigures().size(); j++) {
+                if(teams.get(i).getFigures().get(j) == figure) {
+                    return i;
+                }
+            }
+        }
+        throw new IllegalArgumentException("Could not find team of figure" + figure);
     }
 
     public int getNumberOfLivingTeams() {
@@ -610,7 +643,8 @@ public class MapWindow extends Application implements Networkable {
             case "ACTIVATE_FIGURE":
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
-                scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
+                projectileFocused = false;
+                if(autoScroll && !projectileFocused) scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
                 break;
             case "CURRENT_TEAM_END_ROUND":
                 if(server == null) { // already done on server
@@ -659,6 +693,7 @@ public class MapWindow extends Application implements Networkable {
                     flyingProjectile = projectile;
                     fieldPane.getChildren().add(flyingProjectile);
                     shootingIsAllowed = false;
+                    projectileFocused = true;
                     //ToDo setRoundTimer down to 5sec
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
@@ -680,12 +715,16 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "FIGURE_SET_POSITION":
                 Point2D position = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
+                Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
                 if(server == null) { // server already applied change to prevent timing issue
-                    Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
                     f.setPosition(position); // TODO alternative setter
                 }
+                if(autoScroll && (!projectileFocused || client.isLocalGame() || getTeamOfFigure(f) == client.getAssociatedTeam())) {
+                    projectileFocused = false; // when moving own figure, stop focusing projectile
+                    System.out.println("projectile lost focus");
+                }
                 if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
-                    scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
+                    if(autoScroll && !projectileFocused) scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
                 break;
             case "REPLACE_BLOCK":
@@ -707,7 +746,7 @@ public class MapWindow extends Application implements Networkable {
                     final double x = Double.parseDouble(cmd[1]);
                     final double y = Double.parseDouble(cmd[2]);
                     flyingProjectile.setPosition(new Point2D(x, y));
-                    scrollTo(x, y, 0, 0, false);
+                    if(autoScroll && projectileFocused) scrollTo(x, y, 0, 0, false);
                 }
                 break;
             case "REMOVE_FLYING_PROJECTILE":

@@ -504,6 +504,7 @@ public class NetLobby extends Application implements Networkable {
         disableForbiddenSettings(associatedTeam);
         spectator.setSelected(associatedTeam == -1);
         System.out.println("I belong to team " + associatedTeam);
+        client.setAssociatedTeam(newTeam);
     }
 
     public void spectatorBoxChanged(boolean isChecked) {

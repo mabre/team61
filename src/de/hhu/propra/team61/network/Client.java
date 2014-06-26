@@ -39,6 +39,9 @@ public class Client implements Runnable {
     static String id;
     /** the name of the player sitting in front of this client */
     private String name;
+
+    /** the number of the team which is controlled by this client, counting starts from 0 = host, -1 = spectator */
+    private int associatedTeam;
     /** true if the client is connected to a local game (ie. only one client is running) */
     private boolean isLocalGame = false;
 
@@ -185,5 +188,22 @@ public class Client implements Runnable {
      */
     public boolean isLocalGame() {
         return isLocalGame;
+    }
+
+    /**
+     * Gets the team which is controlled by this client.
+     * Counting starts from 0 = host, -1 = spectator.
+     * @return the team associated with this client
+     */
+    public int getAssociatedTeam() {
+        return associatedTeam;
+    }
+
+    /**
+     * Sets the number of the team which is controlled by this client.
+     * Counting starts from 0 = host, -1 = spectator.
+     */
+    public void setAssociatedTeam(int associatedTeam) {
+        this.associatedTeam = associatedTeam;
     }
 }
