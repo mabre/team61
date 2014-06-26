@@ -117,6 +117,17 @@ public class Server implements Runnable {
     }
 
     /**
+     * Sends the given commands to all connected clients.
+     * @param commands the commands to be sent
+     * @see #sendCommand(String)
+     */
+    public static void  sendCommands(ArrayList<String> commands) {
+        for (String command : commands) {
+            sendCommand(command);
+        }
+    }
+
+    /**
      * Checks if a client with the given id exists.
      * @param id the id to be checked
      * @return true if a client with the given id exists

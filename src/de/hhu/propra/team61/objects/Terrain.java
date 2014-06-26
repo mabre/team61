@@ -580,15 +580,18 @@ public class Terrain extends GridPane {
     public boolean standingOnLiquid(Point2D position) {
         final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
         final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
-        final int y = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int maxY = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int minY = maxY - (Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE;
 
-        if(y >= terrain.size()) {
+        if(maxY >= terrain.size()) {
             return false;
         }
 
-        for(int x=minX; x < maxX && x < terrain.get(y).size(); x++) {
-            if(terrain.get(y).get(x).isLiquid()) {
-                return true;
+        for(int y=minY; y <= maxY && y < terrain.size(); y++) {
+            for (int x = minX; x < maxX && x < terrain.get(y).size(); x++) {
+                if (terrain.get(y).get(x).isLiquid()) {
+                    return true;
+                }
             }
         }
 
@@ -598,7 +601,7 @@ public class Terrain extends GridPane {
     private void flood(ArrayList<String> commands) {
         for(int row=terrain.size()-1; row>=0; row--) {
             char foundLiquidInRow = ' ';
-            for(int column = 0; column < terrain.get(row).size(); column++) {
+            for(int column = 0; column < terrain.get(row).size(); column++) { // TODO move to function + before for loop
                 if(terrain.get(row).get(column).isLiquid()) {
                     foundLiquidInRow = terrain.get(row).get(column).getType();
                     break;
@@ -613,5 +616,34 @@ public class Terrain extends GridPane {
                 }
             }
         }
+    }
+
+    public ArrayList<String> increaseFlood(int floodLevel) {
+        ArrayList<String> commands = new ArrayList<>();
+
+        if(floodLevel > terrain.size()) return commands;
+
+        int newRowToFlood = terrain.size()-floodLevel;
+
+        char foundLiquidInRow = ' ';
+
+        for (int column = 0; column < terrain.get(terrain.size()-1).size() && foundLiquidInRow == ' '; column++) {
+            if (terrain.get(terrain.size()-1).get(column).isLiquid()) {
+                foundLiquidInRow = terrain.get(terrain.size()-1).get(column).getType();
+            }
+        }
+
+        if(foundLiquidInRow == ' ') foundLiquidInRow = 'W'; // default to water for levels w/o liquid
+
+        for(int column = 0; column < terrain.get(newRowToFlood).size(); column++) {
+            if(terrain.get(newRowToFlood).get(column).isSky()) {
+                replaceBlock(column, newRowToFlood, foundLiquidInRow);
+                commands.add("REPLACE_BLOCK " + column + " " + newRowToFlood + " " + foundLiquidInRow);
+            }
+        }
+
+        flood(commands);
+
+        return commands;
     }
 }

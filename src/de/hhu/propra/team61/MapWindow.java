@@ -99,6 +99,8 @@ public class MapWindow extends Application implements Networkable {
     private Figure boss = null;
     private boolean bossSpawnedLeft;
 
+    private int floodLevel = -1;
+
     private String map; // TODO do we need this?
     private Chat chat;
     private SceneController sceneController;
@@ -453,6 +455,8 @@ public class MapWindow extends Application implements Networkable {
         } else if(boss != null) {
             moveBoss();
             server.sendCommand("SD BOSS MOVE");
+        } else if(floodLevel != -1) {
+            server.sendCommands(terrain.increaseFlood(++floodLevel));
         }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -983,6 +987,18 @@ public class MapWindow extends Application implements Networkable {
                                     moveBoss();
                                 }
                             }
+                            break;
+                        case "flood":
+                            if (cmd.length > 2) {
+                                floodLevel = Integer.parseInt(cmd[2]);
+                            } else {
+                                if(floodLevel != -1) {
+                                    terrain.increaseFlood(++floodLevel);
+                                } else {
+                                    floodLevel = 0;
+                                }
+                            }
+                            break;
                     }
                 });
                 System.out.println("Premature Death");
