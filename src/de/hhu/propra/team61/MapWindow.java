@@ -728,8 +728,12 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "REPLACE_BLOCK":
-                if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
-                terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                if(server == null) {
+                    if (cmd[3].charAt(0) == '#') {
+                        cmd[3] = " "; //Decode # as destruction, ' ' is impossible due to Client/Server architecture
+                    }
+                    terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                }
                 break;
             case "DEACTIVATE_FIGURE":
                 shootingIsAllowed = true;

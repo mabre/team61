@@ -430,7 +430,7 @@ public class Terrain extends GridPane {
                 debugLog("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
-                replaceBlock(blockX,blockY,replacement); //Mark as destroyed
+                replaceBlock(blockX,blockY,' '); //Mark as destroyed
 
                 // Recursively continue destruction for all directions unless OutOfBounds
                 if (blockY+1 < terrain.size()){ explode(commands, blockX, blockY + 1, explosionPower); }
@@ -450,11 +450,11 @@ public class Terrain extends GridPane {
 
                     if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
+                            replaceBlock(blockX, blockY, '\\');
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
-                        } else {
-                            if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
-                                commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
-                            }
+                        } else if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
+                            replaceBlock(blockX, blockY, '/');
+                            commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                         }
                     }
                 }
@@ -475,6 +475,7 @@ public class Terrain extends GridPane {
 
         ArrayList<String> commands = new ArrayList<String>();
         explode(commands, blockX, blockY, explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
+        flood(commands);
 
         return commands;
     }
@@ -592,5 +593,25 @@ public class Terrain extends GridPane {
         }
 
         return false;
+    }
+
+    private void flood(ArrayList<String> commands) {
+        for(int row=terrain.size()-1; row>=0; row--) {
+            char foundLiquidInRow = ' ';
+            for(int column = 0; column < terrain.get(row).size(); column++) {
+                if(terrain.get(row).get(column).isLiquid()) {
+                    foundLiquidInRow = terrain.get(row).get(column).getType();
+                    break;
+                }
+            }
+            if(foundLiquidInRow != ' ') {
+                for(int column = 0; column < terrain.get(row).size(); column++) {
+                    if(terrain.get(row).get(column).isSky()) {
+                        replaceBlock(column, row, foundLiquidInRow);
+                        commands.add("REPLACE_BLOCK " + column + " " + row + " " + foundLiquidInRow);
+                    }
+                }
+            }
+        }
     }
 }
