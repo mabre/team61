@@ -384,7 +384,7 @@ public class Terrain extends GridPane {
     public double getFriction(Point2D pos) {
         int row = (int)((pos.getY()+Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE);
         int column = (int)(pos.getX()/BLOCK_SIZE);
-        if(row >= terrain.size() || column > terrain.get(0).size()) return 1;
+        if(row >= terrain.size() || column > terrain.get(0).size() || row < 0 || column < 0) return 1;
         return terrain.get(row).get(column).getFriction();
     }
 

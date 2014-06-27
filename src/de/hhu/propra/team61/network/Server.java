@@ -70,7 +70,7 @@ public class Server implements Runnable {
                 listener.close();
             }
         } catch(BindException e) {
-            System.out.println("ERROR " + e.getLocalizedMessage());
+            System.err.println("ERROR " + e.getLocalizedMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -93,7 +93,7 @@ public class Server implements Runnable {
 
     /**
      * Sets {@link #currentNetworkable}.
-     * The given object should have a sensible implementation of {@link de.hhu.propra.team61.network.Networkable#handleKeyEventOnServer(String)},
+     * The given object should have a sensible implementation of {@link de.hhu.propra.team61.network.Networkable#handleOnServer(String)},
      * ie. must understand commands relevant to the view.
      * @param networkable the view which will receive processed and filtered server commands
      * @see de.hhu.propra.team61.network.Server.ClientConnection#broadcast()
@@ -103,15 +103,14 @@ public class Server implements Runnable {
     }
 
     /**
-     * Sends the given command after prepending "COMMAND " to all connected clients.
+     * Sends the given command to all connected clients.
      * @param command the command to be sent
      */
-    public static void sendCommand(String command) {
+    public static void send(String command) {
         synchronized (clients) {
-            for (int i=0; i< clients.size(); i++) {
-                String message = "COMMAND " + command; // TODO necessary?
-                clients.get(i).out.println(message);
-                System.out.println("SERVER sent command to " + clients.get(i).id+"/"+ clients.get(i).name + ": " + message);
+            for (ClientConnection client : clients) {
+                client.out.println(command);
+                System.out.println("SERVER sent command to " + client.id + "/" + client.name + ": " + command);
             }
         }
     }
@@ -261,11 +260,11 @@ public class Server implements Runnable {
                     client.associatedTeam = newTeam;
                     client.out.println("SET_TEAM_NUMBER " + newTeam);
                     System.out.println(client.id + "/" + client.name + " associated with team " + newTeam);
-                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
+                    send("SPECTATOR_LIST " + getClientListAsJson());
                     return;
                 }
             }
-            System.out.println("WARNING Did not find " + id);
+            System.err.println("WARNING Did not find " + id);
         }
     }
 
@@ -276,7 +275,7 @@ public class Server implements Runnable {
      */
     public void changeTeamByNumber(int team, int newTeam) {
         if(team < 1) {
-            System.out.println("ERROR: team " + team + " cannot be changed.");
+            System.err.println("ERROR: team " + team + " cannot be changed.");
             return;
         }
         synchronized (clients) {
@@ -285,11 +284,11 @@ public class Server implements Runnable {
                     client.associatedTeam = newTeam;
                     client.out.println("SET_TEAM_NUMBER " + newTeam);
                     System.out.println(client.id + "/" + client.name + " associated with team " + newTeam);
-                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
+                    send("SPECTATOR_LIST " + getClientListAsJson());
                     return;
                 }
             }
-            System.out.println("WARNING Did not find " + team);
+            System.err.println("WARNING Did not find " + team);
         }
     }
 
@@ -324,6 +323,7 @@ public class Server implements Runnable {
 
     /**
      * This class represents a connected client and holds the input/output reader/writers.
+     * Each connection has a unique id and player name. Each player (unless it is spectator) is associated with a team.
      */
     private static class ClientConnection implements AutoCloseable {
         /** reader which receives the messages of the associated client */
@@ -365,7 +365,7 @@ public class Server implements Runnable {
                 synchronized (clients) {
                     clients.add(this);
                 }
-                sendCommand("SPECTATOR_LIST " + getClientListAsJson());
+                send("SPECTATOR_LIST " + getClientListAsJson());
                 broadcast();
             }
         }
@@ -380,7 +380,7 @@ public class Server implements Runnable {
                 System.out.println("SERVER: asked for id and name");
                 String identifier = in.readLine();
                 if(identifier == null) {
-                    System.out.println("SERVER: read null identifier");
+                    System.err.println("SERVER: read null identifier");
                     return;
                 }
                 if(!clientIdExists(id)) { // TODO ok, here seems to be sth wrong ...
@@ -396,8 +396,8 @@ public class Server implements Runnable {
         }
 
         /**
-         * processes messages received from the client, and passes commands to {Networkable#handleKeyEventOnServer} of
-         * {#currentNetworkable}, if necessary.
+         * Processes messages received from the client, and passes commands to {Networkable#handleOnServer} of {#currentNetworkable}, if necessary.
+         * Unknown commands are discarded.
          * @throws IOException
          */
         private void broadcast() throws IOException {
@@ -407,77 +407,117 @@ public class Server implements Runnable {
                     if (line == null) {
                         return;
                     }
-                    String clientId = line.split(" ", 2)[0]; // TODO equals this.id?
+                    System.out.println("SERVER RECEIVED message from " + id + ": " + line);
                     if (line.contains("CHAT ")) {
-                        String msg = line.split(" ", 3)[2];
-                        if (msg.startsWith("/kick ")) {
-                            String userToKick = msg.split(" ", 2)[1];
-                            if(clientNameExists(userToKick)) {
-                                if(clientId.equals(Client.id) || clientId.equals(getIdFromName(userToKick))) {
-                                    disconnect(userToKick);
-                                    sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
-                                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
-                                } else {
-                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
-                                }
-                            } else {
-                                sendCommand("SERVER CHAT command failed: No such user. cmd: " + getNameFromId(clientId) + " " + msg);
-                            }
-                        } else if (msg.startsWith("/kickteam ")) {
-                            if(clientId.equals(Client.id)) { // TODO team cannot surrender
-                                currentNetworkable.handleKeyEventOnServer(msg);
-                                sendCommand("SERVER CHAT command executed. cmd: " + getNameFromId(clientId) + ": " + msg);
-                            } else {
-                                sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
-                            }
-                        } else if (msg.startsWith("/rename ")) {
-                            String names[] = msg.split(" ", 3);
-                            if (names.length == 3) {
-                                if (clientId.equals(Client.id) || clientId.equals(getIdFromName(names[1]))) {
-                                    sendCommand("SERVER CHAT command executed. cmd: " + names[1] + ": " + msg);
-                                    renameByName(names[1], names[2]);
-                                    sendCommand("SPECTATOR_LIST " + getClientListAsJson());
-                                } else {
-                                    sendCommand("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(clientId) + " " + msg);
-                                }
-                            } else {
-                                sendCommand("SERVER CHAT command executed. cmd: " + name + ": " + msg);
-                                renameByName(name, names[1]);
-                                sendCommand("SPECTATOR_LIST " + getClientListAsJson());
-                            }
-                        // cheat codes are enclosed in double low-9 quotation mark [AltGr-v on Linux] and right double quotation mark [AltGr-n]
-                        // (typographic German opening quotation mark 99 / typographic English closing quotation mark 99 - no-one will type this accidentally)
-                        } else if (msg.startsWith("/„") && msg.endsWith("”")) {
-                            currentNetworkable.handleKeyEventOnServer("CHEAT " + removeLastChar(extractPart(msg, "/„")));
-                        } else {
-                            sendCommand(getNameFromId(clientId) + " CHAT " + msg);
-                        }
-                    } else if (line.contains("GET_STATUS")) {
+                        processChatMessage(line.split(" ", 2)[1]);
+                    } else if (line.startsWith("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());
-                    } else if (line.contains("CLIENT_READY ")) {
+                    } else if (line.startsWith("CLIENT_READY ")) {
                         isReady = true;
-                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer("READY " + associatedTeam + " " + extractPart(line, "CLIENT_READY ")));
-                    } else if (line.contains("SPECTATOR ")) {
-                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(line + " " + associatedTeam));
-                    } else if (line.contains("KEYEVENT ")) {
-                        Platform.runLater(() -> currentNetworkable.handleKeyEventOnServer(associatedTeam + " " + extractPart(line, "KEYEVENT ")));
-                    } else if (line.contains("STATUS ")) {
-                        if (clientId.equals(Client.id)) {
-                            sendCommand(extractPart(line, clientId+" "));
-                        } else {
-                            System.out.println("SERVER: operation not allowed for " + clientId + ": " + line);
-                            System.out.println("    only allowed for " + Client.id);
-                        }
+                        Platform.runLater(() -> currentNetworkable.handleOnServer("READY " + associatedTeam + " " + extractPart(line, "CLIENT_READY ")));
+                    } else if (line.startsWith("SPECTATOR ")) {
+                        Platform.runLater(() -> currentNetworkable.handleOnServer(id + " " + line + " " + associatedTeam));
+                    } else if (line.startsWith("KEYEVENT ")) {
+                        Platform.runLater(() -> currentNetworkable.handleOnServer(associatedTeam + " " + extractPart(line, "KEYEVENT ")));
+                    } else if (line.startsWith("STATUS ")) {
+                        System.err.println("WARNING: COMMAND NO LONGER SUPPORTED!"); // TODO remove
                     } else {
-                        System.out.println("SERVER: unhandled message: " + line);
+                        System.err.println("SERVER: unhandled message: " + line);
                     }
                 }
             } catch(SocketException e) {
-                System.out.println("SERVER: SocketException at " + id+"/"+name + " " + e.getMessage());
+                System.err.println("SERVER: SocketException at " + id+"/"+name + " " + e.getMessage());
             } catch(IOException e) {
-                System.out.println("SERVER: IOException at " + id+"/"+name + " " + e.getMessage());
+                System.err.println("SERVER: IOException at " + id+"/"+name + " " + e.getMessage());
             }
         }
+
+        /**
+         * Processes a chat message.
+         * Checks if the message is a cheat command and executes it. If it is a normal message, it is passed to
+         * {@link #currentNetworkable}.
+         * @param msg the message to be processed
+         */
+        private void processChatMessage(String msg) {
+            if (msg.startsWith("/kick ")) {
+                kickUserByChat(msg.split(" ", 1)[0], msg);
+            } else if (msg.startsWith("/kickteam ")) {
+                kickTeamByChat(msg);
+            } else if (msg.startsWith("/rename ")) {
+                String names[] = extractPart(msg, "/rename ").split(" "); // TODO renaming players with spaces?
+                if(names.length == 1) { // if only one name given -> rename current user
+                    renameByChat(name, names[0], msg);
+                } else if(names.length == 2) {
+                    renameByChat(names[0], names[1], msg);
+                } else {
+                    System.err.println("renaming users with spaces in name not supported, considering whole string as new name");
+                    renameByChat(name, extractPart(msg, "/rename "), msg);
+                }
+            // cheat codes are enclosed in double low-9 quotation mark [AltGr-v on Linux] and right double quotation mark [AltGr-n]
+            // (typographic German opening quotation mark 99 / typographic English closing quotation mark 99 - no-one will type this accidentally)
+            } else if (msg.startsWith("/„") && msg.endsWith("”")) {
+                currentNetworkable.handleOnServer("CHEAT " + removeLastChar(extractPart(msg, "/„")));
+            } else {
+                send(getNameFromId(id) + " CHAT " + msg);
+            }
+        }
+
+        /**
+         * Changes the name of the given user.
+         * A user can only be renamed by the user themselves or by the host. The original chat command is sent to all
+         * clients to inform them of the execution of this command.
+         * @param oldName name of the user which is renamed
+         * @param newName new name of the user
+         * @param msg the original chat message which contains the rename command
+         */
+        private void renameByChat(String oldName, String newName, String msg) {
+            if (id.equals(Client.id) || id.equals(getIdFromName(oldName))) {
+                send("SERVER CHAT command executed. cmd: " + oldName + ": " + msg);
+                renameByName(oldName, newName);
+                send("SPECTATOR_LIST " + getClientListAsJson());
+            } else {
+                send("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(id) + " " + msg);
+            }
+        }
+
+        /**
+         * Instructs {@link #currentNetworkable} to kick the team mentioned in the message.
+         * "/kickteam " followed by the team number is passed. Only the host can kick a team. The original chat command
+         * is sent to all clients to inform them of the execution of this command.
+         * @param msg the original chat message which contains the kick command
+         */
+        private void kickTeamByChat(String msg) {
+            if(id.equals(Client.id)) { // TODO team cannot surrender
+                currentNetworkable.handleOnServer(msg);
+                send("SERVER CHAT command executed. cmd: " + getNameFromId(id) + ": " + msg);
+            } else {
+                send("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(id) + " " + msg);
+            }
+        }
+
+        /**
+         * Kicks the given user by disconnecting it.
+         * A user can only be kicked by the user themselves or by the host. The associated team is not removed from the
+         * current game, use {@link #kickTeamByChat}. The original chat command is sent to all clients to inform them of
+         * the execution of this command.
+         * @param userToKick the id or name of the client which shall be kicked
+         * @param msg the original chat message which contains the kickteam command
+         */
+        private void kickUserByChat(String userToKick, String msg) {
+            if(clientNameExists(userToKick)) {
+                // host can kick every client, and the client itself can kick itself
+                if(id.equals(Client.id) || id.equals(getIdFromName(userToKick))) { // first condition is true when client running on host sent this command // TODO condidtion to function
+                    disconnect(userToKick);
+                    send("SERVER CHAT command executed. cmd: " + getNameFromId(id) + ": " + msg);
+                    send("SPECTATOR_LIST " + getClientListAsJson());
+                } else {
+                    send("SERVER CHAT command failed: Operation not allowed. cmd: " + getNameFromId(id) + " " + msg);
+                }
+            } else {
+                send("SERVER CHAT command failed: No such user. cmd: " + getNameFromId(id) + " " + msg);
+            }
+        }
+
 
         /**
          * Removes this connection from the list of {@link #clients} list.
@@ -518,7 +558,9 @@ public class Server implements Runnable {
         }
 
         /**
-         * @return associated team as formatted string (eg. "Specatator" instead of -1)
+         * Gets the associated team as formatted string.
+         *  (eg. "Spectator" instead of -1)
+         * @return associated team as formatted string
          */
         public String getAssociatedTeam() {
             if(associatedTeam == -1) return "Spectator";
