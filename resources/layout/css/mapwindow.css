@@ -12,3 +12,21 @@
 #scrollPane {
    -fx-background-color: transparent;
 }
+
+#pausePane {
+    -fx-background-color: rgba(225, 237, 231, 0.8);
+    -fx-padding: 60 0 0 330;
+}
+
+.button {
+    -fx-font-size: 15px;
+    -fx-padding: 4 22 12 22;
+    -fx-text-fill: #FFFFFF;
+    -fx-background-image: url("file:resources/layout/menuebutton.png");
+    -fx-background-repeat: repeat-x;
+    -fx-focus-color: transparent;
+}
+
+.button:hover  {
+    -fx-background-image: url("file:resources/layout/menuebuttonhover.png");
+}

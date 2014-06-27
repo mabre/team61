@@ -325,11 +325,11 @@ public class CustomizeWindow extends Application {
         actionForTerrainButton(snow, "Snow", 'i');
         selectionGrid.add(snow, 0, 4);
         Button rightEdge = new Button();
-        rightEdge.setGraphic(new ImageView(new Image(img_path + "slant_ground_ri.png")));
+        rightEdge.setGraphic(new ImageView(new Image(img_path + "rightedge.png")));
         actionForTerrainButton(rightEdge, "Right edge", '/');
         selectionGrid.add(rightEdge, 0, 5);
         Button leftEdge = new Button();
-        leftEdge.setGraphic(new ImageView(new Image(img_path + "slant_ground_le.png")));
+        leftEdge.setGraphic(new ImageView(new Image(img_path + "leftedge.png")));
         actionForTerrainButton(leftEdge, "Left edge", '\\');
         selectionGrid.add(leftEdge, 0, 6);
         selectionGrid.add(terrainType, 0, 7, 5, 1);
@@ -487,7 +487,7 @@ public class CustomizeWindow extends Application {
 
     }
 
-    private void actionForTerrainButton(Button terrainButton, String terrain, char character) {
+    private void actionForTerrainButton(Button terrainButton, final String terrain, char character) {
         terrainButton.addEventHandler(MouseEvent.MOUSE_ENTERED,
                 new EventHandler<MouseEvent>() {
                     @Override public void handle(MouseEvent e) {
@@ -501,9 +501,10 @@ public class CustomizeWindow extends Application {
                 terrainType.setText("");
             }
         });
+        String terrainToUse = terrain.replaceAll("\\s","");
         terrainButton.setOnAction(e -> {
             chosenTerrainType = character;
-            image = new Image(img_path + terrain.toLowerCase() + ".png");
+            image = new Image(img_path + terrainToUse.toLowerCase() + ".png");
             imageView.setImage(image);
         });
     }
@@ -551,8 +552,8 @@ public class CustomizeWindow extends Application {
         levelTerrain.setOnMouseMoved(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                int x = (int)mouseEvent.getX();
-                int y = (int)mouseEvent.getY();
+                int x = (int) mouseEvent.getX();
+                int y = (int) mouseEvent.getY();
                 imageView.setLayoutX(x);
                 imageView.setLayoutY(y);
                 levelTerrain.setCursor(Cursor.NONE);

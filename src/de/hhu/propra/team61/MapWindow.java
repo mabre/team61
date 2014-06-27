@@ -1,9 +1,6 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.gui.Chat;
-import de.hhu.propra.team61.gui.GameOverWindow;
-import de.hhu.propra.team61.gui.SceneController;
-import de.hhu.propra.team61.gui.WindIndicator;
+import de.hhu.propra.team61.gui.*;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
@@ -19,19 +16,20 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.HPos;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -59,8 +57,12 @@ public class MapWindow extends Application implements Networkable {
 
     //JavaFX related variables
     private Scene drawing;
+    /** contains gamePane and pause/help-overlay */
+    private StackPane rootPane = new StackPane();
+    /** contains pause/help-overlay */
+    private BorderPane pausePane = new BorderPane();
     /** contains terrain, labels at the top etc. (ie. everything) */
-    private BorderPane rootPane;
+    private BorderPane gamePane;
     /** contains chat, scrollPane with terrain, teams etc. */
     private StackPane centerPane;
     /** contains terrain, teams, weapons */
@@ -73,6 +75,9 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
+    private ImageView pauseHelpImageView = new ImageView();
+    private final static Image pauseImage = new Image("file:resources/layout/pause.png");
+    private final static Image helpImage = new Image("file:resources/layout/help.png");
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
@@ -89,6 +94,7 @@ public class MapWindow extends Application implements Networkable {
     /** used to disable shooting multiple times during one turn */
     private boolean shootingIsAllowed = true;
     private boolean pause = false;
+    private boolean help = false;
     //Projectile-Moving-Thread related variables
     private ArrayList<Projectile> flyingProjectiles = new ArrayList<>();
     private Thread moveObjectsThread;
@@ -198,7 +204,7 @@ public class MapWindow extends Application implements Networkable {
             shutdown();
             sceneController.switchToMenue();
         });
-        rootPane = new BorderPane();
+        gamePane = new BorderPane();
         // contains the terrain with figures
         scrollPane = new ScrollPane();
         centerPane = new StackPane();
@@ -220,7 +226,7 @@ public class MapWindow extends Application implements Networkable {
         scrollPane.setContent(anchorPane);
         scrollPane.setPrefSize(1000, 530);
         centerPane.getChildren().add(scrollPane);
-        rootPane.setBottom(centerPane);
+        gamePane.setBottom(centerPane);
 
         for(Team team: teams) {
             fieldPane.getChildren().add(team);
@@ -228,7 +234,9 @@ public class MapWindow extends Application implements Networkable {
         }
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
-        rootPane.setTop(teamLabel);
+        gamePane.setTop(teamLabel);
+        createPausePane();
+        rootPane.getChildren().addAll(gamePane, pausePane);
 
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
@@ -259,7 +267,7 @@ public class MapWindow extends Application implements Networkable {
 
         if(server != null) terrain.rewind();
         windIndicator.setWindForce(terrain.getWindMagnitude());
-        rootPane.setCenter(windIndicator);
+        gamePane.setCenter(windIndicator);
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
@@ -369,6 +377,47 @@ public class MapWindow extends Application implements Networkable {
             });
             moveObjectsThread.start();
         }
+    }
+
+    private void createPausePane() {
+        pausePane.setVisible(false);
+        CustomGrid pauseGrid = new CustomGrid();
+        pauseGrid.add(pauseHelpImageView, 0, 0, 2, 1);
+        pauseGrid.setHalignment(pauseHelpImageView, HPos.CENTER);
+        Button cont = new Button("Continue game");
+        cont.setOnAction(e -> {
+            if (pause) {
+                pause = !pause;
+                server.sendCommand("PAUSE " + pause);
+            } else {
+                help = !help;
+                pausePane.setVisible(help);
+            }
+        });
+
+        pauseGrid.add(cont, 0, 1);
+        pauseGrid.setHalignment(cont, HPos.CENTER);
+        Button exit = new Button("End game");
+        exit.setOnAction(e -> {
+            sceneController.switchToMenue();
+            //TODO stop game
+        });
+        pauseGrid.add(exit, 1, 1);
+        pauseGrid.setHalignment(exit, HPos.CENTER);
+        Text shortcuts = new Text("Shortcuts:");
+        pauseGrid.add(shortcuts, 0, 4);
+        Text shortcutsList = new Text("A/left arrow key - walk left\n" +
+                "D/right arrow key - walk right\n" +
+                "W/up arrow key - jump, move crosshair up\n" +
+                "S/down arrow key - move crosshair down\n" +
+                "E - open inventory\n" +
+                "1 to 0 - choose item\n" +
+                "Space - shoot weapon\n" +
+                "C - open chat\n" +
+                "P/Esc/F1 - Pause game, show this help");
+        pauseGrid.add(shortcutsList, 0, 5, 2, 8);
+        pausePane.setId("pausePane");
+        pausePane.setCenter(pauseGrid);
     }
 
     /**
@@ -631,8 +680,11 @@ public class MapWindow extends Application implements Networkable {
             pause = Boolean.parseBoolean(cmd[1]);
             if(pause) {
                 teamLabel.setText("Pause - If(Host){Press P or ESC to continue}"); //ToDo ugly temporary implementation
+                pauseHelpImageView.setImage(pauseImage);
+                pausePane.setVisible(true);
             } else {
                 teamLabel.setText("Continue");
+                pausePane.setVisible(false);
             }
         }
         
@@ -858,9 +910,14 @@ public class MapWindow extends Application implements Networkable {
             case "Esc":
             case "Pause":
             case "P":
+            case "F1":
                 if (team == 0 || client.isLocalGame()) { // allowing pausing by host (team 0) and when playing local game
                     pause = !pause;
                     server.sendCommand("PAUSE " + pause);
+                } else {
+                    help = !help;
+                    pauseHelpImageView.setImage(helpImage);
+                    pausePane.setVisible(help);
                 }
                 break;
         }

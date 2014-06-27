@@ -40,9 +40,9 @@ public class TerrainBlock extends ImageView {
     /** image looking like sky */
     private final static Image SKY_IMAGE = new Image(imgPath + "sky.png");
     /** image looking like a slant from top left to bottom right */
-    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
+    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "leftedge.png");
     /** image looking like a slant from bottom left to top right */
-    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
+    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "rightedge.png");
     /** image looking like stone */
     private final static Image STONES_IMAGE = new Image(imgPath + "stone.png");
     /** image looking like water */
