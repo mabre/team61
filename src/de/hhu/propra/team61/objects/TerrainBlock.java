@@ -32,7 +32,7 @@ public class TerrainBlock extends ImageView {
     private final static String imgPath = "file:resources/";
     // preloaded terrain images
     /** image looking like earth */
-    private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
+    private final static Image EARTH_IMAGE = new Image(imgPath + "soil.png");
     /** image looking like ice */
     private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
     /** image looking like lave */
@@ -44,7 +44,7 @@ public class TerrainBlock extends ImageView {
     /** image looking like a slant from bottom left to top right */
     private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
     /** image looking like stone */
-    private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
+    private final static Image STONES_IMAGE = new Image(imgPath + "stone.png");
     /** image looking like water */
     private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
     /** image indicating a spawn point */

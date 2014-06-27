@@ -17,6 +17,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -73,9 +74,6 @@ public class CustomizeWindow extends Application {
     CustomGrid selectionGrid = new CustomGrid();
     private char chosenTerrainType = 'S';
     private int chosenBrushWidth = 3;
-    private static int BLOCK_SIZE = 8; // TODO grab from Terrain?
-    private static int MAP_HEIGHT = 60;
-    private static int MAP_WIDTH = 130;
     private String keysEntered = "";
     private boolean cheatEnabled = false;
     private Figure block = null;
@@ -84,9 +82,11 @@ public class CustomizeWindow extends Application {
     Text terrainType = new Text();
     Button stone = new Button();
     String chosenMap = new String("editor/basic.lvl");
-    ArrayList<ArrayList<Character>> terrain = new ArrayList<>();
     TextField mapNameField = new TextField("Custom map");
     Slider brushWidth = new Slider(1, 7, 3);
+    private String img_path = new String("file:resources/");
+    private Image image = new Image(img_path + "stone.png");
+    private ImageView imageView = new ImageView(image);
 
     public CustomizeWindow(SceneController sceneController) {
         this.sceneController = sceneController;
@@ -252,11 +252,11 @@ public class CustomizeWindow extends Application {
         liquidChooser.valueProperty().addListener((ov, value, new_value) -> {
             if (new_value.equals("Water")) {
             } else {
-                for (int i = 0; i < levelTerrain.getTerrainWidth()/BLOCK_SIZE; i++) {
-                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/BLOCK_SIZE-1, 'W');
+                for (int i = 0; i < levelTerrain.getTerrainWidth()/Terrain.BLOCK_SIZE; i++) {
+                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/Terrain.BLOCK_SIZE-1, 'W');
                 }
-                for (int i = 0; i < levelTerrain.getTerrainWidth()/BLOCK_SIZE; i++) {
-                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/BLOCK_SIZE-1, 'L');
+                for (int i = 0; i < levelTerrain.getTerrainWidth()/Terrain.BLOCK_SIZE; i++) {
+                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/Terrain.BLOCK_SIZE-1, 'L');
                 }
             }
         });
@@ -305,73 +305,46 @@ public class CustomizeWindow extends Application {
             }
         });
         initializeLevelEditor();
-        stone.setGraphic(new ImageView(new Image("file:resources/stones.png")));
-        stone.setOnAction(e -> {
-            chosenTerrainType = 'S';
-        });
-        mouseOverTerrain(stone, "Stone");
+        stone.setGraphic(new ImageView(new Image(img_path + "stone.png")));
+        actionForTerrainButton(stone, "Stone", 'S');
         selectionGrid.add(stone, 0, 0);
         Button soil = new Button();
-        soil.setGraphic(new ImageView(new Image("file:resources/earth.png")));
-        soil.setOnAction(e -> {
-            chosenTerrainType = 'E';
-        });
-        mouseOverTerrain(soil, "Soil");
+        soil.setGraphic(new ImageView(new Image(img_path + "soil.png")));
+        actionForTerrainButton(soil, "Soil", 'E');
         selectionGrid.add(soil, 0, 1);
         Button sand = new Button();
-        sand.setGraphic(new ImageView(new Image("file:resources/stones.png")));
-        sand.setOnAction(e -> {
-            chosenTerrainType = 's';
-        });
-        mouseOverTerrain(sand, "Sand");
+        sand.setGraphic(new ImageView(new Image(img_path + "stone.png")));
+        actionForTerrainButton(sand, "Sand", 's');
         selectionGrid.add(sand, 0, 2);
         Button ice = new Button();
-        ice.setGraphic(new ImageView(new Image("file:resources/ice.png")));
-        ice.setOnAction(e -> {
-            chosenTerrainType = 'I';
-        });
-        mouseOverTerrain(ice, "Ice");
+        ice.setGraphic(new ImageView(new Image(img_path + "ice.png")));
+        actionForTerrainButton(ice, "Ice", 'I');
         selectionGrid.add(ice, 0, 3);
         Button snow = new Button();
-        snow.setGraphic(new ImageView(new Image("file:resources/stones.png")));
-        snow.setOnAction(e -> {
-            chosenTerrainType = 'i';
-        });
-        mouseOverTerrain(snow, "Snow");
+        snow.setGraphic(new ImageView(new Image(img_path + "stone.png")));
+        actionForTerrainButton(snow, "Snow", 'i');
         selectionGrid.add(snow, 0, 4);
         Button rightEdge = new Button();
-        rightEdge.setGraphic(new ImageView(new Image("file:resources/slant_ground_ri.png")));
-        rightEdge.setOnAction(e -> {
-            chosenTerrainType = '/';
-        });
-        mouseOverTerrain(rightEdge, "Right edge");
+        rightEdge.setGraphic(new ImageView(new Image(img_path + "slant_ground_ri.png")));
+        actionForTerrainButton(rightEdge, "Right edge", '/');
         selectionGrid.add(rightEdge, 0, 5);
         Button leftEdge = new Button();
-        leftEdge.setGraphic(new ImageView(new Image("file:resources/slant_ground_le.png")));
-        leftEdge.setOnAction(e -> {
-            chosenTerrainType = '\\';
-        });
-        mouseOverTerrain(leftEdge, "Left edge");
+        leftEdge.setGraphic(new ImageView(new Image(img_path + "slant_ground_le.png")));
+        actionForTerrainButton(leftEdge, "Left edge", '\\');
         selectionGrid.add(leftEdge, 0, 6);
         selectionGrid.add(terrainType, 0, 7, 5, 1);
         Button eraser = new Button("Eraser");
-        eraser.setOnAction(e -> {
-            chosenTerrainType = ' ';
-        });
-        mouseOverTerrain(eraser, "Erase parts of the map.");
+        actionForTerrainButton(eraser, "Erase parts of the map.", ' ');
         selectionGrid.add(eraser, 0, 11);
         Button spawnPoint = new Button("Spawn point");
-        spawnPoint.setOnAction(e -> {
-            chosenTerrainType = 'P';
-        });
-        mouseOverTerrain(spawnPoint, "Set a spawn point.");
+        actionForTerrainButton(spawnPoint, "Set a spawn point.", 'P');
         selectionGrid.add(spawnPoint, 0, 12);
         Button reset = new Button("Reset");
         reset.setOnAction(e -> {
             //Remove all blocks, set to board.png and water
             initializeLevelEditor();
         });
-        mouseOverTerrain(reset, "Remove your masterpiece :(");
+        actionForTerrainButton(reset, "Remove your masterpiece :(", chosenTerrainType);
         selectionGrid.add(reset, 0, 13);
         Button save = new Button("Save");
         save.setOnAction(e -> {
@@ -379,7 +352,7 @@ public class CustomizeWindow extends Application {
             createEditGrid();
             root.setLeft(editGrid);
         });
-        mouseOverTerrain(save, "Save the map.");
+        actionForTerrainButton(save, "Save the map.", chosenTerrainType);
         selectionGrid.add(save, 0, 14);
         Text brush = new Text("Brush width: ");
         selectionGrid.add(brush, 1, 0);
@@ -392,7 +365,6 @@ public class CustomizeWindow extends Application {
         brushWidth.valueProperty().addListener(new ChangeListener<Number>() {
             public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
                 chosenBrushWidth = new_val.intValue();
-                System.out.println(chosenBrushWidth);
             }
         });
         selectionGrid.add(brushWidth, 1, 1, 1, 4);
@@ -515,7 +487,7 @@ public class CustomizeWindow extends Application {
 
     }
 
-    private void mouseOverTerrain(Button terrainButton, String terrain) {
+    private void actionForTerrainButton(Button terrainButton, String terrain, char character) {
         terrainButton.addEventHandler(MouseEvent.MOUSE_ENTERED,
                 new EventHandler<MouseEvent>() {
                     @Override public void handle(MouseEvent e) {
@@ -528,6 +500,11 @@ public class CustomizeWindow extends Application {
             public void handle(MouseEvent e) {
                 terrainType.setText("");
             }
+        });
+        terrainButton.setOnAction(e -> {
+            chosenTerrainType = character;
+            image = new Image(img_path + terrain.toLowerCase() + ".png");
+            imageView.setImage(image);
         });
     }
 
@@ -550,7 +527,10 @@ public class CustomizeWindow extends Application {
             scrollPane.setContent(anchorPane);
             background.setStyle("-fx-background-image: url('" + "file:resources/levels/board.png" + "')");
             levelPane = new StackPane();
-            levelPane.getChildren().addAll(background, scrollPane);
+            Pane forImageView = new Pane();
+            forImageView.setMaxSize(750, 560);
+            forImageView.getChildren().add(imageView);
+            levelPane.getChildren().addAll(background, forImageView, scrollPane);
             newMapPane.setLeft(levelPane);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -567,22 +547,33 @@ public class CustomizeWindow extends Application {
                 draw(mouseEvent);
             }
         });
+        levelTerrain.setCursor(Cursor.NONE);
+        levelTerrain.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                int x = (int)mouseEvent.getX();
+                int y = (int)mouseEvent.getY();
+                imageView.setLayoutX(x);
+                imageView.setLayoutY(y);
+                levelTerrain.setCursor(Cursor.NONE);
+            }
+        });
     }
 
     private void draw(MouseEvent mouseEvent) {
-        int x = (int)mouseEvent.getX()/BLOCK_SIZE;
-        int y = (int)mouseEvent.getY()/BLOCK_SIZE;
+        int x = (int)mouseEvent.getX()/Terrain.BLOCK_SIZE;
+        int y = (int)mouseEvent.getY()/Terrain.BLOCK_SIZE;
         //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing liquid
         if (chosenTerrainType != 'P') {
             for (int i = x - (chosenBrushWidth / 2); i <= x + (chosenBrushWidth / 2); i++) {
                 for (int j = y - (chosenBrushWidth / 2); j <= y + (chosenBrushWidth / 2); j++) {
-                    if (j < (levelTerrain.getTerrainHeight() - 1) / BLOCK_SIZE && i < levelTerrain.getTerrainWidth() / BLOCK_SIZE && j >= 0 && i >= 0) {
+                    if (j < (levelTerrain.getTerrainHeight() - 1) / Terrain.BLOCK_SIZE && i < levelTerrain.getTerrainWidth() / Terrain.BLOCK_SIZE && j >= 0 && i >= 0) {
                         levelTerrain.replaceBlock(i, j, chosenTerrainType);
                     }
                 }
             }
         } else {
-            if (y < (levelTerrain.getTerrainHeight() - 1) / BLOCK_SIZE && x < levelTerrain.getTerrainWidth() / BLOCK_SIZE && y >= 0 && x >= 0) {
+            if (y < (levelTerrain.getTerrainHeight() - 1) / Terrain.BLOCK_SIZE && x < levelTerrain.getTerrainWidth() / Terrain.BLOCK_SIZE && y >= 0 && x >= 0) {
                 levelTerrain.replaceBlock(x, y, chosenTerrainType);
             }
         }

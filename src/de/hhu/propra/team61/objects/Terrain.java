@@ -44,7 +44,7 @@ public class Terrain extends GridPane {
     /** set to {@code true} to true to see the terrain grid */
     private static final boolean GRID_ENABLED = false;
     /** the size of a block within the terrain; you usually do NOT want to use this outside this class (notable exception: level editor) */
-    final static int BLOCK_SIZE = 8;
+    public final static int BLOCK_SIZE = 8;
 
     /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
