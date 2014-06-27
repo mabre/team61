@@ -248,6 +248,16 @@ public class MapWindow extends Application implements Networkable {
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
                         break;
+                    case ESCAPE:
+                    case PAUSE:
+                    case P:
+                    case F1:
+                        if (server == null) { // only server can pause - other players only see help
+                            help = !help;
+                            pauseHelpImageView.setImage(helpImage);
+                            pausePane.setVisible(help);
+                            break;
+                        }
                     default:
                         client.sendKeyEvent(keyEvent.getCode());
                 }
@@ -399,6 +409,7 @@ public class MapWindow extends Application implements Networkable {
         pauseGrid.setHalignment(cont, HPos.CENTER);
         Button exit = new Button("End game");
         exit.setOnAction(e -> {
+            shutdown();
             sceneController.switchToMenue();
             //TODO stop game
         });
@@ -406,15 +417,16 @@ public class MapWindow extends Application implements Networkable {
         pauseGrid.setHalignment(exit, HPos.CENTER);
         Text shortcuts = new Text("Shortcuts:");
         pauseGrid.add(shortcuts, 0, 4);
-        Text shortcutsList = new Text("A/left arrow key - walk left\n" +
-                "D/right arrow key - walk right\n" +
-                "W/up arrow key - jump, move crosshair up\n" +
-                "S/down arrow key - move crosshair down\n" +
-                "E - open inventory\n" +
-                "1 to 0 - choose item\n" +
-                "Space - shoot weapon\n" +
-                "C - open chat\n" +
-                "P/Esc/F1 - Pause game, show this help");
+        Text shortcutsList = new Text(
+                "←/A\t\twalk left\n" +
+                "→/D\t\twalk right\n" +
+                "↑/W\t\tjump, move crosshair up\n" +
+                "↓/S\t\tmove crosshair down\n" +
+                "E\t\topen inventory\n" +
+                "1 – 7\t\tchoose item\n" +
+                "Space\tshoot weapon\n" +
+                "C\t\topen chat\n" +
+                "P/Esc/F1\tpause game, show this help");
         pauseGrid.add(shortcutsList, 0, 5, 2, 8);
         pausePane.setId("pausePane");
         pausePane.setCenter(pauseGrid);
@@ -915,9 +927,7 @@ public class MapWindow extends Application implements Networkable {
                     pause = !pause;
                     server.sendCommand("PAUSE " + pause);
                 } else {
-                    help = !help;
-                    pauseHelpImageView.setImage(helpImage);
-                    pausePane.setVisible(help);
+                    System.err.println("pausing not allowed for " + team);
                 }
                 break;
         }
