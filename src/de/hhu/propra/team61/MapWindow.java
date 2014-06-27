@@ -53,8 +53,10 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
+    /** number of turns until sudden death is started */
     private final static int TURNS_TILL_SUDDEN_DEATH = 30; // TODO pref?
-    private final static int SUDDEN_DEATH_ROUNDS = 20;
+    /** number of turns the boss needs to destroy the whole map */
+    private final static int SUDDEN_DEATH_TURNS = 20;
 
     //JavaFX related variables
     private Scene drawing;
@@ -449,9 +451,16 @@ public class MapWindow extends Application implements Networkable {
         terrain.rewind();
         server.sendCommand("WIND_FORCE " + terrain.getWindMagnitude());
 
-        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null) {
-            System.out.println("sudden death is coming ..."); // TODO IMPORTANT network
-            spawnBoss();
+        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null && floodLevel == -1) {
+            switch ((int)(Math.random()*2)) {
+                case 0:
+                    spawnBoss();
+                    break;
+                default:
+                    System.out.println("flood warning"); // TODO game comment
+                    floodLevel = 0;
+                    break;
+            }
         } else if(boss != null) {
             moveBoss();
             server.sendCommand("SD BOSS MOVE");
@@ -550,13 +559,14 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void initBoss(String name) {
+        System.out.println(name + " appeared"); // TODO game comment
         boss = new Figure(name, "boss", 1000000, 1000000, false, false, false); // TODO short-hand constructor
         boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
         fieldPane.getChildren().add(boss);
     }
 
     private void moveBoss() {
-        final int moveBy = terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS;
+        final int moveBy = terrain.getTerrainWidth()/ SUDDEN_DEATH_TURNS;
         if(bossSpawnedLeft) {
             boss.setPosition(boss.getPosition().add(moveBy, 0));
         } else {

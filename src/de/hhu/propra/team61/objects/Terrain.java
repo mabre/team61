@@ -598,9 +598,16 @@ public class Terrain extends GridPane {
         return false;
     }
 
+    /**
+     * Makes the liquid flow into wholes.
+     * Replaces sky blocks in lines with a liquid with the liquid, starting at the bottom and stopping when a row without
+     * a liquid is found. REPLACE_BLOCK commands are added to the given list.
+     * @param commands will contain a list of REPLACE_BLOCK commands
+     */
     private void flood(ArrayList<String> commands) {
-        for(int row=terrain.size()-1; row>=0; row--) {
-            char foundLiquidInRow = ' ';
+        char foundLiquidInRow = 'W';
+        for(int row=terrain.size()-1; row>=0 && foundLiquidInRow != ' '; row--) {
+            foundLiquidInRow = ' ';
             for(int column = 0; column < terrain.get(row).size(); column++) { // TODO move to function + before for loop
                 if(terrain.get(row).get(column).isLiquid()) {
                     foundLiquidInRow = terrain.get(row).get(column).getType();
@@ -618,6 +625,12 @@ public class Terrain extends GridPane {
         }
     }
 
+    /**
+     * Make liquid level rise to the given level.
+     * @param floodLevel the number of rows which are flooded
+     * @return a list of REPLACE_BLOCK commands
+     * @see #flood(java.util.ArrayList)
+     */
     public ArrayList<String> increaseFlood(int floodLevel) {
         ArrayList<String> commands = new ArrayList<>();
 
@@ -635,6 +648,7 @@ public class Terrain extends GridPane {
 
         if(foundLiquidInRow == ' ') foundLiquidInRow = 'W'; // default to water for levels w/o liquid
 
+        // replace one sky block of the new line to be flooded with the liquid -> flood() will flood the rest of the row
         for(int column = 0; column < terrain.get(newRowToFlood).size(); column++) {
             if(terrain.get(newRowToFlood).get(column).isSky()) {
                 replaceBlock(column, newRowToFlood, foundLiquidInRow);
