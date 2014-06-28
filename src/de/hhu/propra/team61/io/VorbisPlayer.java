@@ -28,10 +28,17 @@ public class VorbisPlayer {
 
     static ArrayList<Thread> playerThreads = new ArrayList<>(); // we might want to extend this data structure to allow stopping specific files
     static boolean stopped = false;
+    static int filesBeingPlayed = 0;
 
     private static void testPlay(String filename, boolean repeat) {
         try {
+            while(stopped && filesBeingPlayed > 0) { // in case playback is currently stopped, wait till all files stopped playing before setting stopped to false again
+                Thread.sleep(100);
+            }
+            stopped = false;
+
             File file = new File(filename);
+            filesBeingPlayed++;
             do {
                 // Get AudioInputStream from given file.
                 AudioInputStream in = AudioSystem.getAudioInputStream(file);
@@ -59,6 +66,8 @@ public class VorbisPlayer {
             System.err.println("Vorbis Player: " + filename + " is no valid ogg vorbis audio file (is lib/ in your class path?): " + e.getLocalizedMessage());
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            filesBeingPlayed--;
         }
     }
 
@@ -99,7 +108,6 @@ public class VorbisPlayer {
      * @param repeat whether to repeat the file
      */
     public static void play(String file, boolean repeat) {
-        stopped = false;
         Thread t = new Thread(() -> testPlay(file, repeat));
         playerThreads.add(t);
         t.start();
