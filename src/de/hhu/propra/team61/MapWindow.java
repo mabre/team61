@@ -721,7 +721,6 @@ public class MapWindow extends Application implements Networkable {
                 }
                 if(autoScroll && (!projectileFocused || client.isLocalGame() || getTeamOfFigure(f) == client.getAssociatedTeam())) {
                     projectileFocused = false; // when moving own figure, stop focusing projectile
-                    System.out.println("projectile lost focus");
                 }
                 if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
                     if(autoScroll && !projectileFocused) scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);

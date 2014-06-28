@@ -92,12 +92,20 @@ public class TerrainBlock extends ImageView {
     /** y coordinate (in blocks) of this block in the terrain */
     private int y;
 
-    /** class for grouping the neighbouring blocks together */
+    /** Class for grouping the neighbouring blocks together and performing actions on them. */
     private class NeighbouringBlocks {
         public TerrainBlock left = null;
         public TerrainBlock top = null;
         public TerrainBlock right = null;
         public TerrainBlock bottom = null;
+
+        /** Calls {@link #drawImage()} for all set neighbour blocks */
+        public void redrawImages() {
+            if(left != null) left.drawImage();
+            if(top != null) top.drawImage();
+            if(right != null) right.drawImage();
+            if(bottom != null) bottom.drawImage();
+        }
     }
     /** contains references to the neighbouring blocks */
     private NeighbouringBlocks neighbours = new NeighbouringBlocks();
@@ -134,9 +142,6 @@ public class TerrainBlock extends ImageView {
     public void setTopNeighbour(TerrainBlock block) {
         neighbours.top = block;
         drawImage();
-        if(type == 'W') {
-            System.out.println();
-        }
     }
 
     /**
@@ -163,7 +168,8 @@ public class TerrainBlock extends ImageView {
      * threads.
      */
     private void drawImage() {
-        Platform.runLater(() -> {
+        // make calling this save from everywhere (called very often with different names), but only use runLater if necessary (performance impact when starting game/edit)
+        if(Platform.isFxApplicationThread()) {
             switch (type) {
                 case ' ':
                     this.setImage(SKY_IMAGE);
@@ -199,7 +205,10 @@ public class TerrainBlock extends ImageView {
                 default:
                     this.setImage(SKY_IMAGE);
             }
-        });
+        } else {
+            System.err.println("HERE");
+            Platform.runLater(this::drawImage);
+        }
     }
 
     /**
@@ -275,12 +284,13 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
-     * Sets the type of this terrain block and redraws it.
+     * Sets the type of this terrain block and redraws it and its neighbours.
      * @param type the new type of this block
      */
     public void setType(char type) {
         this.type = type;
         drawImage();
+        neighbours.redrawImages(); // look of neighbours might change because this block changed
     }
 
     /**
