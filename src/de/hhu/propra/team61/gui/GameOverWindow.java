@@ -125,7 +125,7 @@ public class GameOverWindow extends Application implements Networkable {
     }
 
     @Override
-    public void handleKeyEventOnServer(String keyCode) {
+    public void handleOnServer(String command) {
 
     }
 

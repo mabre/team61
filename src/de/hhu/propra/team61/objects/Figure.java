@@ -173,19 +173,20 @@ public class Figure extends StackPane {
     }
 
     /**
-     * moves the figure to the given position, updated the hit region, position of the figure image and the hp label
-     * JavaFX parts are run with runLater, hence it is save to call this function from non-fx threads.
+     * Moves the figure to the given position, updates the hit region, position of the figure image and the hp label.
+     * The position is rounded to one decimal place. JavaFX parts are run with runLater, hence it is save to call this
+     * function from non-fx threads.
      * @param newPosition the new position of the figure in px
      */
     public void setPosition(Point2D newPosition) {
         if(health <= 0 && !newPosition.equals(GRAVEYARD)) { // workaround for a timing issue // TODO we have to do sth when a figure dies when it is its turn
-            System.out.println("WARNING: figure " + name + " is dead, hence cannot be moved");
+            System.err.println("WARNING: figure " + name + " is dead, hence cannot be moved");
             position = GRAVEYARD;
         }
 
         int offset = NORMED_OBJECT_SIZE / 2;
 
-        position = new Point2D(newPosition.getX(), newPosition.getY());
+        position = new Point2D(Math.round(newPosition.getX()*10)/10.0, Math.round(newPosition.getY()*10)/10.0); // round position to one decimal place, see above (10.0 must be double)
         hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
 //        getChildren().removeAll(hitRegionDebug);
 //        hitRegionDebug = new Rectangle(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
@@ -194,12 +195,12 @@ public class Figure extends StackPane {
 //        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
         //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
         Platform.runLater(() -> {
-            figureImage.setTranslateX(Math.round(position.getX()));
+            figureImage.setTranslateX(Math.round(position.getX())); // round this position to prevent ugly subpixel rendering
             figureImage.setTranslateY(Math.round(position.getY()));
-            nameTag.setTranslateX(position.getX() + offset - nameTag.getWidth() / 2);
-            nameTag.setTranslateY(position.getY() - NORMED_OBJECT_SIZE * 2);
-            hpLabel.setTranslateX(position.getX() + offset - hpLabel.getWidth() / 2);
-            hpLabel.setTranslateY(position.getY() - NORMED_OBJECT_SIZE);
+            nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getWidth() / 2);
+            nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
+            hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getWidth() / 2);
+            hpLabel.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE);
 
             setSelectedItem(getSelectedItem()); // Update position of weapon
         });
@@ -224,14 +225,22 @@ public class Figure extends StackPane {
         this.facingRight = facingRight;
         figureImage.setScaleX(facingRight ? 1 : -1); // mirror image when not facing right
     }
+
     public boolean getFacingRight(){
         return facingRight;
     }
 
     /**
-     * lets the figure suffer damage
+     * Lets the figure suffer damage.
+     * If {@see armor} is greater than 0, the damage is reduced.
+     * Examples:
+     * <ul>
+     *     <li>hp is at 80, {@code armor=0}, {@code sufferDamage(40)} is called. hp is now at 40.</li>
+     *     <li>hp is at 80, {@code armor=.5}, {@code sufferDamage(40)} is called. hp is now at 60.</li>
+     *     <li>hp is at 40, {@code sufferDamage(40)} is called. hp is now at 0, the figure becomes invisible, and a {@link DeathException} is thrown.</li>
+     * </ul>
      * @param damage the damage (armor will reduce the damage)
-     * @throws DeathException when the figure is dead after suffering the given damage
+     * @throws DeathException thrown when the figure is dead after suffering the given damage
      */
     public void sufferDamage(int damage) throws DeathException {
         health -= damage - (armor*damage);
