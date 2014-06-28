@@ -10,6 +10,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -526,9 +527,14 @@ public class Terrain extends GridPane {
 
     /**
      * Gets the file of the background music for the loaded terrain.
+     * First checks if a user defined BGM is found in resources/audio/user/BGM/; if not, the default BGM is returned.
      * @return full resources path of the background music
      */
     public String getBackgroundMusic() {
-        return "resources/audio/BGM/"+musicFile;
+        if(new File("resources/audio/user/BGM/"+musicFile).exists()) {
+            return "resources/audio/user/BGM/"+musicFile;
+        } else {
+            return "resources/audio/BGM/"+musicFile;
+        }
     }
 }
