@@ -10,11 +10,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-
-import sun.audio.*;
 
 /**
  * A GridPane representing a terrain.
@@ -52,6 +48,7 @@ public class Terrain extends GridPane {
     private ArrayList<ArrayList<Character>> terrain;
     private ArrayList<Point2D> spawnPoints;
     private ArrayList<Figure> figures;
+    private String musicFile;
 
     private Point2D wind = new Point2D(0,0);
     private final static double MAX_WIND_SPEED_NORMAL = Figure.WALK_SPEED*.8;
@@ -62,7 +59,7 @@ public class Terrain extends GridPane {
      */
     public Terrain(JSONObject terrain) {
         load(terrain);
-        playBackgroundMusic(terrain.getString("music"));
+        musicFile = terrain.getString("music");
         figures = new ArrayList<>();
     }
 
@@ -522,27 +519,16 @@ public class Terrain extends GridPane {
             jsonTerrain.put(builder.toString());
         }
         save.put("terrain", jsonTerrain);
+        save.put("music", musicFile);
         return save;
 
     }
 
     /**
-     * method to play BackgroundMusic (BGM)
+     * Gets the file of the background music for the loaded terrain.
+     * @return full resources path of the background music
      */
-
-    public static void playBackgroundMusic(String bgmName){
-        AudioPlayer AP = AudioPlayer.player;
-        AudioStream BGM;
-        AudioData AD;
-        ContinuousAudioDataStream loop = null;
-        try {
-            BGM = new AudioStream(new FileInputStream("resources/audio/BGM/" + bgmName));
-            AD = BGM.getData();
-            loop = new ContinuousAudioDataStream(AD);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        AP.start(loop);
+    public String getBackgroundMusic() {
+        return "resources/audio/BGM/"+musicFile;
     }
-
 }

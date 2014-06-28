@@ -38,13 +38,9 @@ import javafx.util.Duration;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import sun.audio.*;
 import javax.sound.sampled.*;
 
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
@@ -265,6 +261,8 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) terrain.rewind();
         windIndicator.setWindForce(terrain.getWindMagnitude());
         rootPane.setCenter(windIndicator);
+
+        VorbisPlayer.play(terrain.getBackgroundMusic(), true);
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
@@ -525,6 +523,8 @@ public class MapWindow extends Application implements Networkable {
      * stops all map window threads and saves game state
      */
     private void shutdown() {
+        VorbisPlayer.stop();
+
         if(moveObjectsThread != null) moveObjectsThread.interrupt();
 
         GameState.save(this.toJson());
@@ -692,6 +692,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
+                VorbisPlayer.stop();
                 GameOverWindow gameOverWindow = new GameOverWindow();
                 gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), teams.get(Integer.parseInt(cmd[1])).getName(), map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;

@@ -2,6 +2,7 @@ package de.hhu.propra.team61.io;
 
 import javax.sound.sampled.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -16,7 +17,7 @@ import java.util.ArrayList;
  * <p>
  * This class is based on the code at http://www.javazoom.net/vorbisspi/documents.html. The VorbisSPI package is
  * licensed under LGPL. To use this class, make sure that the {@code lib} directory has been added to the libraries of
- * the project. If the library is missing, a {@code javax.sound.sampled.UnsupportedAudioFileException:} will be thrown.
+ * the project. If the library is missing, a {@code javax.sound.sampled.UnsupportedAudioFileException} will be thrown.
  * <p>
  * Use {@code VorbisPlayer.play("resources/audio/BGM/sample.ogg", true);} to play a background music, and
  * {@code VorbisPlayer.play("resources/audio/SFX/sample.ogg", false);} for sound effects. To stop playback, use
@@ -52,6 +53,10 @@ public class VorbisPlayer {
                     in.close();
                 }
             } while (repeat && !stopped);
+        } catch (FileNotFoundException e) {
+            System.err.println("VorbisPlayer: " + filename + " could not be found: " + e.getLocalizedMessage());
+        } catch (UnsupportedAudioFileException e) {
+            System.err.println("Vorbis Player: " + filename + " is no valid ogg vorbis audio file (is lib/ in your class path?): " + e.getLocalizedMessage());
         } catch (Exception e) {
             e.printStackTrace();
         }
