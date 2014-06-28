@@ -171,13 +171,19 @@ public class Terrain extends GridPane {
      * creates new random wind
      * <p>
      * The maximum wind force depends on the settings chosen by the user. (TODO actually not) Lower wind forces are more
-     * probable.
+     * probable; for a maximum speed of 4, the absolute value of the wind force has the following probabilities:
+     * <ul>
+     * <li>[0, 1.3]: 50 %
+     * <li>[1.3, 2.7]: 40 %
+     * <li>[2.7, 4]: 10 %
+     * </ul>
      * </p>
      */
     public void rewind() {
         double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
-        double windSpeed = Math.random() * maxWindSpeed - maxWindSpeed / 2;
-        if (Math.random() > .5) windSpeed *= 2; // make higher speed less probable
+        double windSpeed = (Math.random() * maxWindSpeed) - maxWindSpeed / 2;
+        if (Math.random() > .5) windSpeed *= 1.5; // make higher speed less probable
+        else if (Math.random() > .75) windSpeed *= 2;
         wind = new Point2D(windSpeed, 0);
         System.out.println("new wind: " + windSpeed);
     }
@@ -233,7 +239,7 @@ public class Terrain extends GridPane {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         Point2D directionAfterWind = direction;
         if(influencedByWind && !isInWindbreak(oldPosition, direction)) directionAfterWind = direction.add(wind);
-        Point2D directionAfterFriction = directionAfterWind.multiply(getFriction(oldPosition));
+        Point2D directionAfterFriction = new Point2D(directionAfterWind.getX()*getFriction(oldPosition), directionAfterWind.getY());
         if(directionAfterFriction.magnitude() < 1 && directionAfterWind.magnitude() > 1) {
             directionAfterFriction = directionAfterWind.normalize(); // even with friction, move at least 1 px if movement >1px requested (eg. walking on water with medium wind)
         }
@@ -340,7 +346,9 @@ public class Terrain extends GridPane {
         int minY, maxY, minX, maxX;
         minY = (int) Math.floor(position.getY() / BLOCK_SIZE - 1);
         maxY = (int) Math.floor((position.getY() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE - 1);
-        if(movingVertical) maxY += (int) Math.floor(Figure.JUMP_SPEED / BLOCK_SIZE);
+        if(movingVertical) {
+            maxY += (int) Math.floor(Figure.JUMP_SPEED / BLOCK_SIZE) + 1;
+        }
         if(wind.getX() > 0) {
             minX = (int) Math.floor(position.getX() / BLOCK_SIZE - 1);
             maxX = (int) Math.floor(position.getX() / BLOCK_SIZE);
