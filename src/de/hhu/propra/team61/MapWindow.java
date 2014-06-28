@@ -1,9 +1,6 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.gui.Chat;
-import de.hhu.propra.team61.gui.GameOverWindow;
-import de.hhu.propra.team61.gui.SceneController;
-import de.hhu.propra.team61.gui.WindIndicator;
+import de.hhu.propra.team61.gui.*;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
@@ -75,7 +72,7 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
-    private Label ingameLabel;
+    private ScrollingLabel ingameLabel = new ScrollingLabel();
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
@@ -226,7 +223,6 @@ public class MapWindow extends Application implements Networkable {
             terrain.addFigures(team.getFigures());
         }
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
-        ingameLabel = new Label();
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
         rootPane.setRight(ingameLabel);
@@ -952,22 +948,6 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * Plays the given soundeffect (SFX)
-     * @param sfxName is the name of the played SoundEffect.
-     */
-    public static void playSoundeffects(String sfxName){
-        Clip clip;
-        try {
-            clip = AudioSystem.getClip();
-            AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("resources/audio/SFX/"+sfxName));
-            clip.open(inputStream);
-            clip.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * Shows the given label in right upper corner.
      * @param content is the text shown in the Label.
      */
@@ -975,7 +955,7 @@ public class MapWindow extends Application implements Networkable {
         ingameLabel.setVisible(true);
 
         Platform.runLater(() -> {
-            ingameLabel.setText(content);
+            ingameLabel.addLine(content, false);
             rootPane.setRight(ingameLabel);
         });
     }
