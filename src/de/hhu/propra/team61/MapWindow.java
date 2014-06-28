@@ -403,6 +403,9 @@ public class MapWindow extends Application implements Networkable {
         }
     }*/
 
+    /**
+     * Calculates the number of living Teams.
+     */
     public int getNumberOfLivingTeams() {
         int livingTeams = 0;
         for (Team team : teams) {
@@ -413,6 +416,9 @@ public class MapWindow extends Application implements Networkable {
         return livingTeams;
     }
 
+    /**
+     * ends the current Turn.
+     */
     public void endTurn() {
         if(turnCount == -42) { // cheat mode
             shootingIsAllowed = true;
