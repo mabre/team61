@@ -146,8 +146,7 @@ public class GameSettings extends Application {
         Scene settingScene = new Scene(settingGrid, 1000, 600);
         settingScene.getStylesheets().add("file:resources/layout/css/settings.css");
         settingGrid.getStyleClass().add("settingpane");
-        sceneController.setSettingsScene(settingScene);
-        sceneController.switchToGameSettings();
+        sceneController.switchScene(settingScene, "Game settings");
     }
 
     /**

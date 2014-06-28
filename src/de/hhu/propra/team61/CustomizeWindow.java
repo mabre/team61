@@ -164,8 +164,7 @@ public class CustomizeWindow extends Application {
         root.setLeft(editGrid);
         Scene customizeScene = new Scene(root, 1000, 600);
         customizeScene.getStylesheets().add("file:resources/layout/css/customize.css");
-        sceneController.setCustomizeScene(customizeScene);
-        sceneController.switchToCustomize();
+        sceneController.switchScene(customizeScene, "Customize");
     }
 
     /**
@@ -766,7 +765,7 @@ public class CustomizeWindow extends Application {
      * Also adds possibility to delete a level.
      */
     private void getMaps() {
-        ArrayList<String> availableMaps = CustomizeManager.getAvailableMaps();
+        ArrayList<String> availableMaps = CustomizeManager.getAvailableLevels();
         for (int i=0; i<availableMaps.size(); i++) {
             Button chooseMapToEdit = new Button(availableMaps.get(i));
             final int finalI = i;

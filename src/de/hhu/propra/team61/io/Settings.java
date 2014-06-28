@@ -3,7 +3,9 @@ package de.hhu.propra.team61.io;
 import de.hhu.propra.team61.io.json.JSONObject;
 
 /**
- * Created by jessy on 24.05.14.
+ * Saves game settings.
+ *
+ * Created by Jessypet on 24.05.14.
  */
 public class Settings {
 
@@ -16,7 +18,7 @@ public class Settings {
     }
 
     /**
-     * @return game state from SAVE_STATE_FILE
+     * @return game state loaded from SAVE_STATE_FILE
      */
     public static JSONObject getSavedSettings(String loadfilestring) {
         return Json.getFromFile(loadfilestring);

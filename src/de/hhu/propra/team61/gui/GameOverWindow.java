@@ -95,8 +95,7 @@ public class GameOverWindow extends Application implements Networkable {
         overGrid.add(end, 0, 4);
         Scene overScene = new Scene(root);
         overScene.getStylesheets().add("file:resources/layout/css/gameover.css");
-        sceneController.setGameOverScene(overScene);
-        sceneController.switchToGameOver();
+        sceneController.switchScene(overScene, "Game over");
     }
 
     @Override

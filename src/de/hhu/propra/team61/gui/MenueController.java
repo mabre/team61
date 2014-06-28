@@ -50,8 +50,7 @@ public class MenueController {
      */
     @FXML
     public void handleStartNetwork() {
-        NetPopUp netPopUp = new NetPopUp();
-        netPopUp.openPopUp(sceneController);
+        NetPopUp netPopUp = new NetPopUp(sceneController);
     }
 
     /**
@@ -79,7 +78,7 @@ public class MenueController {
 
     /**
      * Opens options.
-     * @throws IOException in case the file loaded in {@link de.hhu.propra.team61.OptionsWindow#doOptions()} does not exist.
+     * @throws IOException in case the file loaded in {@link de.hhu.propra.team61.OptionsWindow} does not exist.
      */
     @FXML
     public void handleOptions() throws IOException {

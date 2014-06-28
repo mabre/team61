@@ -34,8 +34,7 @@ public class OptionsWindow extends Application {
         optionController = optionLoader.getController();
         Scene optionScene = new Scene(root, 1000, 600);
         optionScene.getStylesheets().add("file:resources/layout/css/options.css");
-        sceneController.setOptionsScene(optionScene);
-        sceneController.switchToOptions();
+        sceneController.switchScene(optionScene, "Options");
         optionController.setSceneController(sceneController);
     }
 

@@ -75,8 +75,11 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
+    /** the ImageView containing the image that is shown in the overlay */
     private ImageView pauseHelpImageView = new ImageView();
+    /** shown in the overlay when the game is paused */
     private final static Image pauseImage = new Image("file:resources/layout/pause.png");
+    /** shown in the overlay when the game is not paused */
     private final static Image helpImage = new Image("file:resources/layout/help.png");
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
@@ -379,6 +382,9 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
+    /**
+     * Creates the overlay for in-game help and when the game is paused. Pane is invisible at all other times.
+     */
     private void createPausePane() {
         pausePane.setVisible(false);
         CustomGrid pauseGrid = new CustomGrid();
@@ -399,8 +405,8 @@ public class MapWindow extends Application implements Networkable {
         pauseGrid.setHalignment(cont, HPos.CENTER);
         Button exit = new Button("End game");
         exit.setOnAction(e -> {
-            sceneController.switchToMenue();
-            //TODO stop game
+             sceneController.switchToMenue();
+             shutdown();
         });
         pauseGrid.add(exit, 1, 1);
         pauseGrid.setHalignment(exit, HPos.CENTER);
@@ -1093,14 +1099,6 @@ public class MapWindow extends Application implements Networkable {
         server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
     }
 
-    public ImageView drawBackgroundImage() {
-        String img = "file:resources/board.png";
-        Image image = new Image(img);
-        ImageView background = new ImageView();
-        background.setImage(image);
-        return background;
-    }
-    
     @Override
     public String getStateForNewClient() {
         return "STATUS MAPWINDOW " + this.toJson().toString();
