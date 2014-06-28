@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.MapWindow;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -35,22 +36,22 @@ public class WindIndicator extends StackPane {
 
             if (roundedAbsoluteValue < .5) {
                 backgroundRectangle.setFill(Color.web("rgba(25,255,25,.5)")); // light green
-                MapWindow.playSoundeffects("lightBreeze.wav");
+                VorbisPlayer.play("resources/audio/SFX/lightBreeze.ogg", false);
             } else if (roundedAbsoluteValue < 1.5) {
                 backgroundRectangle.setFill(Color.web("rgba(15,155,15,.5)")); // dark green
-                MapWindow.playSoundeffects("breeze.wav");
+                VorbisPlayer.play("resources/audio/SFX/breeze.ogg", false);
             } else if (roundedAbsoluteValue < 2.5) {
                 backgroundRectangle.setFill(Color.web("rgba(255,255,15,.5)")); // yellow
-                MapWindow.playSoundeffects("wind.wav");
+                VorbisPlayer.play("resources/audio/SFX/wind.ogg", false);
             } else if (roundedAbsoluteValue < 3.5) {
                 backgroundRectangle.setFill(Color.web("rgba(255,175,15,.5)")); // orange
-                MapWindow.playSoundeffects("strongWind.wav");
+                VorbisPlayer.play("resources/audio/SFX/strongWind.ogg", false);
             } else if (roundedAbsoluteValue < 4.5) {
                 backgroundRectangle.setFill(Color.web("rgba(255,15,15,.5)")); // red
-                MapWindow.playSoundeffects("dangerousWind.wav");
+                VorbisPlayer.play("resources/audio/SFX/dangerousWind.ogg", false);
             } else {
                 backgroundRectangle.setFill(Color.web("rgba(255,15,255,.5)")); // violet
-                MapWindow.playSoundeffects("hurricane.wav");
+                VorbisPlayer.play("resources/audio/SFX/hurricane.ogg", false);
             }
 
             String direction = "";

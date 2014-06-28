@@ -7,6 +7,7 @@ import de.hhu.propra.team61.gui.WindIndicator;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.network.Client;
@@ -242,7 +243,7 @@ public class MapWindow extends Application implements Networkable {
                     case C:
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
-                        playSoundeffects("chatBlop.wav");
+                        VorbisPlayer.play("resources/audio/SFX/chatBlop.ogg", false);
                         break;
                     default:
                         client.sendKeyEvent(keyEvent.getCode());
@@ -326,7 +327,7 @@ public class MapWindow extends Application implements Networkable {
                                         }
                                         if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                             server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
-                                            playSoundeffects("fallDamage.wav");
+                                            VorbisPlayer.play("resources/audio/SFX/fallDamage.ogg", false);
                                         }
                                     }
                                 }
@@ -455,19 +456,19 @@ public class MapWindow extends Application implements Networkable {
             }
             if (currentTeam == oldCurrentTeam) {
                 server.sendCommand("GAME_OVER " + currentTeam);
-                playSoundeffects("gameOver.wav");
+                VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
                 return;
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         if (getNumberOfLivingTeams() == 0){
             server.sendCommand("GAME_OVER " + -1);
-            playSoundeffects("gameOver.wav");
+            VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
             return;
         }
         if (getNumberOfLivingTeams() < 2){
             server.sendCommand("GAME_OVER " + currentTeam);
-            playSoundeffects("gameOver.wav");
+            VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
             return;
         }
 
@@ -494,7 +495,7 @@ public class MapWindow extends Application implements Networkable {
                 recentlyCausedDamage += figure.popRecentlySufferedDamage();
             }
         }
-        if (recentlyCausedDamage >= 50) playSoundeffects("highDamage.wav");
+        if (recentlyCausedDamage >= 50) VorbisPlayer.play("resources/audio/SFX/highDamage.ogg", false);
         return recentlyCausedDamage;
     }
 
@@ -654,7 +655,7 @@ public class MapWindow extends Application implements Networkable {
                     //ToDo setRoundTimer down to 5sec
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
-                    playSoundeffects("reload.wav");
+                    VorbisPlayer.play("resources/audio/SFX/reload.ogg", false);
                     break;
                 }
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
@@ -719,7 +720,7 @@ public class MapWindow extends Application implements Networkable {
                 switch(cmd[1]){
                     case "POISON":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
-                        playSoundeffects("poisoned.wav");
+                        VorbisPlayer.play("resources/audio/SFX/poisoned.ogg", false);
                         break;
                     case "FIRE":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsBurning(true);
@@ -833,7 +834,7 @@ public class MapWindow extends Application implements Networkable {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
                     setGameComment("Bazooka: A classic one.");
-                    playSoundeffects("changeWeapon.wav");
+                    VorbisPlayer.play("resources/audio/SFX/changeWeapon.ogg", false);
                 }
                 break;
             case "2":
@@ -842,7 +843,7 @@ public class MapWindow extends Application implements Networkable {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
                     setGameComment("Granade: Now on SALE with wind!");
-                    playSoundeffects("granade.wav");
+                    VorbisPlayer.play("resources/audio/SFX/granade.ogg", false);
                 }
                 break;
             case "3":
@@ -851,7 +852,7 @@ public class MapWindow extends Application implements Networkable {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
                     setGameComment("Shootgun: Right into the face! - twice");
-                    playSoundeffects("shotgun.wav");
+                    VorbisPlayer.play("resources/audio/SFX/shotgun.ogg", false);
                 }
                 break;
             case "4":
@@ -860,7 +861,7 @@ public class MapWindow extends Application implements Networkable {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
                     setGameComment("Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
-                    playSoundeffects("poisonArrow.wav");
+                    VorbisPlayer.play("resources/audio/SFX/poisonArrow.ogg", false);
                 }
                 break;
             default:
