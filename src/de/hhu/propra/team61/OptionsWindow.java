@@ -9,23 +9,26 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import java.io.IOException;
 
-/*
+/**
+ * This class shows options.
+ *
  * Created by Jessypet on 11.05.14.
- * This class shows options. 
  *
  */
 
 public class OptionsWindow extends Application {
 
-    SceneController sceneController;
-    OptionController optionController = new OptionController();
-    Pane root;
+    /** Controls GUI-elements from FXML-file */
+    private OptionController optionController = new OptionController();
+    /** root for optionScene */
+    private Pane root;
 
-    public OptionsWindow(SceneController sceneController) {
-        this.sceneController = sceneController;
-    }
-
-	public void doOptions() throws IOException {
+    /**
+     * Loads GUI from FXML-file.
+     * @param sceneController used to switch back to menue
+     * @throws IOException in case the FXML-file does not exist
+     */
+    public OptionsWindow(SceneController sceneController) throws IOException {
         FXMLLoader optionLoader = new FXMLLoader(getClass().getResource("gui/options.fxml"));
         root = optionLoader.load();
         optionController = optionLoader.getController();
@@ -34,7 +37,7 @@ public class OptionsWindow extends Application {
         sceneController.setOptionsScene(optionScene);
         sceneController.switchToOptions();
         optionController.setSceneController(sceneController);
-	}
+    }
 
 	@Override
 	public void start(Stage filler) { }

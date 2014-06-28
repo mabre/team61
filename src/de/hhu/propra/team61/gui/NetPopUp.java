@@ -10,7 +10,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * Shows a modal dialog for hosting/joining a team and entering team name and ip address
+ * Shows a modal dialog for hosting/joining a team and entering team name and ip address.
+ *
  * Created by Jessypet on 27.05.14.
  */
 public class NetPopUp extends Application {

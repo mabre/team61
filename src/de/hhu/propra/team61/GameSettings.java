@@ -3,11 +3,9 @@ package de.hhu.propra.team61;
 import de.hhu.propra.team61.gui.CustomGrid;
 import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.io.CustomizeManager;
-import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
-import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Server;
 import javafx.application.Application;
@@ -24,34 +22,45 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
+ * The window that is shown when starting a local game.
+ *<p>
+ * This class contains GUI for choosing teams and game style for the game.
+ * Custom teams and game styles are loaded from different JSON-Files and, when starting the game, saved in SETTINGS_FILE.conf.
+ * <p>
+ *
  * Created by Jessypet on 21.05.14.
  */
 
 public class GameSettings extends Application {
-
-    int numberOfTeams = 2;
-    CustomGrid settingGrid = new CustomGrid();
-    ArrayList<ChoiceBox<String>> teams = new ArrayList<>();
-    ChoiceBox<String> style;
-    HBox hboxPlus = new HBox(5);
-    Button addTeamButton = new Button("+");
-    SceneController sceneController = new SceneController();
-    Text map = new Text();
-    Text teamSize = new Text();
+    /** increased for every team that is added, used for color comparison */
+    private int numberOfTeams = 2;
+    /** grid for GUI elements */
+    private CustomGrid settingGrid = new CustomGrid();
+    /** contains ChoiceBoxes to choose custom team from, one for each team */
+    private ArrayList<ChoiceBox<String>> teams = new ArrayList<>();
+    /** choose custom game style */
+    private ChoiceBox<String> style;
+    /** contains addTeamButton to be able to make button invisible */
+    private HBox hboxPlus = new HBox(5);
+    /** add one more team per click, removed when 4 teams exist */
+    private Button addTeamButton = new Button("+");
+    /** shows level of currently chosen game style */
+    private Text level = new Text();
+    /** shows team-size of currently chosen game style */
+    private Text teamSize = new Text();
 
     Server server;
     Thread serverThread;
     Client client;
     Thread clientThread;
 
+    /**
+     * Builds the GUI, switches the scene and checks conditions to start the game by comparing the team's colors.
+     * @param sceneController makes switching between scenes in one stage possible
+     */
     public GameSettings(SceneController sceneController) {
-        this.sceneController = sceneController;
-    }
-
-    public void doSettings() {
         initializeArrayLists();
         settingGrid.setAlignment(Pos.TOP_LEFT);
         Text teamsText = new Text("Choose Teams:");
@@ -71,7 +80,7 @@ public class GameSettings extends Application {
         style = new ChoiceBox<>(FXCollections.observableArrayList(getStyles()));
         style.getSelectionModel().selectFirst();
         settingGrid.add(style, 3, 2);
-        settingGrid.add(map, 3, 3);
+        settingGrid.add(level, 3, 3);
         settingGrid.add(teamSize, 3, 4, 2, 1);
         showStyleInformation(style.getValue());
         style.valueProperty().addListener(new ChangeListener<String>() {
@@ -89,44 +98,45 @@ public class GameSettings extends Application {
         Button cont = new Button("Continue");
         settingGrid.add(cont, 0, 17);
         cont.setOnAction(e -> {
-                boolean differentColors = true;                     //Check if two players with same team or with same color
-                boolean differentTeams = true;
-                for (int i=0; i<numberOfTeams-1; i++) {
-                    for (int h=i+1; h<numberOfTeams; h++) {
-                        if (teams.get(i).getValue().equals(teams.get(h).getValue())) {
-                            differentTeams = false;
-                        }
+            //Check if there are two players with same team or with same color
+            boolean differentColors = true;
+            boolean differentTeams = true;
+            for (int i=0; i<numberOfTeams-1; i++) {
+                for (int h=i+1; h<numberOfTeams; h++) {
+                    if (teams.get(i).getValue().equals(teams.get(h).getValue())) {
+                        differentTeams = false;
                     }
                 }
-                for (int i=0; i<numberOfTeams-1; i++) {
-                    JSONObject objecti = CustomizeManager.getSavedSettings("teams/"+teams.get(i).getValue());
-                    for(int h=i+1; h<numberOfTeams; h++) {
-                        JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teams.get(h).getValue());
-                        if (objecti.getString("color").equals(objecth.getString("color"))) {
-                            differentColors = false;
-                        }
+            }
+            for (int i=0; i<numberOfTeams-1; i++) {
+                JSONObject objecti = CustomizeManager.getSavedSettings("teams/"+teams.get(i).getValue());
+                for(int h=i+1; h<numberOfTeams; h++) {
+                    JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teams.get(h).getValue());
+                    if (objecti.getString("color").equals(objecth.getString("color"))) {
+                        differentColors = false;
                     }
                 }
-                if (differentTeams) {
-                    if (differentColors) {
-                        // our local game is also client/server based, with server running on localhost
-                        serverThread = new Thread(server = new Server(() -> {
-                            clientThread = new Thread(client = new Client(() -> {
-                                Settings.save(toJson(), "SETTINGS_FILE"); // create JSON object and save it in SETTINGS_FILE.conf
-                                System.out.println("GameSettings: saved settings");
-                                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue());
-                                String map = styleObject.getString("map");
-                                Platform.runLater(() -> new MapWindow(map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
-                            }));
-                            clientThread.start();
+            }
+            if (differentTeams) {
+                if (differentColors) {
+                    // our local game is also client/server based, with server running on localhost
+                    serverThread = new Thread(server = new Server(() -> {
+                        clientThread = new Thread(client = new Client(() -> {
+                            Settings.save(toJson(), "SETTINGS_FILE");
+                            System.out.println("GameSettings: saved settings");
+                            JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue());
+                            String map = styleObject.getString("map");
+                            Platform.runLater(() -> new MapWindow(map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
                         }));
-                        serverThread.start();
-                    } else {
-                        error.setText("You should not choose teams with the same color!");
-                    }
+                        clientThread.start();
+                    }));
+                    serverThread.start();
                 } else {
-                    error.setText("You should not choose the same team more than once!");
+                    error.setText("You should not choose teams with the same color!");
                 }
+            } else {
+                error.setText("You should not choose the same team more than once!");
+            }
         });
         Button back = new Button("Back");
         settingGrid.add(back, 1, 17);
@@ -140,7 +150,11 @@ public class GameSettings extends Application {
         sceneController.switchToGameSettings();
     }
 
-    public JSONObject toJson() {
+    /**
+     * Builds the JSON-Object for chosen teams and game style
+     * @return a JSON-Object containing all game settings
+     */
+    private JSONObject toJson() {
         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue());
         JSONObject output = new JSONObject();
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
@@ -169,7 +183,12 @@ public class GameSettings extends Application {
         return output;
     }
 
-    public JSONObject getJsonForTeam(String fileName) {
+    /**
+     * Gets and saves team-settings from JSON-Object
+     * @param fileName the name of the chosen team (= name of that team's JSON-file)
+     * @return JSON-Object that contains all information about the chosen team
+     */
+    private JSONObject getJsonForTeam(String fileName) {
         JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+fileName);
         JSONObject team = new JSONObject();
         team.put("name", teamObject.getString("name"));
@@ -186,27 +205,46 @@ public class GameSettings extends Application {
         return team;
     }
 
-    public void showStyleInformation(String file) {
+    /**
+     * Gets style-information to show it beneath ChoiceBox
+     * @param file name of the game style (= name of that style's name)
+     */
+    private void showStyleInformation(String file) {
         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+file);
-        map.setText("Map: "+styleObject.getString("map"));
+        level.setText("Map: " + styleObject.getString("map"));
         teamSize.setText("Team-Size: "+styleObject.getString("team-size"));
     }
 
-    public ArrayList<String> getTeams() {
+    /**
+     * Gets available custom teams
+     * @return ArrayList of custom teams to be shown in the ChoiceBoxes
+     */
+    private ArrayList<String> getTeams() {
         ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
         return availableTeams;
     }
 
-    public ArrayList<String> getStyles() {
+    /**
+     * Gets available custom game styles
+     * @return ArrayList of custom game styles to be shown in the ChoiceBox
+     */
+    private ArrayList<String> getStyles() {
         ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
         return availableGameStyles;
     }
 
-    public void addTeam(int number) {
+    /**
+     * Shows another ChoiceBox for new team
+     * @param number number of teams already existing, index for ArrayList of ChoiceBoxes
+     */
+    private void addTeam(int number) {
         settingGrid.add(teams.get(number-1), 0, number+1);
     }
 
-    public void initializeArrayLists() {
+    /**
+     * Creates ArrayList team containing ChoiceBoxes
+     */
+    private void initializeArrayLists() {
         for (int i=0; i<4; i++) {
             teams.add(new ChoiceBox<>(FXCollections.observableArrayList(getTeams())));
             teams.get(i).getSelectionModel().select(i);

@@ -10,6 +10,10 @@ import javafx.fxml.FXML;
 import java.io.IOException;
 
 /**
+ * Controls the main menue.
+ *
+ * Contains the methods triggered by the FXML file when a button in the menue is clicked.
+ *
  * Created by Jessypet on 04.06.14.
  */
 public class MenueController {
@@ -18,26 +22,41 @@ public class MenueController {
     Thread serverThread;
     Client client;
     Thread clientThread;
-    BigStage mainwindow;
+    /** stage of the game */
+    private BigStage mainwindow;
+    /** used to switch to different scenes */
     SceneController sceneController;
 
+    /**
+     * Initializes stage and sceneController.
+     * @param mainwindow stage of the game
+     * @param sceneController used to switch to different scenes
+     */
     public void setMainWindow(BigStage mainwindow, SceneController sceneController) {
         this.mainwindow = mainwindow;
         this.sceneController = sceneController;
     }
 
+    /**
+     * Switches to game settings.
+     */
     @FXML
     public void handleStartLocal() {
         GameSettings gamesettings = new GameSettings(sceneController);
-        gamesettings.doSettings();
     }
 
+    /**
+     * Opens pop-up to start network game.
+     */
     @FXML
     public void handleStartNetwork() {
         NetPopUp netPopUp = new NetPopUp();
         netPopUp.openPopUp(sceneController);
     }
 
+    /**
+     * Loads the last played game.
+     */
     @FXML
     public void handleStartSaved() {
     // our local game is also client/server based, with server running on localhost
@@ -50,17 +69,26 @@ public class MenueController {
         serverThread.start();
     }
 
+    /**
+     * Switches to Customize.
+     */
     @FXML
     public void handleCustomize() {
         CustomizeWindow customizeWindow = new CustomizeWindow(sceneController);
     }
 
+    /**
+     * Opens options.
+     * @throws IOException in case the file loaded in {@link de.hhu.propra.team61.OptionsWindow#doOptions()} does not exist.
+     */
     @FXML
     public void handleOptions() throws IOException {
             OptionsWindow optionWindow = new OptionsWindow(sceneController);
-            optionWindow.doOptions();
     }
 
+    /**
+     * Closes the game.
+     */
     @FXML
     public void handleExit() {
             mainwindow.close();

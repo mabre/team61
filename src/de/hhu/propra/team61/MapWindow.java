@@ -801,9 +801,8 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
-                GameOverWindow gameOverWindow = new GameOverWindow();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
-                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 if(server==null) { // TODO code duplication should be avoided
