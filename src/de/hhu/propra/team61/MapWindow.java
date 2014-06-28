@@ -50,6 +50,8 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  */
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
+    /** Chance of a crate spawning (Compared to {@link Math#random()}); TODO give this an true probability, set by Customize */
+    private final static double SUPPLY_DROP_PROBABILITY = 0.75;
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
@@ -493,8 +495,7 @@ public class MapWindow extends Application implements Networkable {
             undoDigitations();
         }
 
-        // TODO give this an true probability, set by Customize? //Remove own supplyDrops Variable?
-        if(true){
+        if(Math.random() > SUPPLY_DROP_PROBABILITY){
             Crate drop = new Crate(terrain.toArrayList().get(0).size()-1);
             server.sendCommand("DROP_SUPPLY"+" "+drop.getPosition().getX()+" "+drop.getContent());
         }
@@ -763,7 +764,7 @@ public class MapWindow extends Application implements Networkable {
                     scrollTo(x, y, 0, 0, false);
                 }
                 break;
-            case "ADD_FLYING_PROJECTILE":
+            case "ADD_FLYING_PROJECTILES":
                 String puffer = "";
                 for(int i = 1; i < cmd.length; i++){ puffer += cmd[i]; }
                 JSONArray input = new JSONArray(puffer);

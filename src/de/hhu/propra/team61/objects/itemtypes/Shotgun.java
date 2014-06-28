@@ -7,8 +7,10 @@ import javafx.geometry.Rectangle2D;
 
 import java.util.ArrayList;
 
+// Created by kevin on 08.06.14.
 /**
- * Created by kevin on 08.06.14.
+ * This class extends {@link de.hhu.propra.team61.objects.Weapon} having constant values for damage etc.,<p>
+ * which are treated as variables in its superclass. The variables are filled with those constant values.
  */
 public class Shotgun extends Weapon { //ToDo Override shoot to make two shots possible
     private final static String  NAME           = "Shotgun";
@@ -32,11 +34,16 @@ public class Shotgun extends Weapon { //ToDo Override shoot to make two shots po
 
 //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
     // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Constructor setting up the {@link de.hhu.propra.team61.objects.Weapon} correctly.
+     * @param munition amount of times, this can be used.
+     */
     public Shotgun(int munition){
         super(NAME,DESCRIPTION,munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,PARALYZES,BLOCKS,MASS,DRIFTS,SPEED);
     }
 
-    @Override
+    @Override //TODO
     /**
      * This Function coordinates damage caused to Figures and Terrain.
      * It returns a series of commands the server has to send to the clients

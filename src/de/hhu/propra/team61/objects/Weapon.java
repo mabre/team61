@@ -1,6 +1,5 @@
 package de.hhu.propra.team61.objects;
 
-import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.Team;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -10,42 +9,39 @@ import javafx.scene.image.ImageView;
 
 import java.util.ArrayList;
 
-/**
- * Created by kevin on 21.05.14.
- *
- * An instance of this class is represents a weapon, which is part of an Inventory of a @link #Team,
- * which means that each @link #Team posses the reference to 1 Instance of each Weapontype.
+ //Created by kevin on 21.05.14.
+ /** An instance of this class represents a weapon, which is part of an Inventory of a {@link de.hhu.propra.team61.Team} <p>
+ * which means that each {@link de.hhu.propra.team61.Team} is in possession of a reference to 1 Instance of each Weapontype. <p>
  * All weapons derive from this class and call {@link #Weapon(String, String, int, String, String, int, String, int, int, int, boolean, boolean, boolean, int, boolean, int)}
- * setting up all the variables in here, which are actually constants to the specific types.
- * This class also derives itself from @link #Item, note that @link #Item itself also derives from Stackpane
+ * setting up all the variables in here, which are actually constants to the specific types. <p>
+ * This class also derives itself from @link #Item, note that @link #Item itself also derives from Stackpane. <p>
  *
- * Here are offered some standard functions, which should prove sufficient for most weapontypes, without
- * special functionality. These are:
- * - Laying the weaponimage over the figure equipping it
- * - Placing the crosshair relatively to the weaponimage
- * - Aiming
- * - Shooting; Creating @link #projectiles depending and sending its own reference along with it
- * - A default collision handling of the created projectile, which means:
- *   -&gt; coordination of Figure.sufferDamage(); to all figures within a sphere reducing damage dealt with the distance
- *   -&gt; Sending Figures flying
- *   -&gt; coordination of terraindestruction
- *
+ * Here are offered some standard functions, which should prove sufficient for most weapontypes, without special functionality. These are: <p>
+ * <ul>
+ *  <li> Laying the weaponimage over the figure equipping it </li>
+ *  <li> Placing the crosshair relatively to the weaponimage </li>
+ *  <li> Aiming </li>
+ *  <li> Shooting; Creating @link #projectiles depending and sending its own reference along with it </li>
+ *  <li> A default collision handling of the created projectile, which means: </li>
+ *   <ul>
+ *    <li> coordination of Figure.sufferDamage(); to all figures within a sphere reducing damage dealt with the distance </li>
+ *    <li> Sending Figures flying </li>
+ *    <li> coordination of terraindestruction </li>
+ *   </ul>
+ * </ul>
  * Some or all of these might be overriden in deriving classes.
- *
  */
 public abstract class Weapon extends Item {
     /** Graphical constant sizes in px */
-    private final int NORMED_OBJECT_SIZE = 16; //ToDo Move this? Like in Projectile
+    private final int NORMED_OBJECT_SIZE = 16;
     private final int NORMED_BLOCK_SIZE  =  8;
     private final int RADIUS = 20; // Distance between Crosshair to Figure
     /** Paths to the Images to be used for the overlay */
     private String projectileImg;
-    private String weaponImg;
     /** Actual images used for the overlay */
     protected ImageView crosshairImage;
-    protected ImageView weaponImage;
 
-    // ToDo
+    // ToDo, validate necessity
     private int delay;          // Timedelay, Explode in x seconds etc.
     /**  */
     private String damagetype;  // Firedamage etc. //ToDo validate obsoleteness
@@ -64,7 +60,7 @@ public abstract class Weapon extends Item {
     /** Velocity of shot */
     private int     speed;
     /** Boolean to enable toggling affection of wind to projectiles shot by this weapon */
-    private boolean drifts;     //ToDo pass this to projectile
+    private boolean drifts;
 
     private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
     /**
@@ -81,10 +77,9 @@ public abstract class Weapon extends Item {
      * Sets up the Constants of a Weapontype to this abstract class
      * and places the weapon- and crosshairimages
      *
-     * @param name
-     * @param description
-     * @param munition Number of shots left
-     * @param weaponImg String/Path to the Image representing the Weapon
+     * @param name passed upwards to {@link de.hhu.propra.team61.objects.Item}
+     * @param description passed upwards to {@link de.hhu.propra.team61.objects.Item}
+     * @param munition Number of shots/uses left
      * @param projectileImg String/Path to the image representing the projectile
      * @param delay fusetimer  //ToDo validate if this is needed up here or if it's enough if this stays in the implementations
      * @param damagetype e.g. Firedamage //ToDo same here
@@ -98,11 +93,10 @@ public abstract class Weapon extends Item {
      * @param drifts toggle windaffection
      * @param speed velocity of the shot
      */
-    protected Weapon(String name, String description, int munition, String weaponImg, String projectileImg, int delay, String damagetype, int damage, int explosionpower, int shockwave, boolean poisons, boolean paralyzes, boolean blocks, int mass, boolean drifts, int speed){
-        super(name,description);
+    protected Weapon(String name, String description, int munition, String itemImageSRC, String projectileImg, int delay, String damagetype, int damage, int explosionpower, int shockwave, boolean poisons, boolean paralyzes, boolean blocks, int mass, boolean drifts, int speed){
+        super(name,description,itemImageSRC);
 
         this.munition = munition;
-        this.weaponImg = weaponImg;
         this.projectileImg = projectileImg;
         this.delay = delay;
 
@@ -120,10 +114,6 @@ public abstract class Weapon extends Item {
         this.drifts = drifts;
         this.angle = 0;
 
-
-        weaponImage = new ImageView(new Image(weaponImg, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
-        this.getChildren().add(weaponImage);
-
         crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
         this.getChildren().add(crosshairImage);
 
@@ -139,15 +129,18 @@ public abstract class Weapon extends Item {
      * This function is a default offered. It should prove suitable for most weapons, but some may override.
      * If there is enough munition it returns a Projectile else a NoMunitionException is thrown, which needs handling.
      *
-     * The projectile is shot using a vector calculated from the imagepositions.
+     * The projectile is shot using a vector calculated from the position of the image.
      * Munition is also count down in here and the angle is reset, since the instance is not closed afterwards, but kept instead.
+     *
+     * @return a Projectile attaching its own reference to it.
+     * @throws {@link de.hhu.propra.team61.objects.NoMunitionException} when not enough munition left
      */
     public Projectile shoot(int power) throws NoMunitionException{ //ToDo Actually use power OR calc Power and use
         if(munition > 0) {
             Image image = new Image(projectileImg,NORMED_OBJECT_SIZE / 4, NORMED_OBJECT_SIZE / 4,true,true);
             int yOffset = (int)(NORMED_OBJECT_SIZE-image.getHeight())/2;
             int xOffset = (int)(NORMED_OBJECT_SIZE-image.getWidth())/2;
-            Projectile shot = new Projectile(image, new Point2D(weaponImage.getTranslateX()+xOffset, weaponImage.getTranslateY()+yOffset), new Point2D(crosshairImage.getTranslateX()+xOffset, crosshairImage.getTranslateY()+yOffset), speed, this);
+            Projectile shot = new Projectile(image, new Point2D(itemImage.getTranslateX()+xOffset, itemImage.getTranslateY()+yOffset), new Point2D(crosshairImage.getTranslateX()+xOffset, crosshairImage.getTranslateY()+yOffset), speed, this);
 
             munition--;
             System.out.println("munition left: " + munition);
@@ -165,7 +158,14 @@ public abstract class Weapon extends Item {
     /**
      * This Function is a default. In the sense of that this should be overriden by some classes
      * It coordinates damage and conditions caused to Figures and Terrain.
-     * It returns a series of commands the server has to send to the clients
+     * The damage and acceleration of figures is calculated using vectors and their lengths, while
+     * terraindestruction is outsourced to @link #Terrain
+     *
+     * @param terrain reference to {@link de.hhu.propra.team61.objects.Terrain} to call its {@link de.hhu.propra.team61.objects.Terrain#handleExplosion(javafx.geometry.Point2D, int)}
+     * @param teams references to all teams in the Round granting access to all Figures in the Round making the damagestep possible
+     * @param impactArea Collisionpoint in addition to projectilesize
+     * @param isShard Allows different collisionhandling depending on being a shard and weapontype
+     * @return A series of commands the server has to send to the clients is returned, containing all destructed blocks and figureupdates
      */
     public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea, Boolean isShard){
         ArrayList<String> commandList = new ArrayList<String>();
@@ -211,17 +211,11 @@ public abstract class Weapon extends Item {
     }
 
     //Getter and Setter
-    public String getImage() { return projectileImg; } //TODO MOVE?
+    public String getProjectileImage() { return projectileImg; } //TODO MOVE?
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
     public boolean getDrifts() {
         return drifts;
-    }
-
-
-    public void setPosition(Point2D pos) {
-        weaponImage.setTranslateX(pos.getX());
-        weaponImage.setTranslateY(pos.getY());
     }
 
     //----------------------------------Crosshair-Related Functions---------------------------------
@@ -249,6 +243,13 @@ public abstract class Weapon extends Item {
         angle = Math.max(-90, angle - 2);
         angleDraw(faces_right);
     }
+
+    @Override
+    public void angleLeft(boolean faces_right){}
+
+    @Override
+    public void angleRight(boolean faces_right){}
+
     @Override
     /**
      * Actually only sets the Point and changes facing of weapon. It is drawn in @link #MapWindow.
@@ -257,15 +258,15 @@ public abstract class Weapon extends Item {
      */
     public void angleDraw(boolean faces_right){
         if(faces_right){
-            crosshairImage.setTranslateX(weaponImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
-            weaponImage.setScaleX(1); //Reverse mirroring
-            weaponImage.setRotate(-angle);
+            crosshairImage.setTranslateX(itemImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
+            itemImage.setScaleX(1); //Reverse mirroring
+            itemImage.setRotate(-angle);
         }
         else{
-            crosshairImage.setTranslateX(weaponImage.getTranslateX() - Math.cos(toRadian (angle))* RADIUS);
-            weaponImage.setScaleX(-1); //Mirror Weapon, so its facing left
-            weaponImage.setRotate(angle);
+            crosshairImage.setTranslateX(itemImage.getTranslateX() - Math.cos(toRadian (angle))* RADIUS);
+            itemImage.setScaleX(-1); //Mirror Weapon, so its facing left
+            itemImage.setRotate(angle);
         }
-        crosshairImage.setTranslateY(weaponImage.getTranslateY() - Math.sin(toRadian(angle)) * RADIUS);
+        crosshairImage.setTranslateY(itemImage.getTranslateY() - Math.sin(toRadian(angle)) * RADIUS);
     }
 }

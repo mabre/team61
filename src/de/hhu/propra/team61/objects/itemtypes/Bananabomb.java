@@ -13,8 +13,10 @@ import javafx.scene.image.Image;
 
 import java.util.ArrayList;
 
+//Created by kevin on 25.06.14.
 /**
- * Created by kevin on 25.06.14.
+ * This class extends {@link de.hhu.propra.team61.objects.Weapon} having constant values for damage etc.,<p>
+ * which are treated as variables in its superclass. The variables are filled with those constant values.
  */
 public class Bananabomb extends Weapon {
     private final static String  NAME           = "Bananabomb";
@@ -39,15 +41,22 @@ public class Bananabomb extends Weapon {
 
     //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
     // ---------------------------------------------------------------------------------------------
+    /**
+     * Sets up all variables in {@link de.hhu.propra.team61.objects.Weapon}
+     *
+     * @param munition amount of times this can be used
+     */
     public Bananabomb(int munition){
         super(NAME,DESCRIPTION,munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,PARALYZES,BLOCKS,MASS,DRIFTS,SPEED);
     }
 
     @Override
     /**
-     * This Function coordinates damage caused to Figures and Terrain.
-     * It also produces the shards.
-     * It returns a series of commands the server has to send to the clients
+     * This class overrides {@link de.hhu.propra.team61.objects.Weapon#handleCollision(de.hhu.propra.team61.objects.Terrain, java.util.ArrayList, javafx.geometry.Rectangle2D, Boolean)} <p>
+     * in order to create shards as long as it is not called by a shard itself. <p>
+     * {@link de.hhu.propra.team61.objects.Weapon#handleCollision(de.hhu.propra.team61.objects.Terrain, java.util.ArrayList, javafx.geometry.Rectangle2D, Boolean)} is still called in here though.
+     *
+     * @return series of commands needing to be handled by the clients; In case that shards are spawned an JSONArray of these is attached to the commands.
      */
     public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea, Boolean isShard) { //ToDo modify this to make use of a fuse
         ArrayList<String> output = new ArrayList<>();
@@ -62,7 +71,7 @@ public class Bananabomb extends Weapon {
                 shot.setShard();
                 shards.put(shot.toJson());
             }
-            output.add("ADD_FLYING_PROJECTILE " + shards);
+            output.add("ADD_FLYING_PROJECTILES " + shards);
         }
         return output;
     }

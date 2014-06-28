@@ -6,9 +6,9 @@ import javafx.scene.layout.GridPane;
 import java.util.ArrayList;
 
 /**
- * Created by kevin on 25.06.14.
+ * Created by kevin on 25.06.14. ;
  */
-public class InventoryOverlay extends GridPane { //ToDo
+public class InventoryOverlay extends GridPane { //ToDo; is still in development
     private static int xSize    = 0;
     private static int ySize    = 0;
     private static int iconSize = 0;

@@ -204,7 +204,7 @@ public class TerrainBlock extends ImageView {
                 return RESISTANCE_OF_SAND;
             default: return RESISTANCE_OF_SKY;
         }
-    }
+    }<
 
     /**
      * Checks if a given collision area intersects this terrain block.

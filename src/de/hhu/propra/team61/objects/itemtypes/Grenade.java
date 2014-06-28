@@ -7,8 +7,10 @@ import javafx.geometry.Rectangle2D;
 
 import java.util.ArrayList;
 
+// Created by kevin on 21.05.14.
 /**
- * Created by kevin on 21.05.14.
+ * This class extends {@link de.hhu.propra.team61.objects.Weapon} having constant values for damage etc.,<p>
+ * which are treated as variables in its superclass. The variables are filled with those constant values.
  */
 public class Grenade extends Weapon {
     private final static String  NAME           = "Grenade";
@@ -32,16 +34,13 @@ public class Grenade extends Weapon {
 
     //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
     // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Sets up all variables in {@link de.hhu.propra.team61.objects.Weapon}
+     *
+     * @param munition amount of times this can be used
+     */
     public Grenade(int munition){
         super(NAME,DESCRIPTION,munition,WEAPON_IMG,PROJECTILE_IMG,DELAY,DAMAGETYPE,DAMAGE,EXPLOSIONPOWER,SHOCKWAVE,POISONS,PARALYZES,BLOCKS,MASS,DRIFTS,SPEED);
-    }
-
-    @Override
-    /**
-     * This Function coordinates damage caused to Figures and Terrain.
-     * It returns a series of commands the server has to send to the clients
-     */
-    public ArrayList<String> handleCollision(Terrain terrain, ArrayList<Team> teams, Rectangle2D impactArea, Boolean isShard) { //ToDo modify this to make use of a fuse
-        return super.handleCollision(terrain, teams, impactArea, isShard);
     }
 }
