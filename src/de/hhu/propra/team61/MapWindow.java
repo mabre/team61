@@ -321,7 +321,7 @@ public class MapWindow extends Application implements Networkable {
                                         }
                                         if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                             server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
-                                            VorbisPlayer.play("resources/audio/SFX/fallDamage.ogg", false);
+                                            server.sendCommand("PLAY_SFX fallDamage");
                                         }
                                     }
                                 }
@@ -375,29 +375,6 @@ public class MapWindow extends Application implements Networkable {
         return id;
     }
 
-    @Deprecated
-    /*public void cheatMode() {
-        try {
-            levelCounter++;
-            terrain.load(TerrainManager.load(TerrainManager.getAvailableTerrains().get(levelCounter = levelCounter % TerrainManager.getNumberOfAvailableTerrains())));
-            // quite bad hack to reload spawn points, but ok as it's a cheat anyway
-            for(Team team: teams) {
-                fieldPane.getChildren().remove(team);
-            }
-            teams.clear();
-            for(int i=0; i<teamquantity; i++) { // TODO hard coded 2 teams, 2 figures
-                ArrayList<Weapon> weapons = new ArrayList<>();
-                weapons.add(new Bazooka(2));
-                weapons.add(new Grenade(2));
-                Team team = new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.WHITE, "player");
-                teams.add(team);
-                fieldPane.getChildren().add(team);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }*/
-
     /**
      * Calculates the number of living Teams.
      */
@@ -450,19 +427,16 @@ public class MapWindow extends Application implements Networkable {
             }
             if (currentTeam == oldCurrentTeam) {
                 server.sendCommand("GAME_OVER " + currentTeam);
-                VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
                 return;
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         if (getNumberOfLivingTeams() == 0){
-            server.sendCommand("GAME_OVER " + -1);
-            VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
+            server.sendCommand("GAME_OVER -1");
             return;
         }
         if (getNumberOfLivingTeams() < 2){
             server.sendCommand("GAME_OVER " + currentTeam);
-            VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
             return;
         }
 
@@ -489,7 +463,7 @@ public class MapWindow extends Application implements Networkable {
                 recentlyCausedDamage += figure.popRecentlySufferedDamage();
             }
         }
-        if (recentlyCausedDamage >= 50) VorbisPlayer.play("resources/audio/SFX/highDamage.ogg", false);
+        if (recentlyCausedDamage >= 50) server.sendCommand("PLAY_SFX highDamage");
         return recentlyCausedDamage;
     }
 
@@ -678,6 +652,9 @@ public class MapWindow extends Application implements Networkable {
                     scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
                 break;
+            case "PLAY_SFX":
+                VorbisPlayer.play("resources/audio/SFX/" + cmd[1] + ".ogg", false);
+                break;
             case "REPLACE_BLOCK":
                 if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
                 terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
@@ -726,6 +703,9 @@ public class MapWindow extends Application implements Networkable {
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);
                         break;
                 }
+                break;
+            case "SET_GAME_COMMENT":
+                setGameComment(extractPart(command, "SET_GAME_COMMENT "));
                 break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
@@ -830,8 +810,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
-                    setGameComment("Bazooka: A classic one.");
-                    VorbisPlayer.play("resources/audio/SFX/changeWeapon.ogg", false);
+                    server.sendCommand("SET_GAME_COMMENT Bazooka: A classic one."); // TODO use new getter
+                    server.sendCommand("PLAY_SFX changeWeapon");
                 }
                 break;
             case "2":
@@ -839,8 +819,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
-                    setGameComment("Granade: Now on SALE with wind!");
-                    VorbisPlayer.play("resources/audio/SFX/granade.ogg", false);
+                    server.sendCommand("SET_GAME_COMMENT Granade: Now on SALE with wind!");
+                    server.sendCommand("PLAY_SFX granade");
                 }
                 break;
             case "3":
@@ -848,8 +828,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
-                    setGameComment("Shootgun: Right into the face! - twice");
-                    VorbisPlayer.play("resources/audio/SFX/shotgun.ogg", false);
+                    server.sendCommand("SET_GAME_COMMENT Shootgun: Right into the face! - twice");
+                    server.sendCommand("PLAY_SFX shotgun");
                 }
                 break;
             case "4":
@@ -857,8 +837,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
-                    setGameComment("Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
-                    VorbisPlayer.play("resources/audio/SFX/poisonArrow.ogg", false);
+                    server.sendCommand("SET_GAME_COMMENT Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
+                    server.sendCommand("PLAY_SFX poisonArrow");
                 }
                 break;
             default:
@@ -876,22 +856,22 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(0).getFigures().get(i).setHealth(0);
                 }
                 turnCount = -42; // prevents endTurn() from showing game over window
-                setGameComment("You are now alone.");
+                server.sendCommand("SET_GAME_COMMENT You are now alone.");
                 System.out.println("You are now alone.");
                 break;
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
-                setGameComment("Ate my spinach.");
+                server.sendCommand("SET_GAME_COMMENT Ate my spinach.");
                 System.out.println("Ate my spinach.");
                 break;
             case "dedigitate": // calls undoDigitations() method
                 undoDigitations();
-                setGameComment("Returning to Baby I");
+                server.sendCommand("SET_GAME_COMMENT Returning to Baby I");
                 System.out.println("Returning to Baby I");
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();
-                setGameComment("Digitation.");
+                server.sendCommand("SET_GAME_COMMENT Digitation.");
                 System.out.println("Digitation.");
                 break;
             case "forcedig": // forces digitation of all figures
@@ -900,17 +880,17 @@ public class MapWindow extends Application implements Networkable {
                         figure.digitate();
                     }
                 }
-                setGameComment("Mass-Digitation");
+                server.sendCommand("SET_GAME_COMMENT Mass-Digitation");
                 System.out.println("Mass-Digitation.");
                 break;
             case "rewind": // sets wind to given value
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
-                setGameComment("It's windy.");
+                server.sendCommand("SET_GAME_COMMENT It's windy.");
                 System.out.println("It’s windy.");
             default:
                 client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
-                setGameComment("No cheating, please!");
+                server.sendCommand("SET_GAME_COMMENT No cheating, please!");
                 System.out.println("No cheating, please!");
         }
     }

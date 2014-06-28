@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.MapWindow;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Server;
 import javafx.application.Application;
@@ -81,6 +82,8 @@ public class GameOverWindow extends Application {
         overScene.getStylesheets().add("file:resources/layout/css/gameover.css");
         sceneController.setGameOverScene(overScene);
         sceneController.switchToGameOver();
+
+        VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
     }
 
     @Override
