@@ -49,7 +49,7 @@ public class NetLobby extends Application implements Networkable {
     private CustomGrid overviewGrid = new CustomGrid();
     /** every hbox contains information for one team */
     private ArrayList<HBox> hboxes = new ArrayList<>();
-    /** to choose a cutsom team */
+    /** to choose a custom team */
     private ArrayList<ChoiceBox<String>> teamChoosers = new ArrayList();
     /** indicators next to each team, shows if the player is ready */
     private ArrayList<Text> readys = new ArrayList<>();

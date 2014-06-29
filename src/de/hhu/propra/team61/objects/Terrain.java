@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects; // TODO create own subpackage (after merging, otherwise resolving conflicts might become hard)
 
 import de.hhu.propra.team61.animation.SpriteAnimation;
+import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
@@ -172,12 +173,25 @@ public class Terrain extends GridPane {
     /**
      * creates new random wind
      * <p>
-     * The maximum wind force depends on the settings chosen by the user. (TODO actually not) Lower wind forces are more
+     * The maximum wind force depends on the settings chosen by the user. Lower wind forces are more
      * probable.
      * </p>
      */
     public void rewind() {
-        double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
+        JSONObject settings = Settings.getSavedSettings("SETTINGS_FILE.conf");
+        double maxWindSpeed = MAX_WIND_SPEED_NORMAL;
+        switch(settings.getInt("windForce")) {
+            case 1:
+                maxWindSpeed = MAX_WIND_SPEED_EASY;
+                break;
+            case 2:
+                maxWindSpeed = MAX_WIND_SPEED_NORMAL;
+                break;
+            case 3:
+            case 4:
+                maxWindSpeed = MAX_WIND_SPEED_HARD;
+                break;
+        }
         double windSpeed = Math.random() * maxWindSpeed - maxWindSpeed / 2;
         if (Math.random() > .5) windSpeed *= 2; // make higher speed less probable
         wind = new Point2D(windSpeed, 0);
