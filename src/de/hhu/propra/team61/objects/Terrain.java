@@ -171,13 +171,19 @@ public class Terrain extends GridPane {
      * creates new random wind
      * <p>
      * The maximum wind force depends on the settings chosen by the user. (TODO actually not) Lower wind forces are more
-     * probable.
+     * probable; for a maximum speed of 4, the absolute value of the wind force has the following probabilities:
+     * <ul>
+     * <li>[0, 1.3]: 50 %
+     * <li>[1.3, 2.7]: 40 %
+     * <li>[2.7, 4]: 10 %
+     * </ul>
      * </p>
      */
     public void rewind() {
         double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
-        double windSpeed = Math.random() * maxWindSpeed - maxWindSpeed / 2;
-        if (Math.random() > .5) windSpeed *= 2; // make higher speed less probable
+        double windSpeed = (Math.random() * maxWindSpeed) - maxWindSpeed / 2;
+        if (Math.random() > .5) windSpeed *= 1.5; // make higher speed less probable
+        else if (Math.random() > .75) windSpeed *= 2;
         wind = new Point2D(windSpeed, 0);
         System.out.println("new wind: " + windSpeed);
     }
@@ -223,21 +229,25 @@ public class Terrain extends GridPane {
      * @param hitRegion a rectangle describing the area where the object can collide with terrain etc.
      * @param canWalkAlongDiagonals when true, the object is moved along diagonal walls
      * @param canWalkThroughFigures when true, the object is able to walk through figures
-     * @param snapToPx when true, the position returned is rounded to whole px // TODO remove
+     * @param snapToPx when true, the position returned is rounded to whole px (needed by figures to really land on ground)
      * @param influencedByWind if false, the wind is not considered when calculating the new position
      * @return new position of the object
      * @throws CollisionException thrown when hitting terrain or a figure
      * @see CollisionException
      */
-    public Point2D getPositionForDirection(Point2D oldPosition, Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
+    public Point2D getPositionForDirection(final Point2D oldPosition, final Point2D direction, Rectangle2D hitRegion, boolean canWalkAlongDiagonals, boolean canWalkThroughFigures, boolean snapToPx, boolean influencedByWind) throws CollisionException {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
-        if(influencedByWind && !isInWindbreak(oldPosition, direction)) direction = direction.add(wind);
-        direction = direction.multiply(getFriction(oldPosition));
-        Point2D normalizedDirection = direction.normalize();
+        Point2D directionAfterWind = direction;
+        if(influencedByWind && !isInWindbreak(oldPosition, direction)) directionAfterWind = direction.add(wind);
+        Point2D directionAfterFriction = new Point2D(directionAfterWind.getX()*getFriction(oldPosition), directionAfterWind.getY());
+        if(directionAfterFriction.magnitude() < 1 && directionAfterWind.magnitude() > 1) {
+            directionAfterFriction = directionAfterWind.normalize(); // even with friction, move at least 1 px if movement >1px requested (eg. walking on water with medium wind)
+        }
+        Point2D normalizedDirection = directionAfterFriction.normalize();
         debugLog("start position: " + oldPosition);
         debugLog("normalized velocity: " + normalizedDirection);
 
-        final int runs = (int) direction.magnitude();
+        final int runs = (int) directionAfterFriction.magnitude();
 
         for (int i = 0; i < runs; i++) {
             // move position by 1px
@@ -336,7 +346,9 @@ public class Terrain extends GridPane {
         int minY, maxY, minX, maxX;
         minY = (int) Math.floor(position.getY() / BLOCK_SIZE - 1);
         maxY = (int) Math.floor((position.getY() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE - 1);
-        if(movingVertical) maxY += (int) Math.floor(Figure.JUMP_SPEED / BLOCK_SIZE);
+        if(movingVertical) {
+            maxY += (int) Math.floor(Figure.JUMP_SPEED / BLOCK_SIZE) + 1;
+        }
         if(wind.getX() > 0) {
             minX = (int) Math.floor(position.getX() / BLOCK_SIZE - 1);
             maxX = (int) Math.floor(position.getX() / BLOCK_SIZE);
@@ -380,7 +392,7 @@ public class Terrain extends GridPane {
     public double getFriction(Point2D pos) {
         int row = (int)((pos.getY()+Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE);
         int column = (int)(pos.getX()/BLOCK_SIZE);
-        if(row >= terrain.size() || column > terrain.get(0).size()) return 1;
+        if(row >= terrain.size() || column > terrain.get(0).size() || row < 0 || column < 0) return 1;
         return terrain.get(row).get(column).getFriction();
     }
 
@@ -426,7 +438,7 @@ public class Terrain extends GridPane {
                 debugLog("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
-                replaceBlock(blockX,blockY,replacement); //Mark as destroyed
+                replaceBlock(blockX,blockY,' '); //Mark as destroyed
 
                 // Recursively continue destruction for all directions unless OutOfBounds
                 if (blockY+1 < terrain.size()){ explode(commands, blockX, blockY + 1, explosionPower); }
@@ -444,13 +456,13 @@ public class Terrain extends GridPane {
 
                     debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
-                    if(blockX > 0 && blockX < terrain.get(blockY).size()){
+                    if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
+                            replaceBlock(blockX, blockY, '\\');
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
-                        } else {
-                            if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
-                                commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
-                            }
+                        } else if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
+                            replaceBlock(blockX, blockY, '/');
+                            commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                         }
                     }
                 }
@@ -471,6 +483,7 @@ public class Terrain extends GridPane {
 
         ArrayList<String> commands = new ArrayList<String>();
         explode(commands, blockX, blockY, explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
+        flood(commands);
 
         return commands;
     }
@@ -575,18 +588,84 @@ public class Terrain extends GridPane {
     public boolean standingOnLiquid(Point2D position) {
         final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
         final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
-        final int y = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int maxY = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int minY = maxY - (Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE;
 
-        if(y >= terrain.size()) {
+        if(maxY >= terrain.size()) {
             return false;
         }
 
-        for(int x=minX; x < maxX && x < terrain.get(y).size(); x++) {
-            if(terrain.get(y).get(x).isLiquid()) {
-                return true;
+        for(int y=minY; y <= maxY && y < terrain.size(); y++) {
+            for (int x = minX; x < maxX && x < terrain.get(y).size(); x++) {
+                if (terrain.get(y).get(x).isLiquid()) {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Makes the liquid flow into wholes.
+     * Replaces sky blocks in lines with a liquid with the liquid, starting at the bottom and stopping when a row without
+     * a liquid is found. REPLACE_BLOCK commands are added to the given list.
+     * @param commands will contain a list of REPLACE_BLOCK commands
+     */
+    private void flood(ArrayList<String> commands) {
+        char foundLiquidInRow = 'W';
+        for(int row=terrain.size()-1; row>=0 && foundLiquidInRow != ' '; row--) {
+            foundLiquidInRow = ' ';
+            for(int column = 0; column < terrain.get(row).size(); column++) { // TODO move to function + before for loop
+                if(terrain.get(row).get(column).isLiquid()) {
+                    foundLiquidInRow = terrain.get(row).get(column).getType();
+                    break;
+                }
+            }
+            if(foundLiquidInRow != ' ') {
+                for(int column = 0; column < terrain.get(row).size(); column++) {
+                    if(terrain.get(row).get(column).isSky()) {
+                        replaceBlock(column, row, foundLiquidInRow);
+                        commands.add("REPLACE_BLOCK " + column + " " + row + " " + foundLiquidInRow);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Make liquid level rise to the given level.
+     * @param floodLevel the number of rows which are flooded
+     * @return a list of REPLACE_BLOCK commands
+     * @see #flood(java.util.ArrayList)
+     */
+    public ArrayList<String> increaseFlood(int floodLevel) {
+        ArrayList<String> commands = new ArrayList<>();
+
+        if(floodLevel > terrain.size()) return commands;
+
+        int newRowToFlood = terrain.size()-floodLevel;
+
+        char foundLiquidInRow = ' ';
+
+        for (int column = 0; column < terrain.get(terrain.size()-1).size() && foundLiquidInRow == ' '; column++) {
+            if (terrain.get(terrain.size()-1).get(column).isLiquid()) {
+                foundLiquidInRow = terrain.get(terrain.size()-1).get(column).getType();
+            }
+        }
+
+        if(foundLiquidInRow == ' ') foundLiquidInRow = 'W'; // default to water for levels w/o liquid
+
+        // replace one sky block of the new line to be flooded with the liquid -> flood() will flood the rest of the row
+        for(int column = 0; column < terrain.get(newRowToFlood).size(); column++) {
+            if(terrain.get(newRowToFlood).get(column).isSky()) {
+                replaceBlock(column, newRowToFlood, foundLiquidInRow);
+                commands.add("REPLACE_BLOCK " + column + " " + newRowToFlood + " " + foundLiquidInRow);
+            }
+        }
+
+        flood(commands);
+
+        return commands;
     }
 }

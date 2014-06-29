@@ -22,11 +22,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
 import java.util.ArrayList;
-import static de.hhu.propra.team61.JavaFxUtils.toHex;
+
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
@@ -139,7 +138,7 @@ public class NetLobby extends Application implements Networkable {
         sizeField.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                client.send(getStateForNewClient());
+                server.send(getStateForNewClient());
             }
         });
         Text teamNumber = new Text("Max. number of teams: ");
@@ -148,7 +147,7 @@ public class NetLobby extends Application implements Networkable {
         numberOfTeams.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                client.send(getStateForNewClient());
+                server.send(getStateForNewClient());
             }
         });
         Text chooseMapText = new Text("Map:");
@@ -162,7 +161,7 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(mapChooser, 1, 2);
         mapChooser.valueProperty().addListener(new ChangeListener<String>() {
             public void changed(ObservableValue ov, String value, String new_value) {
-                client.send(getStateForNewClient());
+                server.send(getStateForNewClient());
             }
         });
 
@@ -190,6 +189,10 @@ public class NetLobby extends Application implements Networkable {
         Button back = new Button("Back");
         bottomBox.getChildren().addAll(back, sameColor);
         back.setOnAction(e -> {
+            if(serverThread != null) serverThread.interrupt();
+            System.out.println("NetLobby server thread interrupted");
+            if(server != null) server.stop();
+            System.out.println("NetLobby server (if any) stopped");
             sceneController.switchToMenue();
         });
         bottomBox.setId("bottomBox");
@@ -401,7 +404,7 @@ public class NetLobby extends Application implements Networkable {
             if(server != null) {
                 removeTeam(i, true);
                 server.changeTeamByNumber(i, -1); // change team to spectator
-                server.sendCommand(getStateForNewClient()); // send new lobby state to clients
+                server.send(getStateForNewClient()); // send new lobby state to clients
             } else {
                 spectator.setSelected(true);
             }
@@ -504,6 +507,7 @@ public class NetLobby extends Application implements Networkable {
         disableForbiddenSettings(associatedTeam);
         spectator.setSelected(associatedTeam == -1);
         System.out.println("I belong to team " + associatedTeam);
+        client.setAssociatedTeam(newTeam);
     }
 
     public void spectatorBoxChanged(boolean isChecked) {
@@ -543,20 +547,20 @@ public class NetLobby extends Application implements Networkable {
     /**********************************************************************************************/
 
     @Override
-    public void handleKeyEventOnServer(String keyCode) {
-        System.out.println("server handling command in lobby: " + keyCode);
-        if (keyCode.contains("SPECTATOR ")) {
-            boolean checked = !(keyCode.contains("UNCHECKED"));
-            int currentTeam = Integer.parseInt(extractPart(keyCode, "CHECKED "));
-            String clientId = keyCode.split(" ", 2)[0];
+    public void handleOnServer(String command) {
+        System.out.println("server handling command in lobby: " + command);
+        if (command.contains("SPECTATOR ")) {
+            boolean checked = !(command.contains("UNCHECKED"));
+            int currentTeam = Integer.parseInt(extractPart(command, "CHECKED "));
+            String clientId = command.split(" ", 2)[0];
             handleSpectatorBoxChanged(checked, currentTeam, clientId);
-        } else if (keyCode.startsWith("READY")) {
-            int team = Integer.parseInt(keyCode.split(" ", 3)[1]);
-            JSONObject clientSettings = new JSONObject(keyCode.split(" ", 3)[2]);
+        } else if (command.startsWith("READY")) {
+            int team = Integer.parseInt(command.split(" ", 3)[1]);
+            JSONObject clientSettings = new JSONObject(command.split(" ", 3)[2]);
             applySettingsFromClient(clientSettings, team);
             setTeamReady(team);
         } else {
-            System.out.println("Lobby handleKeyEventOnServer: unknown command " + keyCode);
+            System.out.println("Lobby handleOnServer: unknown command " + command);
         }
     }
 
@@ -578,7 +582,7 @@ public class NetLobby extends Application implements Networkable {
         }
 
         fromJson(currentSettings);
-        server.sendCommand(getStateForNewClient());
+        server.send(getStateForNewClient());
     }
 
     private void handleSpectatorBoxChanged(boolean isSpectating, int currentTeam, String clientId) {
@@ -606,7 +610,7 @@ public class NetLobby extends Application implements Networkable {
             }
         }
 
-        server.sendCommand(getStateForNewClient());
+        server.send(getStateForNewClient());
     }
 
     /**
@@ -618,7 +622,7 @@ public class NetLobby extends Application implements Networkable {
 
         System.out.println("Team #" + team + " is ready");
         readys.get(team).setText("ready");
-        server.sendCommand(getStateForNewClient());
+        server.send(getStateForNewClient());
 
         if(server.teamsAreReady()) start.setDisable(false);
     }

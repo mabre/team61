@@ -1,9 +1,0 @@
-Board-Legend
-
-"P"= player (player spawnpoint: each player spawns on a random spawnpoint)
-"/" and "\" = slant ground (walkable)
-"W" = water (Not walkable: You also drown if your hitbox is 3/4 in water) // TODO not yet
-"L" = lava  (Not walkable: You also drown if your hitbox is 3/4 in lava)
-"S" = stone (graphic/design)
-"E" = earth (graphic/design)
-"I" = ice   (graphic/design)

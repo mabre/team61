@@ -53,8 +53,10 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
-    private final static int ROUNDS_TILL_SUDDEN_DEATH = 30; // TODO pref?
-    private final static int SUDDEN_DEATH_ROUNDS = 20;
+    /** number of turns until sudden death is started */
+    private final static int TURNS_TILL_SUDDEN_DEATH = 30; // TODO pref?
+    /** number of turns the boss needs to destroy the whole map */
+    private final static int SUDDEN_DEATH_TURNS = 20;
 
     //JavaFX related variables
     private Scene drawing;
@@ -77,9 +79,10 @@ public class MapWindow extends Application implements Networkable {
     private ArrayList<Team> teams;
     private int currentTeam = 0;
     private int turnCount = 0;
-    private int levelCounter = 0;
     private int teamquantity;
     private int teamsize;
+    private boolean autoScroll = true;
+    private boolean projectileFocused = false;
 
     /** power/energy projectile is shot with */
     private int power = 0;
@@ -97,6 +100,8 @@ public class MapWindow extends Application implements Networkable {
 
     private Figure boss = null;
     private boolean bossSpawnedLeft;
+
+    private int floodLevel = -1;
 
     private String map; // TODO do we need this?
     private Chat chat;
@@ -137,7 +142,7 @@ public class MapWindow extends Application implements Networkable {
 
         initialize();
 
-        if(server != null) server.sendCommand(getStateForNewClient());
+        if(server != null) server.send(getStateForNewClient());
     }
 
     public MapWindow(JSONObject input, Client client, Thread clientThread, SceneController sceneController) {
@@ -185,7 +190,7 @@ public class MapWindow extends Application implements Networkable {
 
         initialize();
 
-        if(server != null) server.sendCommand(getStateForNewClient());
+        if(server != null) server.send(getStateForNewClient());
     }
 
     /**
@@ -238,6 +243,18 @@ public class MapWindow extends Application implements Networkable {
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
                         break;
+                    case Z:
+                        if(autoScroll) {
+                            autoScroll = false;
+                        } else {
+                            autoScroll = true;
+                            if(!projectileFocused) {
+                                Point2D figPos = teams.get(currentTeam).getCurrentFigure().getPosition();
+                                scrollTo(figPos.getX(), figPos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
+                            }
+                        }
+                        System.out.println("camera autoscroll: " + autoScroll);
+                        break;
                     default:
                         client.sendKeyEvent(keyEvent.getCode());
                 }
@@ -271,8 +288,8 @@ public class MapWindow extends Application implements Networkable {
                                     newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
                                     flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                     flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
-                                    scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
-                                    server.sendCommand("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                                    if(autoScroll && projectileFocused) scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
+                                    server.send("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
                                 } catch (CollisionException e) {
                                     System.out.println("CollisionException, let's do this!");
                                     final Projectile collidingProjectile = flyingProjectile;
@@ -288,7 +305,7 @@ public class MapWindow extends Application implements Networkable {
                                         ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
                                         fieldPane.getChildren().remove(collidingProjectile);
                                         for (String command : commandList) {
-                                            server.sendCommand(command);
+                                            server.send(command);
                                         } //Send commands+
                                         endTurn();
                                     });
@@ -305,13 +322,13 @@ public class MapWindow extends Application implements Networkable {
                                             newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false, true);
                                             if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
                                                 figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
-                                                server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
+                                                server.send("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
                                             }
                                         } catch (CollisionException e) {
                                             if (!e.getLastGoodPosition().equals(oldPos)) {
                                                 System.out.println("CollisionWithTerrainException");
                                                 figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
-                                                server.sendCommand("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
+                                                server.send("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                             }
                                             int oldHp = figure.getHealth();
                                             try {
@@ -326,7 +343,7 @@ public class MapWindow extends Application implements Networkable {
                                                 }
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
-                                                server.sendCommand("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                                server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
                                             }
                                         }
                                     }
@@ -362,23 +379,44 @@ public class MapWindow extends Application implements Networkable {
         output.put("currentTeam", currentTeam);
         output.put("terrain", terrain.toJson());
         output.put("windForce", terrain.getWindMagnitude());
+        // TODO include sudden death status
         return output;
     }
 
     /**
-     * @param figure a figure object reference
+     * Gets a unique id of the given figure.
+     * The idea is the number of the team, followed by a space, followed by the number of the figure (counting starts
+     * from 0).
+     * @param figure a reference to the figure whose team and number are sought
      * @return team index + " " + figure index of the given figure
+     * @throws java.lang.IllegalArgumentException thrown when the given figure is not found
      */
-    private String getFigureId(Figure figure) {  //ToDo Probably not necessary anymore due to the movement of collisionhandling to the weaponclasses
-        String id = "";
+    private String getFigureId(Figure figure) throws IllegalArgumentException {
         for(int i=0; i<teams.size(); i++) {
             for(int j=0; j<teams.get(i).getFigures().size(); j++) {
                 if(teams.get(i).getFigures().get(j) == figure) {
-                    id = i+" "+j;
+                    return i+" "+j;
                 }
             }
         }
-        return id;
+        throw new IllegalArgumentException("Could not find figure" + figure);
+    }
+
+    /**
+     * Gets the number of the team of the given figure.
+     * @param figure a reference to the figure whose team is sought
+     * @return the index of the team of the figure
+     * @throws java.lang.IllegalArgumentException thrown when the given figure is not found
+     */
+    private int getTeamOfFigure(Figure figure) throws IllegalArgumentException {
+        for(int i=0; i<teams.size(); i++) {
+            for(int j=0; j<teams.get(i).getFigures().size(); j++) {
+                if(teams.get(i).getFigures().get(j) == figure) {
+                    return i;
+                }
+            }
+        }
+        throw new IllegalArgumentException("Could not find team of figure" + figure);
     }
 
     public int getNumberOfLivingTeams() {
@@ -407,19 +445,28 @@ public class MapWindow extends Application implements Networkable {
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
 
         turnCount++; // TODO timing issue
-        server.sendCommand("SET_TURN_COUNT " + turnCount);
+        server.send("SET_TURN_COUNT " + turnCount);
 
-        server.sendCommand("DEACTIVATE_FIGURE " + currentTeam);
+        server.send("DEACTIVATE_FIGURE " + currentTeam);
 
         terrain.rewind();
-        server.sendCommand("WIND_FORCE " + terrain.getWindMagnitude());
+        server.send("WIND_FORCE " + terrain.getWindMagnitude());
 
-        if(turnCount % teams.size() >= ROUNDS_TILL_SUDDEN_DEATH && boss == null) {
-            System.out.println("sudden death is coming ..."); // TODO IMPORTANT network
-            spawnBoss();
+        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null && floodLevel == -1) {
+            switch ((int)(Math.random()*2)) {
+                case 0:
+                    spawnBoss();
+                    break;
+                default:
+                    System.out.println("flood warning"); // TODO game comment
+                    floodLevel = 0;
+                    break;
+            }
         } else if(boss != null) {
             moveBoss();
-            server.sendCommand("SD BOSS MOVE");
+            server.send("SD BOSS MOVE");
+        } else if(floodLevel != -1) {
+            server.sendCommands(terrain.increaseFlood(++floodLevel));
         }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -429,7 +476,7 @@ public class MapWindow extends Application implements Networkable {
                     if(f.getHealth() > 0) { //Avoid reviving the poisoned dead
                         if (f.getIsPoisoned()) {
                             f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON));
-                            server.sendCommand("SET_HP " + getFigureId(f) + " " + f.getHealth());
+                            server.send("SET_HP " + getFigureId(f) + " " + f.getHealth());
                         }
                     }
                 }
@@ -443,17 +490,17 @@ public class MapWindow extends Application implements Networkable {
                 currentTeam = 0;
             }
             if (currentTeam == oldCurrentTeam) {
-                server.sendCommand("GAME_OVER " + currentTeam);
+                server.send("GAME_OVER " + currentTeam);
                 return;
             }
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         if (getNumberOfLivingTeams() == 0){
-            server.sendCommand("GAME_OVER " + -1);
+            server.send("GAME_OVER " + -1);
             return;
         }
         if (getNumberOfLivingTeams() < 2){
-            server.sendCommand("GAME_OVER " + currentTeam);
+            server.send("GAME_OVER " + currentTeam);
             return;
         }
 
@@ -463,13 +510,13 @@ public class MapWindow extends Application implements Networkable {
             undoDigitations();
         }
 
-        server.sendCommand("SET_CURRENT_TEAM " + currentTeam);
+        server.send("SET_CURRENT_TEAM " + currentTeam);
         teams.get(currentTeam).endRound();
-        server.sendCommand("CURRENT_TEAM_END_ROUND " + currentTeam);
-        server.sendCommand("ACTIVATE_FIGURE " + currentTeam);
+        server.send("CURRENT_TEAM_END_ROUND " + currentTeam);
+        server.send("ACTIVATE_FIGURE " + currentTeam);
 
         String teamLabelText = "Turn " + turnCount + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
-        server.sendCommand("TEAM_LABEL_SET_TEXT " + teamLabelText);
+        server.send("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
     }
 
@@ -488,7 +535,7 @@ public class MapWindow extends Application implements Networkable {
             for(Figure figure: team.getFigures()) {
                 if(figure.getHealth() >= DIGITATION_MIN_HEALTH && figure.getCausedHpDamage() >= DIGITATION_MIN_CAUSED_DAMAGE) {
                     figure.digitate();
-                    server.sendCommand("DIGITATE " + getFigureId(figure));
+                    server.send("DIGITATE " + getFigureId(figure));
                 }
             }
         }
@@ -499,7 +546,7 @@ public class MapWindow extends Application implements Networkable {
             for (Figure figure : team.getFigures()) {
                 if (figure.getHealth() < DEDIGITATION_HEALTH_THRESHOLD) {
                     figure.dedigitate();
-                    server.sendCommand("DEDIGITATE " + getFigureId(figure));
+                    server.send("DEDIGITATE " + getFigureId(figure));
                 }
             }
         }
@@ -509,17 +556,18 @@ public class MapWindow extends Application implements Networkable {
         String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar"); // similarity to Vel’Koz and Kog’Maw is purely coincidental
         bossSpawnedLeft = (Math.random() > .5);
         initBoss(bossName);
-        server.sendCommand("SD BOSS SPAWN " + bossName + " " + bossSpawnedLeft);
+        server.send("SD BOSS SPAWN " + bossName + " " + bossSpawnedLeft);
     }
 
     private void initBoss(String name) {
+        System.out.println(name + " appeared"); // TODO game comment
         boss = new Figure(name, "boss", 1000000, 1000000, false, false, false); // TODO short-hand constructor
         boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
         fieldPane.getChildren().add(boss);
     }
 
     private void moveBoss() {
-        final int moveBy = terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS;
+        final int moveBy = terrain.getTerrainWidth()/ SUDDEN_DEATH_TURNS;
         if(bossSpawnedLeft) {
             boss.setPosition(boss.getPosition().add(moveBy, 0));
         } else {
@@ -610,7 +658,8 @@ public class MapWindow extends Application implements Networkable {
             case "ACTIVATE_FIGURE":
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(true);
                 Point2D activePos = teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().getPosition();
-                scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
+                projectileFocused = false;
+                if(autoScroll && !projectileFocused) scrollTo(activePos.getX(), activePos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, true);
                 break;
             case "CURRENT_TEAM_END_ROUND":
                 if(server == null) { // already done on server
@@ -659,6 +708,7 @@ public class MapWindow extends Application implements Networkable {
                     flyingProjectile = projectile;
                     fieldPane.getChildren().add(flyingProjectile);
                     shootingIsAllowed = false;
+                    projectileFocused = true;
                     //ToDo setRoundTimer down to 5sec
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
@@ -680,17 +730,24 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "FIGURE_SET_POSITION":
                 Point2D position = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
+                Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
                 if(server == null) { // server already applied change to prevent timing issue
-                    Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
                     f.setPosition(position); // TODO alternative setter
                 }
+                if(autoScroll && (!projectileFocused || client.isLocalGame() || getTeamOfFigure(f) == client.getAssociatedTeam())) {
+                    projectileFocused = false; // when moving own figure, stop focusing projectile
+                }
                 if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
-                    scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
+                    if(autoScroll && !projectileFocused) scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
                 break;
             case "REPLACE_BLOCK":
-                if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
-                terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                if(server == null) {
+                    if (cmd[3].charAt(0) == '#') {
+                        cmd[3] = " "; //Decode # as destruction, ' ' is impossible due to Client/Server architecture
+                    }
+                    terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                }
                 break;
             case "DEACTIVATE_FIGURE":
                 shootingIsAllowed = true;
@@ -707,7 +764,7 @@ public class MapWindow extends Application implements Networkable {
                     final double x = Double.parseDouble(cmd[1]);
                     final double y = Double.parseDouble(cmd[2]);
                     flyingProjectile.setPosition(new Point2D(x, y));
-                    scrollTo(x, y, 0, 0, false);
+                    if(autoScroll && projectileFocused) scrollTo(x, y, 0, 0, false);
                 }
                 break;
             case "REMOVE_FLYING_PROJECTILE":
@@ -749,13 +806,17 @@ public class MapWindow extends Application implements Networkable {
                     case "STUCK":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);
                         break;
+                    default:
+                        System.err.println("handleKeyEventOnClient: no event for key " + command);
                 }
                 break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
                 break;
             case "SUDDEN_DEATH":
-                teams.get(Integer.parseInt(cmd[1])).suddenDeath();
+                int teamToKill = Integer.parseInt(cmd[1]);
+                teams.get(teamToKill).suddenDeath();
+                if(teamToKill == currentTeam) endTurn(); // TODO IMPORTANT this cannot work on clients ...
                 break;
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
@@ -764,26 +825,35 @@ public class MapWindow extends Application implements Networkable {
                 windIndicator.setWindForce(Double.parseDouble(cmd[1]));
                 break;
             default:
-                System.out.println("handleKeyEventOnClient: no event for key " + command);
+                System.err.println("handleKeyEventOnClient: no event for key " + command);
         }
     }
 
     @Override
-    public void handleKeyEventOnServer(String keyCode) {
-        if (keyCode.startsWith("/kickteam ")) {
+    public void handleOnServer(String command) {
+        if (command.startsWith("/kickteam ")) {
+            String teamToKick = extractPart(command, "/kickteam ");
             try {
-                int teamNumber = Integer.parseInt(extractPart(keyCode, "/kickteam "))-1;
+                int teamNumber = Integer.parseInt(teamToKick)-1; // user starts counting from 1, we count from 0
                 if(teamNumber >= teams.size()) throw new IndexOutOfBoundsException();
-                server.sendCommand("SUDDEN_DEATH " + teamNumber);
+                server.send("SUDDEN_DEATH " + teamNumber);
                 if(currentTeam == teamNumber) {
                     endTurn();
                 }
-            } catch(NumberFormatException | IndexOutOfBoundsException e) {
-                    System.out.println("malformed command " + keyCode);
+            } catch(NumberFormatException e) {
+                // no team number given, try team name
+                for (int i = 0; i < teams.size(); i++) {
+                    if (teams.get(i).getName().equals(teamToKick)) {
+                        server.send("SUDDEN_DEATH " + i);
+                        break;
+                    }
+                }
+            } catch(IndexOutOfBoundsException e) {
+                    System.out.println("malformed command " + command);
             }
             return;
-        } else if(keyCode.startsWith("CHEAT ")) {
-            executeCheat(extractPart(keyCode, "CHEAT ").split(" "));
+        } else if(command.startsWith("CHEAT ")) {
+            executeCheat(extractPart(command, "CHEAT ").split(" "));
             return;
         }
 
@@ -791,94 +861,94 @@ public class MapWindow extends Application implements Networkable {
 
         int team = -1;
         try {
-            team = Integer.parseInt(keyCode.split(" ", 2)[0]);
+            team = Integer.parseInt(command.split(" ", 2)[0]);
         } catch(NumberFormatException e) {
-            System.out.println("handleKeyEventOnServer: NumberFormatException" + e.getMessage());
+            System.out.println("handleOnServer: NumberFormatException" + e.getMessage());
             return;
         }
-        keyCode = keyCode.split(" ", 2)[1];
+        command = command.split(" ", 2)[1];
 
         // pause is a special case: do not ignore pause command when paused, and also accept the input when it's not team 0's turn
-        switch(keyCode) {
+        switch(command) {
             case "Esc":
             case "Pause":
             case "P":
                 if (team == 0 || client.isLocalGame()) { // allowing pausing by host (team 0) and when playing local game
                     pause = !pause;
-                    server.sendCommand("PAUSE " + pause);
+                    server.send("PAUSE " + pause);
                 }
                 break;
         }
 
         if(pause) {
-            System.out.println("Game paused, ignoring command " + keyCode);
+            System.out.println("Game paused, ignoring command " + command);
             return;
         }
 
         if (team != currentTeam && !client.isLocalGame()) {
-            System.out.println("The key event " + keyCode + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
+            System.out.println("The key event " + command + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
             return;
         }
 
-        switch(keyCode) {
+        switch(command) {
             case "Space":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    server.sendCommand("CURRENT_FIGURE_SHOOT");
+                    server.send("CURRENT_FIGURE_SHOOT");
                 }
                 break;
             // these codes always result in optical changes only, so nothing to do on server side
             case "Up":
             case "W":
                 if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    server.sendCommand("CURRENT_FIGURE_ANGLE_UP");
+                    server.send("CURRENT_FIGURE_ANGLE_UP");
                 } else {
                     teams.get(currentTeam).getCurrentFigure().jump();
                 }
                 break;
             case "Down":
             case "S":
-                server.sendCommand("CURRENT_FIGURE_ANGLE_DOWN");
+                server.send("CURRENT_FIGURE_ANGLE_DOWN");
                 break;
             case "Left":
             case "A":
-                server.sendCommand("CURRENT_FIGURE_FACE_LEFT");
+                server.send("CURRENT_FIGURE_FACE_LEFT");
                 moveCurrentlyActiveFigure(new Point2D(-Figure.WALK_SPEED, 0));
                 break;
             case "Right":
             case "D":
-                server.sendCommand("CURRENT_FIGURE_FACE_RIGHT");
+                server.send("CURRENT_FIGURE_FACE_RIGHT");
                 moveCurrentlyActiveFigure(new Point2D(Figure.WALK_SPEED, 0));
                 break;
             case "1":
                 if(shootingIsAllowed) {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
+                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
                 }
                 break;
             case "2":
                 if(shootingIsAllowed) {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
+                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
                 }
                 break;
             case "3":
                 if(shootingIsAllowed) {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
+                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
                 }
                 break;
             case "4":
                 if(shootingIsAllowed) {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
-                        server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
+                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
                 }
                 break;
             default:
-                System.out.println("handleKeyEventOnServer: no event for key " + keyCode);
+                System.out.println("handleOnServer: no event for key " + command);
         }
     }
 
@@ -897,6 +967,10 @@ public class MapWindow extends Application implements Networkable {
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
                 System.out.println("Ate my spinach.");
+                break;
+            case "1up+": // 1000 live for first figure of first team
+                teams.get(0).getFigures().get(0).setHealth(1000);
+                System.out.println("Ate too much spinach.");
                 break;
             case "dedigitate": // calls undoDigitations() method
                 undoDigitations();
@@ -936,6 +1010,18 @@ public class MapWindow extends Application implements Networkable {
                                     moveBoss();
                                 }
                             }
+                            break;
+                        case "flood":
+                            if (cmd.length > 2) {
+                                floodLevel = Integer.parseInt(cmd[2]);
+                            } else {
+                                if(floodLevel != -1) {
+                                    terrain.increaseFlood(++floodLevel);
+                                } else {
+                                    floodLevel = 0;
+                                }
+                            }
+                            break;
                     }
                 });
                 System.out.println("Premature Death");
@@ -962,7 +1048,7 @@ public class MapWindow extends Application implements Networkable {
             newPos = e.getLastGoodPosition();
         }
         f.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
-        server.sendCommand("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
+        server.send("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
     }
 
     public ImageView drawBackgroundImage() {
