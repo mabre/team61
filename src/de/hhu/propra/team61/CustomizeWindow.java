@@ -4,6 +4,7 @@ import de.hhu.propra.team61.gui.CustomGrid;
 import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.objects.CollisionException;
@@ -28,9 +29,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -79,7 +77,6 @@ public class CustomizeWindow extends Application {
     private boolean cheatEnabled = false;
     private Figure block = null;
     private Thread moveBlockThread = null;
-    Clip clip = null;
     Text terrainType = new Text();
     Button stone = new Button();
     String chosenMap = new String("editor/basic.lvl");
@@ -425,7 +422,7 @@ public class CustomizeWindow extends Application {
         });
         cheatEnabled = true;
         keysEntered = "";
-        playRussianFolkSong();
+        VorbisPlayer.play("resources/audio/BGM/korobeiniki.ogg", true);
         spawnBlock();
         moveBlockThread.start();
     }
@@ -433,7 +430,7 @@ public class CustomizeWindow extends Application {
     private void stopCheat() {
         cheatEnabled = false;
         if(moveBlockThread != null) moveBlockThread.interrupt();
-        if(clip != null) clip.stop();
+        VorbisPlayer.stop();
         if(block != null) anchorPane.getChildren().removeAll(block);
     }
 
@@ -498,19 +495,6 @@ public class CustomizeWindow extends Application {
             System.out.println("CollisionWithTerrainException");
             block.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
         }
-    }
-
-    private void playRussianFolkSong() {
-        try {
-            clip = AudioSystem.getClip();
-            AudioInputStream inputStream = AudioSystem.getAudioInputStream(new File("resources/audio/BGM/korobeiniki.wav"));
-            clip.open(inputStream);
-            clip.loop(Clip.LOOP_CONTINUOUSLY);
-            clip.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
     private void mouseOverTerrain(Button terrainButton, String terrain) {
