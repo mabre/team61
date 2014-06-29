@@ -30,11 +30,21 @@ public class Terrain extends GridPane {
     private final static String imgPath = "file:resources/";
     private final static int BLOCK_SIZE = 8;
     private final static Image EARTH_IMAGE = new Image(imgPath + "map/earth.png");
+    private final static Image ICE_SLANT_RE_IMAGE = new Image(imgPath + "map/slant_ice_ri.png");
+    private final static Image ICE_SLANT_LE_IMAGE = new Image(imgPath + "map/slant_ice_le.png");
+    private final static Image STONE_SLANT_RE_IMAGE = new Image(imgPath + "map/slant_stone_ri.png");
+    private final static Image STONE_SLANT_LE_IMAGE = new Image(imgPath + "map/slant_stone_le.png");
+    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "map/slant_ground_le.png");
+    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "map/slant_ground_ri.png");
+    private final static Image ICE_SLANT_RE_IMAGE_TOP = new Image(imgPath + "map/slant_ice_ri_top.png");
+    private final static Image ICE_SLANT_LE_IMAGE_TOP = new Image(imgPath + "map/slant_ice_le_top.png");
+    private final static Image STONE_SLANT_RE_IMAGE_TOP = new Image(imgPath + "map/slant_stone_ri_top.png");
+    private final static Image STONE_SLANT_LE_IMAGE_TOP = new Image(imgPath + "map/slant_stone_le_top.png");
+    private final static Image SLANT_LE_IMAGE_TOP = new Image(imgPath + "map/slant_ground_le_top.png");
+    private final static Image SLANT_RI_IMAGE_TOP = new Image(imgPath + "map/slant_ground_ri_top.png");
     private final static Image ICE_IMAGE = new Image(imgPath + "map/ice.png");
     private final static Image LAVE_IMAGE = new Image(imgPath + "map/lava.png");
     private final static Image SKY_IMAGE = new Image(imgPath + "map/sky.png");
-    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "map/slant_ground_le.png");
-    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "map/slant_ground_ri.png");
     private final static Image STONES_IMAGE = new Image(imgPath + "map/stones.png");
     private final static Image WATER_IMAGE = new Image(imgPath + "map/water.png");
 
@@ -112,10 +122,12 @@ public class Terrain extends GridPane {
                 add(new ImageView(ICE_IMAGE), column, row);
                 break;
             case '/':
-                add(new ImageView(SLANT_RI_IMAGE), column, row);
+                Image rightslant = getSlant(row,column,'/');
+                add(new ImageView(rightslant), column, row);
                 break;
             case '\\':
-                add(new ImageView(SLANT_LE_IMAGE), column, row);
+                Image leftslant = getSlant(row,column,'\\');
+                add(new ImageView(leftslant), column, row);
                 break;
             case 'W':
                 add(new ImageView(WATER_IMAGE), column, row);
@@ -131,6 +143,85 @@ public class Terrain extends GridPane {
         }
 
     }
+
+    /**
+     * This Method checks the terrain to determine the correct image of slant to use
+     * @param x row
+     * @param y column
+     * @param slash '/' or '\\' to indicate slant direction
+     * @return  used slantimage
+     */
+    private Image getSlant (int x, int y, char slash){
+        if (x-1<0) {
+            if (slash=='/')
+                return SLANT_RI_IMAGE;
+            else
+                return SLANT_LE_IMAGE;
+        }
+        char block = terrain.get(x-1).get(y);
+        if (block!=' '){
+            //slant is on roof
+            if (slash=='/'){
+                switch (block){
+                    case 'I' :
+                        return ICE_SLANT_RE_IMAGE_TOP;
+                    case '#':
+                        return SLANT_RI_IMAGE_TOP;
+                    case 'E':
+                        return SLANT_RI_IMAGE_TOP;
+                    case 'S':
+                        return STONE_SLANT_RE_IMAGE_TOP;
+                    default : return SLANT_RI_IMAGE_TOP;
+                }
+            }
+            else {
+                switch (block) {
+                    case 'I':
+                        return ICE_SLANT_LE_IMAGE_TOP;
+                    case '#':
+                        return SLANT_LE_IMAGE_TOP;
+                    case 'E':
+                        return SLANT_LE_IMAGE_TOP;
+                    case 'S':
+                        return STONE_SLANT_LE_IMAGE_TOP;
+                    default : return SLANT_LE_IMAGE_TOP;
+                }
+            }
+
+        }
+        //slant is on ground
+        else {
+            block = terrain.get(x+1).get(y);
+            if (slash=='/'){
+                switch (block){
+                    case 'I' :
+                        return ICE_SLANT_RE_IMAGE;
+                    case '#':
+                        return SLANT_RI_IMAGE;
+                    case 'E':
+                        return SLANT_RI_IMAGE;
+                    case 'S':
+                        return STONE_SLANT_RE_IMAGE;
+                    default : return SLANT_RI_IMAGE;
+                }
+            }
+            else {
+                switch (block) {
+                    case 'I':
+                        return ICE_SLANT_LE_IMAGE;
+                    case '#':
+                        return SLANT_LE_IMAGE;
+                    case 'E':
+                        return SLANT_LE_IMAGE;
+                    case 'S':
+                        return STONE_SLANT_LE_IMAGE;
+                    default : return SLANT_LE_IMAGE;
+                }
+            }
+        }
+
+    }
+
 
     /**
      * @return the 2-D-ArrayList representing the loaded terrain
@@ -272,7 +363,7 @@ public class Terrain extends GridPane {
         debugLog("start position: " + oldPosition);
         debugLog("normalized velocity: " + normalizedDirection);
 
-        final int runs = (int) (direction.magnitude()*getFriction(oldPosition));
+        final int runs = (int) (direction.magnitude());
         for (int i = 0; i < runs; i++) {
             // move position by 1px
             newPosition = newPosition.add(normalizedDirection);
@@ -396,7 +487,7 @@ public class Terrain extends GridPane {
      * @return friction of block below worm
      */
     private double getFriction (Point2D pos){
-        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)+NORM_WORM_SIZE).get((int)(pos.getX()/BLOCK_SIZE));
+        char block = terrain.get((int)(pos.getY()/BLOCK_SIZE)+Figure.NORMED_OBJECT_SIZE).get((int)(pos.getX()/BLOCK_SIZE));
         switch (block) {
             case 's':
                 return SAND_FRICTION;

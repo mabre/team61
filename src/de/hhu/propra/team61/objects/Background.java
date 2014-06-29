@@ -28,28 +28,27 @@ public class Background extends Application implements Runnable {
     private static final int FRAME_HEIGHT = 19;
     private Terrain stage;
 
+    /**
+     *
+     * @param ostage
+     */
     public Background(Terrain ostage){
         this.stage = ostage;
     }
     @Override
     public void run(){
-        for (int i = HEIGHT; i>0; i--){
+        int col = 6;
+        int rows = 6;
+        for (int i = HEIGHT; i>=0; i--){
             if (i==0)i = HEIGHT;
             int index = i%FRAMES;
             int x = (index*WIDTH);
             SPRITE.setViewport(new Rectangle2D(x,0,WIDTH,FRAME_HEIGHT));
-            stage.add(SPRITE, 0, i);
-            stage.add(SPRITE, 0, i+HEIGHT);
-            stage.add(SPRITE, 0, i+HEIGHT*2);
-            stage.add(SPRITE, 0, i+HEIGHT*3);
-            stage.add(SPRITE, WIDTH, i);
-            stage.add(SPRITE, WIDTH, i+HEIGHT);
-            stage.add(SPRITE, WIDTH, i+HEIGHT*2);
-            stage.add(SPRITE, WIDTH, i+HEIGHT*3);
-            stage.add(SPRITE, WIDTH*2, i);
-            stage.add(SPRITE, WIDTH*2, i+HEIGHT);
-            stage.add(SPRITE, WIDTH*2, i+HEIGHT*2);
-            stage.add(SPRITE, WIDTH*2, i+HEIGHT*3);
+            for (int j = col; j >= 0; j--){
+                for (int k = rows; k>=0;k--){
+                    stage.add(SPRITE, j, k);
+                }
+            }
 
         }
     }
