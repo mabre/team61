@@ -16,8 +16,10 @@ import javafx.scene.image.ImageView;
  * <li>{@code 'W'} (water): walkable liquid
  * <li>{@code 'L'} (lava): walkable liquid
  * <li>{@code 'S'} (stone): walkable ground with normal friction
- * <li>{@code 'E'} (earth): walkable ground with normal friction
+ * <li>{@code 's'} (sand): walkable ground with higher friction
+ * <li>{@code 'E'} (soil): walkable ground with normal friction
  * <li>{@code 'I'} (ice): walkable ground with lower friction
+ * <li>{@code 'i'} (snow): walkable ground with normal friction
  * <li>{@code '/'}, {@code '\'}: walkable slant ground
  * </ul>
  * After creating a block, you should call {@link #setTopNeighbour(TerrainBlock)}, {@link #setRightNeighbour(TerrainBlock)},
@@ -33,13 +35,17 @@ public class TerrainBlock extends ImageView {
     private final static String imgPath = "file:resources/terrain/";
     // preloaded terrain images
     /** image looking like earth */
-    private final static Image EARTH_IMAGE = new Image(imgPath + "soil.png");
+    private final static Image SOIL_IMAGE = new Image(imgPath + "soil.png");
     /** image looking like ice */
     private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
     /** image looking like lave */
     private final static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
+    /** image looking like sand */
+    private final static Image SAND_IMAGE = new Image(imgPath + "sand.png");
     /** image looking like sky */
     private final static Image SKY_IMAGE = new Image(imgPath + "sky.png");
+    /** image looking like snow */
+    private final static Image SNOW_IMAGE = new Image(imgPath + "snow.png");
     /** image looking like a slant from top left to bottom right */
     private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
     /** image looking like a slant from bottom left to top right */
@@ -177,11 +183,17 @@ public class TerrainBlock extends ImageView {
                 case 'S':
                     this.setImage(STONES_IMAGE);
                     break;
+                case 's':
+                    this.setImage(SAND_IMAGE);
+                    break;
                 case 'E':
-                    this.setImage(EARTH_IMAGE);
+                    this.setImage(SOIL_IMAGE);
                     break;
                 case 'I':
                     this.setImage(ICE_IMAGE);
+                    break;
+                case 'i':
+                    this.setImage(SNOW_IMAGE);
                     break;
                 case '/':
                     this.setImage(SLANT_RI_IMAGE);
@@ -231,10 +243,8 @@ public class TerrainBlock extends ImageView {
             case 'S': return RESISTANCE_OF_STONE;
             case 'E': return RESISTANCE_OF_EARTH;
             case 'I': return RESISTANCE_OF_ICE;
-            case 'A': //ToDo change that
-                return RESISTANCE_OF_SNOW;
-            case 'B': //ToDo change that
-                return RESISTANCE_OF_SAND;
+            case 'i': return RESISTANCE_OF_SNOW;
+            case 's': return RESISTANCE_OF_SAND;
             default: return RESISTANCE_OF_SKY;
         }
     }

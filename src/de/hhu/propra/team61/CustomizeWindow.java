@@ -302,49 +302,49 @@ public class CustomizeWindow extends Application {
             }
         });
         initializeLevelEditor();
-        stone.setGraphic(new ImageView(new Image("file:resources/stones.png")));
+        stone.setGraphic(new ImageView(new Image("file:resources/terrain/stones.png")));
         stone.setOnAction(e -> {
             chosenTerrainType = 'S';
         });
         mouseOverTerrain(stone, "Stone");
         selectionGrid.add(stone, 0, 0);
         Button soil = new Button();
-        soil.setGraphic(new ImageView(new Image("file:resources/earth.png")));
+        soil.setGraphic(new ImageView(new Image("file:resources/terrain/soil.png")));
         soil.setOnAction(e -> {
             chosenTerrainType = 'E';
         });
         mouseOverTerrain(soil, "Soil");
         selectionGrid.add(soil, 0, 1);
         Button sand = new Button();
-        sand.setGraphic(new ImageView(new Image("file:resources/stones.png")));
+        sand.setGraphic(new ImageView(new Image("file:resources/terrain/sand.png")));
         sand.setOnAction(e -> {
             chosenTerrainType = 's';
         });
         mouseOverTerrain(sand, "Sand");
         selectionGrid.add(sand, 0, 2);
         Button ice = new Button();
-        ice.setGraphic(new ImageView(new Image("file:resources/ice.png")));
+        ice.setGraphic(new ImageView(new Image("file:resources/terrain/ice.png")));
         ice.setOnAction(e -> {
             chosenTerrainType = 'I';
         });
         mouseOverTerrain(ice, "Ice");
         selectionGrid.add(ice, 0, 3);
         Button snow = new Button();
-        snow.setGraphic(new ImageView(new Image("file:resources/stones.png")));
+        snow.setGraphic(new ImageView(new Image("file:resources/terrain/snow.png")));
         snow.setOnAction(e -> {
             chosenTerrainType = 'i';
         });
         mouseOverTerrain(snow, "Snow");
         selectionGrid.add(snow, 0, 4);
         Button rightEdge = new Button();
-        rightEdge.setGraphic(new ImageView(new Image("file:resources/slant_ground_ri.png")));
+        rightEdge.setGraphic(new ImageView(new Image("file:resources/terrain/slant_ground_ri.png")));
         rightEdge.setOnAction(e -> {
             chosenTerrainType = '/';
         });
         mouseOverTerrain(rightEdge, "Right edge");
         selectionGrid.add(rightEdge, 0, 5);
         Button leftEdge = new Button();
-        leftEdge.setGraphic(new ImageView(new Image("file:resources/slant_ground_le.png")));
+        leftEdge.setGraphic(new ImageView(new Image("file:resources/terrain/slant_ground_le.png")));
         leftEdge.setOnAction(e -> {
             chosenTerrainType = '\\';
         });
@@ -439,32 +439,46 @@ public class CustomizeWindow extends Application {
 
     private void spawnBlock() {
         String path;
-        switch((int)(Math.random()*3)) {
+        switch((int)(Math.random()*5)) {
             case 0:
                 chosenTerrainType = 'S';
-                path = "../stones";
+                path = "../terrain/stones";
                 break;
             case 1:
                 chosenTerrainType = 'E';
-                path = "../earth";
+                path = "../terrain/soil";
+                break;
+            case 2:
+                chosenTerrainType = 's';
+                path = "../terrain/sand";
+                break;
+            case 3:
+                chosenTerrainType = 'i';
+                path = "../terrain/snow";
                 break;
             default:
                 chosenTerrainType = 'I';
-                path = "../ice";
+                path = "../terrain/ice";
         }
         int hp;
-        switch((int)(Math.random()*4)) {
+        switch((int)(Math.random()*6)) {
             case 0:
                 hp = 2;
                 break;
             case 1:
-                hp = 42;
+                hp = 21;
                 break;
             case 2:
+                hp = 42;
+                break;
+            case 3:
                 hp = 61;
                 break;
-            default:
+            case 4:
                 hp = 1337;
+                break;
+            default:
+                hp = 2014;
         }
         Platform.runLater(() -> {
             block = new Figure(chosenTerrainType+"", path, hp, 0, false, false, false);
