@@ -8,7 +8,6 @@ import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -71,7 +70,9 @@ public class Terrain extends GridPane {
 
     /**
      * Creates a new terrain from the given JSONObject.
+     * This is the same as calling {@code Terrain(terrain, false)}.
      * @param terrain a JSONObject containing the level whose terrain shall be displayed
+     * @see de.hhu.propra.team61.objects.Terrain
      */
     public Terrain(JSONObject terrain) {
         this(terrain, false);
@@ -178,19 +179,12 @@ public class Terrain extends GridPane {
      * </p>
      */
     public void rewind() {
-        JSONObject settings = Settings.getSavedSettings("OPTIONS_FILE.conf");
-        double maxWindSpeed = MAX_WIND_SPEED_NORMAL;
-        switch(settings.getInt("windForce")) {
-            case 1:
-                maxWindSpeed = MAX_WIND_SPEED_EASY;
-                break;
-            case 2:
-                maxWindSpeed = MAX_WIND_SPEED_NORMAL;
-                break;
-            case 3:
-            case 4:
-                maxWindSpeed = MAX_WIND_SPEED_HARD;
-                break;
+        double maxWindSpeed;
+        switch(Settings.getSavedInt("windForce", 2)) {
+            case 1: maxWindSpeed = MAX_WIND_SPEED_EASY; break;
+            case 2: maxWindSpeed = MAX_WIND_SPEED_NORMAL; break;
+            case 3: maxWindSpeed = MAX_WIND_SPEED_HARD; break;
+            default: maxWindSpeed = 0; break;
         }
         double windSpeed = Math.random() * maxWindSpeed - maxWindSpeed / 2;
         if (Math.random() > .5) windSpeed *= 2; // make higher speed less probable

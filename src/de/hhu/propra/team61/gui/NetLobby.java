@@ -270,7 +270,7 @@ public class NetLobby extends Application implements Networkable {
                     }
                 }
                 if (differentColors) {
-                    Settings.save(toJson(), "NET_SETTINGS_FILE");
+                    Settings.saveJson(toJson(), "NET_SETTINGS_FILE");
                     System.out.println("Network-GameSettings: saved settings");
                     MapWindow mapwindow = new MapWindow(levelChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
                 } else {

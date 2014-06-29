@@ -133,7 +133,7 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
 
-        JSONObject settings = Settings.getSavedSettings(file);
+        JSONObject settings = Settings.getSavedJson(file);
         this.teamquantity = settings.getInt("numberOfTeams");
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
@@ -182,7 +182,7 @@ public class MapWindow extends Application implements Networkable {
 
         this.terrain = new Terrain(input.getJSONObject("terrain"));
 
-        JSONObject settings = Settings.getSavedSettings(file); //ToDo Obsolete or roundtimer etc in there?
+        JSONObject settings = Settings.getSavedJson(file); //ToDo Obsolete or roundtimer etc in there?
 
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");

@@ -9,19 +9,48 @@ import de.hhu.propra.team61.io.json.JSONObject;
  */
 public class Settings {
 
+    static final String PREFS_FILE = "Afrobob.conf";
+
     /**
-     * @param json is saved to SETTINGS_FILE
+     * Saves the given JSONObject to the given file
+     * @param json the json to be saved
+     * @param file the file to which the json is saved
      */
-    public static void save(JSONObject json, String file) {
+    public static void saveJson(JSONObject json, String file) {
         file = file+".conf";
         Json.save(json, file);
     }
 
     /**
-     * @return game state loaded from SAVE_STATE_FILE
+     * Creates a JSONObject from the contents of the given file.
+     * @param filename the file containing the json
+     * @return the json saved in the given file
      */
-    public static JSONObject getSavedSettings(String loadfilestring) {
-        return Json.getFromFile(loadfilestring);
+    public static JSONObject getSavedJson(String filename) {
+        return Json.getFromFile(filename);
     }
 
+    public static void savePrefs(JSONObject json) {
+        Json.save(json, PREFS_FILE);
+    }
+
+    /**
+     * Gets the saved preferences as json.
+     * @return json in {@link #PREFS_FILE}
+     */
+    public static JSONObject getSavedPrefs() {
+        return Json.getFromFile(PREFS_FILE);
+    }
+
+    /**
+     * Gets the value of an integer preference.
+     * {@code getSavedInt("foo", 42, "SETTINGS.conf")} will return the value of the key foo, or {@code 42} if the value
+     * does not exist in the file, or the file does not exist.
+     * @param key the key of the setting
+     * @param defaultValue fall back value
+     * @return the value for the key
+     */
+    public static int getSavedInt(String key, int defaultValue) {
+        return Json.getInt(Json.getFromFile(PREFS_FILE), key, defaultValue);
+    }
 }

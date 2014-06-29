@@ -110,7 +110,7 @@ public class Figure extends StackPane {
 
         hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        System.out.println("Chosen figure: "+ figureType);
+        System.out.println("Chosen figure: " + figureType);
         Image image = new Image("file:resources/figures/"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         figureImage.setImage(image);
         getChildren().add(figureImage);
@@ -133,7 +133,7 @@ public class Figure extends StackPane {
         output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
         output.put("massFactor", massFactor);
         output.put("causedHpDamage", causedHpDamage);
-        output.put("position.x", position.getX()); // TODO save as array
+        output.put("position.x", position.getX()); // TODO saveJson as array
         output.put("position.y", position.getY());
 
         output.put("isParalyzed", isParalyzed);
@@ -174,7 +174,7 @@ public class Figure extends StackPane {
 
     /**
      * moves the figure to the given position, updated the hit region, position of the figure image and the hp label
-     * JavaFX parts are run with runLater, hence it is save to call this function from non-fx threads.
+     * JavaFX parts are run with runLater, hence it is saveJson to call this function from non-fx threads.
      * @param newPosition the new position of the figure in px
      */
     public void setPosition(Point2D newPosition) {
