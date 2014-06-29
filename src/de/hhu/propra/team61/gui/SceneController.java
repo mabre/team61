@@ -4,88 +4,79 @@ import de.hhu.propra.team61.gui.BigStage;
 import javafx.scene.Scene;
 
 /**
+ * Makes switching between scenes in one stage possible.
+ *
+ * Contains all scenes and the stage = mainwindow and resets the scene of the mainwindow. The scenes containing main
+ * menue and the game itself need to be saved in sceneController, because they can also be set from outside the class they
+ * are created in.
+ * All methods in this class are public as sceneController is called by other classes.
+ *
  * Created by Jessypet on 01.06.14.
  */
 
 public class SceneController {
 
-    public BigStage mainwindow;
-    public Scene menueScene;
-    public Scene optionsScene;
-    public Scene settingsScene;
-    public Scene lobbyScene;
-    public Scene gameScene;
-    public Scene gameOverScene;
-    public Scene customizeScene;
+    /** The main window */
+    private BigStage mainwindow;
+    /** contains main menue */
+    private Scene menueScene;
+    /** contains game */
+    private Scene gameScene;
 
+    /**
+     * Sets the main stage.
+     * @param mainwindow main stage
+     */
     public void setStage(BigStage mainwindow) {
         this.mainwindow = mainwindow;
     }
 
+    /**
+     * Returns the main stage.
+     * @return the main stage
+     */
     public BigStage getStage() {
         return mainwindow;
     }
 
+    /**
+     * Sets the scene of the main menue.
+     * @param menueScene contains the main menue
+     */
     public void setMenueScene(Scene menueScene) {
         this.menueScene = menueScene;
     }
-
-    public void setOptionsScene(Scene optionsScene) {
-        this.optionsScene = optionsScene;
-    }
-
-    public void setSettingsScene(Scene settingsScene) {
-        this.settingsScene = settingsScene;
-    }
-
-    public void setLobbyScene(Scene lobbyScene) {
-        this.lobbyScene = lobbyScene;
-    }
-
+    /**
+     * Sets the scene of the game ({@link de.hhu.propra.team61.MapWindow}).
+     * @param gameScene contains the game
+     */
     public void setGameScene(Scene gameScene) {
         this.gameScene = gameScene;
     }
 
-    public void setGameOverScene(Scene gameOverScene) {
-        this.gameOverScene = gameOverScene;
+    /**
+     * Switches to the given scene.
+     * @param scene the scene that is supposed to be shown
+     * @param title the new title of the window
+     */
+    public void switchScene(Scene scene, String title) {
+        mainwindow.setScene(scene);
+        mainwindow.setTitle(title);
     }
 
-    public void setCustomizeScene(Scene customizeScene) {
-        this.customizeScene = customizeScene;
-    }
-
+    /**
+     * Switches to the menue.
+     */
     public void switchToMenue() {
         mainwindow.setScene(menueScene);
         mainwindow.setTitle("Unicorns and penguins <3");
     }
 
-    public void switchToOptions() {
-        mainwindow.setScene(optionsScene);
-        mainwindow.setTitle("Options");
-    }
-
-    public void switchToGameSettings() {
-        mainwindow.setScene(settingsScene);
-        mainwindow.setTitle("Game Settings");
-    }
-
-    public void switchToLobby() {
-        mainwindow.setScene(lobbyScene);
-        mainwindow.setTitle("Network Lobby");
-    }
-
+    /**
+     * Switches to the game.
+     */
     public void switchToMapwindow() {
         mainwindow.setScene(gameScene);
         mainwindow.setTitle("The Playground");
-    }
-
-    public void switchToGameOver() {
-        mainwindow.setScene(gameOverScene);
-        mainwindow.setTitle("Game over");
-    }
-
-    public void switchToCustomize() {
-        mainwindow.setScene(customizeScene);
-        mainwindow.setTitle("Customize");
     }
 }

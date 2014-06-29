@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Button?>
+
+<GridPane fx:id="settingGrid" fx:controller="de.hhu.propra.team61.gui.SettingsController" alignment ="TOP_LEFT" hgap="10" vgap="10" xmlns:fx="http://javafx.com/fxml">
+    <children>
+        <Text text="Choose teams:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <Button fx:id="plus" text="+" onAction="#handlePlus" visible="true" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+        <Text text="Choose Game Style:" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+        <ChoiceBox fx:id="gameStyle" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+        <Text fx:id="level" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+        <Text fx:id="teamSize" GridPane.columnIndex="3" GridPane.rowIndex="4" GridPane.columnSpan="2"/>
+        <Button fx:id="edit" text="Edit" onAction="#handleEdit" GridPane.columnIndex="0" GridPane.rowIndex="16"/>
+        <Button fx:id="cont" text="Start!" onAction="#handleContinue" GridPane.columnIndex="0" GridPane.rowIndex="17"/>
+        <Button fx:id="back" text="Back" onAction="#handleBack" GridPane.columnIndex="1" GridPane.rowIndex="17"/>
+        <Text fx:id="error" GridPane.columnIndex="0" GridPane.rowIndex="18" GridPane.columnSpan="5"/>
+    </children>
+    <padding>
+        <Insets bottom="25" left="25" right="25" top="25" />
+    </padding>
+</GridPane>
