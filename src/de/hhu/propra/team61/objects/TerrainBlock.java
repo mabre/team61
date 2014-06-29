@@ -29,7 +29,7 @@ import javafx.scene.image.ImageView;
 public class TerrainBlock extends ImageView {
 
     /** path to the terrain images */
-    private final static String imgPath = "file:resources/";
+    private final static String imgPath = "file:resources/map/";
     // preloaded terrain images
     /** image looking like earth */
     private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
