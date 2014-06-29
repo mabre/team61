@@ -438,7 +438,7 @@ public class Terrain extends GridPane {
                 debugLog("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
-                replaceBlock(blockX,blockY,replacement); //Mark as destroyed
+                replaceBlock(blockX,blockY,' '); //Mark as destroyed
 
                 // Recursively continue destruction for all directions unless OutOfBounds
                 if (blockY+1 < terrain.size()){ explode(commands, blockX, blockY + 1, explosionPower); }
@@ -458,11 +458,11 @@ public class Terrain extends GridPane {
 
                     if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
+                            replaceBlock(blockX, blockY, '\\');
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
-                        } else {
-                            if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
-                                commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
-                            }
+                        } else if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
+                            replaceBlock(blockX, blockY, '/');
+                            commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                         }
                     }
                 }
@@ -483,6 +483,7 @@ public class Terrain extends GridPane {
 
         ArrayList<String> commands = new ArrayList<String>();
         explode(commands, blockX, blockY, explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
+        flood(commands);
 
         return commands;
     }
@@ -587,18 +588,84 @@ public class Terrain extends GridPane {
     public boolean standingOnLiquid(Point2D position) {
         final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
         final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
-        final int y = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int maxY = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int minY = maxY - (Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE;
 
-        if(y >= terrain.size()) {
+        if(maxY >= terrain.size()) {
             return false;
         }
 
-        for(int x=minX; x < maxX && x < terrain.get(y).size(); x++) {
-            if(terrain.get(y).get(x).isLiquid()) {
-                return true;
+        for(int y=minY; y <= maxY && y < terrain.size(); y++) {
+            for (int x = minX; x < maxX && x < terrain.get(y).size(); x++) {
+                if (terrain.get(y).get(x).isLiquid()) {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Makes the liquid flow into wholes.
+     * Replaces sky blocks in lines with a liquid with the liquid, starting at the bottom and stopping when a row without
+     * a liquid is found. REPLACE_BLOCK commands are added to the given list.
+     * @param commands will contain a list of REPLACE_BLOCK commands
+     */
+    private void flood(ArrayList<String> commands) {
+        char foundLiquidInRow = 'W';
+        for(int row=terrain.size()-1; row>=0 && foundLiquidInRow != ' '; row--) {
+            foundLiquidInRow = ' ';
+            for(int column = 0; column < terrain.get(row).size(); column++) { // TODO move to function + before for loop
+                if(terrain.get(row).get(column).isLiquid()) {
+                    foundLiquidInRow = terrain.get(row).get(column).getType();
+                    break;
+                }
+            }
+            if(foundLiquidInRow != ' ') {
+                for(int column = 0; column < terrain.get(row).size(); column++) {
+                    if(terrain.get(row).get(column).isSky()) {
+                        replaceBlock(column, row, foundLiquidInRow);
+                        commands.add("REPLACE_BLOCK " + column + " " + row + " " + foundLiquidInRow);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Make liquid level rise to the given level.
+     * @param floodLevel the number of rows which are flooded
+     * @return a list of REPLACE_BLOCK commands
+     * @see #flood(java.util.ArrayList)
+     */
+    public ArrayList<String> increaseFlood(int floodLevel) {
+        ArrayList<String> commands = new ArrayList<>();
+
+        if(floodLevel > terrain.size()) return commands;
+
+        int newRowToFlood = terrain.size()-floodLevel;
+
+        char foundLiquidInRow = ' ';
+
+        for (int column = 0; column < terrain.get(terrain.size()-1).size() && foundLiquidInRow == ' '; column++) {
+            if (terrain.get(terrain.size()-1).get(column).isLiquid()) {
+                foundLiquidInRow = terrain.get(terrain.size()-1).get(column).getType();
+            }
+        }
+
+        if(foundLiquidInRow == ' ') foundLiquidInRow = 'W'; // default to water for levels w/o liquid
+
+        // replace one sky block of the new line to be flooded with the liquid -> flood() will flood the rest of the row
+        for(int column = 0; column < terrain.get(newRowToFlood).size(); column++) {
+            if(terrain.get(newRowToFlood).get(column).isSky()) {
+                replaceBlock(column, newRowToFlood, foundLiquidInRow);
+                commands.add("REPLACE_BLOCK " + column + " " + newRowToFlood + " " + foundLiquidInRow);
+            }
+        }
+
+        flood(commands);
+
+        return commands;
     }
 }

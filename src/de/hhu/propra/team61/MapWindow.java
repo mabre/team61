@@ -53,8 +53,10 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
+    /** number of turns until sudden death is started */
     private final static int TURNS_TILL_SUDDEN_DEATH = 30; // TODO pref?
-    private final static int SUDDEN_DEATH_ROUNDS = 20;
+    /** number of turns the boss needs to destroy the whole map */
+    private final static int SUDDEN_DEATH_TURNS = 20;
 
     //JavaFX related variables
     private Scene drawing;
@@ -98,6 +100,8 @@ public class MapWindow extends Application implements Networkable {
 
     private Figure boss = null;
     private boolean bossSpawnedLeft;
+
+    private int floodLevel = -1;
 
     private String map; // TODO do we need this?
     private Chat chat;
@@ -375,6 +379,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("currentTeam", currentTeam);
         output.put("terrain", terrain.toJson());
         output.put("windForce", terrain.getWindMagnitude());
+        // TODO include sudden death status
         return output;
     }
 
@@ -447,12 +452,21 @@ public class MapWindow extends Application implements Networkable {
         terrain.rewind();
         server.send("WIND_FORCE " + terrain.getWindMagnitude());
 
-        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null) {
-            System.out.println("sudden death is coming ..."); // TODO IMPORTANT network
-            spawnBoss();
+        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null && floodLevel == -1) {
+            switch ((int)(Math.random()*2)) {
+//                case 0:
+//                    spawnBoss();
+//                    break;
+                default:
+                    System.out.println("flood warning"); // TODO game comment
+                    floodLevel = 0;
+                    break;
+            }
         } else if(boss != null) {
             moveBoss();
             server.send("SD BOSS MOVE");
+        } else if(floodLevel != -1) {
+            server.sendCommands(terrain.increaseFlood(++floodLevel));
         }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -546,13 +560,14 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void initBoss(String name) {
+        System.out.println(name + " appeared"); // TODO game comment
         boss = new Figure(name, "boss", 1000000, 1000000, false, false, false); // TODO short-hand constructor
         boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
         fieldPane.getChildren().add(boss);
     }
 
     private void moveBoss() {
-        final int moveBy = terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS;
+        final int moveBy = terrain.getTerrainWidth()/ SUDDEN_DEATH_TURNS;
         if(bossSpawnedLeft) {
             boss.setPosition(boss.getPosition().add(moveBy, 0));
         } else {
@@ -727,8 +742,12 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "REPLACE_BLOCK":
-                if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
-                terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                if(server == null) {
+                    if (cmd[3].charAt(0) == '#') {
+                        cmd[3] = " "; //Decode # as destruction, ' ' is impossible due to Client/Server architecture
+                    }
+                    terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                }
                 break;
             case "DEACTIVATE_FIGURE":
                 shootingIsAllowed = true;
@@ -989,6 +1008,18 @@ public class MapWindow extends Application implements Networkable {
                                     moveBoss();
                                 }
                             }
+                            break;
+                        case "flood":
+                            if (cmd.length > 2) {
+                                floodLevel = Integer.parseInt(cmd[2]);
+                            } else {
+                                if(floodLevel != -1) {
+                                    terrain.increaseFlood(++floodLevel);
+                                } else {
+                                    floodLevel = 0;
+                                }
+                            }
+                            break;
                     }
                 });
                 System.out.println("Premature Death");
