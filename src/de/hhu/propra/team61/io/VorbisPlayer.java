@@ -63,6 +63,7 @@ public class VorbisPlayer {
         } catch (FileNotFoundException e) {
             System.err.println("VorbisPlayer: " + filename + " could not be found: " + e.getLocalizedMessage());
         } catch (UnsupportedAudioFileException e) {
+            // if you get this exception when running in IntelliJ: go to project structure and add lib/ (next to src/) as library
             System.err.println("Vorbis Player: " + filename + " is no valid ogg vorbis audio file (is lib/ in your class path?): " + e.getLocalizedMessage());
         } catch (Exception e) {
             e.printStackTrace();
