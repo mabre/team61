@@ -1,7 +1,6 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.io.CustomizeManager;
-import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
@@ -23,11 +22,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
 import java.util.ArrayList;
-import static de.hhu.propra.team61.JavaFxUtils.toHex;
+
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
@@ -57,9 +55,11 @@ public class NetLobby extends Application implements Networkable {
     private ArrayList<String> spectators = new ArrayList<>();
     /** button next to each team, makes host able to remove player */
     private ArrayList<Button> removeButtons = new ArrayList<>();
-    /** for choosing the level */
-    private ChoiceBox<String> mapChooser = new ChoiceBox<>();
 
+    /** for choosing game style */
+    private ChoiceBox<String> style = new ChoiceBox<>();
+    /** for choosing the level */
+    private ChoiceBox<String> levelChooser = new ChoiceBox<>();
     /** number of figures per team */
     private TextField sizeField = new TextField("4");
     /** number of allowed teams */
@@ -146,25 +146,51 @@ public class NetLobby extends Application implements Networkable {
         HBox topBox = addTopHBox();
         root.setTop(topBox);
         overviewGrid = new CustomGrid();
-        overviewGrid.setPrefWidth(672);
-        overviewGrid.setPrefHeight(550);
+        overviewGrid.setPrefSize(672, 550);
+        overviewGrid.setMaxSize(672, 550);
         root.setLeft(overviewGrid);
 
         Text teamsText = new Text("Teams:");
         teamsText.setFont(Font.font(16));
-        overviewGrid.add(teamsText, 0, 8);
+        overviewGrid.add(teamsText, 0, 7);
 
         Text team1 = new Text("Team 1");
         hboxes.add(new HBox(20));
         hboxes.get(0).getChildren().addAll(team1, teamChoosers.get(0));
-        overviewGrid.add(hboxes.get(0), 0, 10, 3, 1);
+        overviewGrid.add(hboxes.get(0), 0, 9, 3, 1);
 
-        Text generalSettings = new Text("Choose general settings:");
+        Text generalSettings = new Text("General settings:");
         generalSettings.setFont(Font.font(16));
         overviewGrid.add(generalSettings, 0, 0, 2, 1);
+        style = new ChoiceBox<>(FXCollections.observableArrayList(CustomizeManager.getAvailableGameStyles()));
+        style.getSelectionModel().selectFirst();
+        style.valueProperty().addListener(new ChangeListener<String>() {
+            public void changed(ObservableValue ov, String value, String new_value) {
+                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+new_value);
+                levelChooser.setValue(styleObject.getString("map"));
+                sizeField.setText(styleObject.getString("team-size"));
+                client.send(getStateForNewClient());
+            }
+        });
+        overviewGrid.add(style, 0, 1, 2, 1);
+        Text chooseLevelText = new Text("Level:");
+        overviewGrid.add(chooseLevelText, 2, 1);
+        ArrayList<String> availableLevels = getLevels();
+        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
+        for (int i=0; i<numberOfLevels; i++) {
+            levelChooser.getItems().add(availableLevels.get(i));
+        }
+        levelChooser.getSelectionModel().selectFirst();
+        overviewGrid.add(levelChooser, 3, 1, 2, 1);
+        levelChooser.valueProperty().addListener(new ChangeListener<String>() {
+            public void changed(ObservableValue ov, String value, String new_value) {
+                client.send(getStateForNewClient());
+            }
+        });
         Text teamSize = new Text("Size of teams: ");
-        overviewGrid.add(teamSize, 0, 1);
-        overviewGrid.add(sizeField, 1, 1);
+        overviewGrid.add(teamSize, 0, 2);
+        sizeField.setPrefWidth(40);
+        overviewGrid.add(sizeField, 1, 2);
         sizeField.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
@@ -172,32 +198,18 @@ public class NetLobby extends Application implements Networkable {
             }
         });
         Text teamNumber = new Text("Max. number of teams: ");
-        overviewGrid.add(teamNumber, 2, 1, 2, 1);
-        overviewGrid.add(numberOfTeams, 4, 1, 2, 1);
+        overviewGrid.add(teamNumber, 2, 2, 2, 1);
+        numberOfTeams.setPrefWidth(40);
+        overviewGrid.add(numberOfTeams, 4, 2);
         numberOfTeams.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 client.send(getStateForNewClient());
             }
         });
-        Text chooseMapText = new Text("Map:");
-        overviewGrid.add(chooseMapText, 0, 2);
-        ArrayList<String> availableLevels = getLevels();
-        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
-        for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(availableLevels.get(i));
-        }
-        mapChooser.getSelectionModel().selectFirst();
-        overviewGrid.add(mapChooser, 1, 2);
-        mapChooser.valueProperty().addListener(new ChangeListener<String>() {
-            public void changed(ObservableValue ov, String value, String new_value) {
-                client.send(getStateForNewClient());
-            }
-        });
-
-        Text enter = new Text ("Enter the quantity of projectiles for each weapon:");
-        enter.setFont(Font.font(14));
-        overviewGrid.add(enter, 0, 3, 3, 1);
+        Text infoGameStyle = new Text("You can choose a game style and change level, team-size and number \n" +
+                "of teams, but not items.");
+        overviewGrid.add(infoGameStyle, 0, 5, 6, 1);
 
         VBox rightBox = new VBox();
         rightBox.setPrefWidth(328);
@@ -260,7 +272,7 @@ public class NetLobby extends Application implements Networkable {
                 if (differentColors) {
                     Settings.save(toJson(), "NET_SETTINGS_FILE");
                     System.out.println("Network-GameSettings: saved settings");
-                    MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                    MapWindow mapwindow = new MapWindow(levelChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
                 } else {
                     sameColor.setText("You should not choose the same color!");
                 }
@@ -345,7 +357,7 @@ public class NetLobby extends Application implements Networkable {
         output.put("numberOfTeams", numberOfTeams.getText());   //save max. number of teams
         output.put("teamsCreated", teamsCreated);       //save current number of players
         output.put("team-size", sizeField.getText()); //save size of teams
-        output.put("map", mapChooser.getValue());
+        output.put("map", levelChooser.getValue());
 
         //TODO Here was originally some code reading out the weapons ArrayList<Textfield> which then had been put into the json
         JSONArray weaponsSettings = new JSONArray();
@@ -429,7 +441,7 @@ public class NetLobby extends Application implements Networkable {
             sizeField.setText(json.getString("team-size"));
         }
         if(json.has("map")) {
-            mapChooser.setValue(json.getString("map"));
+            levelChooser.setValue(json.getString("map"));
         }
         /*if(json.has("weapons")) {
             JSONArray weaponsArray = json.getJSONArray("weapons");
@@ -466,7 +478,7 @@ public class NetLobby extends Application implements Networkable {
             return;
         }
         hboxes.get(number).getChildren().addAll(team, teamChoosers.get(number), readys.get(number), removeButtons.get(number));
-        overviewGrid.add(hboxes.get(number), 0, number + 10, 5, 1);
+        overviewGrid.add(hboxes.get(number), 0, number + 9, 5, 1);
         start.setDisable(!Server.teamsAreReady());
     }
 
@@ -637,7 +649,7 @@ public class NetLobby extends Application implements Networkable {
             }*/
             sizeField.setDisable(true);
             numberOfTeams.setDisable(true);
-            mapChooser.setDisable(true);
+            levelChooser.setDisable(true);
         }
         for (int i=0; i<=3; i++) {
             teamChoosers.get(i).setDisable(i != team);

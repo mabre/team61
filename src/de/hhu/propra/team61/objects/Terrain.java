@@ -178,7 +178,7 @@ public class Terrain extends GridPane {
      * </p>
      */
     public void rewind() {
-        JSONObject settings = Settings.getSavedSettings("SETTINGS_FILE.conf");
+        JSONObject settings = Settings.getSavedSettings("OPTIONS_FILE.conf");
         double maxWindSpeed = MAX_WIND_SPEED_NORMAL;
         switch(settings.getInt("windForce")) {
             case 1:
