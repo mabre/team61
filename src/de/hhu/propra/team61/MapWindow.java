@@ -454,9 +454,9 @@ public class MapWindow extends Application implements Networkable {
 
         if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null && floodLevel == -1) {
             switch ((int)(Math.random()*2)) {
-//                case 0:
-//                    spawnBoss();
-//                    break;
+                case 0:
+                    spawnBoss();
+                    break;
                 default:
                     System.out.println("flood warning"); // TODO game comment
                     floodLevel = 0;
