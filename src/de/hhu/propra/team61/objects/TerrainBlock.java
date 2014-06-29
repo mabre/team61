@@ -30,10 +30,10 @@ import javafx.scene.image.ImageView;
 public class TerrainBlock extends ImageView {
 
     /** path to the terrain images */
-    private final static String imgPath = "file:resources/map/";
+    private final static String imgPath = "file:resources/terrain/";
     // preloaded terrain images
     /** image looking like earth */
-    private final static Image EARTH_IMAGE = new Image(imgPath + "earth.png");
+    private final static Image EARTH_IMAGE = new Image(imgPath + "soil.png");
     /** image looking like ice */
     private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
     /** image looking like lave */
