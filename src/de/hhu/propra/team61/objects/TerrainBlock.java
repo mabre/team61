@@ -13,7 +13,7 @@ import javafx.scene.image.ImageView;
  * <ul>
  * <li>{@code ' '}: sky (transparent)
  * <li>{@code 'P'} (player): spawn point: rendered like sky
- * <li>{@code 'W'} (water): walkable liquid // TODO change collision: drop in?
+ * <li>{@code 'W'} (water): walkable liquid
  * <li>{@code 'L'} (lava): walkable liquid
  * <li>{@code 'S'} (stone): walkable ground with normal friction
  * <li>{@code 'E'} (earth): walkable ground with normal friction
@@ -24,7 +24,7 @@ import javafx.scene.image.ImageView;
  * {@link #setBottomNeighbour(TerrainBlock)}, and {@link #setLeftNeighbour(TerrainBlock)}, since some parts of a block are
  * influenced by the neighbouring blocks (eg. the type of a slant depends on the blocks attached to it).
  * To change the terrain type afterwards, use {@link #setType(char)}. Note that this function does not convert spawn
- * points into sky. So if you want to render a spawn point, create a new block and then call {@code setType('P');}.
+ * points into sky. So if you want to render a spawn point, create a new block and then call {@code setType('P')}.
  * @see Terrain
  */
 public class TerrainBlock extends ImageView {
@@ -277,6 +277,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
+     * Gets the type of the block.
      * @return the type of this terrain block
      */
     public char getType() {
@@ -294,6 +295,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
+     * Tells whether the block represents sky.
      * @return returns true if this block represents sky
      */
     public boolean isSky() {
@@ -301,6 +303,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
+     * Tells whether the block represents a liquid.
      * @return returns true if this block represents a liquid
      */
     public boolean isLiquid() {
