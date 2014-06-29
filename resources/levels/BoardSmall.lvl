@@ -1,6 +1,6 @@
 {
-    "background": "cave.png",
-    "music": "like_cave.ogg",
+    "background": "board.png",
+    "music": "like_board.ogg",
     "terrain": [                                                                                                                        
                 "                                                                                                                          ",
                 "                                                                                                                          ",

@@ -1,12 +1,10 @@
 package de.hhu.propra.team61;
 
-import de.hhu.propra.team61.gui.Chat;
-import de.hhu.propra.team61.gui.GameOverWindow;
-import de.hhu.propra.team61.gui.SceneController;
-import de.hhu.propra.team61.gui.WindIndicator;
+import de.hhu.propra.team61.gui.*;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.network.Client;
@@ -34,7 +32,12 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+
+import javax.sound.sampled.*;
+
+
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
@@ -42,7 +45,6 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
  * Created by kevin on 08.05.14.
- * Edited by DiniiAntares on 15.05.14
  * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
  */
 public class MapWindow extends Application implements Networkable {
@@ -74,6 +76,7 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
+    private ScrollingLabel ingameLabel = new ScrollingLabel();
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
@@ -232,7 +235,7 @@ public class MapWindow extends Application implements Networkable {
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         rootPane.setTop(teamLabel);
-
+        rootPane.setRight(ingameLabel);
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -242,6 +245,7 @@ public class MapWindow extends Application implements Networkable {
                     case C:
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
+                        VorbisPlayer.play("resources/audio/SFX/chatBlop.ogg", false);
                         break;
                     case Z:
                         if(autoScroll) {
@@ -275,6 +279,8 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) terrain.rewind();
         windIndicator.setWindForce(terrain.getWindMagnitude());
         rootPane.setCenter(windIndicator);
+
+        VorbisPlayer.play(terrain.getBackgroundMusic(), true);
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
@@ -344,6 +350,7 @@ public class MapWindow extends Application implements Networkable {
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                                 server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                                server.send("PLAY_SFX fallDamage");
                                             }
                                         }
                                     }
@@ -419,6 +426,10 @@ public class MapWindow extends Application implements Networkable {
         throw new IllegalArgumentException("Could not find team of figure" + figure);
     }
 
+    /**
+     * Calculates the number of living teams.
+     * @return number of teams with living figures
+     */
     public int getNumberOfLivingTeams() {
         int livingTeams = 0;
         for (Team team : teams) {
@@ -443,7 +454,6 @@ public class MapWindow extends Application implements Networkable {
         //ToDo Wait until no objectmovements
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
-
         turnCount++; // TODO timing issue
         server.send("SET_TURN_COUNT " + turnCount);
 
@@ -496,7 +506,7 @@ public class MapWindow extends Application implements Networkable {
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         if (getNumberOfLivingTeams() == 0){
-            server.send("GAME_OVER " + -1);
+            server.send("GAME_OVER -1");
             return;
         }
         if (getNumberOfLivingTeams() < 2){
@@ -506,6 +516,7 @@ public class MapWindow extends Application implements Networkable {
 
         if(turnCount == teams.size() * teams.get(0).getFigures().size() * 2) {
             doDigitations();
+            server.send("SET_GAME_COMMENT 0 Digitate, my brave hearts!");
         } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
             undoDigitations();
         }
@@ -520,6 +531,11 @@ public class MapWindow extends Application implements Networkable {
         System.out.println(teamLabelText);
     }
 
+    /**
+     * Sums up the hp damage caused since last time calling this function. Plays a sound when it is >= 50.
+     * @return hp damage caused since last time calling this function
+     * @see de.hhu.propra.team61.objects.Figure#popRecentlySufferedDamage()
+     */
     private int collectRecentlyCausedDamage() {
         int recentlyCausedDamage = 0;
         for(Team team: teams) {
@@ -527,6 +543,7 @@ public class MapWindow extends Application implements Networkable {
                 recentlyCausedDamage += figure.popRecentlySufferedDamage();
             }
         }
+        if (recentlyCausedDamage >= 50) server.send("PLAY_SFX highDamage");
         return recentlyCausedDamage;
     }
 
@@ -580,6 +597,8 @@ public class MapWindow extends Application implements Networkable {
      * stops all map window threads and saves game state
      */
     private void shutdown() {
+        VorbisPlayer.stop();
+
         if(moveObjectsThread != null) moveObjectsThread.interrupt();
 
         GameState.save(this.toJson());
@@ -712,6 +731,7 @@ public class MapWindow extends Application implements Networkable {
                     //ToDo setRoundTimer down to 5sec
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
+                    VorbisPlayer.play("resources/audio/SFX/reload.ogg", false);
                     break;
                 }
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
@@ -741,6 +761,9 @@ public class MapWindow extends Application implements Networkable {
                     if(autoScroll && !projectileFocused) scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
                 break;
+            case "PLAY_SFX":
+                VorbisPlayer.play("resources/audio/SFX/" + cmd[1] + ".ogg", false);
+                break;
             case "REPLACE_BLOCK":
                 //if(server == null) { // hack for destruction calculation
                     if (cmd[3].charAt(0) == '#') {
@@ -755,6 +778,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
+                VorbisPlayer.stop();
                 GameOverWindow gameOverWindow = new GameOverWindow();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
                 gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
@@ -799,6 +823,7 @@ public class MapWindow extends Application implements Networkable {
                 switch(cmd[1]){
                     case "POISON":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
+                        VorbisPlayer.play("resources/audio/SFX/poisoned.ogg", false);
                         break;
                     case "FIRE":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsBurning(true);
@@ -809,6 +834,10 @@ public class MapWindow extends Application implements Networkable {
                     default:
                         System.err.println("handleKeyEventOnClient: no event for key " + command);
                 }
+                break;
+            case "SET_GAME_COMMENT":
+                boolean lowPrio = (cmd[1].equals("1"));
+                setGameComment(command.substring(18), lowPrio);
                 break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
@@ -924,6 +953,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                         server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
+                    server.send("SET_GAME_COMMENT 1 Bazooka: A classic one."); // TODO use new getter
+                    server.send("PLAY_SFX changeWeapon");
                 }
                 break;
             case "2":
@@ -931,6 +962,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
                         server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
+                    server.send("SET_GAME_COMMENT 1 Granade: Now on SALE with wind!");
+                    server.send("PLAY_SFX granade");
                 }
                 break;
             case "3":
@@ -938,6 +971,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
+                    server.send("SET_GAME_COMMENT 1 Shootgun: Right into the face! - twice");
+                    server.send("PLAY_SFX shotgun");
                 }
                 break;
             case "4":
@@ -945,6 +980,8 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
                         server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
+                    server.send("SET_GAME_COMMENT 1 Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
+                    server.send("PLAY_SFX poisonArrow");
                 }
                 break;
             default:
@@ -962,10 +999,12 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(0).getFigures().get(i).setHealth(0);
                 }
                 turnCount = -42; // prevents endTurn() from showing game over window
+                server.send("SET_GAME_COMMENT 0 You are now alone.");
                 System.out.println("You are now alone.");
                 break;
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
+                server.send("SET_GAME_COMMENT 0 Ate my spinach.");
                 System.out.println("Ate my spinach.");
                 break;
             case "1up+": // 1000 live for first figure of first team
@@ -974,10 +1013,12 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "dedigitate": // calls undoDigitations() method
                 undoDigitations();
+                server.send("SET_GAME_COMMENT 0 Returning to Baby I");
                 System.out.println("Returning to Baby I");
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();
+                server.send("SET_GAME_COMMENT 0 Digitation.");
                 System.out.println("Digitation.");
                 break;
             case "forcedig": // forces digitation of all figures
@@ -986,11 +1027,13 @@ public class MapWindow extends Application implements Networkable {
                         figure.digitate();
                     }
                 }
+                server.send("SET_GAME_COMMENT 0 Mass-Digitation");
                 System.out.println("Mass-Digitation.");
                 break;
             case "rewind": // sets wind to given value
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
+                server.send("SET_GAME_COMMENT 0 It's windy.");
                 System.out.println("It’s windy.");
                 break;
             case "gameover": // ends the game by showing game over window
@@ -1028,6 +1071,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             default:
                 client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
+                server.send("SET_GAME_COMMENT 0 No cheating, please!");
                 System.out.println("No cheating, please!");
         }
     }
@@ -1064,4 +1108,17 @@ public class MapWindow extends Application implements Networkable {
         return "STATUS MAPWINDOW " + this.toJson().toString();
     }
 
+    /**
+     * Shows the given label in right upper corner.
+     * @param content is the text shown in the Label.
+     * @param lowPrio if a comment has low priority, is is immediatelyoverwritten when another line is added
+     */
+    void setGameComment(String content, boolean lowPrio){
+        ingameLabel.setVisible(true);
+
+        Platform.runLater(() -> {
+            ingameLabel.addLine(content, lowPrio);
+            rootPane.setRight(ingameLabel);
+        });
+    }
 }
