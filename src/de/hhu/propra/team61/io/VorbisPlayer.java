@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 /**
  * Class for playing ogg vorbis files.
- *
+ * <p>
  * “Ogg Vorbis is a fully open, non-proprietary, patent-and-royalty-free, general-purpose compressed audio format for
  * mid to high quality (8kHz-48.0kHz, 16+ bit, polyphonic) audio and music at fixed and variable bitrates from 16 to
  * 128 kbps/channel. This places Vorbis in the same competitive class as audio representations such as MPEG-4 (AAC), and

@@ -442,6 +442,7 @@ public class MapWindow extends Application implements Networkable {
 
         if(turnCount == teams.size() * teams.get(0).getFigures().size() * 2) {
             doDigitations();
+            server.sendCommand("SET_GAME_COMMENT 0 Digitate, my brave hearts!");
         } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
             undoDigitations();
         }
@@ -705,7 +706,8 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "SET_GAME_COMMENT":
-                setGameComment(extractPart(command, "SET_GAME_COMMENT "));
+                boolean lowPrio = (cmd[1].equals("1"));
+                setGameComment(command.substring(18), lowPrio);
                 break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
@@ -810,7 +812,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     }
-                    server.sendCommand("SET_GAME_COMMENT Bazooka: A classic one."); // TODO use new getter
+                    server.sendCommand("SET_GAME_COMMENT 1 Bazooka: A classic one."); // TODO use new getter
                     server.sendCommand("PLAY_SFX changeWeapon");
                 }
                 break;
@@ -819,7 +821,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     }
-                    server.sendCommand("SET_GAME_COMMENT Granade: Now on SALE with wind!");
+                    server.sendCommand("SET_GAME_COMMENT 1 Granade: Now on SALE with wind!");
                     server.sendCommand("PLAY_SFX granade");
                 }
                 break;
@@ -828,7 +830,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     }
-                    server.sendCommand("SET_GAME_COMMENT Shootgun: Right into the face! - twice");
+                    server.sendCommand("SET_GAME_COMMENT 1 Shootgun: Right into the face! - twice");
                     server.sendCommand("PLAY_SFX shotgun");
                 }
                 break;
@@ -837,7 +839,7 @@ public class MapWindow extends Application implements Networkable {
                     if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
                         server.sendCommand("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     }
-                    server.sendCommand("SET_GAME_COMMENT Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
+                    server.sendCommand("SET_GAME_COMMENT 1 Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
                     server.sendCommand("PLAY_SFX poisonArrow");
                 }
                 break;
@@ -856,22 +858,22 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(0).getFigures().get(i).setHealth(0);
                 }
                 turnCount = -42; // prevents endTurn() from showing game over window
-                server.sendCommand("SET_GAME_COMMENT You are now alone.");
+                server.sendCommand("SET_GAME_COMMENT 0 You are now alone.");
                 System.out.println("You are now alone.");
                 break;
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
-                server.sendCommand("SET_GAME_COMMENT Ate my spinach.");
+                server.sendCommand("SET_GAME_COMMENT 0 Ate my spinach.");
                 System.out.println("Ate my spinach.");
                 break;
             case "dedigitate": // calls undoDigitations() method
                 undoDigitations();
-                server.sendCommand("SET_GAME_COMMENT Returning to Baby I");
+                server.sendCommand("SET_GAME_COMMENT 0 Returning to Baby I");
                 System.out.println("Returning to Baby I");
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();
-                server.sendCommand("SET_GAME_COMMENT Digitation.");
+                server.sendCommand("SET_GAME_COMMENT 0 Digitation.");
                 System.out.println("Digitation.");
                 break;
             case "forcedig": // forces digitation of all figures
@@ -880,17 +882,17 @@ public class MapWindow extends Application implements Networkable {
                         figure.digitate();
                     }
                 }
-                server.sendCommand("SET_GAME_COMMENT Mass-Digitation");
+                server.sendCommand("SET_GAME_COMMENT 0 Mass-Digitation");
                 System.out.println("Mass-Digitation.");
                 break;
             case "rewind": // sets wind to given value
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
-                server.sendCommand("SET_GAME_COMMENT It's windy.");
+                server.sendCommand("SET_GAME_COMMENT 0 It's windy.");
                 System.out.println("It’s windy.");
             default:
                 client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
-                server.sendCommand("SET_GAME_COMMENT No cheating, please!");
+                server.sendCommand("SET_GAME_COMMENT 0 No cheating, please!");
                 System.out.println("No cheating, please!");
         }
     }
@@ -930,12 +932,13 @@ public class MapWindow extends Application implements Networkable {
     /**
      * Shows the given label in right upper corner.
      * @param content is the text shown in the Label.
+     * @param lowPrio if a comment has low priority, is is immediatelyoverwritten when another line is added
      */
-    void setGameComment(String content){
+    void setGameComment(String content, boolean lowPrio){
         ingameLabel.setVisible(true);
 
         Platform.runLater(() -> {
-            ingameLabel.addLine(content, false);
+            ingameLabel.addLine(content, lowPrio);
             rootPane.setRight(ingameLabel);
         });
     }
