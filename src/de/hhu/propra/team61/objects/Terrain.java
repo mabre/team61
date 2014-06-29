@@ -392,7 +392,7 @@ public class Terrain extends GridPane {
     public double getFriction(Point2D pos) {
         int row = (int)((pos.getY()+Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE);
         int column = (int)(pos.getX()/BLOCK_SIZE);
-        if(row >= terrain.size() || column > terrain.get(0).size() || row < 0 || column < 0) return 1;
+        if(row >= terrain.size() || column >= terrain.get(0).size() || row < 0 || column < 0) return 1;
         return terrain.get(row).get(column).getFriction();
     }
 
@@ -428,7 +428,8 @@ public class Terrain extends GridPane {
         final char DESTROYED_TERRAIN = '#';
         char replacement = DESTROYED_TERRAIN;
 
-        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN) { //else abort recursion
+        if (blockY < terrain.size() && blockY >=0 && blockX < terrain.get(blockY).size()&& blockX >=0
+                && explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN) { //else abort recursion
             double resistanceOfBlock = terrain.get(blockY).get(blockX).getResistance();
 
             //Calc behaviour for current Block
@@ -440,13 +441,11 @@ public class Terrain extends GridPane {
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
                 replaceBlock(blockX,blockY,' '); //Mark as destroyed
 
-                // Recursively continue destruction for all directions unless OutOfBounds
-                if (blockY+1 < terrain.size()){ explode(commands, blockX, blockY + 1, explosionPower); }
-
-                if (blockX > 0) { explode(commands, blockX - 1, blockY, explosionPower); }
-                if (blockX+1 < terrain.get(blockY).size()) { explode(commands, blockX + 1, blockY, explosionPower); }
-
-                if (blockY > 0) { explode(commands, blockX, blockY-1, explosionPower); }
+                // Recursively continue destruction for all directions, OutOfBounds is done on top of this method
+                explode(commands, blockX, blockY + 1, explosionPower);
+                explode(commands, blockX - 1, blockY, explosionPower);
+                explode(commands, blockX + 1, blockY, explosionPower);
+                explode(commands, blockX, blockY-1, explosionPower);
 
                 // Add destruction of actual Block to commandlist
                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + replacement);// ' ' is impossible due to the Client/Server-MSG-System
