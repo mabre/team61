@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.gui;
 
-import de.hhu.propra.team61.io.Options;
+import de.hhu.propra.team61.io.Json;
+import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -40,7 +41,7 @@ public class OptionController {
     /**
      * Called when options are opened. Sets the header-image and labels of the windforce-slider, which are supposed
      * to be texts instead of just numbers. Also calls {@link #loadSavedOptions()}.
-     * @param sceneController to switch back to menue
+     * @param sceneController to switch back to menu
      */
     public void initialize(SceneController sceneController) {
         this.sceneController = sceneController;
@@ -50,6 +51,7 @@ public class OptionController {
         windForce.setLabelFormatter(new StringConverter<Double>() {
             @Override
             public String toString(Double n) {
+                if (n == 0) return "Off";
                 if (n == 1) return "Easy";
                 if (n == 2) return "Normal";
                 if (n == 3) return "Hard";
@@ -63,11 +65,11 @@ public class OptionController {
     }
 
     /**
-     * Switches back to main menue,
+     * Switches back to main menu.
      */
     @FXML
     public void handleOptionExit() {
-        Options.save(toJson());
+        Settings.savePrefs(toJson());
         System.out.println("OptionsWindow: saved settings");
         sceneController.switchToMenue();
     }
@@ -76,7 +78,7 @@ public class OptionController {
      * Loads the saved options.
      */
     public void loadSavedOptions() {
-        JSONObject savedSettings = Options.getSavedSettings();
+        JSONObject savedSettings = Settings.getSavedPrefs();
         if(savedSettings.has("volumeMusic")) {
             volumeMusic.setValue(savedSettings.getDouble("volumeMusic"));
         }
@@ -86,9 +88,7 @@ public class OptionController {
         if(savedSettings.has("sd")) {
             suddenDeath.setText(savedSettings.getString("sd"));
         }
-        if(savedSettings.has("windForce")) {
-            windForce.setValue(savedSettings.getDouble("windForce"));
-        }
+        windForce.setValue(Json.getInt(savedSettings, "windForce", 2));
         if(savedSettings.has("timePerTurn")) {
             timePerTurn.setText(savedSettings.getString("timePerTurn"));
         }
@@ -98,7 +98,7 @@ public class OptionController {
     }
 
     /**
-     * Saves options when going back to menue.
+     * Saves options when going back to menu.
      * @return JSONObject containing custom options
      */
     public JSONObject toJson() {

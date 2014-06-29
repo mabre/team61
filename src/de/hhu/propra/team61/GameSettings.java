@@ -122,7 +122,7 @@ public class GameSettings extends Application {
                     // our local game is also client/server based, with server running on localhost
                     serverThread = new Thread(server = new Server(() -> {
                         clientThread = new Thread(client = new Client(() -> {
-                            Settings.save(toJson(), "SETTINGS_FILE");
+                            Settings.saveJson(toJson(), "SETTINGS_FILE");
                             System.out.println("GameSettings: saved settings");
                             JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue());
                             String map = styleObject.getString("map");

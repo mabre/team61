@@ -1,7 +1,6 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.io.CustomizeManager;
-import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
@@ -23,11 +22,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
 import java.util.ArrayList;
-import static de.hhu.propra.team61.JavaFxUtils.toHex;
+
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
@@ -258,7 +256,7 @@ public class NetLobby extends Application implements Networkable {
                     }
                 }
                 if (differentColors) {
-                    Settings.save(toJson(), "NET_SETTINGS_FILE");
+                    Settings.saveJson(toJson(), "NET_SETTINGS_FILE");
                     System.out.println("Network-GameSettings: saved settings");
                     MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
                 } else {
