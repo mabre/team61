@@ -31,9 +31,9 @@ public class TerrainManager {
     }
 
     /**
-     * @param filename the file containing the board to be loaded
-     * @return an ArrayList containing the board ([row][column])
-     * How a valid board looks like is documented in BoardLegend
+     * Loads a level file into a json object.
+     * @param filename the file containing the level to be loaded
+     * @return a JSONObject representing the level
      */
     public static JSONObject load(String filename) throws FileNotFoundException {
         System.out.println("Loading level " + filename);
@@ -43,7 +43,7 @@ public class TerrainManager {
     }
 
     /**
-     * @param levelnumber the index of the level in the JSONObject  returned by {@link #getAvailableTerrains() getAvailableTerrains}
+     * @param levelnumber the index of the level in the JSONObject returned by {@link #getAvailableTerrains() getAvailableTerrains}
      * @return an JSONObject containing the board ([row][column])
      */
     public static JSONObject load(int levelnumber) throws FileNotFoundException {

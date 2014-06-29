@@ -44,8 +44,7 @@ import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
- * Created by kevin on 08.05.14.
- * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
+ * An instance of this class is a window displaying a level with figures, wind, game comments etc.
  */
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
@@ -110,6 +109,16 @@ public class MapWindow extends Application implements Networkable {
     private Chat chat;
     private SceneController sceneController;
 
+    /**
+     * Creates a new map window.
+     * @param map the filename of the level to be loaded
+     * @param file file containing the settings for the game to be started
+     * @param client a client object
+     * @param clientThread the thread executing the client
+     * @param server a server object, might be null
+     * @param serverThread the thread executing the server, might be null
+     * @param sceneController
+     */
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.map = map;
@@ -148,6 +157,14 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) server.send(getStateForNewClient());
     }
 
+    /**
+     * Creates a new map window.
+     * @param input a json object representing the state of the map window
+     * @param client a client object
+     * @param clientThread the thread executing the client
+     * @param sceneController
+     * @see #toJson()
+     */
     public MapWindow(JSONObject input, Client client, Thread clientThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.client = client;
@@ -169,6 +186,16 @@ public class MapWindow extends Application implements Networkable {
         initialize();
     }
 
+    /**
+     * Creates a new map window.
+     * @param input a json object representing the state of the map window
+     * @param client a client object
+     * @param clientThread the thread executing the client
+     * @param server a server object, might be null
+     * @param serverThread the thread executing the server, might be null
+     * @param sceneController
+     * @see #toJson()
+     */
     public MapWindow(JSONObject input, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.client = client;
@@ -373,7 +400,8 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * @return the whole state of the window as JSONObject (except terrain, use terrain.toArrayList())
+     * Gets the whole state of the map window as json.
+     * @return the whole state of the window as JSONObject
      */
     public JSONObject toJson() {
         JSONObject output = new JSONObject();

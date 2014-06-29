@@ -7,22 +7,31 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 
 /**
- * Created by markus on 31.05.14.
+ * A class for a chat box.
  */
 public class Chat extends VBox {
 
-    TextField input;
-    TextArea output;
+    /** line for entering new message */
+    private TextField input;
+    /** area displaying sent and received messages */
+    private TextArea output;
 
-    Client client;
+    /** client object used for sending messages */
+    private Client client;
 
-    boolean unobtrusive = false;
+    /** if true, the chat is transparent when unfocused */
+    private boolean unobtrusive = false;
 
-    boolean recentlyOpened = false;
+    /** helper variable for removing character entered to open the chat */
+    private boolean recentlyOpened = false;
 
     private static final double OPACITY_UNOBTRUSIVE = .4;
     private static final double OPACITY_UNOBTRUSIVE_HOVER = .8;
 
+    /**
+     * Creates a new chat box.
+     * @param client the client used to send messages
+     */
     public Chat(Client client) {
         this.setId("chatBox");
 
@@ -78,6 +87,11 @@ public class Chat extends VBox {
         });
     }
 
+    /**
+     * Appends a message to the output area.
+     * @param name the name of the user who sent the message
+     * @param msg the message to be displayed
+     */
     public void appendMessage(String name, String msg) {
         output.appendText(name + "ː " + msg + "\n");
         if(!isVisible()) {
@@ -86,12 +100,19 @@ public class Chat extends VBox {
         }
     }
 
+    /**
+     * Interprets a chat command
+     * @param command the chat command, format "CLIENTNAME MESSAGE"
+     */
     public void processChatCommand(String command) {
         String name = command.split(" CHAT ", 2)[0];
         String msg = command.split(" CHAT ", 2)[1];
         appendMessage(name, msg);
     }
 
+    /**
+     * Prints available chat commands to output area.
+     */
     private void printHelp() {
         appendMessage("ːCHATHELP", "Type in your message and press enter. When you see your own message, delivery was successful.\n" +
                 "\n" +
@@ -114,6 +135,10 @@ public class Chat extends VBox {
                 "    Toggle chat (in game)\n");
     }
 
+    /**
+     * Sets {@link #unobtrusive}, and updates opacity if necessary.
+     * @param unobtrusive if true, the chat becomes transparent when unfocused.
+     */
     public void setUnobtrusive(boolean unobtrusive) {
         this.unobtrusive = unobtrusive;
         this.setOpacity(unobtrusive ? OPACITY_UNOBTRUSIVE : 1);
