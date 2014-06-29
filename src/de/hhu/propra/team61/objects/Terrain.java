@@ -428,7 +428,7 @@ public class Terrain extends GridPane {
         final char DESTROYED_TERRAIN = '#';
         char replacement = DESTROYED_TERRAIN;
 
-        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN) { //else abort recursion
+        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN && blockX < terrain.get(blockY).size() && blockX >=0) { //else abort recursion
             double resistanceOfBlock = terrain.get(blockY).get(blockX).getResistance();
 
             //Calc behaviour for current Block
