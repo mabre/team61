@@ -456,10 +456,10 @@ public class Terrain extends GridPane {
 
                     if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
-                            replaceBlock(blockX, blockY, '\\');
+//                            replaceBlock(blockX, blockY, '\\'); // influences further calculation, apply this on client // TODO quite hacky
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
                         } else if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
-                            replaceBlock(blockX, blockY, '/');
+//                            replaceBlock(blockX, blockY, '/');
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                         }
                     }
