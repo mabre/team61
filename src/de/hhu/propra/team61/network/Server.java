@@ -26,9 +26,139 @@ import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
  * After creating a new server object, {@link #registerCurrentNetworkable(Networkable)} should be called with
  * {@code this} being the argument. Call {@link #stop()} to shut down the server thread properly.
  * </p>
+ * The following commands are sent by the server and should be handled appropriately on the client:
+ * <ul>
+ * <li>{@code ACTIVATE_FIGURE $int_currentTeam}<br>
+ * Activate the current figure of the given teem, and scrolls to it (if not disabled).<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setActive(boolean)}
+ * <li>{@code $String_clientName CHAT $String_message}<br>
+ * Display the given message from the given client.<br>
+ * see {@link de.hhu.propra.team61.gui.Chat#processChatCommand(String)}
+ * <li>{@code CONDITION POISON $int_team $int_figure}<br>
+ * Poisons the given figure of the given team.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setIsPoisoned(boolean)}
+ * <li>{@code CONDITION FIRE $int_team $int_figure}<br>
+ * Burns the given figure of the given team.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setIsBurning(boolean)} // TODO changed?
+ * <li>{@code CONDITION STUCK $int_team $int_figure}<br>
+ * Stucks the given figure of the given team.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setIsStuck(boolean)} // TODO do we need this?
+ * <li>{@code CURRENT_FIGURE_ANGLE_DOWN}<br>
+ * Move the crosshair of the current figure down.<br>
+ * see {@link de.hhu.propra.team61.objects.Item#angleDown(boolean)} // TODO include figure id
+ * <li>{@code CURRENT_FIGURE_ANGLE_UP}<br>
+ * Move the crosshair of the current figure up.<br>
+ * see {@link de.hhu.propra.team61.objects.Item#angleUp(boolean)}
+ * <li>{@code CURRENT_FIGURE_CHOOSE_WEAPON $int_index}<br>
+ * Make the currently active figure choose the given weapon.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setSelectedItem(de.hhu.propra.team61.objects.Item)} // TODO changed?
+ * <li>{@code CURRENT_FIGURE_FACE_LEFT}<br>
+ * Make the currently active figure look to the left.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setFacingRight(boolean)}
+ * <li>{@code CURRENT_FIGURE_FACE_RIGHT}<br>
+ * Make the currently active figure look to the right.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setFacingRight(boolean)} // TODO merge these commands
+ * <li>{@code CURRENT_FIGURE_SHOOT}<br>
+ * Makes the currently active figure shoot, and scrolls to the created projectile.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#shoot(int)}
+ * <li>{@code CURRENT_TEAM_END_ROUND $int_currentTeam} (*)<br>
+ * see {@link de.hhu.propra.team61.Team#endRound()} // TODO rename
+ * <li>{@code DEACTIVATE_FIGURE $int_currentTeam}<br>
+ * Deactivates the currently active figure and allows shooting again.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setActive(boolean)}
+ * <li>{@code DEDIGITATE $int_team $int_figure} (*)<br>
+ * Degitates the given figure of the given team.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#dedigitate()} // TODO rename
+ * <li>{@code DIGITATE $int_team $int_figure} (*)<br>
+ * Digitates the given figure of the given team.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#digitate()}
+ * <li>{@code FIGURE_SET_POSITION $int_team $int_figure $double_x $double_y [$boolean_scroll=false]}<br>
+ * Move the given figure of the given team to the given position.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setPosition(javafx.geometry.Point2D)}
+ * <li>{@code GAME_OVER $int_team}<br>
+ * Shows the game over window with the given team being the winner.<br>
+ * see {@link de.hhu.propra.team61.gui.GameOverWindow}
+ * <li>{@code NAMEACCEPTED} (**)<br>
+ * Sent after successful negotiation of id and name.<br>
+ * see {@link de.hhu.propra.team61.network.Server.ClientConnection#getName()}
+ * <li>{@code REPLACE_BLOCK $int_column $int_row $char_terrainType} (*)<br>
+ * Replace the terrain block at the given position with the given type, note that ' ' is encoded as '#'.<br>
+ * see {@link de.hhu.propra.team61.objects.Terrain#replaceBlock(int, int, char)}
+ * <li>{@code PAUSE $boolean_paused}<br>
+ * Pauses the game.<br>
+ * see {@link de.hhu.propra.team61.MapWindow#pause}
+ * <li>{@code PROJECTILE_SET_POSITION $double_x $double_y} (*)<br>
+ * Sets the position of the current projectile to the given position.<br>
+ * see {@link de.hhu.propra.team61.objects.Projectile#setPosition(javafx.geometry.Point2D)} // TODO changed?
+ * <li>{@code SD BOSS MOVE} (*)<br>
+ * Moves the boss.<br>
+ * see {@link de.hhu.propra.team61.MapWindow#moveBoss()}
+ * <li>{@code SD BOSS SPAWN $String_name $boolean_spawnedlLeft} (*)<br>
+ * Spawns the boss with the given name at the given side.<br>
+ * see {@link de.hhu.propra.team61.MapWindow#initBoss(String)}
+ * <li>{@code SET_CURRRENT_TEAM $int_currentTeam}<br>
+ * Sets the current team to the given team, and disabled the figure of the previously active team, // TODO why?
+ * see {@link de.hhu.propra.team61.MapWindow#currentTeam}
+ * <li>{@code SET_HP $int_team $int_figure $int_hp} (*)<br>
+ * Sets the hp of the given figure of the given team to the given values.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setHealth(int)}
+ * <li>{@code SET_TEAM_NUMBER $int_team} (**)<br>
+ * Sets the team number for the client.<br>
+ * see {@link #changeTeamById(String, int)}, {@link #changeTeamByNumber(int, int)}
+ * <li>{@code SET_TURN_COUNT $int_turnCount}<br>
+ * Sets turn counter to the given value.<br>
+ * see {@link de.hhu.propra.team61.MapWindow#turnCount} // TODO to we need this?
+ * <li>{@code SPECTATOR_LIST $JSONObject_clientList}<br>
+ * Contains a list with the connected clients.<br>
+ * see {@link #getClientListAsJson()} // TODO rename
+ * <li>{@code STATUS LOBBY $JSONObject_netLobby}<br>
+ * Contains the overall state of the lobby.<br>
+ * see {@link de.hhu.propra.team61.gui.NetLobby#getStateForNewClient()}
+ * <li>{@code STATUS MAPWINDOW $JSONObject_mapWindow}<br>
+ * Contains the overall state of the map window, display map window if it is not shown.<br>
+ * see {@link de.hhu.propra.team61.MapWindow#getStateForNewClient()}
+ * <li>{@code SUBMITNAME}<br>
+ * Requests the client to submit a unique id and a name.<br>
+ * see {@link de.hhu.propra.team61.network.Server.ClientConnection#getName()}
+ * <li>{@code SUDDEN_DEATH $int_team}<br>
+ * Kills the given team.<br>
+ * see {@link de.hhu.propra.team61.Team#suddenDeath()}
+ * <li>{@code TEAM_LABEL_SET_TEXT $String_text}<br>
+ * Sets the text of the team label.<br>
+ * see {@link de.hhu.propra.team61.MapWindow#teamLabel}
+ * <li>{@code WIND_FORCE $double_windMagnitude}<br>
+ * Sets the displayed wind force to the given value.<br>
+ * see {@link de.hhu.propra.team61.gui.WindIndicator#setWindForce(double)}
+ * </ul>
+ * (*) These commands have effects on calculations done on the server and are therefore already executed on the server
+ * before the command is sent. Consequently, the client running on the host must NOT interpret these commands again.<br>
+ * (**) These commands are always sent to only one client, namely the one which sent the command mentioned in the
+ * description.
+ * <p>
  * The server understands the following commands:
  * <ul>
- * <li> TODO doc
+ * <li>{@code $String_id $String_name}<br>
+ * id and name of the client, sent after {@code SUBMITNAME}.<br>
+ * see {@link de.hhu.propra.team61.network.Server.ClientConnection#getName()}
+ * <li>{@code CLIENT_READY $JSONObject_netLobby}<br>
+ * Sets client ready status to {@code true} and applies the parts of the given lobby status the client is allowed to change.<br>
+ * see {@link de.hhu.propra.team61.network.Server.ClientConnection#isReady}
+ * <li>{@code CHAT $String_message}<br>
+ * Sends the chat message after prepending the client's name to all clients.
+ * <li>{@code GET_STATUS}<br>
+ * Sends the status of the current view to the client requesting it.<br>
+ * see {@link Networkable#getStateForNewClient()}
+ * <li>{@code KEYEVENT $String_keyCode}<br>
+ * Contains a key which was pressed on the client and must be handled on server.
+ * <li>{@code SPECTATOR CHECKED}<br>
+ * Makes the client a spectator.<br>
+ * see {@link de.hhu.propra.team61.gui.NetLobby#spectatorBoxChanged(boolean)}
+ * <li>{@code SPECTATOR UNCHECKED}<br>
+ * Makes the client a player, and finds a team for it.<br>
+ * see {@link de.hhu.propra.team61.gui.NetLobby#spectatorBoxChanged(boolean)}
+ * <li>{@code STATUS LOBBY $JSONObject_netLobby}<br>
+ * Applies the parts of the given lobby status the client is allowed to change.<br>
+ * see {@link de.hhu.propra.team61.gui.NetLobby#applySettingsFromClient(de.hhu.propra.team61.io.json.JSONObject, int)}
  * </ul>
  */
 public class Server implements Runnable {
@@ -39,7 +169,7 @@ public class Server implements Runnable {
     private static ArrayList<ClientConnection> clients = new ArrayList<>();
 
     /** method being called when the server is up and running */
-    private Runnable readyListener;
+    private Runnable readyListener; // TODO 0.2 can we make everything static and forget about the server objects? (will need another condition for checking who is host, maybe a static boolean here)
 
     /** listens for new client connections */
     private ServerSocket listener;
@@ -47,7 +177,7 @@ public class Server implements Runnable {
     private static Networkable currentNetworkable;
 
     /**
-     * Creates a new server. Only one server should be running at the same time. Does not start listening for new connections, {@see run()}
+     * Creates a new server. Only one server should be running at the same time. Does not start listening for new connections, see {@link run()}
      * @param listener function which is called when server is set up, thus ready to accept connections
      */
     public Server(Runnable listener) {
@@ -55,7 +185,7 @@ public class Server implements Runnable {
     }
 
     /**
-     * starts the server thread and listens for new client connections
+     * Starts the server thread and listens for new client connections.
      */
     @Override
     public void run() {
@@ -78,7 +208,7 @@ public class Server implements Runnable {
     }
 
     /**
-     * shuts down the server
+     * Shuts down the server by stopping listening for new connections.
      */
     public void stop() {
         System.out.println("SERVER stopping");

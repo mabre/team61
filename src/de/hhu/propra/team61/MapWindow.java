@@ -806,6 +806,8 @@ public class MapWindow extends Application implements Networkable {
                     case "STUCK":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);
                         break;
+                    default:
+                        System.err.println("handleKeyEventOnClient: no event for key " + command);
                 }
                 break;
             case "SET_TURN_COUNT":
@@ -814,7 +816,7 @@ public class MapWindow extends Application implements Networkable {
             case "SUDDEN_DEATH":
                 int teamToKill = Integer.parseInt(cmd[1]);
                 teams.get(teamToKill).suddenDeath();
-                if(teamToKill == currentTeam) endTurn();
+                if(teamToKill == currentTeam) endTurn(); // TODO IMPORTANT this cannot work on clients ...
                 break;
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
@@ -823,7 +825,7 @@ public class MapWindow extends Application implements Networkable {
                 windIndicator.setWindForce(Double.parseDouble(cmd[1]));
                 break;
             default:
-                System.out.println("handleKeyEventOnClient: no event for key " + command);
+                System.err.println("handleKeyEventOnClient: no event for key " + command);
         }
     }
 

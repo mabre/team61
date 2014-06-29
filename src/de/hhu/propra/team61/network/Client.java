@@ -21,10 +21,7 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  * After creating a new client object, {@link #registerCurrentNetworkable(Networkable)} should be called with
  * {@code this} being the argument. Call {@link #stop()} to shut down the client thread properly.
  * </p>
- * The client understands the following commands:
- * <ul>
- * <li> TODO doc
- * </ul>
+ * See {@link de.hhu.propra.team61.network.Server} for a list of commands that should be interpreted by the client.
  */
 public class Client implements Runnable {
     /** reader which receives the command from the server */
