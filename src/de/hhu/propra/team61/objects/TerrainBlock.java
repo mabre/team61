@@ -48,8 +48,12 @@ public class TerrainBlock extends ImageView {
     private final static Image SNOW_IMAGE = new Image(imgPath + "snow.png");
     /** image looking like a slant from top left to bottom right */
     private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
+    /** image looking like a slant from top left to bottom right, with the other edge filled with water */
+    private final static Image SLANT_LE_WATER_IMAGE = new Image(imgPath + "slant_ground_water_le.png");
     /** image looking like a slant from bottom left to top right */
     private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
+    /** image looking like a slant from bottom left to top right, with the other edge filled with water */
+    private final static Image SLANT_RI_WATER_IMAGE = new Image(imgPath + "slant_ground_water_ri.png");
     /** image looking like stone */
     private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
     /** image looking like water */
@@ -195,11 +199,39 @@ public class TerrainBlock extends ImageView {
                 case 'i':
                     this.setImage(SNOW_IMAGE);
                     break;
-                case '/':
+                case '/': // TODO use ice when appropriate
                     this.setImage(SLANT_RI_IMAGE);
+                    if(neighbours.right != null && neighbours.right.isSky() && neighbours.bottom != null && neighbours.bottom.isSky()
+                            && (neighbours.top == null || !neighbours.top.isSky())) {
+                        this.setScaleX(-1); // mirror image when slope is at ceiling
+                        this.setScaleY(-1);
+                        if(neighbours.right.getType() == 'W' || neighbours.bottom.getType() == 'W') {
+                            this.setImage(SLANT_RI_WATER_IMAGE);
+                        }
+                    } else {
+                        this.setScaleX(1);
+                        this.setScaleY(1);
+                        if(neighbours.left != null) {
+                            if(neighbours.left.getType() == 'W') this.setImage(SLANT_RI_WATER_IMAGE);
+                        }
+                    }
                     break;
                 case '\\':
                     this.setImage(SLANT_LE_IMAGE);
+                    if(neighbours.left != null && neighbours.left.isSky() && neighbours.bottom != null && neighbours.bottom.isSky()
+                            && (neighbours.top == null || !neighbours.top.isSky())) {
+                        this.setScaleX(-1);
+                        this.setScaleY(-1);
+                        if(neighbours.left.getType() == 'W' || neighbours.bottom.getType() == 'W') {
+                            this.setImage(SLANT_LE_WATER_IMAGE);
+                        }
+                    } else {
+                        this.setScaleX(1);
+                        this.setScaleY(1);
+                        if(neighbours.right != null) {
+                            if(neighbours.right.getType() == 'W') this.setImage(SLANT_LE_WATER_IMAGE);
+                        }
+                    }
                     break;
                 case 'W':
                     if (neighbours.top == null || neighbours.top.isSky()) {
