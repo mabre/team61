@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.animation.SpriteAnimation;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
@@ -273,6 +274,10 @@ public class Figure extends StackPane {
      */
     public void sufferDamage(int damage) throws DeathException {
         health -= damage - (armor*damage);
+        if (health < 40) {
+            VorbisPlayer.play("resources/audio/SFX/heartbeat.ogg", false);
+            
+        }
         if(health <= 0) {
             health = 0;
             Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);

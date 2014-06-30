@@ -486,6 +486,7 @@ public class MapWindow extends Application implements Networkable {
                     if(f.getHealth() > 0) { //Avoid reviving the poisoned dead
                         if (f.getIsPoisoned()) {
                             f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON));
+                            VorbisPlayer.play("resources/audio/SFX/poisoned.ogg",false);
                             server.send("SET_HP " + getFigureId(f) + " " + f.getHealth());
                         }
                     }
