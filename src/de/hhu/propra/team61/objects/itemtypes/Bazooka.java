@@ -9,7 +9,7 @@ import de.hhu.propra.team61.objects.Weapon;
  */
 public class Bazooka extends Weapon {
     private final static String  NAME           = "Bazooka";
-    private final static String  DESCRIPTION    = "A classic.";
+    public final static String  DESCRIPTION    = "A classic.";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/bazooka.png";

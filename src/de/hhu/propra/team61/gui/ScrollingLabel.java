@@ -3,6 +3,8 @@ package de.hhu.propra.team61.gui;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 
 import java.util.ArrayList;
 import java.util.Timer;
@@ -31,7 +33,7 @@ public class ScrollingLabel extends StackPane {
     /** regardless of the length, a line is visible at least this time (in seconds) */
     private static int MIN_TIMEOUT = 2;
     /** the time a line is shown depends on the letters in the line */
-    private static int LETTERS_PER_SECOND = 20;
+    private static int LETTERS_PER_SECOND = 15;
 
     /** lines currently shown in the label */
     ArrayList<LabelLine> lines = new ArrayList<>();
@@ -43,7 +45,7 @@ public class ScrollingLabel extends StackPane {
         /** low priority lines are overwritten right away */
         boolean lowPriority;
         /** on timeout, this line is removed */
-        Timer removeTimer = new Timer();
+        Timer removeTimer = new Timer(); // TODO IMPORTANT not all timer threads shut down !?
 
         /**
          * Creates a new line.
@@ -51,10 +53,10 @@ public class ScrollingLabel extends StackPane {
          * @param lowPriority whether the line is overwritten right away when a new line is added
          */
         LabelLine(String text, boolean lowPriority) {
+            this.setStyle("-fx-font: 16px Verdana;"); // TODO improve and move to css file
             this.lowPriority = lowPriority;
             setText(text);
-
-            final int timeout = Math.max(MIN_TIMEOUT, text.length()/LETTERS_PER_SECOND) * 1000;
+            final int timeout = Math.max(MIN_TIMEOUT, text.length() / LETTERS_PER_SECOND) * 1000;
             final LabelLine me = this;
             removeTimer.schedule(new TimerTask() {
                 @Override

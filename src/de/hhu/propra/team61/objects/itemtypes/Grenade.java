@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public class Grenade extends Weapon {
     private final static String  NAME           = "Grenade";
-    private final static String  DESCRIPTION    = "Another classic.";
+    public final static String  DESCRIPTION     = "Another classic.";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/grenade.png";

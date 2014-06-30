@@ -14,6 +14,7 @@ import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
 import de.hhu.propra.team61.objects.*;
+import de.hhu.propra.team61.objects.itemtypes.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -71,8 +72,10 @@ public class MapWindow extends Application implements Networkable {
     private StackPane rootPane = new StackPane();
     /** contains pause/help-overlay */
     private BorderPane pausePane = new BorderPane();
-    /** contains terrain, labels at the top etc. (ie. everything) */
+    /** contains terrain, labels at the top etc. (ie. everything visible after initialization) */
     private BorderPane gamePane;
+    /** contains teamLabel, windIndicator */
+    private BorderPane topLine = new BorderPane();
     /** contains chat, scrollPane with terrain, teams etc. */
     private StackPane centerPane;
     /** contains terrain, teams, weapons */
@@ -279,8 +282,9 @@ public class MapWindow extends Application implements Networkable {
         }
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
-        gamePane.setRight(ingameLabel);
-        gamePane.setTop(teamLabel);
+        topLine.setLeft(teamLabel);
+        gamePane.setTop(topLine);
+        gamePane.setCenter(ingameLabel);
         createPausePane();
         rootPane.getChildren().addAll(gamePane, pausePane);
         drawing = new Scene(rootPane, 1600, 300);
@@ -325,7 +329,7 @@ public class MapWindow extends Application implements Networkable {
 
         if(server != null) terrain.rewind();
         windIndicator.setWindForce(terrain.getWindMagnitude());
-        gamePane.setCenter(windIndicator);
+        topLine.setRight(windIndicator);
 
         VorbisPlayer.play(terrain.getBackgroundMusic(), true);
 
@@ -453,10 +457,6 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-<<<<<<< HEAD
-     * Gets the whole state of the map window as json.
-     * @return the whole state of the window as JSONObject
-=======
      * Creates the overlay for in-game help and when the game is paused. Pane is invisible at all other times.
      */
     private void createPausePane() {
@@ -486,23 +486,25 @@ public class MapWindow extends Application implements Networkable {
         pauseGrid.setHalignment(exit, HPos.CENTER);
         Text shortcuts = new Text("Shortcuts:");
         pauseGrid.add(shortcuts, 0, 4);
-        Text shortcutsList = new Text("A/left arrow key - walk left\n" +
-                "D/right arrow key - walk right\n" +
-                "W/up arrow key - jump, move crosshair up\n" +
-                "S/down arrow key - move crosshair down\n" +
-                "E - open inventory\n" +
-                "1 to 0 - choose item\n" +
-                "Space - shoot weapon\n" +
-                "C - open chat\n" +
-                "P/Esc/F1 - Pause game, show this help");
+        Text shortcutsList = new Text(
+                "←/A\t\twalk left\n" +
+                "→/D\t\twalk right\n" +
+                "↑/W\t\tjump, move crosshair up\n" +
+                "↓/S\t\tmove crosshair down\n" +
+                //"E - open inventory\n" + TODO
+                "1 to 8\tchoose item\n" +
+                "Space\tshoot\n" +
+                "C\t\topen chat\n" +
+                "Z\t\tdisable/enable auto-scrolling\n" +
+                "P/Esc/F1\tpause game, show this help");
         pauseGrid.add(shortcutsList, 0, 5, 2, 8);
         pausePane.setId("pausePane");
         pausePane.setCenter(pauseGrid);
     }
 
     /**
-     * @return the whole state of the window as JSONObject (except terrain, use terrain.toArrayList())
->>>>>>> items
+     * Gets the whole state of the map window as json.
+     * @return the whole state of the window as JSONObject
      */
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
@@ -597,7 +599,8 @@ public class MapWindow extends Application implements Networkable {
                     spawnBoss();
                     break;
                 default:
-                    System.out.println("flood warning"); // TODO game comment
+                    System.out.println("flood warning");
+                    server.send("SET_GAME_COMMENT 0 Weather forecast: Flood warning.");
                     floodLevel = 0;
                     break;
             }
@@ -651,8 +654,9 @@ public class MapWindow extends Application implements Networkable {
         }
 
         if(Math.random() > SUPPLY_DROP_PROBABILITY){
-            Crate drop = new Crate(terrain.toArrayList().get(0).size()-1);
+            Crate drop = new Crate(terrain.toArrayList().get(0).size()-Terrain.BLOCK_SIZE);
             server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent());
+            server.send("SET_GAME_COMMENT 0 Nice, a present. That’s like a corollary, it’s for free.");
         }
 
         server.send("SET_CURRENT_TEAM " + currentTeam);
@@ -712,6 +716,7 @@ public class MapWindow extends Application implements Networkable {
 
     private void initBoss(String name) {
         System.out.println(name + " appeared"); // TODO game comment
+        setGameComment("Watch out guys! " + name + " has appeared!", false);
         boss = new Figure(name, "boss", 1000000, 1000000, false, false, false); // TODO short-hand constructor
         boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
         fieldPane.getChildren().add(boss);
@@ -866,6 +871,7 @@ public class MapWindow extends Application implements Networkable {
                     }
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
+                    setGameComment("No munition.", true);
                     VorbisPlayer.play("resources/audio/SFX/reload.ogg", false);
                 }
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
@@ -929,6 +935,9 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "SUPPLY_PICKED_UP":
                 teams.get(Integer.parseInt(cmd[1])).getItem(cmd[2]).refill();
+                if(client.getAssociatedTeam() == Integer.parseInt(cmd[1]) || client.isLocalGame()) { // only current team should see what has been picked up // TODO what happends if a crate falls on a figure?
+                    setGameComment("Cool, a new " + cmd[2], false);
+                }
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
@@ -1121,50 +1130,53 @@ public class MapWindow extends Application implements Networkable {
             case "1":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
-                    server.send("SET_GAME_COMMENT 1 Bazooka: A classic one."); // TODO use new getter
+                    server.send("SET_GAME_COMMENT 1 Bazooka: " + Bazooka.DESCRIPTION);
                     server.send("PLAY_SFX changeWeapon");
                 }
                 break;
             case "2":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
-                    server.send("SET_GAME_COMMENT 1 Granade: Now on SALE with wind!");
-                    server.send("PLAY_SFX granade");
+                    server.send("SET_GAME_COMMENT 1 Grenade: " + Grenade.DESCRIPTION);
+                    server.send("PLAY_SFX granade"); // TODO typo
                 }
                 break;
             case "3":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
-                    server.send("SET_GAME_COMMENT 1 Shootgun: Right into the face! - twice");
+                    server.send("SET_GAME_COMMENT 1 Shotgun: " + Shotgun.DESCRIPTION);
                     server.send("PLAY_SFX shotgun");
-                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                 }
                 break;
             case "4":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
-                    server.send("SET_GAME_COMMENT 1 Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
+                    server.send("SET_GAME_COMMENT 1 Poisoned Arrow: " + PoisonedArrow.DESCRIPTION);
                     server.send("PLAY_SFX poisonArrow");
                 }
                 break;
             case "5":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 5");
+                    server.send("SET_GAME_COMMENT 1 Medipack: " + Medipack.DESCRIPTION);
                 }
                 break;
             case "6":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
+                    server.send("SET_GAME_COMMENT 1 Rifle: " + Rifle.DESCRIPTION);
                 }
                 break;
             case "7":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
+                    server.send("SET_GAME_COMMENT 1 Digiwise: " + Digiwise.DESCRIPTION);
                 }
                 break;
             case "8":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
+                    server.send("SET_GAME_COMMENT 1 Bananabomb: " + Bananabomb.DESCRIPTION);
                 }
                 break;
             case "9":
@@ -1297,8 +1309,6 @@ public class MapWindow extends Application implements Networkable {
      * @param lowPrio if a comment has low priority, is is immediately overwritten when another line is added
      */
     void setGameComment(String content, boolean lowPrio){
-        ingameLabel.setVisible(true);
-
         Platform.runLater(() -> {
             ingameLabel.addLine(content, lowPrio);
         });

@@ -20,7 +20,7 @@ public class Digiwise extends Item {
     private final static int NORMED_OBJECT_SIZE = 16;
 
     private final static String  NAME           = "Digiwise"; //Yes, it is supposed to be written this way. Blame markus
-    private final static String  DESCRIPTION    = "Remember, if you need to force it, it's usually shit.";
+    public final static String  DESCRIPTION     = "Remember, if you need to force it, it's usually shit.";
     private final static String ITEM_IMG = "file:resources/weapons/digiwise.png";
 
     // ---------------------------------------------------------------------------------------------
