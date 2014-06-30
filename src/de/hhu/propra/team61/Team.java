@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.objects.*;
@@ -14,7 +15,7 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 /**
  * Instances of this class represent a team.
- * A team has a certain number of figures, weapons (inventory is shared across all figures of the same team), a color,
+ * A team has a certain number of figures, inventory (inventory is shared across all figures of the same team), a color,
  * and name. To create a new team, either {@link #Team(java.util.ArrayList, java.util.ArrayList, javafx.scene.paint.Color, String, String, de.hhu.propra.team61.io.json.JSONArray)}
  * can be used, passing all the team properties, or {@link #Team(de.hhu.propra.team61.io.json.JSONObject)}, providing
  * a json object representing the state of a team.
@@ -28,8 +29,8 @@ public class Team extends StackPane {
     private int currentFigure = 0;
     /** list of figures playing for this team */
     private ArrayList<Figure> figures;
-    /** list of weapons the figures of this team can use */
-    private ArrayList<Weapon> weapons;
+    /** list of inventory the figures of this team can use */
+    private ArrayList<Item> inventory;
     /** colors of the team */
     private Color color;
     /** name of the team */
@@ -38,14 +39,14 @@ public class Team extends StackPane {
     /**
      * Creates a new team with the given properties.
      * @param spawnPoints determines number and initial position of the figures
-     * @param weapons the list of weapons for the team
+     * @param inventory the list of inventory for the team
      * @param color the color of the team
      * @param name the name of the team
      * @param chosenFigure the figure type ({@link de.hhu.propra.team61.objects.Figure#figureType}) for the figures of the team
      * @param figureNames the names of the figures
      */
-    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Weapon> weapons, Color color, String name, String chosenFigure, JSONArray figureNames) {
-        this.weapons = weapons;
+    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Item> inventory, Color color, String name, String chosenFigure, JSONArray figureNames) {
+        this.inventory = inventory;
         this.color = color;
         this.name = name;
         figures = new ArrayList<>();
@@ -76,21 +77,8 @@ public class Team extends StackPane {
             f.setColor(color);
             getChildren().add(f);
         }
-        weapons = new ArrayList<>();
-        JSONArray weaponsArray = state.getJSONArray("weapons");
-        for(int i=0; i<weaponsArray.length(); i++){
-            JSONObject w = weaponsArray.getJSONObject(i);
-            switch(w.getString("name")){
-                case "Bazooka": weapons.add(new Bazooka(w.getInt("munition")));
-                    break;
-                case "Grenade": weapons.add(new Grenade(w.getInt("munition")));
-                    break;
-                case "Shotgun": weapons.add(new Shotgun(w.getInt("munition")));
-                    break;
-                case "Poisoned Arrow": weapons.add(new PoisonedArrow(w.getInt("munition")));
-                    break;
-            }
-        }
+        JSONArray itemsArray = state.getJSONArray("inventory");
+        inventory = ItemManager.generateInventory(itemsArray);
         currentFigure = state.getInt("currentFigure");
         setAlignment(Pos.TOP_LEFT);
     }
@@ -107,11 +95,7 @@ public class Team extends StackPane {
             figuresArray.put(f.toJson());
         }
         output.put("figures", figuresArray);
-        JSONArray weaponsArray = new JSONArray();
-        for(Weapon w: weapons) {
-            weaponsArray.put(w.toJson());
-        }
-        output.put("weapons", weaponsArray);
+        output.put("inventory", ItemManager.inventoryToJsonArray(inventory));
         output.put("color", toHex(color));
         output.put("name", name);
         output.put("currentFigure", currentFigure);
@@ -132,10 +116,12 @@ public class Team extends StackPane {
             }
             currentFigure++;
             if (currentFigure == figures.size()) {
-                currentFigure = 0;
+                currentFigure = 0; // loop
             }
             i++;
-        } while (figures.get(currentFigure).getHealth() == 0);
+            if (figures.get(currentFigure).getIsParalyzed() && getNumberOfLivingFigures() > 1){currentFigure++; i++;} //Skip paralyzed figures IF not last man standing
+        }
+        while (figures.get(currentFigure).getHealth() == 0);
     }
 
     /**
@@ -181,16 +167,30 @@ public class Team extends StackPane {
      * @param i the number of the weapon
      * @return a reference to the weapon
      */
-    public Weapon getWeapon(int i) {
-        return weapons.get(i);
+    public Item getItem(int i) {
+        return inventory.get(i);
     }
 
     /**
-     * Gets the number of weapons of this team
-     * @return the number of weapons of this team
+     * Gets the weapon with the given name of this team.
+     * @param s Name of the weapon
+     * @return a refereance to the weapon
+     */
+    public Item getItem(String s) {
+        for (Item i : inventory) {
+            if (i.getName().equals(s)) {
+                return i;
+            }
+        }
+        return null; // If not found
+    }
+
+    /**
+     * Gets the number of inventory of this team
+     * @return the number of inventory of this team
      */
     public int getNumberOfWeapons() {
-        return weapons.size();
+        return inventory.size();
     }
 
     /**

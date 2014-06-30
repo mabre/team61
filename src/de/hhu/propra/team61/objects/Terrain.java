@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects; // TODO create own subpackage (after merging, otherwise resolving conflicts might become hard)
 
 import de.hhu.propra.team61.animation.SpriteAnimation;
+import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
@@ -44,7 +45,7 @@ public class Terrain extends GridPane {
     /** set to {@code true} to true to see the terrain grid */
     private static final boolean GRID_ENABLED = false;
     /** the size of a block within the terrain; you usually do NOT want to use this outside this class (notable exception: level editor) */
-    final static int BLOCK_SIZE = 8;
+    public final static int BLOCK_SIZE = 8;
 
     /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
@@ -57,6 +58,8 @@ public class Terrain extends GridPane {
     /** a list of figures with which objects can collide */
     private ArrayList<Figure> figures;
     private String musicFile;
+    /** a list of crates with which //TODO all objects cann collide, figures pick up */
+    private ArrayList<Crate> supplyDrops = new ArrayList<>();
 
     /** a vector representing wind force and direction */
     private Point2D wind = new Point2D(0,0);
@@ -69,7 +72,9 @@ public class Terrain extends GridPane {
 
     /**
      * Creates a new terrain from the given JSONObject.
+     * This is the same as calling {@code Terrain(terrain, false)}.
      * @param terrain a JSONObject containing the level whose terrain shall be displayed
+     * @see de.hhu.propra.team61.objects.Terrain
      */
     public Terrain(JSONObject terrain) {
         this(terrain, false);
@@ -172,7 +177,8 @@ public class Terrain extends GridPane {
     /**
      * creates new random wind
      * <p>
-     * The maximum wind force depends on the settings chosen by the user. (TODO actually not) Lower wind forces are more
+<<<<<<< HEAD
+     * The maximum wind force depends on the settings chosen by the user. Lower wind forces are more
      * probable; for a maximum speed of 4, the absolute value of the wind force has the following probabilities:
      * <ul>
      * <li>[0, 1.3]: 50 %
@@ -182,7 +188,13 @@ public class Terrain extends GridPane {
      * </p>
      */
     public void rewind() {
-        double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
+        double maxWindSpeed;
+        switch(Settings.getSavedInt("windForce", 2)) {
+            case 1: maxWindSpeed = MAX_WIND_SPEED_EASY; break;
+            case 2: maxWindSpeed = MAX_WIND_SPEED_NORMAL; break;
+            case 3: maxWindSpeed = MAX_WIND_SPEED_HARD; break;
+            default: maxWindSpeed = 0; break;
+        }
         double windSpeed = (Math.random() * maxWindSpeed) - maxWindSpeed / 2;
         if (Math.random() > .5) windSpeed *= 1.5; // make higher speed less probable
         else if (Math.random() > .75) windSpeed *= 2;

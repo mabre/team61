@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 /**
- * Main class for starting the game.
+ * Main class for starting the game, creating the stage and the menu.
  * <p>
  * Created by dinii on 15.04.14.<br/>
  * ProPra Team 61:<br/>
@@ -25,15 +25,28 @@ import java.io.IOException;
  */
 public class Afrobob extends Application {
 
-    BigStage mainwindow = new BigStage("Unicorns and Penguins <3");
-    SceneController sceneController = new SceneController();
-    MenueController menueController;
-    Pane root;
+    /** public, because sceneController needs to change the stage's scene */
+    public BigStage mainwindow = new BigStage("Charlie in Madagascar");
+    /** used to switch between scenes in one stage */
+    private SceneController sceneController = new SceneController();
+    /** controls the GUI-elements loaded from menue.fxml */
+    private MenueController menueController;
+    /** contains scene with GUI-elements */
+    private Pane root;
 
+    /**
+     * launches the Application, calls {@link #start(Stage)}
+     * @param args input from prompt
+     */
     public static void main(String[] args) {
         launch(args);
     }
 
+    /**
+     * Loads GUI and CSS for menue. Initializes sceneController by passing the stage mainwindow.
+     * @param filler start needs a stage as parameter, but it is not needed as BigStage is already created
+     * @throws IOException in case FXML-file does not exist
+     */
     public void start (Stage filler) throws IOException {
         sceneController.setStage(mainwindow);
         FXMLLoader loader = new FXMLLoader(getClass().getResource("gui/menue.fxml"));

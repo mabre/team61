@@ -10,15 +10,23 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * Shows a modal dialog for hosting/joining a team and entering team name and ip address
+ * Shows a modal dialog for hosting/joining a team and entering team name and ip address.
+ *
  * Created by Jessypet on 27.05.14.
  */
 public class NetPopUp extends Application {
 
-    TextField ipField = new TextField();
-    TextField nameField = new TextField();
+    /** to enter ip-address before joining a game */
+    private TextField ipField = new TextField();
+    /** to enter player-name */
+    private TextField nameField = new TextField();
 
-    public void openPopUp(SceneController sceneController) {
+    /**
+     * Opens a pop-up where you can either host or join a game. In both cases you need to enter a name, if you want to
+     * join you also need to enter the ip-address of the server. If one of them is missing an error message is shown.
+     * @param sceneController used to switch to network lobby
+     */
+    public NetPopUp(SceneController sceneController) {
         Stage netpopup = new Stage();
         netpopup.initModality(Modality.APPLICATION_MODAL);
         netpopup.setTitle("Start network game");

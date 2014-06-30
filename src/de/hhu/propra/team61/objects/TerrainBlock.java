@@ -13,7 +13,11 @@ import javafx.scene.image.ImageView;
  * <ul>
  * <li>{@code ' '}: sky (transparent)
  * <li>{@code 'P'} (player): spawn point: rendered like sky
+<<<<<<< HEAD
  * <li>{@code 'W'} (water): walkable liquid
+=======
+ * <li>{@code 'W'} (water): walkable liquid // TODO change collision: drop in? Yes please
+>>>>>>> items
  * <li>{@code 'L'} (lava): walkable liquid
  * <li>{@code 'S'} (stone): walkable ground with normal friction
  * <li>{@code 's'} (sand): walkable ground with higher friction

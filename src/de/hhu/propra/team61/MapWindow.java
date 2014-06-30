@@ -5,8 +5,11 @@ import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.io.VorbisPlayer;
+import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.io.Settings;
+import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -16,19 +19,20 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.HPos;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -48,6 +52,8 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
  */
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
+    /** Chance of a crate spawning (Compared to {@link Math#random()}); TODO give this an true probability, set by Customize */
+    private final static double SUPPLY_DROP_PROBABILITY = 0.75; // TODO probability is actually .25
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
@@ -61,8 +67,12 @@ public class MapWindow extends Application implements Networkable {
 
     //JavaFX related variables
     private Scene drawing;
+    /** contains gamePane and pause/help-overlay */
+    private StackPane rootPane = new StackPane();
+    /** contains pause/help-overlay */
+    private BorderPane pausePane = new BorderPane();
     /** contains terrain, labels at the top etc. (ie. everything) */
-    private BorderPane rootPane;
+    private BorderPane gamePane;
     /** contains chat, scrollPane with terrain, teams etc. */
     private StackPane centerPane;
     /** contains terrain, teams, weapons */
@@ -72,10 +82,18 @@ public class MapWindow extends Application implements Networkable {
     private Timeline scrollPaneTimeline = null;
     private final static int SCROLL_ANIMATION_DURATION = 1000;
     private final static int SCROLL_ANIMATION_DELAY = 500;
+    private boolean autoScroll = true;
+    private boolean projectileFocused = false;
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
     private ScrollingLabel ingameLabel = new ScrollingLabel();
+    /** the ImageView containing the image that is shown in the overlay */
+    private ImageView pauseHelpImageView = new ImageView();
+    /** shown in the overlay when the game is paused */
+    private final static Image pauseImage = new Image("file:resources/layout/pause.png");
+    /** shown in the overlay when the game is not paused */
+    private final static Image helpImage = new Image("file:resources/layout/help.png");
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
@@ -83,16 +101,17 @@ public class MapWindow extends Application implements Networkable {
     private int turnCount = 0;
     private int teamquantity;
     private int teamsize;
-    private boolean autoScroll = true;
-    private boolean projectileFocused = false;
 
+    /** dynamic list containing all drops on the screen */
+    private ArrayList<Crate> supplyDrops = new ArrayList<>();
     /** power/energy projectile is shot with */
-    private int power = 0;
+    private int power = 0; //ToDo implement or kick
     /** used to disable shooting multiple times during one turn */
     private boolean shootingIsAllowed = true;
     private boolean pause = false;
+    private boolean help = false;
     //Projectile-Moving-Thread related variables
-    private Projectile flyingProjectile = null;
+    private ArrayList<Projectile> flyingProjectiles = new ArrayList<>();
     private Thread moveObjectsThread;
     //Network
     private Server server;
@@ -108,6 +127,7 @@ public class MapWindow extends Application implements Networkable {
     private String map; // TODO do we need this?
     private Chat chat;
     private SceneController sceneController;
+    private int k;
 
     /**
      * Creates a new map window.
@@ -137,19 +157,16 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
 
-        JSONObject settings = Settings.getSavedSettings(file);
+        JSONObject settings = Settings.getSavedJson(file);
         this.teamquantity = settings.getInt("numberOfTeams");
         this.teamsize = Integer.parseInt(settings.getString("team-size"));
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
-        JSONArray weaponsArray = settings.getJSONArray("weapons");
+
+        //ToDo: Prepare start inventory of all teams
         for(int i=0; i<teamsArray.length(); i++) {
-            ArrayList<Weapon> weapons = new ArrayList<>();
-            weapons.add(new Bazooka(weaponsArray.getJSONObject(0).getInt("weapon1")));
-            weapons.add(new Grenade(weaponsArray.getJSONObject(1).getInt("weapon2")));
-            weapons.add(new Shotgun(weaponsArray.getJSONObject(2).getInt("weapon3")));
-            weapons.add(new PoisonedArrow(weaponsArray.getJSONObject(3).getInt("weapon4")));
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), weapons, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
+            ArrayList<Item> inventory = ItemManager.generateInventory(settings.getJSONArray("inventory")); //ToDo add startInventory to settings
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
         }
 
         initialize();
@@ -207,7 +224,8 @@ public class MapWindow extends Application implements Networkable {
 
         this.terrain = new Terrain(input.getJSONObject("terrain"));
 
-        JSONObject settings = Settings.getSavedSettings(file);
+        JSONObject settings = Settings.getSavedJson(file); //ToDo Obsolete or roundtimer etc in there?
+
         teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
@@ -231,7 +249,7 @@ public class MapWindow extends Application implements Networkable {
             shutdown();
             sceneController.switchToMenue();
         });
-        rootPane = new BorderPane();
+        gamePane = new BorderPane();
         // contains the terrain with figures
         scrollPane = new ScrollPane();
         centerPane = new StackPane();
@@ -253,7 +271,7 @@ public class MapWindow extends Application implements Networkable {
         scrollPane.setContent(anchorPane);
         scrollPane.setPrefSize(1000, 530);
         centerPane.getChildren().add(scrollPane);
-        rootPane.setBottom(centerPane);
+        gamePane.setBottom(centerPane);
 
         for(Team team: teams) {
             fieldPane.getChildren().add(team);
@@ -261,8 +279,10 @@ public class MapWindow extends Application implements Networkable {
         }
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
-        rootPane.setTop(teamLabel);
-        rootPane.setRight(ingameLabel);
+        gamePane.setRight(ingameLabel);
+        gamePane.setTop(teamLabel);
+        createPausePane();
+        rootPane.getChildren().addAll(gamePane, pausePane);
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -305,7 +325,7 @@ public class MapWindow extends Application implements Networkable {
 
         if(server != null) terrain.rewind();
         windIndicator.setWindForce(terrain.getWindMagnitude());
-        rootPane.setCenter(windIndicator);
+        gamePane.setCenter(windIndicator);
 
         VorbisPlayer.play(terrain.getBackgroundMusic(), true);
 
@@ -315,38 +335,71 @@ public class MapWindow extends Application implements Networkable {
                     long before = System.currentTimeMillis(), now, sleep;
                     while (true) {
                         if (!pause) {
-                            if (flyingProjectile != null) {
+                            for (k = 0; k < flyingProjectiles.size(); k++) {
+                                Projectile flyingProjectile = flyingProjectiles.get(k);
                                 try {
                                     final Point2D newPos;
-                                    newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, true);
+                                    newPos = terrain.getPositionForDirection(flyingProjectile.getPosition(), flyingProjectile.getVelocity(), flyingProjectile.getHitRegion(), false, false, false, flyingProjectile.getDrifts());
                                     flyingProjectile.addVelocity(GRAVITY.multiply(flyingProjectile.getMass()));
                                     flyingProjectile.setPosition(new Point2D(newPos.getX(), newPos.getY()));
-                                    if(autoScroll && projectileFocused) scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
-                                    server.send("PROJECTILE_SET_POSITION " + newPos.getX() + " " + newPos.getY());
+                                    if (autoScroll && projectileFocused)
+                                        scrollTo(newPos.getX(), newPos.getY(), 0, 0, false);
+                                    server.send("PROJECTILE_SET_POSITION " + k + " " + newPos.getX() + " " + newPos.getY());
                                 } catch (CollisionException e) {
                                     System.out.println("CollisionException, let's do this!");
                                     final Projectile collidingProjectile = flyingProjectile;
-                                    flyingProjectile = null; // we remove it here to prevent timing issues
+                                    flyingProjectiles.remove(flyingProjectile); // we remove it here to prevent timing issue
                                     Platform.runLater(() -> {
-//                                    } catch (DeathException de) { // TODO that change was somewhat important I think (or not?) ... (see handleCollision in Weapon)
-//                                        if(de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
-//                                            endTurn();
-//                                        }
-//                                    }
+                                        fieldPane.getChildren().remove(flyingProjectile);
                                         //Get series of commands to send to the clients from
                                         //Collisionhandling done by the weapon causing this exception
                                         ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
-                                        fieldPane.getChildren().remove(collidingProjectile);
+                                        if (commandList.contains("REMOVE_FLYING_PROJECTILE")) {
+                                            commandList.set(0, "REMOVE_FLYING_PROJECTILE " + k);
+                                        }
                                         for (String command : commandList) {
                                             server.send(command);
                                         } //Send commands+
-                                        endTurn();
+                                        if (!commandList.contains("ADD_FLYING_PROJECTILE") && flyingProjectiles.size() == 0) {
+                                            endTurn();
+                                        }
                                     });
                                 }
                             }
-                            for (Team team : teams) {
-                                for (Figure figure : team.getFigures()) {
+
+                            for (int i = 0; i < supplyDrops.size(); i++) {
+                                Crate supply = supplyDrops.get(i);
+                                supply.resetVelocity();
+                                final Point2D oldPos = new Point2D(supply.getPosition().getX(), supply.getPosition().getY());
+                                try {
+                                    final Point2D newPos; // TODO code duplication
+                                    newPos = terrain.getPositionForDirection(oldPos, supply.getVelocity(), supply.getHitRegion(), false, true, false, false); //ToDo change last false to true? I am doing that later
+                                    if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                        supply.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
+                                        server.send("SUPPLY_SET_POSITION " + i + " " + (newPos.getX()) + " " + (newPos.getY()));
+                                    }
+                                } catch (CollisionException e) {
+                                    if (!e.getLastGoodPosition().equals(oldPos)) {
+                                        supply.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                                        server.send("SUPPLY_SET_POSITION " + i + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()));
+                                    }
+                                    supply.nullifyVelocity();
+                                }
+                            }
+
+                            for (int t = 0; t < teams.size(); t++) {
+                                Team team = teams.get(t);
+                                for (int f = 0; f < team.getFigures().size(); f++) {
+                                    Figure figure = team.getFigures().get(f);
                                     if (figure.getHealth() > 0) {
+                                        //Check if figure collides with an Crate TODO: Ask if I should move that somewhere else
+                                        for (int i = 0; i < supplyDrops.size(); i++) {
+                                            if (figure.getHitRegion().intersects(supplyDrops.get(i).getHitRegion())) {
+                                                server.send("SUPPLY_PICKED_UP" + " " + t + " " + supplyDrops.get(i).getContent());
+                                                server.send("REMOVE_SUPPLY " + i);
+                                            }
+                                        }
+
                                         final boolean scrollToFigure = (figure == teams.get(currentTeam).getCurrentFigure());
                                         final Point2D oldPos = new Point2D(figure.getPosition().getX(), figure.getPosition().getY());
                                         try {
@@ -355,13 +408,13 @@ public class MapWindow extends Application implements Networkable {
                                             newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false, true);
                                             if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
                                                 figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
-                                                server.send("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
+                                                server.send("FIGURE_SET_POSITION " + t + " " + f + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
                                             }
                                         } catch (CollisionException e) {
                                             if (!e.getLastGoodPosition().equals(oldPos)) {
                                                 System.out.println("CollisionWithTerrainException");
                                                 figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
-                                                server.send("FIGURE_SET_POSITION " + getFigureId(figure) + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
+                                                server.send("FIGURE_SET_POSITION " + t + " " + f + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                             }
                                             int oldHp = figure.getHealth();
                                             try {
@@ -383,13 +436,13 @@ public class MapWindow extends Application implements Networkable {
                                     }
                                 }
                             }
-                        }
 
-                        // sleep thread, and assure constant frame rate
-                        now = System.currentTimeMillis();
-                        sleep = Math.max(0, (1000 / FPS) - (now - before));
-                        Thread.sleep(sleep);
-                        before = System.currentTimeMillis();
+                            // sleep thread, and assure constant frame rate
+                            now = System.currentTimeMillis();
+                            sleep = Math.max(0, (1000 / FPS) - (now - before));
+                            Thread.sleep(sleep);
+                            before = System.currentTimeMillis();
+                        }
                     }
                 } catch (InterruptedException e) {
                     System.out.println("moveObjectsThread shut down");
@@ -400,8 +453,56 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
+<<<<<<< HEAD
      * Gets the whole state of the map window as json.
      * @return the whole state of the window as JSONObject
+=======
+     * Creates the overlay for in-game help and when the game is paused. Pane is invisible at all other times.
+     */
+    private void createPausePane() {
+        pausePane.setVisible(false);
+        CustomGrid pauseGrid = new CustomGrid();
+        pauseGrid.add(pauseHelpImageView, 0, 0, 2, 1);
+        pauseGrid.setHalignment(pauseHelpImageView, HPos.CENTER);
+        Button cont = new Button("Continue game");
+        cont.setOnAction(e -> {
+            if (pause) {
+                pause = !pause;
+                server.send("PAUSE " + pause);
+            } else {
+                help = !help;
+                pausePane.setVisible(help);
+            }
+        });
+
+        pauseGrid.add(cont, 0, 1);
+        pauseGrid.setHalignment(cont, HPos.CENTER);
+        Button exit = new Button("End game");
+        exit.setOnAction(e -> {
+             sceneController.switchToMenue();
+             shutdown();
+        });
+        pauseGrid.add(exit, 1, 1);
+        pauseGrid.setHalignment(exit, HPos.CENTER);
+        Text shortcuts = new Text("Shortcuts:");
+        pauseGrid.add(shortcuts, 0, 4);
+        Text shortcutsList = new Text("A/left arrow key - walk left\n" +
+                "D/right arrow key - walk right\n" +
+                "W/up arrow key - jump, move crosshair up\n" +
+                "S/down arrow key - move crosshair down\n" +
+                "E - open inventory\n" +
+                "1 to 0 - choose item\n" +
+                "Space - shoot weapon\n" +
+                "C - open chat\n" +
+                "P/Esc/F1 - Pause game, show this help");
+        pauseGrid.add(shortcutsList, 0, 5, 2, 8);
+        pausePane.setId("pausePane");
+        pausePane.setCenter(pauseGrid);
+    }
+
+    /**
+     * @return the whole state of the window as JSONObject (except terrain, use terrain.toArrayList())
+>>>>>>> items
      */
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
@@ -479,7 +580,7 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        //ToDo Wait until no objectmovements
+        while(flyingProjectiles.size() > 0){} //Wait until no objectmovements
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
         turnCount++; // TODO timing issue
@@ -547,6 +648,11 @@ public class MapWindow extends Application implements Networkable {
             server.send("SET_GAME_COMMENT 0 Digitate, my brave hearts!");
         } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
             undoDigitations();
+        }
+
+        if(Math.random() > SUPPLY_DROP_PROBABILITY){
+            Crate drop = new Crate(terrain.toArrayList().get(0).size()-1);
+            server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent());
         }
 
         server.send("SET_CURRENT_TEAM " + currentTeam);
@@ -696,8 +802,11 @@ public class MapWindow extends Application implements Networkable {
             pause = Boolean.parseBoolean(cmd[1]);
             if(pause) {
                 teamLabel.setText("Pause - If(Host){Press P or ESC to continue}"); //ToDo ugly temporary implementation
+                pauseHelpImageView.setImage(pauseImage);
+                pausePane.setVisible(true);
             } else {
                 teamLabel.setText("Continue");
+                pausePane.setVisible(false);
             }
         }
         
@@ -726,12 +835,10 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_CHOOSE_WEAPON":
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
-                    fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getWeapon(Integer.parseInt(cmd[1])-1));
+                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getItem(Integer.parseInt(cmd[1]) - 1));
                 fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
@@ -747,22 +854,20 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "CURRENT_FIGURE_SHOOT":
                 try {
-                     /* ToDo
-                    power = power + 5;
-                    Sleep/Wait if more ShootCommands are incoming, count them by incrementing THEN create projectile
-                     */
-                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot(power);
-                    flyingProjectile = projectile;
-                    fieldPane.getChildren().add(flyingProjectile);
-                    shootingIsAllowed = false;
-                    projectileFocused = true;
-                    //ToDo setRoundTimer down to 5sec
+                    Projectile projectile = teams.get(currentTeam).getCurrentFigure().shoot();
+                    if(projectile != null){ //Only weapons need projectiles
+                        flyingProjectiles.add(projectile);
+                        fieldPane.getChildren().add(projectile);
+                        shootingIsAllowed = false;
+                        projectileFocused = true;
+                        //ToDo setRoundTimer down to 5sec
+                    } else { //Treatment for "true" Items
+                        fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                    }
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
                     VorbisPlayer.play("resources/audio/SFX/reload.ogg", false);
-                    break;
                 }
-                fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem().getCrosshair());
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
@@ -792,6 +897,11 @@ public class MapWindow extends Application implements Networkable {
             case "PLAY_SFX":
                 VorbisPlayer.play("resources/audio/SFX/" + cmd[1] + ".ogg", false);
                 break;
+            case "FIGURE_ADD_VELOCITY":
+                Point2D vector = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
+                Figure fig = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
+                fig.addVelocity(vector);
+                break;
             case "REPLACE_BLOCK":
                 //if(server == null) { // hack for destruction calculation
                     if (cmd[3].charAt(0) == '#') {
@@ -804,25 +914,52 @@ public class MapWindow extends Application implements Networkable {
                 shootingIsAllowed = true;
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
                 break;
+
+            case "DROP_SUPPLY":
+                supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(), cmd[2]));
+                fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size() - 1));
+                break;
+            case "REMOVE_SUPPLY":
+                fieldPane.getChildren().remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                supplyDrops.remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                break;
+            case "SUPPLY_SET_POSITION":
+                position = new Point2D(Double.parseDouble(cmd[2]), Double.parseDouble(cmd[3]));
+                supplyDrops.get(Integer.parseInt(cmd[1])).setPosition(position);
+                break;
+            case "SUPPLY_PICKED_UP":
+                teams.get(Integer.parseInt(cmd[1])).getItem(cmd[2]).refill();
+                break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
                 VorbisPlayer.stop();
-                GameOverWindow gameOverWindow = new GameOverWindow();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
-                gameOverWindow.showWinner(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 if(server==null) { // TODO code duplication should be avoided
-                    final double x = Double.parseDouble(cmd[1]);
-                    final double y = Double.parseDouble(cmd[2]);
-                    flyingProjectile.setPosition(new Point2D(x, y));
+                    final double x = Double.parseDouble(cmd[2]);
+                    final double y = Double.parseDouble(cmd[3]);
+                    flyingProjectiles.get(Integer.parseInt(cmd[1])).setPosition(new Point2D(x, y));
                     if(autoScroll && projectileFocused) scrollTo(x, y, 0, 0, false);
                 }
                 break;
+            case "ADD_FLYING_PROJECTILES":
+                String puffer = "";
+                for(int i = 1; i < cmd.length; i++){ puffer += cmd[i]; }
+                JSONArray input = new JSONArray(puffer);
+                for(int i = 0; i < input.length(); i++){
+                    Projectile projectile = new Projectile(input.getJSONObject(i));
+                    flyingProjectiles.add(projectile);
+                    fieldPane.getChildren().add(projectile);
+                }
+                break;
             case "REMOVE_FLYING_PROJECTILE":
-                if(flyingProjectile != null) {
-                    fieldPane.getChildren().remove(flyingProjectile);
-                    flyingProjectile = null;
+                if(server == null) {
+                    if (flyingProjectiles.size() - 1 >= Integer.parseInt(cmd[1])) {
+                        fieldPane.getChildren().remove(flyingProjectiles.get(Integer.parseInt(cmd[1])));
+                        flyingProjectiles.remove(Integer.parseInt(cmd[1]));
+                    }
                 }
                 break;
             case "SD":
@@ -850,14 +987,14 @@ public class MapWindow extends Application implements Networkable {
             case "CONDITION":
                 switch(cmd[1]){
                     case "POISON":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(true);
                         VorbisPlayer.play("resources/audio/SFX/poisoned.ogg", false);
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(Boolean.parseBoolean(cmd[4]));
                         break;
-                    case "FIRE":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsBurning(true);
+                    case "PARALYZE":
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsParalyzed(Boolean.parseBoolean(cmd[4]));
                         break;
                     case "STUCK":
-                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(true);
+                        teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(Boolean.parseBoolean(cmd[4]));
                         break;
                     default:
                         System.err.println("handleKeyEventOnClient: no event for key " + command);
@@ -930,9 +1067,14 @@ public class MapWindow extends Application implements Networkable {
             case "Esc":
             case "Pause":
             case "P":
+            case "F1":
                 if (team == 0 || client.isLocalGame()) { // allowing pausing by host (team 0) and when playing local game
                     pause = !pause;
                     server.send("PAUSE " + pause);
+                } else {
+                    help = !help;
+                    pauseHelpImageView.setImage(helpImage);
+                    pausePane.setVisible(help);
                 }
                 break;
         }
@@ -978,39 +1120,60 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "1":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 1) {
-                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
-                    }
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     server.send("SET_GAME_COMMENT 1 Bazooka: A classic one."); // TODO use new getter
                     server.send("PLAY_SFX changeWeapon");
                 }
                 break;
             case "2":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 2) {
-                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
-                    }
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     server.send("SET_GAME_COMMENT 1 Granade: Now on SALE with wind!");
                     server.send("PLAY_SFX granade");
                 }
                 break;
             case "3":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 3) {
-                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
-                    }
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     server.send("SET_GAME_COMMENT 1 Shootgun: Right into the face! - twice");
                     server.send("PLAY_SFX shotgun");
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                 }
                 break;
             case "4":
                 if(shootingIsAllowed) {
-                    if (teams.get(currentTeam).getNumberOfWeapons() >= 4) {
-                        server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
-                    }
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     server.send("SET_GAME_COMMENT 1 Posion Arrow: To avoid stupid jokes: Don't aim for the knee! Also he won't stay longer than 7 turns");
                     server.send("PLAY_SFX poisonArrow");
                 }
+                break;
+            case "5":
+                if(shootingIsAllowed) {
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 5");
+                }
+                break;
+            case "6":
+                if(shootingIsAllowed) {
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
+                }
+                break;
+            case "7":
+                if(shootingIsAllowed) {
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
+                }
+                break;
+            case "8":
+                if(shootingIsAllowed) {
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
+                }
+                break;
+            case "9":
+                if(shootingIsAllowed) {
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 9");
+                }
+                break;
+            case "E":
+                //inventory.toggleVisibility();
                 break;
             default:
                 System.out.println("handleOnServer: no event for key " + command);
@@ -1123,14 +1286,6 @@ public class MapWindow extends Application implements Networkable {
         server.send("FIGURE_SET_POSITION " + getFigureId(f) + " " + newPos.getX() + " " + newPos.getY() + " true");
     }
 
-    public ImageView drawBackgroundImage() {
-        String img = "file:resources/board.png";
-        Image image = new Image(img);
-        ImageView background = new ImageView();
-        background.setImage(image);
-        return background;
-    }
-    
     @Override
     public String getStateForNewClient() {
         return "STATUS MAPWINDOW " + this.toJson().toString();
@@ -1139,14 +1294,13 @@ public class MapWindow extends Application implements Networkable {
     /**
      * Shows the given label in right upper corner.
      * @param content is the text shown in the Label.
-     * @param lowPrio if a comment has low priority, is is immediatelyoverwritten when another line is added
+     * @param lowPrio if a comment has low priority, is is immediately overwritten when another line is added
      */
     void setGameComment(String content, boolean lowPrio){
         ingameLabel.setVisible(true);
 
         Platform.runLater(() -> {
             ingameLabel.addLine(content, lowPrio);
-            rootPane.setRight(ingameLabel);
         });
     }
 }

@@ -15,8 +15,10 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
+import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -30,6 +32,9 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import javax.swing.*;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -37,52 +42,118 @@ import java.util.ArrayList;
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 /**
+ * The window that is shown when clicking 'Customize' in main menue.
+ *
+ * This class contains GUI for creating new teams, game styles and levels.
+ * Custom teams, styles and levels can also be edited or deleted.
+ *
  * Created by Jessypet on 10.06.14.
  */
 
 public class CustomizeWindow extends Application {
 
-    SceneController sceneController = new SceneController();
-    BorderPane root = new BorderPane();
-    CustomGrid newTeamGrid = new CustomGrid();
-    CustomGrid newGameStyleGrid = new CustomGrid();
-    CustomGrid weaponsGrid = new CustomGrid();
-    CustomGrid editGrid;
-    BorderPane newMapPane = new BorderPane();
-    CustomGrid newMapGrid = new CustomGrid();
-    ArrayList<TextField> figureNames = new ArrayList<>();
-    ArrayList<String> weaponNames = new ArrayList<>();
-    ArrayList<CheckBox> weaponCheckBoxes = new ArrayList<>();
-    ArrayList<Slider> weaponSliders = new ArrayList<>();
-    TextField name = new TextField("player");
-    ColorPicker color = new ColorPicker(Color.web("#FF00FF"));
-    ChoiceBox<String> figureChooser = new ChoiceBox<>();
-    TextField styleNameField = new TextField("Custom");
-    TextField sizeField = new TextField("4");
-    ChoiceBox<String> mapChooser = new ChoiceBox<>();
-    ChoiceBox<String> musicChooser = new ChoiceBox<>();
-    ChoiceBox<String> imageChooser = new ChoiceBox<>();
-    ChoiceBox<String> fluidChooser = new ChoiceBox<>();
-    ScrollPane scrollPane;
-    AnchorPane anchorPane = new AnchorPane();
-    Terrain levelTerrain;
-    StackPane levelPane;
-    Pane background = new Pane();
-    CustomGrid selectionGrid = new CustomGrid();
-    char chosenTerrainType;
-    private static int BLOCK_SIZE = 8; // TODO grab from Terrain?
-    private static int MAP_HEIGHT = 60;
-    private static int MAP_WIDTH = 130;
+    /** used to switch back to menue */
+    private SceneController sceneController = new SceneController();
+    /** root for scene and for all GUI-elements */
+    private BorderPane root = new BorderPane();
+    /** grid that contains lists of existing teams, game styles and levels */
+    private CustomGrid editGrid;
+
+    ///Team editor
+    /** grid for all GUI-elements for creating a team */
+    private CustomGrid newTeamGrid = new CustomGrid();
+    /** contains names of the team's fígures */
+    private ArrayList<TextField> figureNames = new ArrayList<>();
+    /** TextField to enter wanted team name */
+    private TextField name = new TextField("player");
+    /** ColorPicker to choose wanted team color */
+    private ColorPicker color = new ColorPicker(Color.web("#FF00FF"));
+    /** choose penguin or unicorn as the team's figure */
+    private ChoiceBox<String> figureChooser = new ChoiceBox<>();
+
+    ///Style editor
+    /** grid for all GUI-elements for creating a game styke */
+    private CustomGrid newGameStyleGrid = new CustomGrid();
+    /** grid containing elements for changing items */
+    private CustomGrid itemsGrid = new CustomGrid();
+    /**TextField for entering name of the game style */
+    private TextField styleNameField = new TextField("Custom");
+    /** TextField for entering team-size of the game-style */
+    private TextField sizeField = new TextField("4");
+    /** list of all items */
+    private ArrayList<String> itemNames = new ArrayList<>();
+    /** CheckBoxes to decide whether an item should be in the game */
+    private ArrayList<CheckBox> itemCheckBoxes = new ArrayList<>();
+    /** Sliders to choose quantity for each item */
+    private ArrayList<Slider> itemSliders = new ArrayList<>();
+
+    ///Level editor
+    //Buttons to choose terrain type
+    private Button stone = new Button();
+    private Button soil = new Button();
+    private Button sand = new Button();
+    private Button ice = new Button();
+    private Button snow = new Button();
+    private Button rightEdge = new Button();
+    private Button leftEdge = new Button();
+    Button eraser = new Button("Eraser");
+    Button reset = new Button("Reset");
+    Button save = new Button("Save");
+    Button spawnPoint = new Button("Spawn point");
+
+    private BorderPane newMapPane = new BorderPane();
+    private CustomGrid newMapGrid = new CustomGrid();
+    /** ChoiceBox to choose map */
+    private ChoiceBox<String> mapChooser = new ChoiceBox<>();
+    /** ChoiceBox to choose background music */
+    private ChoiceBox<String> musicChooser = new ChoiceBox<>();
+    /** ChoiceBox to choose background imgae */
+    private ChoiceBox<String> imageChooser = new ChoiceBox<>();
+    /** ChoiceBox to choose liquid in the bottom of the level */
+    private ChoiceBox<String> liquidChooser = new ChoiceBox<>();
+    /** shows text of the button the mouse is focusing */
+    private Text terrainType = new Text();
+    /** the map to be loaded */
+    private String chosenMap = new String("editor/basic.lvl");
+    /** TextField for wanted name of a custom map */
+    private TextField mapNameField = new TextField("Custom map");
+    /** contains buttons to choose terrain */
+    private CustomGrid selectionGrid = new CustomGrid();
+    /** used for drawing the chosen terrain block */
+    private char chosenTerrainType = 'S';
+    /** chosen brush width */
+    private int chosenBrushWidth = 3;
+    /** Slider to choose the width of the brush */
+    private Slider brushWidth = new Slider(1, 7, 3);
+    /** contains level */
+    private ScrollPane scrollPane;
+    /** anchors levelTerrain at the bottom */
+    private AnchorPane anchorPane;
+    /** Terrain to draw level in  */
+    private Terrain levelTerrain;
+    /** contains scrollPane and background */
+    private StackPane levelPane;
+    /** contains chosen background image */
+    private Pane background = new Pane();
+     /** directory of cursor-images */
+    private String img_path = "file:resources/terrain/";
+    /** image that is shown instead of cursor in drawing area */
+    private Image image = new Image(img_path + "stones.png");
+    /** contains cursor-image */
+    private ImageView imageView = new ImageView(image);
+    /** contains imageView */
+    Pane forImageView;
+
+    ///Tetris-Cheat
     private String keysEntered = "";
     private boolean cheatEnabled = false;
     private Figure block = null;
     private Thread moveBlockThread = null;
-    Text terrainType = new Text();
-    Button stone = new Button();
-    String chosenMap = new String("editor/basic.lvl");
-    ArrayList<ArrayList<Character>> terrain = new ArrayList<>();
-    TextField mapNameField = new TextField("Custom map");
 
+    /**
+     * initializes all GUI-elements and switches to customizeScene
+     * @param sceneController makes switching between scenes in one stage possible
+     */
     public CustomizeWindow(SceneController sceneController) {
         this.sceneController = sceneController;
         initializeArrayLists();
@@ -94,15 +165,17 @@ public class CustomizeWindow extends Application {
         root.setLeft(editGrid);
         Scene customizeScene = new Scene(root, 1000, 600);
         customizeScene.getStylesheets().add("file:resources/layout/css/customize.css");
-        sceneController.setCustomizeScene(customizeScene);
-        sceneController.switchToCustomize();
+        sceneController.switchScene(customizeScene, "Customize");
     }
 
+    /**
+     * creates menue to switch between teams, game styles, levels and the main menue
+     */
     private void createTopBox() {
         HBox topBox = new HBox(20);
         Button edit = new Button("Edit team/game style/map");
         edit.setOnAction(e -> {
-            root.getChildren().remove(weaponsGrid);
+            root.getChildren().remove(itemsGrid);
             createEditGrid();
             root.setLeft(editGrid);
         });
@@ -110,7 +183,7 @@ public class CustomizeWindow extends Application {
         newTeam.setOnAction(e -> {
             refresh();
             root.setLeft(newTeamGrid);
-            root.getChildren().remove(weaponsGrid);
+            root.getChildren().remove(itemsGrid);
         });
         Button newGameStyle = new Button("Create new game style");
         newGameStyle.setOnAction(e -> {
@@ -120,7 +193,7 @@ public class CustomizeWindow extends Application {
         Button newMap = new Button("Create new map");
         newMap.setOnAction(e -> {
             refresh();
-            root.getChildren().remove(weaponsGrid);
+            root.getChildren().remove(itemsGrid);
             chosenMap = "editor/basic.lvl";
             initializeLevelEditor();
             root.setLeft(newMapPane);
@@ -136,6 +209,9 @@ public class CustomizeWindow extends Application {
         root.setTop(topBox);
     }
 
+    /**
+     * shows lists of all existing teams, game styles and levels
+     */
     private void createEditGrid() {
         editGrid = new CustomGrid();
         Text whatToDoHere = new Text("Here you can edit or remove an existing team or game style.");
@@ -154,6 +230,9 @@ public class CustomizeWindow extends Application {
         getMaps();
     }
 
+    /**
+     * GUI for creating and saving a new team
+     */
     private void createTeam() {
         Text wormNamesText = new Text("Figures (enter names):");
         wormNamesText.setFont(Font.font("Verdana", 15));
@@ -177,11 +256,14 @@ public class CustomizeWindow extends Application {
             CustomizeManager.save(teamToJson(), "teams/" + name.getText());
             createEditGrid();
             root.setLeft(editGrid);
-            root.getChildren().remove(weaponsGrid);
+            root.getChildren().remove(itemsGrid);
         });
         newTeamGrid.add(saveTeam, 0, 10);
     }
 
+    /**
+     * GUI for creating and saving a new game style
+     */
     private void createGameStyle() {
         Text styleName = new Text("Style-Name:");
         styleName.setFont(Font.font("Verdana", 15));
@@ -206,23 +288,33 @@ public class CustomizeWindow extends Application {
             CustomizeManager.save(styleToJson(), "gamestyles/"+styleNameField.getText());
             createEditGrid();
             root.setLeft(editGrid);
-            root.getChildren().remove(weaponsGrid);
+            root.getChildren().remove(itemsGrid);
         });
         newGameStyleGrid.add(saveGameStyle, 0, 10);
-        Button changeWeapons = new Button("Change weapons");
-        newGameStyleGrid.add(changeWeapons, 0, 5);
-        changeWeapons.setOnAction(e -> {
-            root.setRight(weaponsGrid);
+        Button changeItems = new Button("Change items");
+        newGameStyleGrid.add(changeItems, 0, 5);
+        changeItems.setOnAction(e -> {
+            root.setRight(itemsGrid);
         });
-        Text howToChangeWeapons = new Text("Add/remove/edit a certain weapon.");
-        newGameStyleGrid.add(howToChangeWeapons, 1, 5, 2, 1);
-        Label weapons = new Label("Weapons");
-        weapons.setFont(Font.font("Verdana", 20));
-        weaponsGrid.add(weapons, 0, 2);
-        Text enter = new Text ("Enter the quantity of projectiles for each weapon.");
-        weaponsGrid.add(enter, 0, 3, 3, 1);
+        Text whatIsChangeItems = new Text("Add/remove/edit weapons or other items.");
+        newGameStyleGrid.add(whatIsChangeItems, 1, 5, 2, 1);
+        Label items = new Label("Items");
+        items.setFont(Font.font("Verdana", 20));
+        itemsGrid.add(items, 0, 2);
+        Text enter = new Text ("Enter the quantity of each item.\n " +
+                "(number of projectiles for weapons)");
+        itemsGrid.add(enter, 0, 3, 2, 2);
     }
 
+    /**
+     * Creating GUI around the level editor. Adds all elements but the drawing area:
+     * <ul>
+     *     <li>ChoiceBoxes for music, image, fluid and TextField for name + their effect</li>
+     *     <li>Terrain-Buttons</li>
+     *     <li>Saving and resetting levels</li>
+     * </ul>
+     * Also contains EventFilter for Tetris-cheat.
+     */
     private void createMap() {
         Text music = new Text("Background music:");
         newMapGrid.add(music, 0, 0);
@@ -238,19 +330,19 @@ public class CustomizeWindow extends Application {
                 background.setStyle("-fx-background-image: url('" + "file:resources/levels/"+new_value + "')");
             }
         });
-        Text fluid = new Text("Fluid:");
-        newMapGrid.add(fluid, 4, 0);
-        fluidChooser.getItems().addAll("Water", "Lava");
-        fluidChooser.getSelectionModel().selectFirst();
-        newMapGrid.add(fluidChooser, 5, 0);
-        fluidChooser.valueProperty().addListener((ov, value, new_value) -> {
+        Text liquid = new Text("Liquid:");
+        newMapGrid.add(liquid, 4, 0);
+        liquidChooser.getItems().addAll("Water", "Lava");
+        liquidChooser.getSelectionModel().selectFirst();
+        newMapGrid.add(liquidChooser, 5, 0);
+        liquidChooser.valueProperty().addListener((ov, value, new_value) -> {
             if (new_value.equals("Water")) {
             } else {
-                for (int i = 0; i <= 129; i++) { // TODO what are these numbers? Throws exception when replacing water with lava in small board; use Terrain.getLevelHeight/Width
-                    levelTerrain.replaceBlock(i, 59, 'W');
+                for (int i = 0; i < levelTerrain.getTerrainWidth()/Terrain.BLOCK_SIZE; i++) {
+                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/Terrain.BLOCK_SIZE-1, 'W');
                 }
-                for (int i = 0; i <= 129; i++) {
-                    levelTerrain.replaceBlock(i, 59, 'L');
+                for (int i = 0; i < levelTerrain.getTerrainWidth()/Terrain.BLOCK_SIZE; i++) {
+                    levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/Terrain.BLOCK_SIZE-1, 'L');
                 }
             }
         });
@@ -299,85 +391,60 @@ public class CustomizeWindow extends Application {
             }
         });
         initializeLevelEditor();
-        stone.setGraphic(new ImageView(new Image("file:resources/terrain/stones.png")));
-        stone.setOnAction(e -> {
-            chosenTerrainType = 'S';
-        });
-        mouseOverTerrain(stone, "Stone");
+        stone.setGraphic(new ImageView(new Image(img_path + "stones.png")));
+        actionForTerrainButton(stone, "Stone", 'S');
         selectionGrid.add(stone, 0, 0);
-        Button soil = new Button();
-        soil.setGraphic(new ImageView(new Image("file:resources/terrain/soil.png")));
-        soil.setOnAction(e -> {
-            chosenTerrainType = 'E';
-        });
-        mouseOverTerrain(soil, "Soil");
+        soil.setGraphic(new ImageView(new Image(img_path + "soil.png")));
+        actionForTerrainButton(soil, "Soil", 'E');
         selectionGrid.add(soil, 0, 1);
-        Button sand = new Button();
-        sand.setGraphic(new ImageView(new Image("file:resources/terrain/sand.png")));
-        sand.setOnAction(e -> {
-            chosenTerrainType = 's';
-        });
-        mouseOverTerrain(sand, "Sand");
+        sand.setGraphic(new ImageView(new Image(img_path + "sand.png")));
+        actionForTerrainButton(sand, "Sand", 's');
         selectionGrid.add(sand, 0, 2);
-        Button ice = new Button();
-        ice.setGraphic(new ImageView(new Image("file:resources/terrain/ice.png")));
-        ice.setOnAction(e -> {
-            chosenTerrainType = 'I';
-        });
-        mouseOverTerrain(ice, "Ice");
+        ice.setGraphic(new ImageView(new Image(img_path + "ice.png")));
+        actionForTerrainButton(ice, "Ice", 'I');
         selectionGrid.add(ice, 0, 3);
-        Button snow = new Button();
-        snow.setGraphic(new ImageView(new Image("file:resources/terrain/snow.png")));
-        snow.setOnAction(e -> {
-            chosenTerrainType = 'i';
-        });
-        mouseOverTerrain(snow, "Snow");
+        snow.setGraphic(new ImageView(new Image(img_path + "snow.png")));
+        actionForTerrainButton(snow, "Snow", 'i');
         selectionGrid.add(snow, 0, 4);
-        Button rightEdge = new Button();
-        rightEdge.setGraphic(new ImageView(new Image("file:resources/terrain/slant_ground_ri.png")));
-        rightEdge.setOnAction(e -> {
-            chosenTerrainType = '/';
-        });
-        mouseOverTerrain(rightEdge, "Right edge");
+        rightEdge.setGraphic(new ImageView(new Image(img_path + "slant_ground_ri.png")));
+        actionForTerrainButton(rightEdge, "Right edge", '/');
         selectionGrid.add(rightEdge, 0, 5);
-        Button leftEdge = new Button();
-        leftEdge.setGraphic(new ImageView(new Image("file:resources/terrain/slant_ground_le.png")));
-        leftEdge.setOnAction(e -> {
-            chosenTerrainType = '\\';
-        });
-        mouseOverTerrain(leftEdge, "Left edge");
+        leftEdge.setGraphic(new ImageView(new Image(img_path + "slant_ground_le.png")));
+        actionForTerrainButton(leftEdge, "Left edge", '\\');
         selectionGrid.add(leftEdge, 0, 6);
         selectionGrid.add(terrainType, 0, 7, 5, 1);
-        Button eraser = new Button("Eraser");
-        eraser.setOnAction(e -> {
-            chosenTerrainType = ' ';
-        });
-        mouseOverTerrain(eraser, "Erase parts of the map.");
+        actionForTerrainButton(eraser, "Erase parts of the map.", ' ');
         selectionGrid.add(eraser, 0, 11);
-        Button spawnPoint = new Button("Spawn point");
-        spawnPoint.setOnAction(e -> {
-            chosenTerrainType = 'P';
-        });
-        mouseOverTerrain(spawnPoint, "Set a spawn point.");
+        actionForTerrainButton(spawnPoint, "Set a spawn point.", 'P');
         selectionGrid.add(spawnPoint, 0, 12);
-        Button reset = new Button("Reset");
         reset.setOnAction(e -> {
             //Remove all blocks, set to board.png and water
             initializeLevelEditor();
         });
-        mouseOverTerrain(reset, "Remove your masterpiece :(");
+        actionForTerrainButton(reset, "Remove your masterpiece :(", chosenTerrainType);
         selectionGrid.add(reset, 0, 13);
-        Button save = new Button("Save");
         save.setOnAction(e -> {
             CustomizeManager.saveMap(mapToJson(), "levels/" + mapNameField.getText());
             createEditGrid();
             root.setLeft(editGrid);
         });
-        mouseOverTerrain(save, "Save the map.");
+        actionForTerrainButton(save, "Save the map.", chosenTerrainType);
         selectionGrid.add(save, 0, 14);
-        chosenTerrainType = 'S';
+        Text brush = new Text("Brush width: ");
+        selectionGrid.add(brush, 1, 0);
+        brushWidth.setOrientation(Orientation.VERTICAL);
+        brushWidth.setShowTickLabels(true);
+        brushWidth.setShowTickMarks(true);
+        brushWidth.setMinorTickCount(0);
+        brushWidth.setMajorTickUnit(2);
+        brushWidth.setSnapToTicks(true);
+        brushWidth.valueProperty().addListener(new ChangeListener<Number>() {
+            public void changed(ObservableValue<? extends Number> ov, Number old_val, Number new_val) {
+                chosenBrushWidth = new_val.intValue();
+            }
+        });
+        selectionGrid.add(brushWidth, 1, 1, 1, 4);
         newMapPane.setRight(selectionGrid);
-        ToolTipManager.sharedInstance().setInitialDelay(0);
     }
 
     private void startCheat() {
@@ -497,7 +564,15 @@ public class CustomizeWindow extends Application {
         }
     }
 
-    private void mouseOverTerrain(Button terrainButton, String terrain) {
+    /**
+     * This method add EventHandlers to every button in selectionGrid. When the mouse is entering a button,
+     * a text is displayed giving information about the button. Exiting the button the text disappears. Pressing an
+     * terrainButton will change the chosen terrain type.
+     * @param terrainButton the button to add EventHandlers to
+     * @param terrain the text to be shown when the mouse is over terrainButton
+     * @param character the character that is used in Terrain to draw the right block
+     */
+    private void actionForTerrainButton(Button terrainButton, final String terrain, char character) {
         terrainButton.addEventHandler(MouseEvent.MOUSE_ENTERED,
                 new EventHandler<MouseEvent>() {
                     @Override public void handle(MouseEvent e) {
@@ -511,8 +586,21 @@ public class CustomizeWindow extends Application {
                 terrainType.setText("");
             }
         });
+        String terrainToUse = terrain.replaceAll("\\s","");
+        if (terrainButton!=reset && terrainButton!=save) {
+            terrainButton.setOnAction(e -> {
+                chosenTerrainType = character;
+                image = new Image(img_path + terrainToUse.toLowerCase() + ".png");
+                imageView.setImage(image);
+            });
+        }
     }
 
+    /**
+     * Creates the drawing area. It's a stack of background, cursor and levelTerrain. Clicking or dragging will call
+     * {@link de.hhu.propra.team61.objects.Terrain#replaceBlock(int, int, char)} and draw the chosen terrain type.
+     * The cursor is set to none, imageView is following the mouse to occur as cursor.
+     */
     private void initializeLevelEditor() {
         try {
             levelTerrain = new Terrain(TerrainManager.load(chosenMap), true);
@@ -521,9 +609,13 @@ public class CustomizeWindow extends Application {
             scrollPane.setMaxHeight(560);
 
             //anchor the editor to the bottom left corner (ScrollPane cannot do that)
+            anchorPane = new AnchorPane();
             AnchorPane.setBottomAnchor(levelTerrain, 0.0);
             AnchorPane.setLeftAnchor(levelTerrain, 0.0);
-            anchorPane.getChildren().add(levelTerrain);
+            forImageView = new Pane();
+            forImageView.setMaxSize(745, 560);
+            forImageView.getChildren().add(imageView);
+            anchorPane.getChildren().addAll(forImageView, levelTerrain);
             scrollPane.setId("scrollPane");
             scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
                 anchorPane.setPrefSize(Math.max(levelTerrain.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(levelTerrain.getBoundsInParent().getMaxY(), newBounds.getHeight()))
@@ -536,38 +628,85 @@ public class CustomizeWindow extends Application {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        levelTerrain.setOnMouseClicked(mouseEvent -> {
-            int x = (int)mouseEvent.getX()/BLOCK_SIZE;
-            int y = (int)mouseEvent.getY()/BLOCK_SIZE;
-            //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing fluid
-            if (y < levelTerrain.getTerrainHeight()/BLOCK_SIZE && x < levelTerrain.getTerrainWidth()/BLOCK_SIZE && y >= 0 && x >= 0) {
-                levelTerrain.replaceBlock(x, y, chosenTerrainType);
+        levelTerrain.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                draw(mouseEvent);
             }
         });
-        levelTerrain.setOnMouseDragged(mouseEvent -> { // TODO code duplication, move to function
-            int x = (int) mouseEvent.getX() / BLOCK_SIZE;
-            int y = (int) mouseEvent.getY() / BLOCK_SIZE;
-            if (y < levelTerrain.getTerrainHeight()/BLOCK_SIZE && x < levelTerrain.getTerrainWidth()/BLOCK_SIZE && y >= 0 && x >= 0) {
-                levelTerrain.replaceBlock(x, y, chosenTerrainType);
+        levelTerrain.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                draw(mouseEvent);
+            }
+        });
+        levelTerrain.setCursor(Cursor.NONE);
+        levelTerrain.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                int x = (int) mouseEvent.getX();
+                int y = (int) mouseEvent.getY();
+                imageView.setLayoutX(x);
+                imageView.setLayoutY(y);
+                levelTerrain.setCursor(Cursor.NONE);
             }
         });
     }
 
+    /**
+     * Gets position of the mouse-click and draws block using {@link de.hhu.propra.team61.objects.Terrain#replaceBlock(int, int, char)}.
+     * First checks if user dragged the mouse outside of the drawing area to avoid an IndexOutOfBoundsException.
+     * @param mouseEvent event that contains information about the position of the mouse
+     */
+    private void draw(MouseEvent mouseEvent) {
+        int x = (int)mouseEvent.getX()/Terrain.BLOCK_SIZE;
+        int y = (int)mouseEvent.getY()/Terrain.BLOCK_SIZE;
+        //Check to avoid IndexOutOfBoundsException (tries to replace block that doesn't exist) & erasing liquid
+        if (chosenTerrainType != 'P') {
+            for (int i = x - (chosenBrushWidth / 2); i <= x + (chosenBrushWidth / 2); i++) {
+                for (int j = y - (chosenBrushWidth / 2); j <= y + (chosenBrushWidth / 2); j++) {
+                    if (j < (levelTerrain.getTerrainHeight() - 1) / Terrain.BLOCK_SIZE && i < levelTerrain.getTerrainWidth() / Terrain.BLOCK_SIZE && j >= 0 && i >= 0) {
+                        levelTerrain.replaceBlock(i, j, chosenTerrainType);
+                    }
+                }
+            }
+        } else {
+            if (y < (levelTerrain.getTerrainHeight() - 1) / Terrain.BLOCK_SIZE && x < levelTerrain.getTerrainWidth() / Terrain.BLOCK_SIZE && y >= 0 && x >= 0) {
+                levelTerrain.replaceBlock(x, y, chosenTerrainType);
+            }
+        }
+    }
+
+    /**
+     * Calls method {@link #fromJson(String, Boolean)} to load team chosen to edit.
+     * @param teamName name of the team to load
+     */
     private void editTeam(String teamName) {
         fromJson(teamName, true);
         root.setLeft(newTeamGrid);
     }
 
+    /**
+     * Calls method {@link #fromJson(String, Boolean)} to load game style chosen to edit.
+     * @param styleName name of the game style to load
+     */
     private void editStyle(String styleName) {
         fromJson(styleName, false);
         root.setLeft(newGameStyleGrid);
     }
 
+    /**
+     * Calls method {@link de.hhu.propra.team61.io.TerrainManager#getAvailableTerrains()} to search for existing levels
+     * @return ArrayList of available levels
+     */
     private ArrayList<String> getLevels() {
         ArrayList<String> levels = TerrainManager.getAvailableTerrains();
         return levels;
     }
 
+    /**
+     * searches for the available background images
+     */
     private void getBackgroundImages() {
         ArrayList<String> backgroundImages = CustomizeManager.getAvailableBackgrounds();
         for (int i=0; i<backgroundImages.size(); i++) {
@@ -576,6 +715,10 @@ public class CustomizeWindow extends Application {
         imageChooser.getSelectionModel().selectFirst();
     }
 
+    /**
+     * Searches for existing teams and adds a button for each team. Clicking one button will call {@link #editTeam(String)}.
+     * Also adds possibility to delete a team.
+     */
     private void getTeams() {
         ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
         for (int i=0; i<availableTeams.size(); i++) {
@@ -595,6 +738,10 @@ public class CustomizeWindow extends Application {
         }
     }
 
+    /**
+     * Searches for existing game styles and adds a button for each style. Clicking one button will call {@link #editStyle(String)}.
+     * Also adds possibility to delete a game style.
+     */
     private void getGameStyles() {
         ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
         for (int i=0; i<availableGameStyles.size(); i++) {
@@ -614,8 +761,13 @@ public class CustomizeWindow extends Application {
         }
     }
 
+    /**
+     * Searches for existing levels and adds a button for each level. Clicking one button will call
+     * {@link #initializeLevelEditor()} and load the chosen level into the editor.
+     * Also adds possibility to delete a level.
+     */
     private void getMaps() {
-        ArrayList<String> availableMaps = CustomizeManager.getAvailableMaps();
+        ArrayList<String> availableMaps = CustomizeManager.getAvailableLevels();
         for (int i=0; i<availableMaps.size(); i++) {
             Button chooseMapToEdit = new Button(availableMaps.get(i));
             final int finalI = i;
@@ -636,6 +788,10 @@ public class CustomizeWindow extends Application {
         }
     }
 
+    /**
+     * Deletes a file.
+     * @param fileName name of the file to be deleted
+     */
     private void deleteFile(String fileName) {
         File file = new File("resources/"+fileName);
         if (file.delete()){
@@ -645,6 +801,10 @@ public class CustomizeWindow extends Application {
         root.setLeft(editGrid);
     }
 
+    /**
+     * Saves settings for the created team.
+     * @return JSON-Object that contains all settings for the created team
+     */
     private JSONObject teamToJson() {
         JSONObject output = new JSONObject();
         output.put("name", name.getText());
@@ -658,21 +818,27 @@ public class CustomizeWindow extends Application {
         return output;
     }
 
+    /**
+     * Saves settings for the created game style.
+     * @return JSON-Object that contains all settings for the created game style
+     */
     private JSONObject styleToJson() {
         JSONObject output = new JSONObject();
         output.put("name", styleNameField.getText());
         output.put("team-size", sizeField.getText());
         output.put("map", mapChooser.getValue());
-        JSONArray weapons = new JSONArray();
-        for (int i=0; i<weaponNames.size(); i++) {
-            JSONObject weapon = new JSONObject();
-            weapon.put("weapon"+(i+1), (int) weaponSliders.get(i).getValue());
-            weapons.put(weapon);
+        JSONArray inventory = new JSONArray();
+        for (int i=0; i< itemNames.size(); i++) {
+            inventory.put((int) itemSliders.get(i).getValue());
         }
-        output.put("weapons", weapons);
+        output.put("inventory", inventory);
         return output;
     }
 
+    /**
+     * Saves the created level and additional settings as background music.
+     * @return JSON-Object that contains all settings for the created level + the level itself
+     */
     private JSONObject mapToJson() {
         JSONObject output = new JSONObject();
         output.put("background", imageChooser.getValue());
@@ -682,6 +848,11 @@ public class CustomizeWindow extends Application {
         return output;
     }
 
+    /**
+     * Loads settings for either a chosen game style or a chosen team into the GUI-elements which can be edited afterwards.
+     * @param file File to load settings from
+     * @param choseTeam boolean to indicate whether a team or a game style was chosen
+     */
     private void fromJson(String file, Boolean choseTeam) {
         if (choseTeam) {
             JSONObject savedTeam = CustomizeManager.getSavedSettings("teams/" + file);
@@ -711,49 +882,60 @@ public class CustomizeWindow extends Application {
             if (savedStyle.has("map")) {
                 mapChooser.setValue(savedStyle.getString("map"));
             }
-            if (savedStyle.has("weapons")) {
-                JSONArray weapons = savedStyle.getJSONArray("weapons");
-                for (int i=0; i<weaponNames.size(); i++) {
-                    weaponSliders.get(i).setValue(weapons.getJSONObject(i).getInt("weapon" + (i + 1)));
-                    weaponCheckBoxes.get(i).setSelected(weapons.getJSONObject(i).getInt("weapon" + (i + 1))>0);
+            if (savedStyle.has("inventory")) {
+                JSONArray inventory = savedStyle.getJSONArray("inventory");
+                for (int i=0; i< itemNames.size(); i++) {
+                    itemSliders.get(i).setValue(inventory.getInt(i));
+                    itemCheckBoxes.get(i).setSelected(inventory.getInt(i)>0);
                 }
             }
         }
     }
 
+    /**
+     * Initializes the list of items that can be changed for a game style. Creates a CheckBox and a Slider for each item
+     * and sets them to default values.
+     */
     private void initializeArrayLists() {
         for (int i=0; i<6; i++) {
             figureNames.add(new TextField("Character" + (i+1)));
             newTeamGrid.add(figureNames.get(i), 0, i+3);
         }
-        weaponNames.add("Bazooka");
-        weaponNames.add("Grenade");
-        weaponNames.add("Pistol");
-        weaponNames.add("Poisoned arrow");
-        for (int i=0; i<weaponNames.size(); i++) {
-            weaponCheckBoxes.add(new CheckBox(weaponNames.get(i)));
-            weaponCheckBoxes.get(i).setSelected(true);
+        itemNames.add("Bazooka");
+        itemNames.add("Grenade");
+        itemNames.add("Pistol");
+        itemNames.add("Poisoned arrow");
+        itemNames.add("Medipack");
+        itemNames.add("Rifle");
+        itemNames.add("Banana-Bomb");
+        for (int i=0; i< itemNames.size(); i++) {
+            itemCheckBoxes.add(new CheckBox(itemNames.get(i)));
+            itemCheckBoxes.get(i).setSelected(true);
             final int finalI = i;
-            weaponCheckBoxes.get(i).selectedProperty().addListener(new ChangeListener<Boolean>() {
+            itemCheckBoxes.get(i).selectedProperty().addListener(new ChangeListener<Boolean>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                     if (!newValue) {
-                        weaponSliders.get(finalI).setValue(0);
+                        itemSliders.get(finalI).setValue(0);
                     } else {
-                        weaponSliders.get(finalI).setValue(50);
+                        itemSliders.get(finalI).setValue(50);
                     }
                 }
             });
-            weaponsGrid.add(weaponCheckBoxes.get(i), 0, i + 5);
+            itemsGrid.add(itemCheckBoxes.get(i), 0, i + 6);
         }
-        for (int i=0; i<weaponNames.size(); i++) {
-            weaponSliders.add(new Slider(0, 100, 50));
-            weaponSliders.get(i).setShowTickMarks(true);
-            weaponSliders.get(i).setShowTickLabels(true);
-            weaponsGrid.add(weaponSliders.get(i), 1, i+5);
+        for (int i=0; i<itemNames.size(); i++) {
+            itemSliders.add(new Slider(0, 100, 50));
+            itemSliders.get(i).setShowTickMarks(true);
+            itemSliders.get(i).setShowTickLabels(true);
+            itemSliders.get(i).setBlockIncrement(50);
+            itemsGrid.add(itemSliders.get(i), 1, i + 6, 3, 1);
         }
     }
 
+    /**
+     * Sets all TextFields etc. back to default values when another menue-point is clicked.
+     */
     private void refresh() {
         name.setText("player");
         color.setValue(Color.web("#FF00FF"));
@@ -763,9 +945,9 @@ public class CustomizeWindow extends Application {
         styleNameField.setText("Custom");
         sizeField.setText("4");
         mapChooser.getSelectionModel().selectFirst();
-        for (int i=0; i<weaponNames.size(); i++) {
-            weaponCheckBoxes.get(i).setSelected(true);
-            weaponSliders.get(i).setValue(50);
+        for (int i=0; i< itemNames.size(); i++) {
+            itemCheckBoxes.get(i).setSelected(true);
+            itemSliders.get(i).setValue(50);
         }
         mapNameField.setText("Custom map");
     }
