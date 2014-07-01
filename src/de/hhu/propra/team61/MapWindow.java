@@ -440,13 +440,13 @@ public class MapWindow extends Application implements Networkable {
                                     }
                                 }
                             }
-
-                            // sleep thread, and assure constant frame rate
-                            now = System.currentTimeMillis();
-                            sleep = Math.max(0, (1000 / FPS) - (now - before));
-                            Thread.sleep(sleep);
-                            before = System.currentTimeMillis();
                         }
+
+                        // sleep thread, and assure constant frame rate
+                        now = System.currentTimeMillis();
+                        sleep = Math.max(0, (1000 / FPS) - (now - before));
+                        Thread.sleep(sleep);
+                        before = System.currentTimeMillis();
                     }
                 } catch (InterruptedException e) {
                     System.out.println("moveObjectsThread shut down");
