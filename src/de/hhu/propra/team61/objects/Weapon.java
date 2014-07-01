@@ -192,6 +192,9 @@ public abstract class Weapon extends Item {
                         // TODO IMPORTANT
                     }
                     commandList.add("SET_HP " + t + " " + f + " " + treatedFigure.getHealth());
+                    if(treatedFigure.getHealth() == 0) {
+                        commandList.add("SET_GAME_COMMENT 0 " + generateKillComment(treatedFigure.getName()));
+                    }
 
                     //1.2 Set conditions
                     if(poisons){ commandList.add("CONDITION" + " " + "POISON" + " "  + t + " " + f + " " + "true"); }
@@ -210,7 +213,21 @@ public abstract class Weapon extends Item {
         return commandList;
     }
 
-    //Getter and Setter
+    /**
+     * Generates a random game comment for the death of a figure, depending on its name
+     * @param name the name of the killed figure
+     * @return a (funny) game comment
+     */
+    private String generateKillComment(String name) {
+        name = name.toLowerCase();
+        if(name.startsWith("c") || name.startsWith("k") || name.endsWith("y") || name.endsWith("i") || name.endsWith("e")) {
+            return "Oh my God, they killed " + name + "! You bastards!";
+        } else {
+            return name + " passed on";
+        }
+    }
+
+     //Getter and Setter
     public String getProjectileImage() { return projectileImg; } //TODO MOVE?
     public double getAngle() { return angle; }
     public int getMass() { return mass; }

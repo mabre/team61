@@ -5,6 +5,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 
 import java.util.ArrayList;
 import java.util.Timer;
@@ -33,7 +34,7 @@ public class ScrollingLabel extends StackPane {
     /** regardless of the length, a line is visible at least this time (in seconds) */
     private static int MIN_TIMEOUT = 2;
     /** the time a line is shown depends on the letters in the line */
-    private static int LETTERS_PER_SECOND = 15;
+    private static int LETTERS_PER_SECOND = 10;
 
     /** lines currently shown in the label */
     private ArrayList<LabelLine> lines = new ArrayList<>();
@@ -43,7 +44,7 @@ public class ScrollingLabel extends StackPane {
     /**
      * A label which calls {@link #remove(de.hhu.propra.team61.gui.ScrollingLabel.LabelLine)} after a certain timeout.
      */
-    private class LabelLine extends Label {
+    private class LabelLine extends Text {
         /** low priority lines are overwritten right away */
         boolean lowPriority;
         /** on timeout, this line is removed */
@@ -55,7 +56,10 @@ public class ScrollingLabel extends StackPane {
          * @param lowPriority whether the line is overwritten right away when a new line is added
          */
         LabelLine(String text, boolean lowPriority) {
-            this.setStyle("-fx-font: 16px Verdana;"); // TODO improve and move to css file
+            this.setStyle("-fx-font: 16px Verdana;" +
+                    "-fx-fill: linear-gradient(to bottom, repeat, orange 0%, red 100%);" +
+                    "-fx-stroke: black;" +
+                    "-fx-stroke-width: .3;"); // TODO improve and move to css file
             this.lowPriority = lowPriority;
             setText(text);
             final int timeout = Math.max(MIN_TIMEOUT, text.length() / LETTERS_PER_SECOND) * 1000;
@@ -99,7 +103,7 @@ public class ScrollingLabel extends StackPane {
 
         if(lines.size() > 1) { // new label is last element
             LabelLine lastLine = lines.get(lines.size() - 2);
-            newLine.setTranslateY(lastLine.getTranslateY() + lastLine.getHeight());
+            newLine.setTranslateY(lastLine.getTranslateY() + lastLine.prefHeight(1000));
         }
     }
 
@@ -128,7 +132,7 @@ public class ScrollingLabel extends StackPane {
             getChildren().remove(line);
 //            lines.remove(lineIndex);
             for(int i=lineIndex; i < lines.size(); i++) {
-                lines.get(i).setTranslateY(lines.get(i).getTranslateY() - line.getHeight());
+                lines.get(i).setTranslateY(lines.get(i).getTranslateY() - line.prefHeight(1000));
             }
         });
     }
