@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public class Shotgun extends Weapon { //ToDo Override shoot to make two shots possible
     private final static String  NAME           = "Shotgun";
-    public final static String  DESCRIPTION    = "Right into the face! - twice";
+    public final static String  DESCRIPTION    = "Right into the face!"; // TODO - twice
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/shotgun.png";

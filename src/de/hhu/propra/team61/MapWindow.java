@@ -8,8 +8,6 @@ import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
-import de.hhu.propra.team61.io.Settings;
-import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -37,10 +35,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-
-import javax.sound.sampled.*;
 
 
 import java.util.ArrayList;
@@ -737,6 +732,7 @@ public class MapWindow extends Application implements Networkable {
      */
     private void shutdown() {
         VorbisPlayer.stop();
+        ingameLabel.stopAllTimers();
 
         if(moveObjectsThread != null) moveObjectsThread.interrupt();
 
@@ -942,6 +938,9 @@ public class MapWindow extends Application implements Networkable {
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
                 VorbisPlayer.stop();
+
+
+                ingameLabel.stopAllTimers();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
                 GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;

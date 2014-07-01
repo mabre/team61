@@ -36,7 +36,9 @@ public class ScrollingLabel extends StackPane {
     private static int LETTERS_PER_SECOND = 15;
 
     /** lines currently shown in the label */
-    ArrayList<LabelLine> lines = new ArrayList<>();
+    private ArrayList<LabelLine> lines = new ArrayList<>();
+    /** lines used to be shown in the label, needed to stop all timer threads // TODO don't know why */
+    private ArrayList<LabelLine> oldLines = new ArrayList<>();
 
     /**
      * A label which calls {@link #remove(de.hhu.propra.team61.gui.ScrollingLabel.LabelLine)} after a certain timeout.
@@ -111,6 +113,7 @@ public class ScrollingLabel extends StackPane {
                 lastLine.stopRemoveTimer();
                 getChildren().remove(lastLine);
                 lines.remove(lastLine);
+                oldLines.add(lastLine);
             }
         }
     }
@@ -120,14 +123,26 @@ public class ScrollingLabel extends StackPane {
      * @param line the line to be removed.
      */
     private void remove(LabelLine line) {
-        Platform.runLater(() -> {
+        Platform.runLater(() -> { // wird das ausgeführt, wenn fx geschlossen?
             int lineIndex = lines.indexOf(line);
             getChildren().remove(line);
-            lines.remove(lineIndex);
+//            lines.remove(lineIndex);
             for(int i=lineIndex; i < lines.size(); i++) {
                 lines.get(i).setTranslateY(lines.get(i).getTranslateY() - line.getHeight());
             }
         });
+    }
+
+    /**
+     * Stops all timers and threads.
+     */
+    public void stopAllTimers() {
+        for(LabelLine line: lines) {
+            line.stopRemoveTimer();
+        }
+        for(LabelLine line: oldLines) {
+            line.stopRemoveTimer();
+        }
     }
 
 }
