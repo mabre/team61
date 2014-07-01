@@ -46,6 +46,7 @@ public class Terrain extends GridPane {
     private static final boolean GRID_ENABLED = false;
     /** the size of a block within the terrain; you usually do NOT want to use this outside this class (notable exception: level editor) */
     public final static int BLOCK_SIZE = 8;
+    private final char DESTROYED_TERRAIN = '#';
 
     /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
@@ -439,7 +440,6 @@ public class Terrain extends GridPane {
      * @param explosionPower value to determine (int)if block (blockX,blockY) is destroyed
      */
     private void explode(ArrayList<String> commands, int blockX, int blockY, int explosionPower){
-        final char DESTROYED_TERRAIN = '#';
         char replacement = DESTROYED_TERRAIN;
 
         if (blockY < terrain.size() && blockY >=0 && blockX < terrain.get(blockY).size()&& blockX >=0
@@ -472,7 +472,7 @@ public class Terrain extends GridPane {
 
                     if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
-//                            replaceBlock(blockX, blockY, '\\'); // influences further calculation, apply this on client // TODO quite hacky
+//                            replaceBlock(blockX, blockY, '\\'); // influences further calculation, apply this on client // TODO quite hacky // original idea: flooding does not work, now fixed above
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
                         } else if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
 //                            replaceBlock(blockX, blockY, '/');
@@ -653,7 +653,7 @@ public class Terrain extends GridPane {
             }
             if(foundLiquidInRow != ' ') {
                 for(int column = 0; column < terrain.get(row).size(); column++) {
-                    if(terrain.get(row).get(column).isSky()) {
+                    if(terrain.get(row).get(column).isSky() || terrain.get(row).get(column).getType() == DESTROYED_TERRAIN) {
                         replaceBlock(column, row, foundLiquidInRow);
                         commands.add("REPLACE_BLOCK " + column + " " + row + " " + foundLiquidInRow);
                     }
