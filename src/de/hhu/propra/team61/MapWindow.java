@@ -243,6 +243,16 @@ public class MapWindow extends Application implements Networkable {
      * creates the stage, so that everything is visible
      */
     private void initialize() {
+        for(int i=0; i<teams.size(); i++) { // TODO workaround till we have a sensible warning
+            if(teams.get(i).getNumberOfLivingFigures() == 0 ||
+                 (i>0 && teams.get(i).getNumberOfLivingFigures() != teams.get(i-1).getNumberOfLivingFigures())) {
+                System.err.println("Team " + i + " has " + teams.get(i).getNumberOfLivingFigures() + " living figures. Not enough spawn points?");
+                shutdown();
+                sceneController.switchToMenue();
+                return;
+            }
+        }
+
         sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
             sceneController.switchToMenue();

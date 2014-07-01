@@ -52,7 +52,8 @@ public class Team extends StackPane {
         figures = new ArrayList<>();
         for (int j=0; j < spawnPoints.size(); j++) {
             Point2D sp = spawnPoints.get(j);
-            Figure f = new Figure(figureNames.getJSONObject(j).getString("figure"), chosenFigure, 100, 0, false, false, false); // TODO @Kegny create sensible default constructor
+            String figureName = j < figureNames.length() ? figureNames.getJSONObject(j).getString("figure") : "UNNAMED#"+j;
+            Figure f = new Figure(figureName, chosenFigure, 100, 0, false, false, false); // TODO @Kegny create sensible default constructor
             f.setColor(this.color);
             figures.add(f);
             f.setPosition(sp);
