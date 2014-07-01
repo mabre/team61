@@ -25,7 +25,7 @@ public class OptionsWindow extends Application {
 
     /**
      * Loads GUI from FXML-file.
-     * @param sceneController used to switch back to menue
+     * @param sceneController used to switch back to menu
      * @throws IOException in case the FXML-file does not exist
      */
     public OptionsWindow(SceneController sceneController) throws IOException {

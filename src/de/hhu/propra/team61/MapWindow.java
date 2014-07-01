@@ -245,7 +245,7 @@ public class MapWindow extends Application implements Networkable {
     private void initialize() {
         sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
-            sceneController.switchToMenue();
+            sceneController.switchToMenu();
         });
         gamePane = new BorderPane();
         // contains the terrain with figures
@@ -474,7 +474,7 @@ public class MapWindow extends Application implements Networkable {
         pauseGrid.setHalignment(cont, HPos.CENTER);
         Button exit = new Button("End game");
         exit.setOnAction(e -> {
-             sceneController.switchToMenue();
+             sceneController.switchToMenu();
              shutdown();
         });
         pauseGrid.add(exit, 1, 1);

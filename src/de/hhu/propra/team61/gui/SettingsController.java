@@ -120,7 +120,7 @@ public class SettingsController {
 
     @FXML
     public void handleBack() {
-        sceneController.switchToMenue();
+        sceneController.switchToMenu();
     }
 
     /**

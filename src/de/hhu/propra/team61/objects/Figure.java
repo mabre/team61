@@ -246,7 +246,7 @@ public class Figure extends StackPane {
         health -= damage - (armor*damage);
         if(health <= 0) {
             health = 0;
-            Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+            Image image = new Image("file:resources/spawnpoint.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
             Platform.runLater(() -> figureImage.setImage(image));
             setPosition(GRAVEYARD);
             throw new DeathException(this);

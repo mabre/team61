@@ -55,7 +55,7 @@ public class Afrobob extends Application {
         Scene scene = new Scene(root, 1000, 600);
         mainwindow.setScene(scene);
         scene.getStylesheets().add("file:resources/layout/css/menue.css");
-        sceneController.setMenueScene(scene);
+        sceneController.setMenuScene(scene);
         menueController.setMainWindow(mainwindow, sceneController);
         mainwindow.show();
     }

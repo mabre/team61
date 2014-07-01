@@ -19,7 +19,7 @@ import javafx.util.StringConverter;
 
 public class OptionController {
 
-    /** to switch back to menue */
+    /** to switch back to menu */
     private SceneController sceneController;
     /** contains image */
     @FXML private ImageView imageView = new ImageView();
@@ -71,7 +71,7 @@ public class OptionController {
     public void handleOptionExit() {
         Settings.savePrefs(toJson());
         System.out.println("OptionsWindow: saved settings");
-        sceneController.switchToMenue();
+        sceneController.switchToMenu();
     }
 
     /**

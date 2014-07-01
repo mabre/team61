@@ -31,10 +31,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import javax.swing.*;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -62,7 +58,7 @@ public class CustomizeWindow extends Application {
     ///Team editor
     /** grid for all GUI-elements for creating a team */
     private CustomGrid newTeamGrid = new CustomGrid();
-    /** contains names of the team's fígures */
+    /** contains names of the team's figures */
     private ArrayList<TextField> figureNames = new ArrayList<>();
     /** TextField to enter wanted team name */
     private TextField name = new TextField("player");
@@ -202,7 +198,7 @@ public class CustomizeWindow extends Application {
         Button backToMenue = new Button("Go back to menue");
         backToMenue.setOnAction(e -> {
             stopCheat();
-            sceneController.switchToMenue();
+            sceneController.switchToMenu();
         });
         topBox.getChildren().addAll(edit, newTeam, newGameStyle, newMap, backToMenue);
         topBox.setAlignment(Pos.CENTER);
@@ -425,7 +421,7 @@ public class CustomizeWindow extends Application {
         selectionGrid.add(terrainType, 0, 7, 5, 1);
         actionForTerrainButton(eraser, "Erase parts of the map.", ' ');
         selectionGrid.add(eraser, 0, 11);
-        actionForTerrainButton(spawnPoint, "Set a spawn point.", 'P');
+        actionForTerrainButton(spawnPoint, "Set a spawn point", 'P');
         selectionGrid.add(spawnPoint, 0, 12);
         reset.setOnAction(e -> {
             //Remove all blocks, set to board.png and water
@@ -600,7 +596,15 @@ public class CustomizeWindow extends Application {
         if (terrainButton!=reset && terrainButton!=save) {
             terrainButton.setOnAction(e -> {
                 chosenTerrainType = character;
-                image = new Image(img_path + terrainToUse.toLowerCase() + ".png");
+                if (terrainButton == eraser) {
+                    image = new Image(img_path + "eraser.png");
+                } else {
+                  if (terrainButton == spawnPoint) {
+                      image = new Image(img_path + "spawnpoint.png");
+                  } else {
+                      image = new Image(img_path + terrainToUse.toLowerCase() + ".png");
+                  }
+                }
                 imageView.setImage(image);
             });
         }
@@ -685,6 +689,8 @@ public class CustomizeWindow extends Application {
                 levelTerrain.replaceBlock(x, y, chosenTerrainType);
             }
         }
+        imageView.setLayoutX(x*Terrain.BLOCK_SIZE);
+        imageView.setLayoutY(y*Terrain.BLOCK_SIZE);
     }
 
     /**

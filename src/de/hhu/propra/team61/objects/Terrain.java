@@ -538,6 +538,10 @@ public class Terrain extends GridPane {
         }
     }
 
+    /**
+     * Gets the name of the background image for the chosen level.
+     * @return name of the background image
+     */
     public String getBackgroundImage() {
         return backgroundImage;
     }
