@@ -59,6 +59,8 @@ public class Terrain extends GridPane {
     /** a list of figures with which objects can collide */
     private ArrayList<Figure> figures;
     private String musicFile;
+    /** the background image for the chosen level */
+    private String backgroundImage;
     /** a list of crates with which //TODO all objects cann collide, figures pick up */
     private ArrayList<Crate> supplyDrops = new ArrayList<>();
 
@@ -89,6 +91,7 @@ public class Terrain extends GridPane {
     public Terrain(JSONObject terrain, boolean renderSpawnPoints) {
         load(terrain, renderSpawnPoints);
         musicFile = terrain.getString("music");
+        backgroundImage = terrain.getString("background");
         figures = new ArrayList<>();
     }
 
@@ -533,6 +536,10 @@ public class Terrain extends GridPane {
         } else {
             return "resources/audio/BGM/"+musicFile;
         }
+    }
+
+    public String getBackgroundImage() {
+        return backgroundImage;
     }
 
     /**

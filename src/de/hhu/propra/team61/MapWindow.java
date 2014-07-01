@@ -281,7 +281,7 @@ public class MapWindow extends Application implements Networkable {
         gamePane.setTop(topLine);
         gamePane.setCenter(ingameLabel);
         createPausePane();
-        rootPane.getChildren().addAll(gamePane, pausePane);
+        rootPane.getChildren().addAll(drawBackgroundImage(), gamePane, pausePane);
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -495,6 +495,13 @@ public class MapWindow extends Application implements Networkable {
         pauseGrid.add(shortcutsList, 0, 5, 2, 8);
         pausePane.setId("pausePane");
         pausePane.setCenter(pauseGrid);
+    }
+
+    private Pane drawBackgroundImage() {
+        String image = "file:resources/levels/"+terrain.getBackgroundImage();
+        Pane backgroundPane = new Pane();
+        backgroundPane.setStyle("-fx-background-image: url('" + image + "')");
+        return backgroundPane;
     }
 
     /**

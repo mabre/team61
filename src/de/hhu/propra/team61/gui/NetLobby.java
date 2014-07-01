@@ -194,6 +194,11 @@ public class NetLobby extends Application implements Networkable {
         sizeField.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if (Integer.parseInt(newValue) > 6) {
+                    sizeField.setText("6");
+                } else if (Integer.parseInt(newValue) < 1) {
+                    sizeField.setText("1");
+                }
                 server.send(getStateForNewClient());
             }
         });

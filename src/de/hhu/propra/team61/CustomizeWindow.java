@@ -271,6 +271,16 @@ public class CustomizeWindow extends Application {
         newGameStyleGrid.add(styleNameField, 1, 2);
         Text sizeText = new Text("Team-Size:");
         sizeText.setFont(Font.font("Verdana", 15));
+        sizeField.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if (Integer.parseInt(newValue) > 6) {
+                    sizeField.setText("6");
+                } else if (Integer.parseInt(newValue) < 1) {
+                    sizeField.setText("1");
+                }
+            }
+        });
         newGameStyleGrid.add(sizeText, 0, 3);
         newGameStyleGrid.add(sizeField, 1, 3);
         Text chooseMapText = new Text("Choose map:");

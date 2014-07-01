@@ -105,7 +105,7 @@ public class OptionController {
         JSONObject output = new JSONObject();
         output.put("volumeMusic", volumeMusic.getValue());
         output.put("volumeEffects", volumeEffects.getValue());
-        if (suddenDeath.getText().equals("") || !suddenDeath.getText().matches("[0-9]*")) {
+        if (suddenDeath.getText().equals("") || !suddenDeath.getText().matches("[0-9]*") || Integer.parseInt(suddenDeath.getText()) < 0) {
             output.put("sd", String.valueOf(15));
         } else {
             output.put("sd", suddenDeath.getText());
