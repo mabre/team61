@@ -73,8 +73,8 @@ public class TerrainBlock extends ImageView {
     /** damage resistance of liquids (liquids cannot be destroyed) */
     private final static double RESISTANCE_OF_LIQUIDS = 99999999;
     //Blocks
-    /** damage resistance of earth */
-    private final static double RESISTANCE_OF_EARTH = 25; // TODO drop OF_ ?
+    /** damage resistance of soil */
+    private final static double RESISTANCE_OF_SOIL = 25; // TODO drop OF_ ?
     /** damage resistance of sand */
     private final static double RESISTANCE_OF_SAND = 20;
     /** damage resistance of snow */
@@ -89,8 +89,8 @@ public class TerrainBlock extends ImageView {
 
     /** friction factor for ice */
     private final static double ICE_FRICTION = 2; // TODO rename to FRICTION_ICE
-    /** friction factor for earth */
-    private final static double EARTH_FRICTION = 1;
+    /** friction factor for soil */
+    private final static double SOIL_FRICTION = 1;
     /** friction factor for sand */ // TODO higher value = less friction?
     private final static double SAND_FRICTION = 0.5;
     /** friction factor for liquids */
@@ -277,7 +277,7 @@ public class TerrainBlock extends ImageView {
                     return RESISTANCE_OF_SKY; // return an at least somewhat useful information
                 }
             case 'S': return RESISTANCE_OF_STONE;
-            case 'E': return RESISTANCE_OF_EARTH;
+            case 'E': return RESISTANCE_OF_SOIL;
             case 'I': return RESISTANCE_OF_ICE;
             case 'i': return RESISTANCE_OF_SNOW;
             case 's': return RESISTANCE_OF_SAND;
@@ -367,7 +367,7 @@ public class TerrainBlock extends ImageView {
             case 'I':
                 return ICE_FRICTION;
             case 'E':
-                return EARTH_FRICTION;
+                return SOIL_FRICTION;
             case 'W':
             case 'L':
                 return LIQUID_FRICTION;

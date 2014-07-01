@@ -175,9 +175,8 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * creates new random wind
+     * Creates new random wind.
      * <p>
-<<<<<<< HEAD
      * The maximum wind force depends on the settings chosen by the user. Lower wind forces are more
      * probable; for a maximum speed of 4, the absolute value of the wind force has the following probabilities:
      * <ul>
@@ -203,6 +202,7 @@ public class Terrain extends GridPane {
     }
 
     /**
+     * Gets the magnitude of the current wind vector, with the sign indicating the direction (positive meaning to the right)
      * @return the magnitude of the current wind vector, the sign indicates wind direction
      */
     public double getWindMagnitude() {
@@ -453,7 +453,8 @@ public class Terrain extends GridPane {
                 debugLog("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
-                replaceBlock(blockX,blockY,' '); //Mark as destroyed
+                replaceBlock(blockX,blockY,replacement); //Mark as destroyed
+//                replaceBlock(blockX,blockY,' '); //see below
 
                 // Recursively continue destruction for all directions, OutOfBounds is done on top of this method
                 explode(commands, blockX, blockY + 1, explosionPower);
@@ -467,7 +468,7 @@ public class Terrain extends GridPane {
             } else { // Check if partially enough destructive Force
                 if(explosionPower > resistanceOfBlock * TerrainBlock.MODIFIER_FOR_SLANTS && !terrain.get(blockY).get(blockX).isSky()){ // BUT do not create slants out of air
 
-                    debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
+                    debugLog("now a slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                     if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
