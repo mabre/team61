@@ -528,6 +528,10 @@ public class MapWindow extends Application implements Networkable {
         server.send("ACTIVATE_FIGURE " + currentTeam);
 
         String teamLabelText = "Turn " + turnCount + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        if (teams.get(currentTeam).getCurrentFigure().getHealth() < 30){
+            VorbisPlayer.play("resources/audio/SFX/heartbeat.ogg", false);
+            //TODO insert
+        }
         server.send("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
     }

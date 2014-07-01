@@ -274,10 +274,6 @@ public class Figure extends StackPane {
      */
     public void sufferDamage(int damage) throws DeathException {
         health -= damage - (armor*damage);
-        if (health < 40) {
-            VorbisPlayer.play("resources/audio/SFX/heartbeat.ogg", false);
-            
-        }
         if(health <= 0) {
             health = 0;
             Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
