@@ -21,6 +21,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
@@ -31,6 +35,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -388,14 +393,14 @@ public class CustomizeWindow extends Application {
             } else {
                 switch (keyEvent.getCode()) {
                     case RIGHT:
-                        if(block.getPosition().getX()+8 < levelTerrain.getTerrainWidth())
+                        if (block.getPosition().getX() + 8 < levelTerrain.getTerrainWidth())
                             moveBlock(8, 0);
                         break;
                     case DOWN:
                         moveBlock(0, 16);
                         break;
                     case LEFT:
-                        if(block.getPosition().getX() > 8)
+                        if (block.getPosition().getX() > 8)
                             moveBlock(-8, 0);
                         break;
                     default:
@@ -593,10 +598,12 @@ public class CustomizeWindow extends Application {
     private void actionForTerrainButton(Button terrainButton, final String terrain, char character) {
         terrainButton.addEventHandler(MouseEvent.MOUSE_ENTERED,
                 new EventHandler<MouseEvent>() {
-                    @Override public void handle(MouseEvent e) {
+                    @Override
+                    public void handle(MouseEvent e) {
                         terrainType.setText(terrain);
                     }
-                });
+                }
+        );
         terrainButton.addEventHandler(MouseEvent.MOUSE_EXITED,
         new EventHandler<MouseEvent>() {
         @Override
@@ -639,7 +646,7 @@ public class CustomizeWindow extends Application {
             AnchorPane.setBottomAnchor(levelTerrain, 0.0);
             AnchorPane.setLeftAnchor(levelTerrain, 0.0);
             forImageView = new Pane();
-            forImageView.setMaxSize(745, 560);
+            forImageView.setMaxSize(750, 560);
             forImageView.getChildren().add(imageView);
             anchorPane.getChildren().addAll(forImageView, levelTerrain);
             scrollPane.setId("scrollPane");
@@ -749,6 +756,7 @@ public class CustomizeWindow extends Application {
      */
     private void getTeams() {
         ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
+        ScrollPane teamPane = new ScrollPane();
         Pane teamList = new Pane();
         teamList.getStyleClass().add("list");
         ArrayList<HBox> hboxes = new ArrayList<>();
@@ -773,7 +781,11 @@ public class CustomizeWindow extends Application {
             teamGrid.add(hboxes.get(i), 0, i);
         }
         teamList.getChildren().add(teamGrid);
-        editGrid.add(teamList, 0, 1, 1, 10);
+        teamPane.setContent(teamList);
+        teamPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        teamPane.getStyleClass().add("scrollPane");
+        teamPane.setPrefSize(220, 450);
+        editGrid.add(teamPane, 0, 1, 1, 10);
     }
 
     /**
@@ -782,6 +794,7 @@ public class CustomizeWindow extends Application {
      */
     private void getGameStyles() {
         ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
+        ScrollPane stylePane = new ScrollPane();
         Pane styleList = new Pane();
         styleList.getStyleClass().add("list");
         ArrayList<HBox> hboxes = new ArrayList<>();
@@ -806,7 +819,11 @@ public class CustomizeWindow extends Application {
             styleGrid.add(hboxes.get(i), 0, i);
         }
         styleList.getChildren().add(styleGrid);
-        editGrid.add(styleList, 1, 1, 1, 10);
+        stylePane.setContent(styleList);
+        stylePane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        stylePane.getStyleClass().add("scrollPane");
+        stylePane.setPrefSize(220, 450);
+        editGrid.add(stylePane, 1, 1, 1, 10);
     }
 
     /**
@@ -816,6 +833,7 @@ public class CustomizeWindow extends Application {
      */
     private void getMaps() {
         ArrayList<String> availableMaps = CustomizeManager.getAvailableLevels();
+        ScrollPane mapPane = new ScrollPane();
         Pane mapList = new Pane();
         mapList.getStyleClass().add("list");
         ArrayList<HBox> hboxes = new ArrayList<>();
@@ -843,7 +861,11 @@ public class CustomizeWindow extends Application {
             mapGrid.add(hboxes.get(i), 0, i);
         }
         mapList.getChildren().add(mapGrid);
-        editGrid.add(mapList, 2, 1, 1, 10);
+        mapPane.setContent(mapList);
+        mapPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        mapPane.getStyleClass().add("scrollPane");
+        mapPane.setPrefSize(220, 450);
+        editGrid.add(mapPane, 2, 1, 1, 10);
     }
 
     /**
