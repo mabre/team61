@@ -23,7 +23,7 @@
         <Text text="seconds" GridPane.columnIndex="3" GridPane.rowIndex="6" GridPane.columnSpan="2" />
         <Text text="COMING SOON" GridPane.columnIndex="5" GridPane.rowIndex="6" GridPane.columnSpan="2" />
         <CheckBox fx:id="fallDamage" text="Change round after suffering fall damage" GridPane.columnIndex="0" GridPane.rowIndex="7" GridPane.columnSpan="6" />
-        <Button text="Close" onAction="#handleOptionExit" GridPane.columnIndex="2" GridPane.rowIndex="14" GridPane.halignment="CENTER"/>
+        <Button fx:id="close" text="Close" onAction="#handleOptionExit" GridPane.columnIndex="3" GridPane.rowIndex="14" GridPane.halignment="CENTER" styleClass="mainButton"/>
     </children>
     <padding>
         <Insets bottom="25" left="25" right="25" top="25" />

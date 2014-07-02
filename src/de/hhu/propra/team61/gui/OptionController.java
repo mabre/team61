@@ -54,8 +54,7 @@ public class OptionController {
                 if (n == 0) return "Off";
                 if (n == 1) return "Easy";
                 if (n == 2) return "Normal";
-                if (n == 3) return "Hard";
-                return "You idiot!";
+                return "Hard";
             }
             @Override
             public Double fromString(String s) {

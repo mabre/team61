@@ -236,6 +236,7 @@ public class NetLobby extends Application implements Networkable {
 
         HBox bottomBox = new HBox();
         Button back = new Button("Back");
+        back.getStyleClass().add("mainButton");
         bottomBox.getChildren().addAll(back);
         back.setOnAction(e -> {
             if(serverThread != null) serverThread.interrupt();
@@ -289,6 +290,7 @@ public class NetLobby extends Application implements Networkable {
                 }
             }
         });
+        start.getStyleClass().add("mainButton");
         ready = new Button("Ready");
         ready.setDisable(true); //enabled when disabling spectator mode
         ready.setOnAction(new EventHandler<ActionEvent>() {
@@ -300,6 +302,7 @@ public class NetLobby extends Application implements Networkable {
                 client.send("CLIENT_READY " + toJson());
             }
         });
+        ready.getStyleClass().add("mainButton");
         startBox.setAlignment(Pos.CENTER_RIGHT);
         startBox.setPrefWidth(400);
         if (isHost) {

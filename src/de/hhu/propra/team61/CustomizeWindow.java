@@ -63,12 +63,12 @@ public class CustomizeWindow extends Application {
     /** TextField to enter wanted team name */
     private TextField name = new TextField("player");
     /** ColorPicker to choose wanted team color */
-    private ColorPicker color = new ColorPicker(Color.web("#FF00FF"));
+    private ColorPicker color = new ColorPicker(Color.web("#663366"));
     /** choose penguin or unicorn as the team's figure */
     private ChoiceBox<String> figureChooser = new ChoiceBox<>();
 
     ///Style editor
-    /** grid for all GUI-elements for creating a game styke */
+    /** grid for all GUI-elements for creating a game style */
     private CustomGrid newGameStyleGrid = new CustomGrid();
     /** grid containing elements for changing items */
     private CustomGrid itemsGrid = new CustomGrid();
@@ -170,23 +170,27 @@ public class CustomizeWindow extends Application {
     private void createTopBox() {
         HBox topBox = new HBox(20);
         Button edit = new Button("Edit team/game style/map");
+        edit.getStyleClass().add("mainButton");
         edit.setOnAction(e -> {
             root.getChildren().remove(itemsGrid);
             createEditGrid();
             root.setLeft(editGrid);
         });
         Button newTeam = new Button("Create new team");
+        newTeam.getStyleClass().add("mainButton");
         newTeam.setOnAction(e -> {
             refresh();
             root.setLeft(newTeamGrid);
             root.getChildren().remove(itemsGrid);
         });
         Button newGameStyle = new Button("Create new game style");
+        newGameStyle.getStyleClass().add("mainButton");
         newGameStyle.setOnAction(e -> {
             refresh();
             root.setLeft(newGameStyleGrid);
         });
         Button newMap = new Button("Create new map");
+        newMap.getStyleClass().add("mainButton");
         newMap.setOnAction(e -> {
             refresh();
             root.getChildren().remove(itemsGrid);
@@ -195,12 +199,13 @@ public class CustomizeWindow extends Application {
             root.setLeft(newMapPane);
             scrollPane.requestFocus(); // to make cheat work right away
         });
-        Button backToMenue = new Button("Go back to menue");
-        backToMenue.setOnAction(e -> {
+        Button backToMenu = new Button("Go back to menu");
+        backToMenu.getStyleClass().add("mainButton");
+        backToMenu.setOnAction(e -> {
             stopCheat();
             sceneController.switchToMenu();
         });
-        topBox.getChildren().addAll(edit, newTeam, newGameStyle, newMap, backToMenue);
+        topBox.getChildren().addAll(edit, newTeam, newGameStyle, newMap, backToMenu);
         topBox.setAlignment(Pos.CENTER);
         root.setTop(topBox);
     }
@@ -210,20 +215,20 @@ public class CustomizeWindow extends Application {
      */
     private void createEditGrid() {
         editGrid = new CustomGrid();
-        Text whatToDoHere = new Text("Here you can edit or remove an existing team or game style.");
-        editGrid.add(whatToDoHere, 0, 2, 15, 1);
         Text teamsText = new Text("Teams:");
         teamsText.setFont(Font.font("Verdana", 20));
-        editGrid.add(teamsText, 0, 4, 2, 1);
+        editGrid.add(teamsText, 0, 0, 2, 1);
         getTeams();
         Text stylesText = new Text("Game Styles:");
         stylesText.setFont(Font.font("Verdana", 20));
-        editGrid.add(stylesText, 5, 4, 2, 1);
+        editGrid.add(stylesText, 1, 0, 2, 1);
         getGameStyles();
         Text mapsText = new Text("Maps:");
         mapsText.setFont(Font.font("Verdana", 20));
-        editGrid.add(mapsText, 10, 4, 2, 1);
+        editGrid.add(mapsText, 2, 0, 2, 1);
         getMaps();
+        Image customizeImage = new Image("file:resources/layout/customize.png");
+        editGrid.add(new ImageView(customizeImage), 3, 1, 3, 7);
     }
 
     /**
@@ -248,6 +253,7 @@ public class CustomizeWindow extends Application {
         figureChooser.getSelectionModel().selectFirst();
         newTeamGrid.add(figureChooser, 2, 7);
         Button saveTeam = new Button("Save");
+        saveTeam.getStyleClass().add("mainButton");
         saveTeam.setOnAction(e -> {
             CustomizeManager.save(teamToJson(), "teams/" + name.getText());
             createEditGrid();
@@ -290,6 +296,7 @@ public class CustomizeWindow extends Application {
         mapChooser.getSelectionModel().selectFirst();
         newGameStyleGrid.add(mapChooser, 1, 4);
         Button saveGameStyle = new Button("Save");
+        saveGameStyle.getStyleClass().add("mainButton");
         saveGameStyle.setOnAction(e -> {
             CustomizeManager.save(styleToJson(), "gamestyles/"+styleNameField.getText());
             createEditGrid();
@@ -298,6 +305,7 @@ public class CustomizeWindow extends Application {
         });
         newGameStyleGrid.add(saveGameStyle, 0, 10);
         Button changeItems = new Button("Change items");
+        changeItems.getStyleClass().add("mainButton");
         newGameStyleGrid.add(changeItems, 0, 5);
         changeItems.setOnAction(e -> {
             root.setRight(itemsGrid);
@@ -419,14 +427,17 @@ public class CustomizeWindow extends Application {
         actionForTerrainButton(leftEdge, "Left edge", '\\');
         selectionGrid.add(leftEdge, 0, 6);
         selectionGrid.add(terrainType, 0, 7, 5, 1);
+        eraser.getStyleClass().add("mainButton");
         actionForTerrainButton(eraser, "Erase parts of the map.", ' ');
         selectionGrid.add(eraser, 0, 11);
+        spawnPoint.getStyleClass().add("mainButton");
         actionForTerrainButton(spawnPoint, "Set a spawn point", 'P');
         selectionGrid.add(spawnPoint, 0, 12);
         reset.setOnAction(e -> {
             //Remove all blocks, set to board.png and water
             initializeLevelEditor();
         });
+        reset.getStyleClass().add("mainButton");
         actionForTerrainButton(reset, "Remove your masterpiece :(", chosenTerrainType);
         selectionGrid.add(reset, 0, 13);
         save.setOnAction(e -> {
@@ -434,6 +445,7 @@ public class CustomizeWindow extends Application {
             createEditGrid();
             root.setLeft(editGrid);
         });
+        save.getStyleClass().add("mainButton");
         actionForTerrainButton(save, "Save the map.", chosenTerrainType);
         selectionGrid.add(save, 0, 14);
         Text brush = new Text("Brush width: ");
@@ -737,6 +749,10 @@ public class CustomizeWindow extends Application {
      */
     private void getTeams() {
         ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
+        Pane teamList = new Pane();
+        teamList.getStyleClass().add("list");
+        ArrayList<HBox> hboxes = new ArrayList<>();
+        CustomGrid teamGrid = new CustomGrid();
         for (int i=0; i<availableTeams.size(); i++) {
             Button chooseTeamToEdit = new Button(availableTeams.get(i));
             final int finalI = i;
@@ -744,14 +760,20 @@ public class CustomizeWindow extends Application {
                 refresh();
                 editTeam(availableTeams.get(finalI));
             });
-            editGrid.add(chooseTeamToEdit, 0, i+5);
+            chooseTeamToEdit.getStyleClass().add("listButton");
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
                 deleteFile("teams/" + chooseTeamToEdit.getText());
             });
-            editGrid.add(remove, 1, i+5);
+            hboxes.add(new HBox(20));
+            hboxes.get(i).getStyleClass().add("listHBox");
+            hboxes.get(i).setAlignment(Pos.CENTER);
+            hboxes.get(i).getChildren().addAll(chooseTeamToEdit, remove);
+            teamGrid.add(hboxes.get(i), 0, i);
         }
+        teamList.getChildren().add(teamGrid);
+        editGrid.add(teamList, 0, 1, 1, 10);
     }
 
     /**
@@ -760,6 +782,10 @@ public class CustomizeWindow extends Application {
      */
     private void getGameStyles() {
         ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
+        Pane styleList = new Pane();
+        styleList.getStyleClass().add("list");
+        ArrayList<HBox> hboxes = new ArrayList<>();
+        CustomGrid styleGrid = new CustomGrid();
         for (int i=0; i<availableGameStyles.size(); i++) {
             Button chooseStyleToEdit = new Button(availableGameStyles.get(i));
             final int finalI = i;
@@ -767,14 +793,20 @@ public class CustomizeWindow extends Application {
                 refresh();
                 editStyle(availableGameStyles.get(finalI));
             });
-            editGrid.add(chooseStyleToEdit, 5, i+5);
+            chooseStyleToEdit.getStyleClass().add("listButton");
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
                 deleteFile("gamestyles/"+chooseStyleToEdit.getText());
             });
-            editGrid.add(remove, 6, i+5);
+            hboxes.add(new HBox(20));
+            hboxes.get(i).setAlignment(Pos.CENTER);
+            hboxes.get(i).getStyleClass().add("listHBox");
+            hboxes.get(i).getChildren().addAll(chooseStyleToEdit, remove);
+            styleGrid.add(hboxes.get(i), 0, i);
         }
+        styleList.getChildren().add(styleGrid);
+        editGrid.add(styleList, 1, 1, 1, 10);
     }
 
     /**
@@ -784,6 +816,10 @@ public class CustomizeWindow extends Application {
      */
     private void getMaps() {
         ArrayList<String> availableMaps = CustomizeManager.getAvailableLevels();
+        Pane mapList = new Pane();
+        mapList.getStyleClass().add("list");
+        ArrayList<HBox> hboxes = new ArrayList<>();
+        CustomGrid mapGrid = new CustomGrid();
         for (int i=0; i<availableMaps.size(); i++) {
             Button chooseMapToEdit = new Button(availableMaps.get(i));
             final int finalI = i;
@@ -794,14 +830,20 @@ public class CustomizeWindow extends Application {
                 mapNameField.setText(chosenMap);
                 root.setLeft(newMapPane);
             });
-            editGrid.add(chooseMapToEdit, 10, i+5);
+            chooseMapToEdit.getStyleClass().add("listButton");
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
                 deleteFile("levels/" + chooseMapToEdit.getText());
             });
-            editGrid.add(remove, 11, i+5);
+            hboxes.add(new HBox(20));
+            hboxes.get(i).setAlignment(Pos.CENTER);
+            hboxes.get(i).getStyleClass().add("listHBox");
+            hboxes.get(i).getChildren().addAll(chooseMapToEdit, remove);
+            mapGrid.add(hboxes.get(i), 0, i);
         }
+        mapList.getChildren().add(mapGrid);
+        editGrid.add(mapList, 2, 1, 1, 10);
     }
 
     /**
@@ -954,7 +996,7 @@ public class CustomizeWindow extends Application {
      */
     private void refresh() {
         name.setText("player");
-        color.setValue(Color.web("#FF00FF"));
+        color.setValue(Color.web("#663366"));
         for (int i=0; i<6; i++) {
             figureNames.get(i).setText("Character"+(i+1));
         }
