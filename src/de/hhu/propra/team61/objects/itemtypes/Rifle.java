@@ -64,16 +64,17 @@ public class Rifle extends Weapon {
         super.angleDraw(faces_right);
         int xOffset = NORMED_OBJECT_SIZE / 2;
         int yOffset = NORMED_OBJECT_SIZE / 2;
+        //draw relatively from there
+        redDot.setStartX(0);
+        redDot.setStartY(0);
+        redDot.setEndX(100);
+        double endY = 100 * Math.sin(toRadian(getAngle()));
+        redDot.setEndY(endY);
         //set absolute position
         redDot.setTranslateX(itemImage.getTranslateX());
-        redDot.setTranslateY(itemImage.getTranslateY());
-        //draw relatively from there
-        redDot.setStartX(xOffset);
-        redDot.setStartY(yOffset);
-        redDot.setEndX(10);
-        redDot.setEndY(10 * Math.sin(toRadian(getAngle())));
+        redDot.setTranslateY(itemImage.getTranslateY() + Math.min(endY,0) + yOffset); // move the upper end of the canvas (wherever this comes from), so that the line does not tilt away
 
-        System.out.println(redDot.toString()); // TODO this whole redDot-thing doesnt't work..
+
 /*
         //relative Endpoint
         if(faces_right){
