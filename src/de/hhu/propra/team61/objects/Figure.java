@@ -110,7 +110,7 @@ public class Figure extends StackPane {
 
         hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        System.out.println("Chosen figure: "+ figureType);
+        System.out.println("Chosen figure: " + figureType);
         Image image = new Image("file:resources/figures/"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         figureImage.setImage(image);
         getChildren().add(figureImage);
@@ -133,7 +133,7 @@ public class Figure extends StackPane {
         output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
         output.put("massFactor", massFactor);
         output.put("causedHpDamage", causedHpDamage);
-        output.put("position.x", position.getX()); // TODO save as array
+        output.put("position.x", position.getX()); // TODO saveJson as array
         output.put("position.y", position.getY());
 
         output.put("isParalyzed", isParalyzed);
