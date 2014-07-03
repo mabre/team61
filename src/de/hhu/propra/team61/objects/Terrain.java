@@ -521,6 +521,7 @@ public class Terrain extends GridPane {
         }
         save.put("terrain", jsonTerrain);
         save.put("music", musicFile);
+        save.put("background", backgroundImage);
         return save;
 
     }

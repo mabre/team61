@@ -447,6 +447,7 @@ public class CustomizeWindow extends Application {
         selectionGrid.add(reset, 0, 13);
         save.setOnAction(e -> {
             CustomizeManager.saveMap(mapToJson(), "levels/" + mapNameField.getText());
+            refresh();
             createEditGrid();
             root.setLeft(editGrid);
         });
@@ -649,13 +650,15 @@ public class CustomizeWindow extends Application {
             forImageView.setMaxSize(750, 560);
             forImageView.getChildren().add(imageView);
             anchorPane.getChildren().addAll(forImageView, levelTerrain);
-            scrollPane.setId("scrollPane");
+            scrollPane.getStyleClass().add("scrollPane");
             scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
                 anchorPane.setPrefSize(Math.max(levelTerrain.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(levelTerrain.getBoundsInParent().getMaxY(), newBounds.getHeight()))
             );
             scrollPane.setContent(anchorPane);
             background.setStyle("-fx-background-image: url('" + "file:resources/levels/board.png" + "')");
             levelPane = new StackPane();
+            levelPane.setPrefSize(750, 560);
+            levelPane.setMaxHeight(560);
             levelPane.getChildren().addAll(background, scrollPane);
             newMapPane.setLeft(levelPane);
         } catch (FileNotFoundException e) {
@@ -673,7 +676,6 @@ public class CustomizeWindow extends Application {
                 draw(mouseEvent);
             }
         });
-        levelTerrain.setCursor(Cursor.NONE);
         levelTerrain.setOnMouseMoved(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
@@ -681,7 +683,6 @@ public class CustomizeWindow extends Application {
                 int y = (int) mouseEvent.getY();
                 imageView.setLayoutX(x);
                 imageView.setLayoutY(y);
-                levelTerrain.setCursor(Cursor.NONE);
             }
         });
     }
@@ -1024,11 +1025,18 @@ public class CustomizeWindow extends Application {
         }
         styleNameField.setText("Custom");
         sizeField.setText("4");
-        mapChooser.getSelectionModel().selectFirst();
         for (int i=0; i< itemNames.size(); i++) {
             itemCheckBoxes.get(i).setSelected(true);
             itemSliders.get(i).setValue(50);
         }
+        mapChooser = new ChoiceBox<>();
+        ArrayList<String> availableLevels = getLevels();
+        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
+        for (int i=0; i<numberOfLevels; i++) {
+            mapChooser.getItems().add(availableLevels.get(i));
+        }
+        mapChooser.getSelectionModel().selectFirst();
+        newGameStyleGrid.add(mapChooser, 1, 4);
         mapNameField.setText("Custom map");
     }
 

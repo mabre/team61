@@ -472,7 +472,7 @@ public class MapWindow extends Application implements Networkable {
 
         pauseGrid.add(cont, 0, 1);
         pauseGrid.setHalignment(cont, HPos.CENTER);
-        Button exit = new Button("End game");
+        Button exit = new Button("Save and end game");
         exit.setOnAction(e -> {
              sceneController.switchToMenu();
              shutdown();

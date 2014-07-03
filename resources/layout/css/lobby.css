@@ -13,26 +13,30 @@
 }
 
 #topBox {
-    -fx-background-color: rgba(255, 94, 48, 0.8);
-    -fx-background-radius: 10;
+    -fx-background-image: url("file:resources/layout/rainbow.png");
+    -fx-background-repeat: repeat;
+    -fx-background-position: center;
+    -fx-background-radius: 30;
     -fx-padding: 10 10 10 10;
 }
 
 #chatBox {
-    -fx-background-color: rgba(0, 0, 0, 0.3);
+    -fx-background-color: rgba(218, 77, 18, 0.3);
     -fx-background-radius: 10;
     -fx-padding: 20 25 10 25;
 }
 
 .listGrid {
-    -fx-background-color: rgba(255, 119, 48, 0.5);
+    -fx-background-color: rgba(194, 218, 93, 0.3);
     -fx-background-radius: 10;
     -fx-padding: 20 25 10 25;
 }
 
 #bottomBox {
-    -fx-background-color: rgba(255, 94, 48, 0.8);
-    -fx-background-radius: 10;
+    -fx-background-image: url("file:resources/layout/rainbow.png");
+    -fx-background-repeat: repeat;
+    -fx-background-position: center;
+    -fx-background-radius: 30;
     -fx-padding: 10 10 10 10;
 }
 
@@ -44,7 +48,7 @@
 }
 
 .mainButton {
-    -fx-background-color: rgba(255, 255, 255, 0.7);
+    -fx-background-color: rgba(255, 255, 255, 0.9);
     -fx-padding: 5 10 5 10;
     -fx-background-radius: 5;
 }
