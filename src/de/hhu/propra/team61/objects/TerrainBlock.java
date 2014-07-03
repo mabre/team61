@@ -266,6 +266,7 @@ public class TerrainBlock extends ImageView {
     public double getResistance() {
         switch (type) {
             case ' ': return RESISTANCE_OF_SKY;
+            case '@': // TODO destroyed terrain boss
             case 'W':
             case 'L': return RESISTANCE_OF_LIQUIDS;
             case '/':
