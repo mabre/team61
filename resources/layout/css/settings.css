@@ -4,3 +4,22 @@
     -fx-background-image: url("file:resources/layout/back.png");
     -fx-background-position: top left;
 }
+
+.mainButton {
+    -fx-background-color: rgba(254, 94, 47, 0.5);
+    -fx-padding: 5 10 5 10;
+    -fx-background-radius: 5;
+}
+
+.mainButton:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+}
+
+.plus {
+    -fx-background-color: linear-gradient(#ff5400, #be1d00);
+    -fx-background-radius: 10;
+    -fx-background-insets: 30;
+    -fx-text-fill: #cc0100;
+    -fx-border-color: rgb(150, 150, 150);
+    -fx-border-radius: 5;
+}

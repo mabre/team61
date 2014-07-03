@@ -16,7 +16,7 @@ public class Medipack extends Item {
     private final static int NORMED_OBJECT_SIZE = 16;
 
     private final static String  NAME           = "Medipack";
-    private final static String  DESCRIPTION    = "Come on, that's just a flesh wound.";
+    public final static String  DESCRIPTION    = "Come on, that's just a flesh wound.";
     private final static String  ITEM_IMG = "file:resources/weapons/medipack.png";
 
     private final static String  DAMAGETYPE     = "Healing";

@@ -13,6 +13,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -45,6 +46,7 @@ public class Terrain extends GridPane {
     private static final boolean GRID_ENABLED = false;
     /** the size of a block within the terrain; you usually do NOT want to use this outside this class (notable exception: level editor) */
     public final static int BLOCK_SIZE = 8;
+    private final char DESTROYED_TERRAIN = '#';
 
     /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
@@ -56,6 +58,9 @@ public class Terrain extends GridPane {
     private ArrayList<Point2D> spawnPoints;
     /** a list of figures with which objects can collide */
     private ArrayList<Figure> figures;
+    private String musicFile;
+    /** the background image for the chosen level */
+    private String backgroundImage;
     /** a list of crates with which //TODO all objects cann collide, figures pick up */
     private ArrayList<Crate> supplyDrops = new ArrayList<>();
 
@@ -85,6 +90,8 @@ public class Terrain extends GridPane {
      */
     public Terrain(JSONObject terrain, boolean renderSpawnPoints) {
         load(terrain, renderSpawnPoints);
+        musicFile = terrain.getString("music");
+        backgroundImage = terrain.getString("background");
         figures = new ArrayList<>();
     }
 
@@ -172,10 +179,15 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * creates new random wind
+     * Creates new random wind.
      * <p>
      * The maximum wind force depends on the settings chosen by the user. Lower wind forces are more
-     * probable.
+     * probable; for a maximum speed of 4, the absolute value of the wind force has the following probabilities:
+     * <ul>
+     * <li>[0, 1.3]: 50 %
+     * <li>[1.3, 2.7]: 40 %
+     * <li>[2.7, 4]: 10 %
+     * </ul>
      * </p>
      */
     public void rewind() {
@@ -186,13 +198,15 @@ public class Terrain extends GridPane {
             case 3: maxWindSpeed = MAX_WIND_SPEED_HARD; break;
             default: maxWindSpeed = 0; break;
         }
-        double windSpeed = Math.random() * maxWindSpeed - maxWindSpeed / 2;
-        if (Math.random() > .5) windSpeed *= 2; // make higher speed less probable
+        double windSpeed = (Math.random() * maxWindSpeed) - maxWindSpeed / 2;
+        if (Math.random() > .5) windSpeed *= 1.5; // make higher speed less probable
+        else if (Math.random() > .75) windSpeed *= 2;
         wind = new Point2D(windSpeed, 0);
         System.out.println("new wind: " + windSpeed);
     }
 
     /**
+     * Gets the magnitude of the current wind vector, with the sign indicating the direction (positive meaning to the right)
      * @return the magnitude of the current wind vector, the sign indicates wind direction
      */
     public double getWindMagnitude() {
@@ -243,7 +257,7 @@ public class Terrain extends GridPane {
         Point2D newPosition = new Point2D(oldPosition.getX(), oldPosition.getY());
         Point2D directionAfterWind = direction;
         if(influencedByWind && !isInWindbreak(oldPosition, direction)) directionAfterWind = direction.add(wind);
-        Point2D directionAfterFriction = directionAfterWind.multiply(getFriction(oldPosition));
+        Point2D directionAfterFriction = new Point2D(directionAfterWind.getX()*getFriction(oldPosition), directionAfterWind.getY());
         if(directionAfterFriction.magnitude() < 1 && directionAfterWind.magnitude() > 1) {
             directionAfterFriction = directionAfterWind.normalize(); // even with friction, move at least 1 px if movement >1px requested (eg. walking on water with medium wind)
         }
@@ -350,7 +364,9 @@ public class Terrain extends GridPane {
         int minY, maxY, minX, maxX;
         minY = (int) Math.floor(position.getY() / BLOCK_SIZE - 1);
         maxY = (int) Math.floor((position.getY() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE - 1);
-        if(movingVertical) maxY += (int) Math.floor(Figure.JUMP_SPEED / BLOCK_SIZE);
+        if(movingVertical) {
+            maxY += (int) Math.floor(Figure.JUMP_SPEED / BLOCK_SIZE) + 1;
+        }
         if(wind.getX() > 0) {
             minX = (int) Math.floor(position.getX() / BLOCK_SIZE - 1);
             maxX = (int) Math.floor(position.getX() / BLOCK_SIZE);
@@ -394,7 +410,7 @@ public class Terrain extends GridPane {
     public double getFriction(Point2D pos) {
         int row = (int)((pos.getY()+Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE);
         int column = (int)(pos.getX()/BLOCK_SIZE);
-        if(row >= terrain.size() || column > terrain.get(0).size() || row < 0 || column < 0) return 1;
+        if(row >= terrain.size() || column >= terrain.get(0).size() || row < 0 || column < 0) return 1;
         return terrain.get(row).get(column).getFriction();
     }
 
@@ -427,10 +443,10 @@ public class Terrain extends GridPane {
      * @param explosionPower value to determine (int)if block (blockX,blockY) is destroyed
      */
     private void explode(ArrayList<String> commands, int blockX, int blockY, int explosionPower){
-        final char DESTROYED_TERRAIN = '#';
         char replacement = DESTROYED_TERRAIN;
 
-        if (explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN) { //else abort recursion
+        if (blockY < terrain.size() && blockY >=0 && blockX < terrain.get(blockY).size()&& blockX >=0
+                && explosionPower > 0 && terrain.get(blockY).get(blockX).getType() != DESTROYED_TERRAIN) { //else abort recursion
             double resistanceOfBlock = terrain.get(blockY).get(blockX).getResistance();
 
             //Calc behaviour for current Block
@@ -441,14 +457,13 @@ public class Terrain extends GridPane {
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
                 replaceBlock(blockX,blockY,replacement); //Mark as destroyed
+//                replaceBlock(blockX,blockY,' '); //see below
 
-                // Recursively continue destruction for all directions unless OutOfBounds
-                if (blockY+1 < terrain.size()){ explode(commands, blockX, blockY + 1, explosionPower); }
-
-                if (blockX > 0) { explode(commands, blockX - 1, blockY, explosionPower); }
-                if (blockX+1 < terrain.get(blockY).size()) { explode(commands, blockX + 1, blockY, explosionPower); }
-
-                if (blockY > 0) { explode(commands, blockX, blockY-1, explosionPower); }
+                // Recursively continue destruction for all directions, OutOfBounds is done on top of this method
+                explode(commands, blockX, blockY + 1, explosionPower);
+                explode(commands, blockX - 1, blockY, explosionPower);
+                explode(commands, blockX + 1, blockY, explosionPower);
+                explode(commands, blockX, blockY-1, explosionPower);
 
                 // Add destruction of actual Block to commandlist
                 commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + replacement);// ' ' is impossible due to the Client/Server-MSG-System
@@ -456,15 +471,15 @@ public class Terrain extends GridPane {
             } else { // Check if partially enough destructive Force
                 if(explosionPower > resistanceOfBlock * TerrainBlock.MODIFIER_FOR_SLANTS && !terrain.get(blockY).get(blockX).isSky()){ // BUT do not create slants out of air
 
-                    debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
+                    debugLog("now a slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                     if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
+//                            replaceBlock(blockX, blockY, '\\'); // influences further calculation, apply this on client // TODO quite hacky // original idea: flooding does not work, now fixed above
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
-                        } else {
-                            if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
-                                commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
-                            }
+                        } else if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
+//                            replaceBlock(blockX, blockY, '/');
+                            commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '/');
                         }
                     }
                 }
@@ -485,6 +500,7 @@ public class Terrain extends GridPane {
 
         ArrayList<String> commands = new ArrayList<String>();
         explode(commands, blockX, blockY, explosionPower); //Recursive Function, actual handling in here, adds commands to the arraylist
+        flood(commands);
 
         return commands;
     }
@@ -504,7 +520,31 @@ public class Terrain extends GridPane {
             jsonTerrain.put(builder.toString());
         }
         save.put("terrain", jsonTerrain);
+        save.put("music", musicFile);
+        save.put("background", backgroundImage);
         return save;
+
+    }
+
+    /**
+     * Gets the file of the background music for the loaded terrain.
+     * First checks if a user defined BGM is found in resources/audio/user/BGM/; if not, the default BGM is returned.
+     * @return full resources path of the background music
+     */
+    public String getBackgroundMusic() {
+        if(new File("resources/audio/user/BGM/"+musicFile).exists()) {
+            return "resources/audio/user/BGM/"+musicFile;
+        } else {
+            return "resources/audio/BGM/"+musicFile;
+        }
+    }
+
+    /**
+     * Gets the name of the background image for the chosen level.
+     * @return name of the background image
+     */
+    public String getBackgroundImage() {
+        return backgroundImage;
     }
 
     /**
@@ -589,18 +629,84 @@ public class Terrain extends GridPane {
     public boolean standingOnLiquid(Point2D position) {
         final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
         final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
-        final int y = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int maxY = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        final int minY = maxY - (Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE;
 
-        if(y >= terrain.size()) {
+        if(maxY >= terrain.size()) {
             return false;
         }
 
-        for(int x=minX; x < maxX && x < terrain.get(y).size(); x++) {
-            if(terrain.get(y).get(x).isLiquid()) {
-                return true;
+        for(int y=minY; y <= maxY && y < terrain.size(); y++) {
+            for (int x = minX; x < maxX && x < terrain.get(y).size(); x++) {
+                if (terrain.get(y).get(x).isLiquid()) {
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Makes the liquid flow into wholes.
+     * Replaces sky blocks in lines with a liquid with the liquid, starting at the bottom and stopping when a row without
+     * a liquid is found. REPLACE_BLOCK commands are added to the given list.
+     * @param commands will contain a list of REPLACE_BLOCK commands
+     */
+    private void flood(ArrayList<String> commands) {
+        char foundLiquidInRow = 'W';
+        for(int row=terrain.size()-1; row>=0 && foundLiquidInRow != ' '; row--) {
+            foundLiquidInRow = ' ';
+            for(int column = 0; column < terrain.get(row).size(); column++) { // TODO move to function + before for loop
+                if(terrain.get(row).get(column).isLiquid()) {
+                    foundLiquidInRow = terrain.get(row).get(column).getType();
+                    break;
+                }
+            }
+            if(foundLiquidInRow != ' ') {
+                for(int column = 0; column < terrain.get(row).size(); column++) {
+                    if(terrain.get(row).get(column).isSky() || terrain.get(row).get(column).getType() == DESTROYED_TERRAIN) {
+                        replaceBlock(column, row, foundLiquidInRow);
+                        commands.add("REPLACE_BLOCK " + column + " " + row + " " + foundLiquidInRow);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Make liquid level rise to the given level.
+     * @param floodLevel the number of rows which are flooded
+     * @return a list of REPLACE_BLOCK commands
+     * @see #flood(java.util.ArrayList)
+     */
+    public ArrayList<String> increaseFlood(int floodLevel) {
+        ArrayList<String> commands = new ArrayList<>();
+
+        if(floodLevel > terrain.size()) return commands;
+
+        int newRowToFlood = terrain.size()-floodLevel;
+
+        char foundLiquidInRow = ' ';
+
+        for (int column = 0; column < terrain.get(terrain.size()-1).size() && foundLiquidInRow == ' '; column++) {
+            if (terrain.get(terrain.size()-1).get(column).isLiquid()) {
+                foundLiquidInRow = terrain.get(terrain.size()-1).get(column).getType();
+            }
+        }
+
+        if(foundLiquidInRow == ' ') foundLiquidInRow = 'W'; // default to water for levels w/o liquid
+
+        // replace one sky block of the new line to be flooded with the liquid -> flood() will flood the rest of the row
+        for(int column = 0; column < terrain.get(newRowToFlood).size(); column++) {
+            if(terrain.get(newRowToFlood).get(column).isSky()) {
+                replaceBlock(column, newRowToFlood, foundLiquidInRow);
+                commands.add("REPLACE_BLOCK " + column + " " + newRowToFlood + " " + foundLiquidInRow);
+            }
+        }
+
+        flood(commands);
+
+        return commands;
     }
 }

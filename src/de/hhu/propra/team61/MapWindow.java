@@ -2,15 +2,17 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.gui.*;
 import de.hhu.propra.team61.io.GameState;
+import de.hhu.propra.team61.io.Settings;
+import de.hhu.propra.team61.io.TerrainManager;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
-import de.hhu.propra.team61.io.Settings;
-import de.hhu.propra.team61.io.TerrainManager;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
 import de.hhu.propra.team61.objects.*;
+import de.hhu.propra.team61.objects.itemtypes.*;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -34,15 +36,15 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.FileNotFoundException;
+
+
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
- * Created by kevin on 08.05.14.
- * Edited by DiniiAntares on 15.05.14
- * This class is supposed to draw the Array given by "TerrainManager" rendering the Map visible.
+ * An instance of this class is a window displaying a level with figures, wind, game comments etc.
  */
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
@@ -54,8 +56,10 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
+    /** number of turns until sudden death is started */
     private final static int TURNS_TILL_SUDDEN_DEATH = 30; // TODO pref?
-    private final static int SUDDEN_DEATH_ROUNDS = 20;
+    /** number of turns the boss needs to destroy the whole map */
+    private final static int SUDDEN_DEATH_TURNS = 20;
 
     //JavaFX related variables
     private Scene drawing;
@@ -63,8 +67,10 @@ public class MapWindow extends Application implements Networkable {
     private StackPane rootPane = new StackPane();
     /** contains pause/help-overlay */
     private BorderPane pausePane = new BorderPane();
-    /** contains terrain, labels at the top etc. (ie. everything) */
+    /** contains terrain, labels at the top etc. (ie. everything visible after initialization) */
     private BorderPane gamePane;
+    /** contains teamLabel, windIndicator */
+    private BorderPane topLine = new BorderPane();
     /** contains chat, scrollPane with terrain, teams etc. */
     private StackPane centerPane;
     /** contains terrain, teams, weapons */
@@ -79,6 +85,7 @@ public class MapWindow extends Application implements Networkable {
     private Terrain terrain;
     private WindIndicator windIndicator = new WindIndicator();
     private Label teamLabel;
+    private ScrollingLabel ingameLabel = new ScrollingLabel();
     /** the ImageView containing the image that is shown in the overlay */
     private ImageView pauseHelpImageView = new ImageView();
     /** shown in the overlay when the game is paused */
@@ -113,11 +120,23 @@ public class MapWindow extends Application implements Networkable {
     private Figure boss = null;
     private boolean bossSpawnedLeft;
 
+    private int floodLevel = -1;
+
     private String map; // TODO do we need this?
     private Chat chat;
     private SceneController sceneController;
-
     private int k;
+
+    /**
+     * Creates a new map window.
+     * @param map the filename of the level to be loaded
+     * @param file file containing the settings for the game to be started
+     * @param client a client object
+     * @param clientThread the thread executing the client
+     * @param server a server object, might be null
+     * @param serverThread the thread executing the server, might be null
+     * @param sceneController
+     */
     public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.map = map;
@@ -153,6 +172,14 @@ public class MapWindow extends Application implements Networkable {
         if(server != null) server.send(getStateForNewClient());
     }
 
+    /**
+     * Creates a new map window.
+     * @param input a json object representing the state of the map window
+     * @param client a client object
+     * @param clientThread the thread executing the client
+     * @param sceneController
+     * @see #toJson()
+     */
     public MapWindow(JSONObject input, Client client, Thread clientThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.client = client;
@@ -174,6 +201,16 @@ public class MapWindow extends Application implements Networkable {
         initialize();
     }
 
+    /**
+     * Creates a new map window.
+     * @param input a json object representing the state of the map window
+     * @param client a client object
+     * @param clientThread the thread executing the client
+     * @param server a server object, might be null
+     * @param serverThread the thread executing the server, might be null
+     * @param sceneController
+     * @see #toJson()
+     */
     public MapWindow(JSONObject input, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.client = client;
@@ -208,7 +245,7 @@ public class MapWindow extends Application implements Networkable {
     private void initialize() {
         sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
-            sceneController.switchToMenue();
+            sceneController.switchToMenu();
         });
         gamePane = new BorderPane();
         // contains the terrain with figures
@@ -240,10 +277,11 @@ public class MapWindow extends Application implements Networkable {
         }
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
-        gamePane.setTop(teamLabel);
+        topLine.setLeft(teamLabel);
+        gamePane.setTop(topLine);
+        gamePane.setCenter(ingameLabel);
         createPausePane();
-        rootPane.getChildren().addAll(gamePane, pausePane);
-
+        rootPane.getChildren().addAll(drawBackgroundImage(), gamePane, pausePane);
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -253,6 +291,7 @@ public class MapWindow extends Application implements Networkable {
                     case C:
                         System.out.println("toggle chat");
                         chat.setVisible(!chat.isVisible());
+                        VorbisPlayer.play("resources/audio/SFX/chatBlop.ogg", false);
                         break;
                     case Z:
                         if(autoScroll) {
@@ -285,7 +324,9 @@ public class MapWindow extends Application implements Networkable {
 
         if(server != null) terrain.rewind();
         windIndicator.setWindForce(terrain.getWindMagnitude());
-        gamePane.setCenter(windIndicator);
+        topLine.setRight(windIndicator);
+
+        VorbisPlayer.play(terrain.getBackgroundMusic(), true);
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class
@@ -388,18 +429,19 @@ public class MapWindow extends Application implements Networkable {
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                                 server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                                server.send("PLAY_SFX fallDamage");
                                             }
                                         }
                                     }
                                 }
                             }
-
-                            // sleep thread, and assure constant frame rate
-                            now = System.currentTimeMillis();
-                            sleep = Math.max(0, (1000 / FPS) - (now - before));
-                            Thread.sleep(sleep);
-                            before = System.currentTimeMillis();
                         }
+
+                        // sleep thread, and assure constant frame rate
+                        now = System.currentTimeMillis();
+                        sleep = Math.max(0, (1000 / FPS) - (now - before));
+                        Thread.sleep(sleep);
+                        before = System.currentTimeMillis();
                     }
                 } catch (InterruptedException e) {
                     System.out.println("moveObjectsThread shut down");
@@ -430,31 +472,41 @@ public class MapWindow extends Application implements Networkable {
 
         pauseGrid.add(cont, 0, 1);
         pauseGrid.setHalignment(cont, HPos.CENTER);
-        Button exit = new Button("End game");
+        Button exit = new Button("Save and end game");
         exit.setOnAction(e -> {
-             sceneController.switchToMenue();
+             sceneController.switchToMenu();
              shutdown();
         });
         pauseGrid.add(exit, 1, 1);
         pauseGrid.setHalignment(exit, HPos.CENTER);
         Text shortcuts = new Text("Shortcuts:");
         pauseGrid.add(shortcuts, 0, 4);
-        Text shortcutsList = new Text("A/left arrow key - walk left\n" +
-                "D/right arrow key - walk right\n" +
-                "W/up arrow key - jump, move crosshair up\n" +
-                "S/down arrow key - move crosshair down\n" +
-                "E - open inventory\n" +
-                "1 to 0 - choose item\n" +
-                "Space - shoot weapon\n" +
-                "C - open chat\n" +
-                "P/Esc/F1 - Pause game, show this help");
+        Text shortcutsList = new Text(
+                "←/A\t\twalk left\n" +
+                "→/D\t\twalk right\n" +
+                "↑/W\t\tjump, move crosshair up\n" +
+                "↓/S\t\tmove crosshair down\n" +
+                //"E - open inventory\n" + TODO
+                "1 to 8\tchoose item\n" +
+                "Space\tshoot\n" +
+                "C\t\topen chat\n" +
+                "Z\t\tdisable/enable auto-scrolling\n" +
+                "P/Esc/F1\tpause game, show this help");
         pauseGrid.add(shortcutsList, 0, 5, 2, 8);
         pausePane.setId("pausePane");
         pausePane.setCenter(pauseGrid);
     }
 
+    private Pane drawBackgroundImage() {
+        String image = "file:resources/levels/"+terrain.getBackgroundImage();
+        Pane backgroundPane = new Pane();
+        backgroundPane.setStyle("-fx-background-image: url('" + image + "')");
+        return backgroundPane;
+    }
+
     /**
-     * @return the whole state of the window as JSONObject (except terrain, use terrain.toArrayList())
+     * Gets the whole state of the map window as json.
+     * @return the whole state of the window as JSONObject
      */
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
@@ -467,6 +519,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("currentTeam", currentTeam);
         output.put("terrain", terrain.toJson());
         output.put("windForce", terrain.getWindMagnitude());
+        // TODO include sudden death status
         return output;
     }
 
@@ -506,6 +559,10 @@ public class MapWindow extends Application implements Networkable {
         throw new IllegalArgumentException("Could not find team of figure" + figure);
     }
 
+    /**
+     * Calculates the number of living teams.
+     * @return number of teams with living figures
+     */
     public int getNumberOfLivingTeams() {
         int livingTeams = 0;
         for (Team team : teams) {
@@ -530,7 +587,6 @@ public class MapWindow extends Application implements Networkable {
         while(flyingProjectiles.size() > 0){} //Wait until no objectmovements
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
-
         turnCount++; // TODO timing issue
         server.send("SET_TURN_COUNT " + turnCount);
 
@@ -539,12 +595,22 @@ public class MapWindow extends Application implements Networkable {
         terrain.rewind();
         server.send("WIND_FORCE " + terrain.getWindMagnitude());
 
-        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null) {
-            System.out.println("sudden death is coming ..."); // TODO IMPORTANT network
-            spawnBoss();
+        if(turnCount >= TURNS_TILL_SUDDEN_DEATH && boss == null && floodLevel == -1) {
+            switch ((int)(Math.random()*2)) {
+                case 0:
+                    spawnBoss();
+                    break;
+                default:
+                    System.out.println("flood warning");
+                    server.send("SET_GAME_COMMENT 0 Weather forecast: Flood warning.");
+                    floodLevel = 0;
+                    break;
+            }
         } else if(boss != null) {
             moveBoss();
             server.send("SD BOSS MOVE");
+        } else if(floodLevel != -1) {
+            server.sendCommands(terrain.increaseFlood(++floodLevel));
         }
 
         // Let all living poisoned Figures suffer DAMAGE_BY_POISON damage;
@@ -574,7 +640,7 @@ public class MapWindow extends Application implements Networkable {
         } while (teams.get(currentTeam).getNumberOfLivingFigures() == 0);
 
         if (getNumberOfLivingTeams() == 0){
-            server.send("GAME_OVER " + -1);
+            server.send("GAME_OVER -1");
             return;
         }
         if (getNumberOfLivingTeams() < 2){
@@ -584,13 +650,15 @@ public class MapWindow extends Application implements Networkable {
 
         if(turnCount == teams.size() * teams.get(0).getFigures().size() * 2) {
             doDigitations();
+            server.send("SET_GAME_COMMENT 0 Digitate, my brave hearts!");
         } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
             undoDigitations();
         }
 
         if(Math.random() > SUPPLY_DROP_PROBABILITY){
-            Crate drop = new Crate(terrain.toArrayList().get(0).size()-1);
+            Crate drop = new Crate(terrain.toArrayList().get(0).size()-Terrain.BLOCK_SIZE);
             server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent());
+            server.send("SET_GAME_COMMENT 0 Nice, a present. That’s like a corollary, it’s for free.");
         }
 
         server.send("SET_CURRENT_TEAM " + currentTeam);
@@ -603,6 +671,11 @@ public class MapWindow extends Application implements Networkable {
         System.out.println(teamLabelText);
     }
 
+    /**
+     * Sums up the hp damage caused since last time calling this function. Plays a sound when it is >= 50.
+     * @return hp damage caused since last time calling this function
+     * @see de.hhu.propra.team61.objects.Figure#popRecentlySufferedDamage()
+     */
     private int collectRecentlyCausedDamage() {
         int recentlyCausedDamage = 0;
         for(Team team: teams) {
@@ -610,6 +683,7 @@ public class MapWindow extends Application implements Networkable {
                 recentlyCausedDamage += figure.popRecentlySufferedDamage();
             }
         }
+        if (recentlyCausedDamage >= 50) server.send("PLAY_SFX highDamage");
         return recentlyCausedDamage;
     }
 
@@ -643,13 +717,15 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void initBoss(String name) {
+        System.out.println(name + " appeared"); // TODO game comment
+        setGameComment("Watch out guys! " + name + " has appeared!", false);
         boss = new Figure(name, "boss", 1000000, 1000000, false, false, false); // TODO short-hand constructor
         boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
         fieldPane.getChildren().add(boss);
     }
 
     private void moveBoss() {
-        final int moveBy = terrain.getTerrainWidth()/SUDDEN_DEATH_ROUNDS;
+        final int moveBy = terrain.getTerrainWidth()/ SUDDEN_DEATH_TURNS;
         if(bossSpawnedLeft) {
             boss.setPosition(boss.getPosition().add(moveBy, 0));
         } else {
@@ -662,6 +738,9 @@ public class MapWindow extends Application implements Networkable {
      * stops all map window threads and saves game state
      */
     private void shutdown() {
+        VorbisPlayer.stop();
+        ingameLabel.stopAllTimers();
+
         if(moveObjectsThread != null) moveObjectsThread.interrupt();
 
         GameState.save(this.toJson());
@@ -795,6 +874,8 @@ public class MapWindow extends Application implements Networkable {
                     }
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
+                    setGameComment("No munition.", true);
+                    VorbisPlayer.play("resources/audio/SFX/reload.ogg", false);
                 }
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
@@ -817,11 +898,13 @@ public class MapWindow extends Application implements Networkable {
                 }
                 if(autoScroll && (!projectileFocused || client.isLocalGame() || getTeamOfFigure(f) == client.getAssociatedTeam())) {
                     projectileFocused = false; // when moving own figure, stop focusing projectile
-                    System.out.println("projectile lost focus");
                 }
                 if(cmd.length > 5 && Boolean.parseBoolean(cmd[5])) { // do not scroll when moving an inactive figure
                     if(autoScroll && !projectileFocused) scrollTo(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE, false);
                 }
+                break;
+            case "PLAY_SFX":
+                VorbisPlayer.play("resources/audio/SFX/" + cmd[1] + ".ogg", false);
                 break;
             case "FIGURE_ADD_VELOCITY":
                 Point2D vector = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
@@ -829,8 +912,12 @@ public class MapWindow extends Application implements Networkable {
                 fig.addVelocity(vector);
                 break;
             case "REPLACE_BLOCK":
-                if(cmd[3].charAt(0) == '#'){cmd[3] = " ";} //Decode # as destruction, ' ' is impossible due to Client/Server architecture
-                terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                //if(server == null) { // hack for destruction calculation
+                    if (cmd[3].charAt(0) == '#') {
+                        cmd[3] = " "; //Decode # as destruction, ' ' is impossible due to Client/Server architecture
+                    }
+                    terrain.replaceBlock(Integer.parseInt(cmd[1]), Integer.parseInt(cmd[2]), cmd[3].charAt(0));
+                //}
                 break;
             case "DEACTIVATE_FIGURE":
                 shootingIsAllowed = true;
@@ -851,9 +938,16 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "SUPPLY_PICKED_UP":
                 teams.get(Integer.parseInt(cmd[1])).getItem(cmd[2]).refill();
+                if(client.getAssociatedTeam() == Integer.parseInt(cmd[1]) || client.isLocalGame()) { // only current team should see what has been picked up // TODO what happends if a crate falls on a figure?
+                    setGameComment("Cool, a new " + cmd[2], false);
+                }
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
+                VorbisPlayer.stop();
+
+
+                ingameLabel.stopAllTimers();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
                 GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
                 break;
@@ -908,6 +1002,7 @@ public class MapWindow extends Application implements Networkable {
             case "CONDITION":
                 switch(cmd[1]){
                     case "POISON":
+                        VorbisPlayer.play("resources/audio/SFX/poisoned.ogg", false);
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsPoisoned(Boolean.parseBoolean(cmd[4]));
                         break;
                     case "PARALYZE":
@@ -916,7 +1011,13 @@ public class MapWindow extends Application implements Networkable {
                     case "STUCK":
                         teams.get(Integer.parseInt(cmd[2])).getFigures().get(Integer.parseInt(cmd[3])).setIsStuck(Boolean.parseBoolean(cmd[4]));
                         break;
+                    default:
+                        System.err.println("handleKeyEventOnClient: no event for key " + command);
                 }
+                break;
+            case "SET_GAME_COMMENT":
+                boolean lowPrio = (cmd[1].equals("1"));
+                setGameComment(command.substring(18), lowPrio);
                 break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
@@ -924,7 +1025,7 @@ public class MapWindow extends Application implements Networkable {
             case "SUDDEN_DEATH":
                 int teamToKill = Integer.parseInt(cmd[1]);
                 teams.get(teamToKill).suddenDeath();
-                if(teamToKill == currentTeam) endTurn();
+                if(teamToKill == currentTeam) endTurn(); // TODO IMPORTANT this cannot work on clients ...
                 break;
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
@@ -933,7 +1034,7 @@ public class MapWindow extends Application implements Networkable {
                 windIndicator.setWindForce(Double.parseDouble(cmd[1]));
                 break;
             default:
-                System.out.println("handleKeyEventOnClient: no event for key " + command);
+                System.err.println("handleKeyEventOnClient: no event for key " + command);
         }
     }
 
@@ -1035,41 +1136,53 @@ public class MapWindow extends Application implements Networkable {
             case "1":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
+                    server.send("SET_GAME_COMMENT 1 Bazooka: " + Bazooka.DESCRIPTION);
+                    server.send("PLAY_SFX changeWeapon");
                 }
                 break;
             case "2":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
+                    server.send("SET_GAME_COMMENT 1 Grenade: " + Grenade.DESCRIPTION);
+                    server.send("PLAY_SFX granade"); // TODO typo
                 }
                 break;
             case "3":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
+                    server.send("SET_GAME_COMMENT 1 Shotgun: " + Shotgun.DESCRIPTION);
+                    server.send("PLAY_SFX shotgun");
                 }
                 break;
             case "4":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
+                    server.send("SET_GAME_COMMENT 1 Poisoned Arrow: " + PoisonedArrow.DESCRIPTION);
+                    server.send("PLAY_SFX poisonArrow");
                 }
                 break;
             case "5":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 5");
+                    server.send("SET_GAME_COMMENT 1 Medipack: " + Medipack.DESCRIPTION);
                 }
                 break;
             case "6":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
+                    server.send("SET_GAME_COMMENT 1 Rifle: " + Rifle.DESCRIPTION);
                 }
                 break;
             case "7":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
+                    server.send("SET_GAME_COMMENT 1 Digiwise: " + Digiwise.DESCRIPTION);
                 }
                 break;
             case "8":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
+                    server.send("SET_GAME_COMMENT 1 Bananabomb: " + Bananabomb.DESCRIPTION);
                 }
                 break;
             case "9":
@@ -1095,10 +1208,12 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(0).getFigures().get(i).setHealth(0);
                 }
                 turnCount = -42; // prevents endTurn() from showing game over window
+                server.send("SET_GAME_COMMENT 0 You are now alone.");
                 System.out.println("You are now alone.");
                 break;
             case "1up": // 100 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(100);
+                server.send("SET_GAME_COMMENT 0 Ate my spinach.");
                 System.out.println("Ate my spinach.");
                 break;
             case "1up+": // 1000 live for first figure of first team
@@ -1107,10 +1222,12 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "dedigitate": // calls undoDigitations() method
                 undoDigitations();
+                server.send("SET_GAME_COMMENT 0 Returning to Baby I");
                 System.out.println("Returning to Baby I");
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();
+                server.send("SET_GAME_COMMENT 0 Digitation.");
                 System.out.println("Digitation.");
                 break;
             case "forcedig": // forces digitation of all figures
@@ -1119,11 +1236,13 @@ public class MapWindow extends Application implements Networkable {
                         figure.digitate();
                     }
                 }
+                server.send("SET_GAME_COMMENT 0 Mass-Digitation");
                 System.out.println("Mass-Digitation.");
                 break;
             case "rewind": // sets wind to given value
                 terrain.setWind(Double.parseDouble(cmd[1]));
                 windIndicator.setWindForce(terrain.getWindMagnitude());
+                server.send("SET_GAME_COMMENT 0 It's windy.");
                 System.out.println("It’s windy.");
                 break;
             case "gameover": // ends the game by showing game over window
@@ -1143,12 +1262,25 @@ public class MapWindow extends Application implements Networkable {
                                     moveBoss();
                                 }
                             }
+                            break;
+                        case "flood":
+                            if (cmd.length > 2) {
+                                floodLevel = Integer.parseInt(cmd[2]);
+                            } else {
+                                if(floodLevel != -1) {
+                                    terrain.increaseFlood(++floodLevel);
+                                } else {
+                                    floodLevel = 0;
+                                }
+                            }
+                            break;
                     }
                 });
                 System.out.println("Premature Death");
                 break;
             default:
                 client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
+                server.send("SET_GAME_COMMENT 0 No cheating, please!");
                 System.out.println("No cheating, please!");
         }
     }
@@ -1177,4 +1309,14 @@ public class MapWindow extends Application implements Networkable {
         return "STATUS MAPWINDOW " + this.toJson().toString();
     }
 
+    /**
+     * Shows the given label in right upper corner.
+     * @param content is the text shown in the Label.
+     * @param lowPrio if a comment has low priority, is is immediately overwritten when another line is added
+     */
+    void setGameComment(String content, boolean lowPrio){
+        Platform.runLater(() -> {
+            ingameLabel.addLine(content, lowPrio);
+        });
+    }
 }

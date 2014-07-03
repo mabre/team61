@@ -11,20 +11,18 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-/*
- * Main class, an application creating the stage and the menue.
- *
- * Created by dinii on 15.04.14.
- * ProPra Team 61:
- * Markus Brenneis 2194529 Git: mabre
- * Jan Ecknigk 2202505 Git: Jan-Ecknigk
- * Jessica Petrasch 2166230 Git: Jessypet
- * Kevin Gnyp 2166803 Git: Kegny
- * Simon Franz 2204765 Git: DiniiAntares
+/**
+ * Main class for starting the game, creating the stage and the menu.
+ * <p>
+ * Created by dinii on 15.04.14.<br/>
+ * ProPra Team 61:<br/>
+ * Markus Brenneis 2194529 Git: mabre<br/>
+ * Jan Ecknigk 2202505 Git: Jan-Ecknigk<br/>
+ * Jessica Petrasch 2166230 Git: Jessypet<br/>
+ * Kevin Gnyp 2166803 Git: Kegny<br/>
+ * Simon Franz 2204765 Git: DiniiAntares<br/>
  * Project: Worms clone
- *
  */
-
 public class Afrobob extends Application {
 
     /** public, because sceneController needs to change the stage's scene */
@@ -57,7 +55,7 @@ public class Afrobob extends Application {
         Scene scene = new Scene(root, 1000, 600);
         mainwindow.setScene(scene);
         scene.getStylesheets().add("file:resources/layout/css/menue.css");
-        sceneController.setMenueScene(scene);
+        sceneController.setMenuScene(scene);
         menueController.setMainWindow(mainwindow, sceneController);
         mainwindow.show();
     }

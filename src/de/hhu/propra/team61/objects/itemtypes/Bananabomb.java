@@ -20,7 +20,7 @@ import java.util.ArrayList;
  */
 public class Bananabomb extends Weapon {
     private final static String  NAME           = "Bananabomb";
-    private final static String  DESCRIPTION    = "Do not plug this into your ear."; //TODO @diniiantares you know charly better than I do
+    public final static String  DESCRIPTION    = "Do not put this into your ear.";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/temp0.png";

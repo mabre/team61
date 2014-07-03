@@ -13,45 +13,59 @@ import javafx.scene.image.ImageView;
  * <ul>
  * <li>{@code ' '}: sky (transparent)
  * <li>{@code 'P'} (player): spawn point: rendered like sky
+<<<<<<< HEAD
+ * <li>{@code 'W'} (water): walkable liquid
+=======
  * <li>{@code 'W'} (water): walkable liquid // TODO change collision: drop in? Yes please
+>>>>>>> items
  * <li>{@code 'L'} (lava): walkable liquid
  * <li>{@code 'S'} (stone): walkable ground with normal friction
- * <li>{@code 'E'} (earth): walkable ground with normal friction
+ * <li>{@code 's'} (sand): walkable ground with higher friction
+ * <li>{@code 'E'} (soil): walkable ground with normal friction
  * <li>{@code 'I'} (ice): walkable ground with lower friction
+ * <li>{@code 'i'} (snow): walkable ground with normal friction
  * <li>{@code '/'}, {@code '\'}: walkable slant ground
  * </ul>
  * After creating a block, you should call {@link #setTopNeighbour(TerrainBlock)}, {@link #setRightNeighbour(TerrainBlock)},
  * {@link #setBottomNeighbour(TerrainBlock)}, and {@link #setLeftNeighbour(TerrainBlock)}, since some parts of a block are
  * influenced by the neighbouring blocks (eg. the type of a slant depends on the blocks attached to it).
  * To change the terrain type afterwards, use {@link #setType(char)}. Note that this function does not convert spawn
- * points into sky. So if you want to render a spawn point, create a new block and then call {@code setType('P');}.
+ * points into sky. So if you want to render a spawn point, create a new block and then call {@code setType('P')}.
  * @see Terrain
  */
 public class TerrainBlock extends ImageView {
 
     /** path to the terrain images */
-    private final static String imgPath = "file:resources/";
+    private final static String imgPath = "file:resources/terrain/";
     // preloaded terrain images
     /** image looking like earth */
-    private final static Image EARTH_IMAGE = new Image(imgPath + "soil.png");
+    private final static Image SOIL_IMAGE = new Image(imgPath + "soil.png");
     /** image looking like ice */
     private final static Image ICE_IMAGE = new Image(imgPath + "ice.png");
     /** image looking like lave */
     private final static Image LAVE_IMAGE = new Image(imgPath + "lava.png");
+    /** image looking like sand */
+    private final static Image SAND_IMAGE = new Image(imgPath + "sand.png");
     /** image looking like sky */
     private final static Image SKY_IMAGE = new Image(imgPath + "sky.png");
+    /** image looking like snow */
+    private final static Image SNOW_IMAGE = new Image(imgPath + "snow.png");
     /** image looking like a slant from top left to bottom right */
-    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "leftedge.png");
+    private final static Image SLANT_LE_IMAGE = new Image(imgPath + "slant_ground_le.png");
+    /** image looking like a slant from top left to bottom right, with the other edge filled with water */
+    private final static Image SLANT_LE_WATER_IMAGE = new Image(imgPath + "slant_ground_water_le.png");
     /** image looking like a slant from bottom left to top right */
-    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "rightedge.png");
+    private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
+    /** image looking like a slant from bottom left to top right, with the other edge filled with water */
+    private final static Image SLANT_RI_WATER_IMAGE = new Image(imgPath + "slant_ground_water_ri.png");
     /** image looking like stone */
-    private final static Image STONES_IMAGE = new Image(imgPath + "stone.png");
+    private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
     /** image looking like water */
     private final static Image WATER_IMAGE = new Image(imgPath + "water.png");
     /** image looking like water with transparent region at the top */
     private final static Image WATER_TOP_IMAGE = new Image(imgPath + "water_top.png");
     /** image indicating a spawn point */
-    private final static Image SPAWN_POINT = new Image(imgPath + "spawn.png");
+    private final static Image SPAWN_POINT = new Image(imgPath + "spawnpoint.png");
 
     //Technical Blocks/Special Cases
     /** damage resistance of sky (used to limit range of weapons) */
@@ -59,8 +73,8 @@ public class TerrainBlock extends ImageView {
     /** damage resistance of liquids (liquids cannot be destroyed) */
     private final static double RESISTANCE_OF_LIQUIDS = 99999999;
     //Blocks
-    /** damage resistance of earth */
-    private final static double RESISTANCE_OF_EARTH = 25; // TODO drop OF_ ?
+    /** damage resistance of soil */
+    private final static double RESISTANCE_OF_SOIL = 25; // TODO drop OF_ ?
     /** damage resistance of sand */
     private final static double RESISTANCE_OF_SAND = 20;
     /** damage resistance of snow */
@@ -75,8 +89,8 @@ public class TerrainBlock extends ImageView {
 
     /** friction factor for ice */
     private final static double ICE_FRICTION = 2; // TODO rename to FRICTION_ICE
-    /** friction factor for earth */
-    private final static double EARTH_FRICTION = 1;
+    /** friction factor for soil */
+    private final static double SOIL_FRICTION = 1;
     /** friction factor for sand */ // TODO higher value = less friction?
     private final static double SAND_FRICTION = 0.5;
     /** friction factor for liquids */
@@ -92,12 +106,20 @@ public class TerrainBlock extends ImageView {
     /** y coordinate (in blocks) of this block in the terrain */
     private int y;
 
-    /** class for grouping the neighbouring blocks together */
+    /** Class for grouping the neighbouring blocks together and performing actions on them. */
     private class NeighbouringBlocks {
         public TerrainBlock left = null;
         public TerrainBlock top = null;
         public TerrainBlock right = null;
         public TerrainBlock bottom = null;
+
+        /** Calls {@link #drawImage()} for all set neighbour blocks */
+        public void redrawImages() {
+            if(left != null) left.drawImage();
+            if(top != null) top.drawImage();
+            if(right != null) right.drawImage();
+            if(bottom != null) bottom.drawImage();
+        }
     }
     /** contains references to the neighbouring blocks */
     private NeighbouringBlocks neighbours = new NeighbouringBlocks();
@@ -134,9 +156,6 @@ public class TerrainBlock extends ImageView {
     public void setTopNeighbour(TerrainBlock block) {
         neighbours.top = block;
         drawImage();
-        if(type == 'W') {
-            System.out.println();
-        }
     }
 
     /**
@@ -163,7 +182,8 @@ public class TerrainBlock extends ImageView {
      * threads.
      */
     private void drawImage() {
-        Platform.runLater(() -> {
+        // make calling this save from everywhere (called very often with different names), but only use runLater if necessary (performance impact when starting game/edit)
+        if(Platform.isFxApplicationThread()) {
             switch (type) {
                 case ' ':
                     this.setImage(SKY_IMAGE);
@@ -171,17 +191,51 @@ public class TerrainBlock extends ImageView {
                 case 'S':
                     this.setImage(STONES_IMAGE);
                     break;
+                case 's':
+                    this.setImage(SAND_IMAGE);
+                    break;
                 case 'E':
-                    this.setImage(EARTH_IMAGE);
+                    this.setImage(SOIL_IMAGE);
                     break;
                 case 'I':
                     this.setImage(ICE_IMAGE);
                     break;
-                case '/':
+                case 'i':
+                    this.setImage(SNOW_IMAGE);
+                    break;
+                case '/': // TODO use ice when appropriate
                     this.setImage(SLANT_RI_IMAGE);
+                    if(neighbours.right != null && neighbours.right.isSky() && neighbours.bottom != null && neighbours.bottom.isSky()
+                            && (neighbours.top == null || !neighbours.top.isSky())) {
+                        this.setScaleX(-1); // mirror image when slope is at ceiling
+                        this.setScaleY(-1);
+                        if(neighbours.right.getType() == 'W' || neighbours.bottom.getType() == 'W') {
+                            this.setImage(SLANT_RI_WATER_IMAGE);
+                        }
+                    } else {
+                        this.setScaleX(1);
+                        this.setScaleY(1);
+                        if(neighbours.left != null) {
+                            if(neighbours.left.getType() == 'W') this.setImage(SLANT_RI_WATER_IMAGE);
+                        }
+                    }
                     break;
                 case '\\':
                     this.setImage(SLANT_LE_IMAGE);
+                    if(neighbours.left != null && neighbours.left.isSky() && neighbours.bottom != null && neighbours.bottom.isSky()
+                            && (neighbours.top == null || !neighbours.top.isSky())) {
+                        this.setScaleX(-1);
+                        this.setScaleY(-1);
+                        if(neighbours.left.getType() == 'W' || neighbours.bottom.getType() == 'W') {
+                            this.setImage(SLANT_LE_WATER_IMAGE);
+                        }
+                    } else {
+                        this.setScaleX(1);
+                        this.setScaleY(1);
+                        if(neighbours.right != null) {
+                            if(neighbours.right.getType() == 'W') this.setImage(SLANT_LE_WATER_IMAGE);
+                        }
+                    }
                     break;
                 case 'W':
                     if (neighbours.top == null || neighbours.top.isSky()) {
@@ -199,7 +253,10 @@ public class TerrainBlock extends ImageView {
                 default:
                     this.setImage(SKY_IMAGE);
             }
-        });
+        } else {
+            System.err.println("HERE");
+            Platform.runLater(this::drawImage);
+        }
     }
 
     /**
@@ -220,12 +277,10 @@ public class TerrainBlock extends ImageView {
                     return RESISTANCE_OF_SKY; // return an at least somewhat useful information
                 }
             case 'S': return RESISTANCE_OF_STONE;
-            case 'E': return RESISTANCE_OF_EARTH;
+            case 'E': return RESISTANCE_OF_SOIL;
             case 'I': return RESISTANCE_OF_ICE;
-            case 'A': //ToDo change that
-                return RESISTANCE_OF_SNOW;
-            case 'B': //ToDo change that
-                return RESISTANCE_OF_SAND;
+            case 'i': return RESISTANCE_OF_SNOW;
+            case 's': return RESISTANCE_OF_SAND;
             default: return RESISTANCE_OF_SKY;
         }
     }
@@ -268,6 +323,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
+     * Gets the type of the block.
      * @return the type of this terrain block
      */
     public char getType() {
@@ -275,15 +331,17 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
-     * Sets the type of this terrain block and redraws it.
+     * Sets the type of this terrain block and redraws it and its neighbours.
      * @param type the new type of this block
      */
     public void setType(char type) {
         this.type = type;
         drawImage();
+        neighbours.redrawImages(); // look of neighbours might change because this block changed
     }
 
     /**
+     * Tells whether the block represents sky.
      * @return returns true if this block represents sky
      */
     public boolean isSky() {
@@ -291,6 +349,7 @@ public class TerrainBlock extends ImageView {
     }
 
     /**
+     * Tells whether the block represents a liquid.
      * @return returns true if this block represents a liquid
      */
     public boolean isLiquid() {
@@ -308,7 +367,7 @@ public class TerrainBlock extends ImageView {
             case 'I':
                 return ICE_FRICTION;
             case 'E':
-                return EARTH_FRICTION;
+                return SOIL_FRICTION;
             case 'W':
             case 'L':
                 return LIQUID_FRICTION;

@@ -2,6 +2,7 @@ package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
@@ -90,12 +91,13 @@ public class GameOverWindow extends Application implements Networkable {
         Button end = new Button("End");
         end.setOnAction(e -> {
             shutdown();
-            sceneController.switchToMenue();
+            sceneController.switchToMenu();
         });
         overGrid.add(end, 0, 4);
         Scene overScene = new Scene(root);
         overScene.getStylesheets().add("file:resources/layout/css/gameover.css");
         sceneController.switchScene(overScene, "Game over");
+        VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
     }
 
     @Override

@@ -57,8 +57,8 @@ public class SettingsController {
             teams.get(i).getSelectionModel().select(i);
         }
         numberOfTeams = 2;
-        settingGrid.add(teams.get(0), 0, 2);
-        settingGrid.add(teams.get(1), 0, 3);
+        settingGrid.add(teams.get(0), 0, 2, 3, 1);
+        settingGrid.add(teams.get(1), 0, 3, 3, 1);
     }
 
     @FXML
@@ -120,7 +120,7 @@ public class SettingsController {
 
     @FXML
     public void handleBack() {
-        sceneController.switchToMenue();
+        sceneController.switchToMenu();
     }
 
     /**
@@ -128,7 +128,7 @@ public class SettingsController {
      * @param number number of teams already existing, index for ArrayList of ChoiceBoxes
      */
     private void addTeam(int number) {
-        settingGrid.add(teams.get(number-1), 0, number+1);
+        settingGrid.add(teams.get(number-1), 0, number+1, 3, 1);
     }
 
     /**

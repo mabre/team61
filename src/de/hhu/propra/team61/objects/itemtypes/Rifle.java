@@ -16,7 +16,7 @@ public class Rifle extends Weapon {
     private final static int NORMED_OBJECT_SIZE = 16;
 
     private final static String  NAME           = "Rifle";
-    private final static String  DESCRIPTION    = "Camper!";
+    public final static String  DESCRIPTION    = "Camper!";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/rifle.png";

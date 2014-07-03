@@ -9,7 +9,7 @@ import de.hhu.propra.team61.objects.Weapon;
  */
 public class PoisonedArrow extends Weapon {
     private final static String  NAME           = "PoisonedArrow";
-    private final static String  DESCRIPTION    = "To avoid stupid jokes: Don't aim for the knee";
+    public final static String  DESCRIPTION    = "To avoid stupid jokes: Don't aim for the knee";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/poisonedarrow.png";
