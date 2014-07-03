@@ -326,6 +326,7 @@ public class MapWindow extends Application implements Networkable {
         windIndicator.setWindForce(terrain.getWindMagnitude());
         topLine.setRight(windIndicator);
 
+        VorbisPlayer.readVolumeSetting();
         VorbisPlayer.play(terrain.getBackgroundMusic(), true);
 
         if(server != null) { // only the server should do calculations

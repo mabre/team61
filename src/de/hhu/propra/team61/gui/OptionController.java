@@ -26,9 +26,9 @@ public class OptionController {
     /** contains heading */
     private Image image = new Image("file:resources/layout/options.png");
     /** to change volume of background music */
-    @FXML private Slider volumeMusic = new Slider();
+    @FXML private Slider volumeBGM = new Slider();
     /** to change volume of sound effects */
-    @FXML private Slider volumeEffects = new Slider();
+    @FXML private Slider volumeSFX = new Slider();
     /** to enter how many rounds till sudden death */
     @FXML private TextField suddenDeath = new TextField();
     /** to choose wind force */
@@ -78,11 +78,11 @@ public class OptionController {
      */
     public void loadSavedOptions() {
         JSONObject savedSettings = Settings.getSavedPrefs();
-        if(savedSettings.has("volumeMusic")) {
-            volumeMusic.setValue(savedSettings.getDouble("volumeMusic"));
+        if(savedSettings.has("volumeBGM")) {
+            volumeBGM.setValue(savedSettings.getDouble("volumeBGM"));
         }
-        if(savedSettings.has("volumeEffects")) {
-            volumeEffects.setValue(savedSettings.getDouble("volumeEffects"));
+        if(savedSettings.has("volumeSFX")) {
+            volumeSFX.setValue(savedSettings.getDouble("volumeSFX"));
         }
         if(savedSettings.has("sd")) {
             suddenDeath.setText(savedSettings.getString("sd"));
@@ -102,8 +102,8 @@ public class OptionController {
      */
     public JSONObject toJson() {
         JSONObject output = new JSONObject();
-        output.put("volumeMusic", volumeMusic.getValue());
-        output.put("volumeEffects", volumeEffects.getValue());
+        output.put("volumeBGM", volumeBGM.getValue());
+        output.put("volumeSFX", volumeSFX.getValue());
         if (suddenDeath.getText().equals("") || !suddenDeath.getText().matches("[0-9]*") || Integer.parseInt(suddenDeath.getText()) < 0) {
             output.put("sd", String.valueOf(15));
         } else {
