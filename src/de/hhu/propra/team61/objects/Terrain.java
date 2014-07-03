@@ -415,7 +415,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * Adds the given figures to the list of {@link figures} used for collision control.
+     * Adds the given figures to the list of {@link de.hhu.propra.team61.objects.Figure}s used for collision control.
      * @param figures the figures to be added
      */
     public void addFigures(ArrayList<Figure> figures) {
