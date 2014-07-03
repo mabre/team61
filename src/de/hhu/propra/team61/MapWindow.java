@@ -319,7 +319,7 @@ public class MapWindow extends Application implements Networkable {
                                         for (String command : commandList) {
                                             server.send(command);
                                         } //Send commands+
-                                        if (!commandList.contains("ADD_FLYING_PROJECTILE") && flyingProjectiles.size() == 0) {
+                                        if (!commandList.get(0).contains("ADD_FLYING_PROJECTILE") && !shootingIsAllowed && flyingProjectiles.size() == 0) {
                                             endTurn();
                                         }
                                 }
