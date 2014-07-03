@@ -80,7 +80,11 @@ public class GameOverWindow extends Application implements Networkable {
         overGrid.add(revenge, 0, 3);
         overGrid.add(revengeText, 1, 3);
         revenge.setOnAction(e -> {
-            MapWindow mapwindow = new MapWindow(map, file, client, clientThread, server, serverThread, sceneController);
+            if(client.isLocalGame()) {
+                MapWindow mapwindow = new MapWindow(map, file, client, clientThread, server, serverThread, sceneController);
+            } else {
+                new NetLobby(sceneController, client.getAssociatedTeam(), client, clientThread, server, serverThread);
+            }
         });
         if(server != null) {
             server.registerCurrentNetworkable(this);
@@ -114,13 +118,12 @@ public class GameOverWindow extends Application implements Networkable {
 
     @Override
     public void handleOnClient(String command) {
-        if(command.startsWith("STATUS MAPWINDOW")) {
-            JSONObject state = new JSONObject(extractPart(command, "STATUS MAPWINDOW "));
-            new MapWindow(state, client, clientThread, sceneController);
+        if(command.startsWith("SPECTATOR_LIST")) {
+            new NetLobby(sceneController, client.getAssociatedTeam(), client, clientThread, null, null);
 //        } else if(command.contains("CHAT ")) { // TODO add chat ?
 //            chatBox.processChatCommand(command);
         } else {
-            System.out.println("NetLobby: unknown command " + command);
+            System.out.println("GameOverWindow: unknown command " + command);
         }
     }
 

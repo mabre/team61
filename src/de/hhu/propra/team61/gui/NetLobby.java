@@ -101,7 +101,7 @@ public class NetLobby extends Application implements Networkable {
         this.sceneController = sceneController;
         serverThread = new Thread(server = new Server(() -> {
             clientThread = new Thread(client = new Client(hostName, () -> {
-                client.send("GET_STATUS"); // TODO race condition
+                client.send("GET_STATUS");
                 Platform.runLater(() -> buildGUI());
             }));
             clientThread.start();
@@ -109,6 +109,29 @@ public class NetLobby extends Application implements Networkable {
         }));
         serverThread.start();
         server.registerCurrentNetworkable(this);
+    }
+
+    /**
+     * constructor used when (server and) client are already running
+     * @param TODO
+     */
+    public NetLobby(SceneController sceneController, int team, Client client, Thread clientThread, Server server, Thread serverThread) {
+        initializeArrayLists();
+        this.isHost = (server != null);
+        this.associatedTeam = team;
+        this.sceneController = sceneController;
+        this.clientThread = clientThread;
+        this.client = client;
+        this.serverThread = serverThread;
+        this.server = server;
+        client.registerCurrentNetworkable(this);
+        if(server != null) {
+            server.registerCurrentNetworkable(this);
+            server.changeTeamByNumber(1, 1); // TODO hack to update list of spectators
+        }
+        buildGUI();
+        client.send("GET_STATUS");
+        spectator.setSelected(team == -1);
     }
 
     /**
@@ -710,7 +733,7 @@ public class NetLobby extends Application implements Networkable {
         if(isSpectating) {
             if (currentTeam < 1) {
 //                throw new IllegalArgumentException("Cannot remove team " + currentTeam);
-                System.out.println("ERROR: Cannot remove team " + currentTeam);
+                System.err.println("ERROR: Cannot remove team " + currentTeam);
                 return;
             }
             removeTeam(currentTeam, true);
@@ -719,7 +742,7 @@ public class NetLobby extends Application implements Networkable {
             System.out.println("handleSpectatorBoxChanged: current number of teams: " + teamsCreated);
             if (currentTeam != -1) {
 //                throw new IllegalArgumentException("Team requested, but already in team " + currentTeam);
-                System.out.println("ERROR: Team requested, but already in team " + currentTeam);
+                System.err.println("ERROR: Team requested, but already in team " + currentTeam);
                 return;
             }
             if(teamsCreated < Integer.parseInt(numberOfTeams.getText())) {
