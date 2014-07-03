@@ -17,6 +17,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -44,16 +45,23 @@ public class SettingsController {
 
     public void initialize(SceneController sceneController) {
         this.sceneController = sceneController;
-        gameStyle.setItems(FXCollections.observableArrayList(getStyles()));
+        ArrayList<String> availableStyles = getStyles();
+        for (int h=0; h<availableStyles.size(); h++) {
+            gameStyle.getItems().add(availableStyles.get(h).substring(0, availableStyles.get(h).length()-5));
+        }
         gameStyle.getSelectionModel().selectFirst();
-        showStyleInformation(gameStyle.getValue());
+        showStyleInformation(gameStyle.getValue()+".json");
         gameStyle.valueProperty().addListener(new ChangeListener<String>() {
             public void changed(ObservableValue ov, String value, String new_value) {
-                showStyleInformation(new_value);
+                showStyleInformation(new_value+".json");
             }
         });
+        ArrayList<String> availableTeams = getTeams();
         for (int i=0; i<4; i++) {
-            teams.add(new ChoiceBox<>(FXCollections.observableArrayList(getTeams())));
+            teams.add(new ChoiceBox<>());
+            for (int j=0; j<availableTeams.size(); j++) {
+                teams.get(i).getItems().add(availableTeams.get(j).substring(0, availableTeams.get(j).length()-5));
+            }
             teams.get(i).getSelectionModel().select(i);
         }
         numberOfTeams = 2;
@@ -88,9 +96,9 @@ public class SettingsController {
             }
         }
         for (int i=0; i<numberOfTeams-1; i++) {
-            JSONObject objecti = CustomizeManager.getSavedSettings("teams/" + teams.get(i).getValue());
+            JSONObject objecti = CustomizeManager.getSavedSettings("teams/" + teams.get(i).getValue()+".json");
             for(int h=i+1; h<numberOfTeams; h++) {
-                JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teams.get(h).getValue());
+                JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teams.get(h).getValue()+".json");
                 if (objecti.getString("color").equals(objecth.getString("color"))) {
                     differentColors = false;
                 }
@@ -103,7 +111,7 @@ public class SettingsController {
                     clientThread = new Thread(client = new Client(() -> {
                         Settings.saveJson(toJson(), "SETTINGS_FILE");
                         System.out.println("GameSettings: saved settings");
-                        JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue());
+                        JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue()+".json");
                         String map = styleObject.getString("map");
                         Platform.runLater(() -> new MapWindow(map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
                     }));
@@ -164,7 +172,7 @@ public class SettingsController {
      * @return a JSON-Object containing all game settings
      */
     private JSONObject toJson() {
-        JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue());
+        JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue()+".json");
         JSONObject output = new JSONObject();
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
         output.put("team-size", styleObject.getString("team-size")); //save size of teams
@@ -198,7 +206,7 @@ public class SettingsController {
      * @return JSON-Object that contains all information about the chosen team
      */
     private JSONObject getJsonForTeam(String fileName) {
-        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+fileName);
+        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+fileName+".json");
         JSONObject team = new JSONObject();
         team.put("name", teamObject.getString("name"));
         team.put("color", teamObject.getString("color"));

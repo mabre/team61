@@ -293,10 +293,11 @@ public class CustomizeWindow extends Application {
         Text chooseMapText = new Text("Choose map:");
         chooseMapText.setFont(Font.font("Verdana", 15));
         newGameStyleGrid.add(chooseMapText, 0, 4);
+        mapChooser = new ChoiceBox<>();
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(availableLevels.get(i));
+            mapChooser.getItems().add(availableLevels.get(i).substring(0, availableLevels.get(i).length()-4));
         }
         mapChooser.getSelectionModel().selectFirst();
         newGameStyleGrid.add(mapChooser, 1, 4);
@@ -746,7 +747,7 @@ public class CustomizeWindow extends Application {
     private void getBackgroundImages() {
         ArrayList<String> backgroundImages = CustomizeManager.getAvailableBackgrounds();
         for (int i=0; i<backgroundImages.size(); i++) {
-            imageChooser.getItems().add(backgroundImages.get(i));
+            imageChooser.getItems().add(backgroundImages.get(i).substring(0, backgroundImages.get(i).length()-4));
         }
         imageChooser.getSelectionModel().selectFirst();
     }
@@ -763,7 +764,7 @@ public class CustomizeWindow extends Application {
         ArrayList<HBox> hboxes = new ArrayList<>();
         CustomGrid teamGrid = new CustomGrid();
         for (int i=0; i<availableTeams.size(); i++) {
-            Button chooseTeamToEdit = new Button(availableTeams.get(i));
+            Button chooseTeamToEdit = new Button(availableTeams.get(i).substring(0, availableTeams.get(i).length()-5));
             final int finalI = i;
             chooseTeamToEdit.setOnAction(e -> {
                 refresh();
@@ -773,7 +774,7 @@ public class CustomizeWindow extends Application {
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
-                deleteFile("teams/" + chooseTeamToEdit.getText());
+                deleteFile("teams/" + chooseTeamToEdit.getText() +".json");
             });
             hboxes.add(new HBox(20));
             hboxes.get(i).getStyleClass().add("listHBox");
@@ -801,7 +802,7 @@ public class CustomizeWindow extends Application {
         ArrayList<HBox> hboxes = new ArrayList<>();
         CustomGrid styleGrid = new CustomGrid();
         for (int i=0; i<availableGameStyles.size(); i++) {
-            Button chooseStyleToEdit = new Button(availableGameStyles.get(i));
+            Button chooseStyleToEdit = new Button(availableGameStyles.get(i).substring(0, availableGameStyles.get(i).length()-5));
             final int finalI = i;
             chooseStyleToEdit.setOnAction(e -> {
                 refresh();
@@ -811,7 +812,7 @@ public class CustomizeWindow extends Application {
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
-                deleteFile("gamestyles/"+chooseStyleToEdit.getText());
+                deleteFile("gamestyles/"+chooseStyleToEdit.getText()+".json");
             });
             hboxes.add(new HBox(20));
             hboxes.get(i).setAlignment(Pos.CENTER);
@@ -840,7 +841,7 @@ public class CustomizeWindow extends Application {
         ArrayList<HBox> hboxes = new ArrayList<>();
         CustomGrid mapGrid = new CustomGrid();
         for (int i=0; i<availableMaps.size(); i++) {
-            Button chooseMapToEdit = new Button(availableMaps.get(i));
+            Button chooseMapToEdit = new Button(availableMaps.get(i).substring(0, availableMaps.get(i).length()-4));
             final int finalI = i;
             chooseMapToEdit.setOnAction(e -> {
                 refresh();
@@ -853,7 +854,7 @@ public class CustomizeWindow extends Application {
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
-                deleteFile("levels/" + chooseMapToEdit.getText());
+                deleteFile("levels/" + chooseMapToEdit.getText() +".lvl");
             });
             hboxes.add(new HBox(20));
             hboxes.get(i).setAlignment(Pos.CENTER);
@@ -922,7 +923,7 @@ public class CustomizeWindow extends Application {
      */
     private JSONObject mapToJson() {
         JSONObject output = new JSONObject();
-        output.put("background", imageChooser.getValue());
+        output.put("background", imageChooser.getValue()+".png");
         output.put("music", musicChooser.getValue());
         JSONArray jsonTerrain = levelTerrain.toJson().getJSONArray("terrain");
         output.put("terrain", jsonTerrain);
@@ -1029,11 +1030,12 @@ public class CustomizeWindow extends Application {
             itemCheckBoxes.get(i).setSelected(true);
             itemSliders.get(i).setValue(50);
         }
+        mapChooser.getSelectionModel().selectFirst();
         mapChooser = new ChoiceBox<>();
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(availableLevels.get(i));
+            mapChooser.getItems().add(availableLevels.get(i).substring(0, availableLevels.get(i).length()-4));
         }
         mapChooser.getSelectionModel().selectFirst();
         newGameStyleGrid.add(mapChooser, 1, 4);
