@@ -4,8 +4,10 @@ import de.hhu.propra.team61.Team;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Paint;
 
 import java.util.ArrayList;
 
@@ -117,6 +119,10 @@ public abstract class Weapon extends Item {
         crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
         this.getChildren().add(crosshairImage);
 
+        munitionDisplay = new Label("Uses left: "+this.munition);
+        munitionDisplay.setTextFill(Paint.valueOf("Yellow"));
+        this.getChildren().add(munitionDisplay);
+
         setAlignment(Pos.TOP_LEFT);
     }
 
@@ -143,6 +149,7 @@ public abstract class Weapon extends Item {
             Projectile shot = new Projectile(image, new Point2D(itemImage.getTranslateX()+xOffset, itemImage.getTranslateY()+yOffset), new Point2D(crosshairImage.getTranslateX()+xOffset, crosshairImage.getTranslateY()+yOffset), speed, this);
 
             munition--;
+            munitionDisplay.setText("Uses left: "+this.munition);
             System.out.println("munition left: " + munition);
 
             resetAngle();
@@ -234,7 +241,7 @@ public abstract class Weapon extends Item {
     @Override
     /** Overriden from @link #Item; Enables aiming higher by adjusting angle, setting the maximum to +90° */
     public void angleUp(boolean faces_right){
-        angle = Math.min(90,angle + 2);
+        angle = Math.min(90, angle + 2);
         angleDraw(faces_right);
     }
     @Override
@@ -257,6 +264,8 @@ public abstract class Weapon extends Item {
      * The crosshair is placed with a constant distance around the weaponimage depending on angle and faced direction
      */
     public void angleDraw(boolean faces_right){
+        munitionDisplay.setTranslateX(itemImage.getTranslateX() - NORMED_OBJECT_SIZE / 2);
+        munitionDisplay.setTranslateY(itemImage.getTranslateY() + NORMED_OBJECT_SIZE + 5);
         if(faces_right){
             crosshairImage.setTranslateX(itemImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
             itemImage.setScaleX(1); //Reverse mirroring

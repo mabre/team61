@@ -298,6 +298,7 @@ public class MapWindow extends Application implements Networkable {
                                     flyingProjectiles.remove(flyingProjectile); // we remove it here to prevent timing issue
                                     Platform.runLater(() -> {
                                         fieldPane.getChildren().remove(flyingProjectile);
+                                    });
                                         //Get series of commands to send to the clients from
                                         //Collisionhandling done by the weapon causing this exception
                                         ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
@@ -310,7 +311,6 @@ public class MapWindow extends Application implements Networkable {
                                         if (!commandList.contains("ADD_FLYING_PROJECTILE") && flyingProjectiles.size() == 0) {
                                             endTurn();
                                         }
-                                    });
                                 }
                             }
 
