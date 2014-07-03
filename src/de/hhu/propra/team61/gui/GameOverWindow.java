@@ -82,11 +82,7 @@ public class GameOverWindow extends Application implements Networkable {
         revenge.setOnAction(e -> {
             MapWindow mapwindow = new MapWindow(map, file, client, clientThread, server, serverThread, sceneController);
         });
-        if(server != null) {
-            server.registerCurrentNetworkable(this);
-        } else {
-            revenge.setDisable(true);
-        }
+        if(!client.isLocalGame()) revenge.setDisable(true); // TODO return to lobby in network mode (branch networkBackToLobby)
         client.registerCurrentNetworkable(this);
         Button end = new Button("End");
         end.setOnAction(e -> {
