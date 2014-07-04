@@ -25,6 +25,7 @@ public class Figure extends StackPane {
     private static final int MASS = 1000;
     public static final int WALK_SPEED = 5;
     public static final int JUMP_SPEED = 18 + (int)(MapWindow.GRAVITY.getY() * MASS);
+    /** figures cannot accelerate further in negative (to top) y-direction when y-speed is greater than this during the current jump */
     public static final int MAX_Y_SPEED = (int)(1.2*JUMP_SPEED);
     private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
@@ -334,7 +335,7 @@ public class Figure extends StackPane {
         switch(figureType) {
             case "Penguin":
                 massFactor = .5;
-                jumpDuringFallThreshold = MAX_Y_SPEED/2;
+                jumpDuringFallThreshold = MAX_Y_SPEED;
                 armor = .2;
                 break;
             case "Unicorn":
