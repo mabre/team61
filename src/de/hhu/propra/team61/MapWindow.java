@@ -337,6 +337,11 @@ public class MapWindow extends Application implements Networkable {
         topLine.setRight(windIndicator);
 
         VorbisPlayer.play(terrain.getBackgroundMusic(), true);
+        if(!terrain.getBackgroundMusicName().isEmpty()) {
+            Platform.runLater(() -> // using runLater assures that the comment is not visible before the terrain is visible
+                setGameComment("♫ " + terrain.getBackgroundMusicName() + " ♫", false)
+            );
+        }
 
         if(server != null) { // only the server should do calculations
             moveObjectsThread = new Thread(() -> { // TODO move this code to own class

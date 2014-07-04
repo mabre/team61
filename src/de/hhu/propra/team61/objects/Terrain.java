@@ -536,6 +536,15 @@ public class Terrain extends GridPane {
     }
 
     /**
+     * Gets the name of the file of the background music for the loaded terrain without ".ogg".
+     * @return name of the background music file without ".ogg"
+     */
+    public String getBackgroundMusicName() {
+        if(musicFile.endsWith(".ogg")) return musicFile.substring(0, musicFile.length()-4);
+        return musicFile;
+    }
+
+    /**
      * Destroys columns between the left or right side of the board and a given figure position (usually the boss).
      * @param position the position of the figure
      * @param fromLeft whether to start from the left (true) or right (false)
