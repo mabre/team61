@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.gui;
 
+import de.hhu.propra.team61.JavaFxUtils;
 import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
@@ -164,11 +165,14 @@ public class NetLobby extends Application implements Networkable {
         Text generalSettings = new Text("General settings:");
         generalSettings.setFont(Font.font(16));
         overviewGrid.add(generalSettings, 0, 0, 2, 1);
-        style = new ChoiceBox<>(FXCollections.observableArrayList(CustomizeManager.getAvailableGameStyles()));
+        ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
+        for (int i=0; i<availableGameStyles.size(); i++) {
+            style.getItems().add(JavaFxUtils.removeExtension(availableGameStyles.get(i), 5));
+        }
         style.getSelectionModel().selectFirst();
         style.valueProperty().addListener(new ChangeListener<String>() {
             public void changed(ObservableValue ov, String value, String new_value) {
-                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+new_value);
+                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+new_value+".json");
                 levelChooser.setValue(styleObject.getString("map"));
                 sizeField.setText(styleObject.getString("team-size"));
                 server.send(getStateForNewClient());
@@ -180,7 +184,7 @@ public class NetLobby extends Application implements Networkable {
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            levelChooser.getItems().add(availableLevels.get(i));
+            levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
         }
         levelChooser.getSelectionModel().selectFirst();
         overviewGrid.add(levelChooser, 3, 1, 2, 1);
@@ -273,9 +277,9 @@ public class NetLobby extends Application implements Networkable {
             public void handle(ActionEvent e) {
                 boolean differentColors = true;
                 for (int i=0; i<teamsCreated-1; i++) {
-                    JSONObject objecti = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(i).getValue());
+                    JSONObject objecti = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(i).getValue()+".json");
                     for(int h=i+1; h<teamsCreated; h++) {
-                        JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(h).getValue());
+                        JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(h).getValue()+".json");
                         if (objecti.getString("color").equals(objecth.getString("color"))) {
                             differentColors = false;
                         }
@@ -284,7 +288,7 @@ public class NetLobby extends Application implements Networkable {
                 if (differentColors) {
                     Settings.saveJson(toJson(), "NET_SETTINGS_FILE");
                     System.out.println("Network-GameSettings: saved settings");
-                    MapWindow mapwindow = new MapWindow(levelChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                    MapWindow mapwindow = new MapWindow(levelChooser.getValue()+".lvl", "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
                 } else {
                     sameColor.setVisible(true);
                 }
@@ -423,7 +427,7 @@ public class NetLobby extends Application implements Networkable {
      * @return JSONObject containing all settings for one team
      */
     private JSONObject getJsonForTeam(String team, Text ready) {
-        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+team);
+        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+team+".json");
         JSONObject teamSettings = new JSONObject();
         teamSettings.put("chosenTeam", team);
         teamSettings.put("name", teamObject.getString("name"));
@@ -566,8 +570,12 @@ public class NetLobby extends Application implements Networkable {
      * button to remove.
      */
     private void initializeArrayLists() {
+        ArrayList<String> availableTeams = getTeams();
         for (int i=0; i<=3; i++) {
-            teamChoosers.add(new ChoiceBox<>(FXCollections.observableArrayList(getTeams())));
+            teamChoosers.add(new ChoiceBox<>());
+            for (int j=0; j<availableTeams.size(); j++) {
+                teamChoosers.get(i).getItems().add(JavaFxUtils.removeExtension(availableTeams.get(j), 5));
+            }
             teamChoosers.get(i).getSelectionModel().selectFirst();
             teamChoosers.get(i).valueProperty().addListener(new ChangeListener<String>() {
                 public void changed(ObservableValue ov, String value, String new_value) {
