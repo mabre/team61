@@ -424,7 +424,9 @@ public class MapWindow extends Application implements Networkable {
                                                     figure.sufferDamage(figure.getDamageByLiquid());
                                                 }
                                             } catch (DeathException de) {
-                                                if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+                                                // if the current figure dies by jumping, switch the team, unless this figures just shot
+                                                // (in this case, the projectile collision will trigger endTurn()) (#82)
+                                                if (de.getFigure() == teams.get(currentTeam).getCurrentFigure() && flyingProjectiles.size()==0) {
                                                     endTurn();
                                                 }
                                             }
@@ -585,7 +587,9 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        while(flyingProjectiles.size() > 0){} //Wait until no objectmovements
+        if(flyingProjectiles.size() > 0) {
+            System.err.println("Hey, there are " + flyingProjectiles.size() + " projectiles, we shouldn't be here!");
+        }
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
         turnCount++; // TODO timing issue
