@@ -46,4 +46,14 @@ public class JavaFxUtils {
         return builder.toString();
     }
 
+    /**
+     * Removes a given number of characters from the end of a string.
+     * @param string string to be shortened
+     * @param howMany number of characters that are supposed to be removed
+     * @return the shortened string
+     */
+    public static String removeExtension(String string, int howMany) {
+        string = string.substring(0, string.length()-howMany);
+        return string;
+    }
 }

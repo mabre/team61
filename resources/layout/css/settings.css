@@ -15,11 +15,15 @@
     -fx-background-color: rgba(255, 255, 255, 0.7);
 }
 
+.startButton {
+    -fx-background-color: rgba(254, 94, 47, 0.8);
+    -fx-padding: 5 40 5 40;
+}
+
 .plus {
-    -fx-background-color: linear-gradient(#ff5400, #be1d00);
+    -fx-background-image: url("file:resources/layout/rainbow.png");
+    -fx-background-repeat: repeat-y;
     -fx-background-radius: 10;
     -fx-background-insets: 30;
     -fx-text-fill: #cc0100;
-    -fx-border-color: rgb(150, 150, 150);
-    -fx-border-radius: 5;
 }

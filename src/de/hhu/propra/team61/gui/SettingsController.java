@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.CustomizeWindow;
+import de.hhu.propra.team61.JavaFxUtils;
 import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.Settings;
@@ -32,6 +33,7 @@ public class SettingsController {
     @FXML private Text error = new Text();
     @FXML private GridPane settingGrid = new GridPane();
     @FXML private Button plus = new Button();
+    @FXML private Button cont = new Button();
 
     /** increased for every team that is added, used for color comparison */
     private int numberOfTeams;
@@ -47,7 +49,7 @@ public class SettingsController {
         this.sceneController = sceneController;
         ArrayList<String> availableStyles = getStyles();
         for (int h=0; h<availableStyles.size(); h++) {
-            gameStyle.getItems().add(availableStyles.get(h).substring(0, availableStyles.get(h).length()-5));
+            gameStyle.getItems().add(JavaFxUtils.removeExtension(availableStyles.get(h), 5));
         }
         gameStyle.getSelectionModel().selectFirst();
         showStyleInformation(gameStyle.getValue()+".json");
@@ -60,13 +62,15 @@ public class SettingsController {
         for (int i=0; i<4; i++) {
             teams.add(new ChoiceBox<>());
             for (int j=0; j<availableTeams.size(); j++) {
-                teams.get(i).getItems().add(availableTeams.get(j).substring(0, availableTeams.get(j).length()-5));
+                teams.get(i).getItems().add(JavaFxUtils.removeExtension(availableTeams.get(j), 5));
             }
             teams.get(i).getSelectionModel().select(i);
         }
         numberOfTeams = 2;
         settingGrid.add(teams.get(0), 0, 2, 3, 1);
         settingGrid.add(teams.get(1), 0, 3, 3, 1);
+        cont.getStyleClass().addAll("mainButton", "startButton");
+        plus.setPrefWidth(100);
     }
 
     @FXML

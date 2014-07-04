@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.gui;
 
+import de.hhu.propra.team61.JavaFxUtils;
 import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
@@ -166,7 +167,7 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.add(generalSettings, 0, 0, 2, 1);
         ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
         for (int i=0; i<availableGameStyles.size(); i++) {
-            style.getItems().add(availableGameStyles.get(i).substring(0, availableGameStyles.get(i).length()-5));
+            style.getItems().add(JavaFxUtils.removeExtension(availableGameStyles.get(i), 5));
         }
         style.getSelectionModel().selectFirst();
         style.valueProperty().addListener(new ChangeListener<String>() {
@@ -183,7 +184,7 @@ public class NetLobby extends Application implements Networkable {
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            levelChooser.getItems().add(availableLevels.get(i).substring(0, availableLevels.get(i).length()-4));
+            levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
         }
         levelChooser.getSelectionModel().selectFirst();
         overviewGrid.add(levelChooser, 3, 1, 2, 1);
@@ -573,7 +574,7 @@ public class NetLobby extends Application implements Networkable {
         for (int i=0; i<=3; i++) {
             teamChoosers.add(new ChoiceBox<>());
             for (int j=0; j<availableTeams.size(); j++) {
-                teamChoosers.get(i).getItems().add(availableTeams.get(j).substring(0, availableTeams.get(j).length()-5));
+                teamChoosers.get(i).getItems().add(JavaFxUtils.removeExtension(availableTeams.get(j), 5));
             }
             teamChoosers.get(i).getSelectionModel().selectFirst();
             teamChoosers.get(i).valueProperty().addListener(new ChangeListener<String>() {

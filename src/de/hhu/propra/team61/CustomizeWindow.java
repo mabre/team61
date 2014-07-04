@@ -136,14 +136,8 @@ public class CustomizeWindow extends Application {
     private StackPane levelPane;
     /** contains chosen background image */
     private Pane background = new Pane();
-     /** directory of cursor-images */
+     /** directory of terrain-images */
     private String img_path = "file:resources/terrain/";
-    /** image that is shown instead of cursor in drawing area */
-    private Image image = new Image(img_path + "stones.png");
-    /** contains cursor-image */
-    private ImageView imageView = new ImageView(image);
-    /** contains imageView */
-    Pane forImageView;
 
     ///Tetris-Cheat
     private String keysEntered = "";
@@ -297,7 +291,7 @@ public class CustomizeWindow extends Application {
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(availableLevels.get(i).substring(0, availableLevels.get(i).length()-4));
+            mapChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
         }
         mapChooser.getSelectionModel().selectFirst();
         newGameStyleGrid.add(mapChooser, 1, 4);
@@ -347,7 +341,7 @@ public class CustomizeWindow extends Application {
         newMapGrid.add(imageChooser, 3, 0);
         imageChooser.valueProperty().addListener(new ChangeListener<String>() {
             public void changed(ObservableValue ov, String value, String new_value) {
-                background.setStyle("-fx-background-image: url('" + "file:resources/levels/"+new_value + "')");
+                background.setStyle("-fx-background-image: url('" + "file:resources/levels/"+new_value + ".png" + "')");
             }
         });
         Text liquid = new Text("Liquid:");
@@ -357,10 +351,10 @@ public class CustomizeWindow extends Application {
         newMapGrid.add(liquidChooser, 5, 0);
         liquidChooser.valueProperty().addListener((ov, value, new_value) -> {
             if (new_value.equals("Water")) {
-            } else {
                 for (int i = 0; i < levelTerrain.getTerrainWidth()/Terrain.BLOCK_SIZE; i++) {
                     levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/Terrain.BLOCK_SIZE-1, 'W');
                 }
+            } else {
                 for (int i = 0; i < levelTerrain.getTerrainWidth()/Terrain.BLOCK_SIZE; i++) {
                     levelTerrain.replaceBlock(i, levelTerrain.getTerrainHeight()/Terrain.BLOCK_SIZE-1, 'L');
                 }
@@ -444,7 +438,7 @@ public class CustomizeWindow extends Application {
             initializeLevelEditor();
         });
         reset.getStyleClass().add("mainButton");
-        actionForTerrainButton(reset, "Remove your masterpiece :(", chosenTerrainType);
+        actionForTerrainButton(reset, "Remove your masterpiece :(", 'S');
         selectionGrid.add(reset, 0, 13);
         save.setOnAction(e -> {
             CustomizeManager.saveMap(mapToJson(), "levels/" + mapNameField.getText());
@@ -613,28 +607,16 @@ public class CustomizeWindow extends Application {
                 terrainType.setText("");
             }
         });
-        String terrainToUse = terrain.replaceAll("\\s","");
         if (terrainButton!=reset && terrainButton!=save) {
             terrainButton.setOnAction(e -> {
                 chosenTerrainType = character;
-                if (terrainButton == eraser) {
-                    image = new Image(img_path + "eraser.png");
-                } else {
-                  if (terrainButton == spawnPoint) {
-                      image = new Image(img_path + "spawnpoint.png");
-                  } else {
-                      image = new Image(img_path + terrainToUse.toLowerCase() + ".png");
-                  }
-                }
-                imageView.setImage(image);
             });
         }
     }
 
     /**
-     * Creates the drawing area. It's a stack of background, cursor and levelTerrain. Clicking or dragging will call
+     * Creates the drawing area. It's a stack of background and levelTerrain. Clicking or dragging will call
      * {@link de.hhu.propra.team61.objects.Terrain#replaceBlock(int, int, char)} and draw the chosen terrain type.
-     * The cursor is set to none, imageView is following the mouse to occur as cursor.
      */
     private void initializeLevelEditor() {
         try {
@@ -647,16 +629,13 @@ public class CustomizeWindow extends Application {
             anchorPane = new AnchorPane();
             AnchorPane.setBottomAnchor(levelTerrain, 0.0);
             AnchorPane.setLeftAnchor(levelTerrain, 0.0);
-            forImageView = new Pane();
-            forImageView.setMaxSize(750, 560);
-            forImageView.getChildren().add(imageView);
-            anchorPane.getChildren().addAll(forImageView, levelTerrain);
+            anchorPane.getChildren().add(levelTerrain);
             scrollPane.getStyleClass().add("scrollPane");
             scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
                 anchorPane.setPrefSize(Math.max(levelTerrain.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(levelTerrain.getBoundsInParent().getMaxY(), newBounds.getHeight()))
             );
             scrollPane.setContent(anchorPane);
-            background.setStyle("-fx-background-image: url('" + "file:resources/levels/board.png" + "')");
+            background.setStyle("-fx-background-image: url('" + "file:resources/levels/" + imageChooser.getValue() + ".png" + "')");
             levelPane = new StackPane();
             levelPane.setPrefSize(750, 560);
             levelPane.setMaxHeight(560);
@@ -675,15 +654,6 @@ public class CustomizeWindow extends Application {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 draw(mouseEvent);
-            }
-        });
-        levelTerrain.setOnMouseMoved(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                int x = (int) mouseEvent.getX();
-                int y = (int) mouseEvent.getY();
-                imageView.setLayoutX(x);
-                imageView.setLayoutY(y);
             }
         });
     }
@@ -710,8 +680,6 @@ public class CustomizeWindow extends Application {
                 levelTerrain.replaceBlock(x, y, chosenTerrainType);
             }
         }
-        imageView.setLayoutX(x*Terrain.BLOCK_SIZE);
-        imageView.setLayoutY(y*Terrain.BLOCK_SIZE);
     }
 
     /**
@@ -747,7 +715,7 @@ public class CustomizeWindow extends Application {
     private void getBackgroundImages() {
         ArrayList<String> backgroundImages = CustomizeManager.getAvailableBackgrounds();
         for (int i=0; i<backgroundImages.size(); i++) {
-            imageChooser.getItems().add(backgroundImages.get(i).substring(0, backgroundImages.get(i).length()-4));
+            imageChooser.getItems().add(JavaFxUtils.removeExtension(backgroundImages.get(i), 4));
         }
         imageChooser.getSelectionModel().selectFirst();
     }
@@ -764,7 +732,7 @@ public class CustomizeWindow extends Application {
         ArrayList<HBox> hboxes = new ArrayList<>();
         CustomGrid teamGrid = new CustomGrid();
         for (int i=0; i<availableTeams.size(); i++) {
-            Button chooseTeamToEdit = new Button(availableTeams.get(i).substring(0, availableTeams.get(i).length()-5));
+            Button chooseTeamToEdit = new Button(JavaFxUtils.removeExtension(availableTeams.get(i), 5));
             final int finalI = i;
             chooseTeamToEdit.setOnAction(e -> {
                 refresh();
@@ -802,7 +770,7 @@ public class CustomizeWindow extends Application {
         ArrayList<HBox> hboxes = new ArrayList<>();
         CustomGrid styleGrid = new CustomGrid();
         for (int i=0; i<availableGameStyles.size(); i++) {
-            Button chooseStyleToEdit = new Button(availableGameStyles.get(i).substring(0, availableGameStyles.get(i).length()-5));
+            Button chooseStyleToEdit = new Button(JavaFxUtils.removeExtension(availableGameStyles.get(i), 5));
             final int finalI = i;
             chooseStyleToEdit.setOnAction(e -> {
                 refresh();
@@ -841,7 +809,7 @@ public class CustomizeWindow extends Application {
         ArrayList<HBox> hboxes = new ArrayList<>();
         CustomGrid mapGrid = new CustomGrid();
         for (int i=0; i<availableMaps.size(); i++) {
-            Button chooseMapToEdit = new Button(availableMaps.get(i).substring(0, availableMaps.get(i).length()-4));
+            Button chooseMapToEdit = new Button(JavaFxUtils.removeExtension(availableMaps.get(i), 4));
             final int finalI = i;
             chooseMapToEdit.setOnAction(e -> {
                 refresh();
@@ -1035,7 +1003,7 @@ public class CustomizeWindow extends Application {
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(availableLevels.get(i).substring(0, availableLevels.get(i).length()-4));
+            mapChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
         }
         mapChooser.getSelectionModel().selectFirst();
         newGameStyleGrid.add(mapChooser, 1, 4);
