@@ -221,11 +221,11 @@ public abstract class Weapon extends Item {
      * @return a (funny) game comment
      */
     private String generateKillComment(String name) {
-        name = name.toLowerCase();
-        if(name.startsWith("c") || name.startsWith("k") || name.endsWith("y") || name.endsWith("i") || name.endsWith("e")) {
+        String lName = name.toLowerCase();
+        if(lName.startsWith("c") || lName.startsWith("k") || lName.endsWith("y") || lName.endsWith("i") || lName.endsWith("e")) {
             return "Oh my God, they killed " + name + "! You bastards!";
         } else {
-            return name + " passed on";
+            return name + " passed on.";
         }
     }
 
