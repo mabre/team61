@@ -33,7 +33,7 @@ public class CustomizeManager {
      * @param json is saved to CUSTOMIZE_DIR + wanted name + LVL_FILE_EXTENSION
      * @param file wanted name
      */
-    public static void saveMap(JSONObject json, String file) {
+    public static void saveLevel(JSONObject json, String file) {
         if (file.endsWith(".lvl")) {
             Json.save(json, CUSTOMIZE_DIR+file);
         } else {
@@ -90,6 +90,13 @@ public class CustomizeManager {
         FilenameFilter filter = (f, s) -> s.toLowerCase().endsWith(".png");
         ArrayList<String> backgrounds = new ArrayList<>(Arrays.asList(dir.list(filter)));
         return backgrounds;
+    }
+
+    public static ArrayList<String> getAvailableBackgroundMusic() {
+        File dir = new File(CUSTOMIZE_DIR+"audio/BGM/");
+        FilenameFilter filter = (f, s) -> s.toLowerCase().endsWith(".ogg");
+        ArrayList<String> music = new ArrayList<>(Arrays.asList(dir.list(filter)));
+        return music;
     }
 
 }

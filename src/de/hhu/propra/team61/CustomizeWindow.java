@@ -18,7 +18,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -35,7 +34,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -53,7 +51,7 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 public class CustomizeWindow extends Application {
 
-    /** used to switch back to menue */
+    /** used to switch back to menu */
     private SceneController sceneController = new SceneController();
     /** root for scene and for all GUI-elements */
     private BorderPane root = new BorderPane();
@@ -105,10 +103,10 @@ public class CustomizeWindow extends Application {
     private BorderPane newMapPane = new BorderPane();
     private CustomGrid newMapGrid = new CustomGrid();
     /** ChoiceBox to choose map */
-    private ChoiceBox<String> mapChooser = new ChoiceBox<>();
+    private ChoiceBox<String> levelChooser = new ChoiceBox<>();
     /** ChoiceBox to choose background music */
     private ChoiceBox<String> musicChooser = new ChoiceBox<>();
-    /** ChoiceBox to choose background imgae */
+    /** ChoiceBox to choose background image */
     private ChoiceBox<String> imageChooser = new ChoiceBox<>();
     /** ChoiceBox to choose liquid in the bottom of the level */
     private ChoiceBox<String> liquidChooser = new ChoiceBox<>();
@@ -164,7 +162,7 @@ public class CustomizeWindow extends Application {
     }
 
     /**
-     * creates menue to switch between teams, game styles, levels and the main menue
+     * creates menue to switch between teams, game styles, levels and the main menu
      */
     private void createTopBox() {
         HBox topBox = new HBox(20);
@@ -234,7 +232,7 @@ public class CustomizeWindow extends Application {
      * GUI for creating and saving a new team
      */
     private void createTeam() {
-        Text wormNamesText = new Text("Figures (enter names):");
+        Text wormNamesText = new Text("Figures-names:");
         wormNamesText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(wormNamesText, 0, 2);
         Text nameText = new Text("Team-Name:");
@@ -245,7 +243,7 @@ public class CustomizeWindow extends Application {
         colorText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(colorText, 2, 4);
         newTeamGrid.add(color, 2, 5);
-        Text figureText = new Text("Figure");
+        Text figureText = new Text("Figure:");
         figureText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(figureText, 2, 6);
         figureChooser.getItems().addAll("Penguin", "Unicorn");
@@ -284,17 +282,17 @@ public class CustomizeWindow extends Application {
         });
         newGameStyleGrid.add(sizeText, 0, 3);
         newGameStyleGrid.add(sizeField, 1, 3);
-        Text chooseMapText = new Text("Choose map:");
+        Text chooseMapText = new Text("Choose level:");
         chooseMapText.setFont(Font.font("Verdana", 15));
         newGameStyleGrid.add(chooseMapText, 0, 4);
-        mapChooser = new ChoiceBox<>();
+        levelChooser = new ChoiceBox<>();
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
+            levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
         }
-        mapChooser.getSelectionModel().selectFirst();
-        newGameStyleGrid.add(mapChooser, 1, 4);
+        levelChooser.getSelectionModel().selectFirst();
+        newGameStyleGrid.add(levelChooser, 1, 4);
         Button saveGameStyle = new Button("Save");
         saveGameStyle.getStyleClass().add("mainButton");
         saveGameStyle.setOnAction(e -> {
@@ -332,8 +330,7 @@ public class CustomizeWindow extends Application {
     private void createMap() {
         Text music = new Text("Background music:");
         newMapGrid.add(music, 0, 0);
-        musicChooser.getItems().add("dummy");
-        musicChooser.getSelectionModel().selectFirst();
+        getBackgroundMusic();
         newMapGrid.add(musicChooser, 1, 0);
         Text image = new Text("Background image:");
         newMapGrid.add(image, 2, 0);
@@ -441,7 +438,7 @@ public class CustomizeWindow extends Application {
         actionForTerrainButton(reset, "Remove your masterpiece :(", 'S');
         selectionGrid.add(reset, 0, 13);
         save.setOnAction(e -> {
-            CustomizeManager.saveMap(mapToJson(), "levels/" + mapNameField.getText());
+            CustomizeManager.saveLevel(mapToJson(), "levels/" + mapNameField.getText());
             refresh();
             createEditGrid();
             root.setLeft(editGrid);
@@ -620,6 +617,7 @@ public class CustomizeWindow extends Application {
      */
     private void initializeLevelEditor() {
         try {
+            fromJson(chosenMap, 3);
             levelTerrain = new Terrain(TerrainManager.load(chosenMap), true);
             scrollPane = new ScrollPane();
             scrollPane.setPrefSize(750, 560);
@@ -683,20 +681,20 @@ public class CustomizeWindow extends Application {
     }
 
     /**
-     * Calls method {@link #fromJson(String, Boolean)} to load team chosen to edit.
+     * Calls method {@link #fromJson(String, int)} to load team chosen to edit.
      * @param teamName name of the team to load
      */
     private void editTeam(String teamName) {
-        fromJson(teamName, true);
+        fromJson(teamName, 1);
         root.setLeft(newTeamGrid);
     }
 
     /**
-     * Calls method {@link #fromJson(String, Boolean)} to load game style chosen to edit.
+     * Calls method {@link #fromJson(String, int)} to load game style chosen to edit.
      * @param styleName name of the game style to load
      */
     private void editStyle(String styleName) {
-        fromJson(styleName, false);
+        fromJson(styleName, 2);
         root.setLeft(newGameStyleGrid);
     }
 
@@ -718,6 +716,14 @@ public class CustomizeWindow extends Application {
             imageChooser.getItems().add(JavaFxUtils.removeExtension(backgroundImages.get(i), 4));
         }
         imageChooser.getSelectionModel().selectFirst();
+    }
+
+    private void getBackgroundMusic() {
+        ArrayList<String> backgroundMusic = CustomizeManager.getAvailableBackgroundMusic();
+        for (int i=0; i<backgroundMusic.size(); i++) {
+            musicChooser.getItems().add(JavaFxUtils.removeExtension(backgroundMusic.get(i), 4));
+        }
+        musicChooser.getSelectionModel().selectFirst();
     }
 
     /**
@@ -815,7 +821,7 @@ public class CustomizeWindow extends Application {
                 refresh();
                 chosenMap = availableMaps.get(finalI);
                 initializeLevelEditor();
-                mapNameField.setText(chosenMap);
+                mapNameField.setText(JavaFxUtils.removeExtension(chosenMap, 4));
                 root.setLeft(newMapPane);
             });
             chooseMapToEdit.getStyleClass().add("listButton");
@@ -876,7 +882,7 @@ public class CustomizeWindow extends Application {
         JSONObject output = new JSONObject();
         output.put("name", styleNameField.getText());
         output.put("team-size", sizeField.getText());
-        output.put("map", mapChooser.getValue());
+        output.put("map", levelChooser.getValue());
         JSONArray inventory = new JSONArray();
         for (int i=0; i< itemNames.size(); i++) {
             inventory.put((int) itemSliders.get(i).getValue());
@@ -892,7 +898,7 @@ public class CustomizeWindow extends Application {
     private JSONObject mapToJson() {
         JSONObject output = new JSONObject();
         output.put("background", imageChooser.getValue()+".png");
-        output.put("music", musicChooser.getValue());
+        output.put("music", musicChooser.getValue()+".ogg");
         JSONArray jsonTerrain = levelTerrain.toJson().getJSONArray("terrain");
         output.put("terrain", jsonTerrain);
         return output;
@@ -901,10 +907,10 @@ public class CustomizeWindow extends Application {
     /**
      * Loads settings for either a chosen game style or a chosen team into the GUI-elements which can be edited afterwards.
      * @param file File to load settings from
-     * @param choseTeam boolean to indicate whether a team or a game style was chosen
+     * @param number integer to indicate whether a team, game style or level was chosen
      */
-    private void fromJson(String file, Boolean choseTeam) {
-        if (choseTeam) {
+    private void fromJson(String file, int number) {
+        if (number == 1) {
             JSONObject savedTeam = CustomizeManager.getSavedSettings("teams/" + file);
             if (savedTeam.has("name")) {
                 name.setText(savedTeam.getString("name"));
@@ -922,23 +928,35 @@ public class CustomizeWindow extends Application {
                 }
             }
         } else {
-            JSONObject savedStyle = CustomizeManager.getSavedSettings("gamestyles/" + file);
-            if (savedStyle.has("name")) {
-                styleNameField.setText(savedStyle.getString("name"));
-            }
-            if (savedStyle.has("team-size")) {
-                sizeField.setText(savedStyle.getString("team-size"));
-            }
-            if (savedStyle.has("map")) {
-                mapChooser.setValue(savedStyle.getString("map"));
-            }
-            if (savedStyle.has("inventory")) {
-                JSONArray inventory = savedStyle.getJSONArray("inventory");
-                for (int i=0; i< itemNames.size(); i++) {
-                    itemSliders.get(i).setValue(inventory.getInt(i));
-                    itemCheckBoxes.get(i).setSelected(inventory.getInt(i)>0);
+            if (number == 2) {
+                JSONObject savedStyle = CustomizeManager.getSavedSettings("gamestyles/" + file);
+                if (savedStyle.has("name")) {
+                    styleNameField.setText(savedStyle.getString("name"));
+                }
+                if (savedStyle.has("team-size")) {
+                    sizeField.setText(savedStyle.getString("team-size"));
+                }
+                if (savedStyle.has("map")) {
+                    levelChooser.setValue(savedStyle.getString("map"));
+                }
+                if (savedStyle.has("inventory")) {
+                    JSONArray inventory = savedStyle.getJSONArray("inventory");
+                    for (int i=0; i< itemNames.size(); i++) {
+                        itemSliders.get(i).setValue(inventory.getInt(i));
+                        itemCheckBoxes.get(i).setSelected(inventory.getInt(i)>0);
+                    }
+                }
+            } else {
+                JSONObject savedLevel = CustomizeManager.getSavedSettings("levels/" + file);
+                if (savedLevel.has("background")) {
+                    imageChooser.setValue(JavaFxUtils.removeExtension(savedLevel.getString("background"), 4));
+                }
+                background.setStyle("-fx-background-image: url('" + "file:resources/levels/" + imageChooser.getValue() + ".png" + "')");
+                if (savedLevel.has("music")) {
+                    musicChooser.setValue(JavaFxUtils.removeExtension(savedLevel.getString("music"), 4));
                 }
             }
+
         }
     }
 
@@ -958,6 +976,7 @@ public class CustomizeWindow extends Application {
         itemNames.add("Medipack");
         itemNames.add("Rifle");
         itemNames.add("Banana-Bomb");
+        itemNames.add("Digiwise");
         for (int i=0; i< itemNames.size(); i++) {
             itemCheckBoxes.add(new CheckBox(itemNames.get(i)));
             itemCheckBoxes.get(i).setSelected(true);
@@ -968,14 +987,16 @@ public class CustomizeWindow extends Application {
                     if (!newValue) {
                         itemSliders.get(finalI).setValue(0);
                     } else {
-                        itemSliders.get(finalI).setValue(50);
+                        double j = Math.random()*100;
+                        itemSliders.get(finalI).setValue((int)j);
                     }
                 }
             });
             itemsGrid.add(itemCheckBoxes.get(i), 0, i + 6);
         }
         for (int i=0; i<itemNames.size(); i++) {
-            itemSliders.add(new Slider(0, 100, 50));
+            double h = Math.random()*100;
+            itemSliders.add(new Slider(0, 100, (int)h));
             itemSliders.get(i).setShowTickMarks(true);
             itemSliders.get(i).setShowTickLabels(true);
             itemSliders.get(i).setBlockIncrement(50);
@@ -996,17 +1017,19 @@ public class CustomizeWindow extends Application {
         sizeField.setText("4");
         for (int i=0; i< itemNames.size(); i++) {
             itemCheckBoxes.get(i).setSelected(true);
-            itemSliders.get(i).setValue(50);
+            double j = Math.random()*100;
+            itemSliders.get(i).setValue((int)j);
         }
-        mapChooser.getSelectionModel().selectFirst();
-        mapChooser = new ChoiceBox<>();
+        levelChooser.getSelectionModel().selectFirst();
+        levelChooser = new ChoiceBox<>();
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
         for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
+            levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
         }
-        mapChooser.getSelectionModel().selectFirst();
-        newGameStyleGrid.add(mapChooser, 1, 4);
+        levelChooser.getSelectionModel().selectFirst();
+        musicChooser.getSelectionModel().selectFirst();
+        newGameStyleGrid.add(levelChooser, 1, 4);
         mapNameField.setText("Custom map");
     }
 
