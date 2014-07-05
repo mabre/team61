@@ -172,10 +172,12 @@ public class NetLobby extends Application implements Networkable {
         style.getSelectionModel().selectFirst();
         style.valueProperty().addListener(new ChangeListener<String>() {
             public void changed(ObservableValue ov, String value, String new_value) {
-                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+new_value+".json");
-                levelChooser.setValue(styleObject.getString("map"));
-                sizeField.setText(styleObject.getString("team-size"));
-                server.send(getStateForNewClient());
+                if(new_value != null) {
+                    JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + new_value + ".json");
+                    levelChooser.setValue(styleObject.getString("map"));
+                    sizeField.setText(styleObject.getString("team-size"));
+                    server.send(getStateForNewClient());
+                }
             }
         });
         overviewGrid.add(style, 0, 1, 2, 1);
@@ -303,7 +305,8 @@ public class NetLobby extends Application implements Networkable {
                 ready.setText("Waiting …");
                 ready.setDisable(true);
                 disableForbiddenSettings(-1);
-                client.send("CLIENT_READY " + toJson());
+                client.send("LOBBY_CHANGE " + toJson());
+                client.send("CLIENT_READY");
             }
         });
         ready.getStyleClass().add("mainButton");
@@ -371,6 +374,8 @@ public class NetLobby extends Application implements Networkable {
      * @return
      */
     private JSONObject toJson() {
+        if(style.getValue() == null) return new JSONObject();
+
         JSONObject output = new JSONObject();
         output.put("numberOfTeams", numberOfTeams.getText());   //save max. number of teams
         output.put("teamsCreated", teamsCreated);       //save current number of players
@@ -559,10 +564,12 @@ public class NetLobby extends Application implements Networkable {
                 teamChoosers.get(i).getItems().add(JavaFxUtils.removeExtension(availableTeams.get(j), 5));
             }
             teamChoosers.get(i).getSelectionModel().selectFirst();
-            teamChoosers.get(i).valueProperty().addListener(new ChangeListener<String>() {
-                public void changed(ObservableValue ov, String value, String new_value) {
-                    client.send(getStateForNewClient());
-                }
+            final int thisTeam = i;
+            teamChoosers.get(i).valueProperty().addListener((ov, value, new_value) -> {
+//                if(!value.equals(new_value) && thisTeam == associatedTeam) { // TODO leads to recursive call
+//                    System.err.println(thisTeam);
+//                    client.send("LOBBY_CHANGE " + toJson());
+//                }
             });
             readys.add(new Text("ready"));
             removeButtons.add(new Button("X"));
@@ -676,9 +683,11 @@ public class NetLobby extends Application implements Networkable {
             handleSpectatorBoxChanged(checked, currentTeam, clientId);
         } else if (command.startsWith("READY")) {
             int team = Integer.parseInt(command.split(" ", 3)[1]);
+            setTeamReady(team);
+        } else if (command.startsWith("LOBBY_CHANGE")) {
+            int team = Integer.parseInt(command.split(" ", 3)[1]);
             JSONObject clientSettings = new JSONObject(command.split(" ", 3)[2]);
             applySettingsFromClient(clientSettings, team);
-            setTeamReady(team);
         } else {
             System.out.println("Lobby handleOnServer: unknown command " + command);
         }
@@ -691,16 +700,14 @@ public class NetLobby extends Application implements Networkable {
      */
     private void applySettingsFromClient(JSONObject clientSettings, int team) {
         JSONObject currentSettings = toJson();
-        // clients may only change the team settings, so replace the currently set team settings with the settings send from the team
-
+        // clients may only change the team settings, so replace the currently set team settings with the settings sent from the team
         JSONArray teamsArray = currentSettings.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             if(i == team) {
-                teamsArray.getJSONObject(i).put("name", clientSettings.getJSONArray("teams").getJSONObject(i).getString("name"));
-                teamsArray.getJSONObject(i).put("color", clientSettings.getJSONArray("teams").getJSONObject(i).getString("color"));
+                teamsArray.getJSONObject(i).put("chosenTeam", clientSettings.getJSONArray("teams").getJSONObject(i).getString("chosenTeam"));
             }
         }
-
+        currentSettings.put("teams", teamsArray);
         fromJson(currentSettings);
         server.send(getStateForNewClient());
     }

@@ -9,6 +9,11 @@ import javafx.scene.paint.Color;
  */
 public class JavaFxUtils {
 
+    /**
+     * Gets a hexadecimal string (eg. #FF110A) representing the given color
+     * @param color color of which the hex representation is sought
+     * @return hex string for the given color
+     */
     public static String toHex(Color color) {
         return String.format("#%02X%02X%02X", (int)(color.getRed()*255), (int)(color.getGreen()*255), (int)(color.getBlue()*255));
     }

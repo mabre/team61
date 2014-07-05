@@ -8,13 +8,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.BindException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
+import static de.hhu.propra.team61.JavaFxUtils.removeExtension;
 import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
 
 /**
@@ -78,6 +77,7 @@ import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
  * <li>{@code GAME_OVER $int_team}<br>
  * Shows the game over window with the given team being the winner.<br>
  * see {@link de.hhu.propra.team61.gui.GameOverWindow}
+ * <li>{@code LOBBY_CHANGE}<br>
  * <li>{@code NAMEACCEPTED} (**)<br>
  * Sent after successful negotiation of id and name.<br>
  * see {@link de.hhu.propra.team61.network.Server.ClientConnection#getName()}
@@ -177,7 +177,7 @@ public class Server implements Runnable {
     private static Networkable currentNetworkable;
 
     /**
-     * Creates a new server. Only one server should be running at the same time. Does not start listening for new connections, see {@link run()}
+     * Creates a new server. Only one server should be running at the same time. Does not start listening for new connections, see {@link #run()}
      * @param listener function which is called when server is set up, thus ready to accept connections
      */
     public Server(Runnable listener) {
@@ -230,6 +230,37 @@ public class Server implements Runnable {
      */
     public void registerCurrentNetworkable(Networkable networkable) {
         this.currentNetworkable = networkable;
+    }
+
+    /**
+     * Gets a comma separated list of IPv4 addresses of the network interface of this computer.
+     * Loopback addresses (127.*) are not returned. If no address can be found, "No IPs found." is returned. Note that
+     * it is not possible to get the "public" ip address (only the router knows it).
+     * @return IPs for this machine
+     */
+    public static String getIps() {
+        String ips = "";
+        try {
+            Enumeration e = NetworkInterface.getNetworkInterfaces();
+            while(e.hasMoreElements()) {
+                NetworkInterface networkInterface = (NetworkInterface)e.nextElement();
+                Enumeration addresses = networkInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    String address = ((InetAddress)addresses.nextElement()).getHostAddress();
+                    if(!address.contains(":") && !address.startsWith("127.")) { // do not return IPv6 or loopback addresses
+                        ips += address + ", ";
+                        System.err.println("2");
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        if(ips.length() < 2) {
+            return "No IPs found.";
+        } else {
+            return removeExtension(ips, 2);
+        }
     }
 
     /**
@@ -553,13 +584,15 @@ public class Server implements Runnable {
                         processChatMessage(line.split(" ", 2)[1]);
                     } else if (line.startsWith("GET_STATUS")) {
                         out.println(currentNetworkable.getStateForNewClient());
-                    } else if (line.startsWith("CLIENT_READY ")) {
+                    } else if (line.startsWith("CLIENT_READY")) {
                         isReady = true;
                         Platform.runLater(() -> currentNetworkable.handleOnServer("READY " + associatedTeam + " " + extractPart(line, "CLIENT_READY ")));
                     } else if (line.startsWith("SPECTATOR ")) {
                         Platform.runLater(() -> currentNetworkable.handleOnServer(id + " " + line + " " + associatedTeam));
                     } else if (line.startsWith("KEYEVENT ")) {
                         Platform.runLater(() -> currentNetworkable.handleOnServer(associatedTeam + " " + extractPart(line, "KEYEVENT ")));
+                    } else if (line.startsWith("LOBBY_CHANGE ")) {
+                        Platform.runLater(() -> currentNetworkable.handleOnServer("LOBBY_CHANGE " + associatedTeam + " " + extractPart(line, "LOBBY_CHANGE ")));
                     } else if (line.startsWith("STATUS ")) {
                         System.err.println("WARNING: COMMAND NO LONGER SUPPORTED!"); // TODO remove
                     } else {

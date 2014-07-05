@@ -133,7 +133,7 @@ public class ScrollingLabel extends StackPane {
      * @param line the line to be removed.
      */
     private void remove(LabelLine line) {
-        Platform.runLater(() -> { // wird das ausgeführt, wenn fx geschlossen?
+        Platform.runLater(() -> {
             int lineIndex = lines.indexOf(line);
             getChildren().remove(line);
 //            lines.remove(lineIndex);
