@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import javafx.geometry.Point2D;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
@@ -22,6 +23,8 @@ public abstract class Item extends StackPane{
     protected ImageView itemImage;
     /** Amount of times this item can be used */
     protected int munition; // Item can only be used when munition > 0
+    /** Label indicating left uses */
+    protected Label munitionDisplay;
 
     /**
      * Constructor for deriving classes, setting up variables and the Stackpane

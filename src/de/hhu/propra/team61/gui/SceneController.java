@@ -1,13 +1,12 @@
 package de.hhu.propra.team61.gui;
 
-import de.hhu.propra.team61.gui.BigStage;
 import javafx.scene.Scene;
 
 /**
  * Makes switching between scenes in one stage possible.
  *
  * Contains all scenes and the stage = mainwindow and resets the scene of the mainwindow. The scenes containing main
- * menue and the game itself need to be saved in sceneController, because they can also be set from outside the class they
+ * menu and the game itself need to be saved in sceneController, because they can also be set from outside the class they
  * are created in.
  * All methods in this class are public as sceneController is called by other classes.
  *
@@ -18,8 +17,8 @@ public class SceneController {
 
     /** The main window */
     private BigStage mainwindow;
-    /** contains main menue */
-    private Scene menueScene;
+    /** contains main menu */
+    private Scene menuScene;
     /** contains game */
     private Scene gameScene;
 
@@ -40,11 +39,11 @@ public class SceneController {
     }
 
     /**
-     * Sets the scene of the main menue.
-     * @param menueScene contains the main menue
+     * Sets the scene of the main menu.
+     * @param menuScene contains the main menu
      */
-    public void setMenueScene(Scene menueScene) {
-        this.menueScene = menueScene;
+    public void setMenuScene(Scene menuScene) {
+        this.menuScene = menuScene;
     }
     /**
      * Sets the scene of the game ({@link de.hhu.propra.team61.MapWindow}).
@@ -65,10 +64,10 @@ public class SceneController {
     }
 
     /**
-     * Switches to the menue.
+     * Switches to the menu.
      */
-    public void switchToMenue() {
-        mainwindow.setScene(menueScene);
+    public void switchToMenu() {
+        mainwindow.setScene(menuScene);
         mainwindow.setTitle("Unicorns and penguins <3");
     }
 

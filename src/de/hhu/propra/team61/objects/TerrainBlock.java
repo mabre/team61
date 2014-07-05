@@ -65,7 +65,7 @@ public class TerrainBlock extends ImageView {
     /** image looking like water with transparent region at the top */
     private final static Image WATER_TOP_IMAGE = new Image(imgPath + "water_top.png");
     /** image indicating a spawn point */
-    private final static Image SPAWN_POINT = new Image(imgPath + "spawn.png");
+    private final static Image SPAWN_POINT = new Image(imgPath + "spawnpoint.png");
 
     //Technical Blocks/Special Cases
     /** damage resistance of sky (used to limit range of weapons) */
@@ -266,6 +266,7 @@ public class TerrainBlock extends ImageView {
     public double getResistance() {
         switch (type) {
             case ' ': return RESISTANCE_OF_SKY;
+            case '@': // TODO destroyed terrain boss
             case 'W':
             case 'L': return RESISTANCE_OF_LIQUIDS;
             case '/':

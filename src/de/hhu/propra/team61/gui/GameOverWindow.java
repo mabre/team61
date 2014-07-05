@@ -87,7 +87,7 @@ public class GameOverWindow extends Application implements Networkable {
         Button end = new Button("End");
         end.setOnAction(e -> {
             shutdown();
-            sceneController.switchToMenue();
+            sceneController.switchToMenu();
         });
         overGrid.add(end, 0, 4);
         Scene overScene = new Scene(root);

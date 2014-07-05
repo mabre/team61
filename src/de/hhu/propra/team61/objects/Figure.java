@@ -14,24 +14,33 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+// Created by kevin on 14.05.14.
 /**
- * Created by kevin on 14.05.14.
+ * An instance of this class represents <U>one</U> Figure, which most likely will be part of a<p>
+ * {@link de.hhu.propra.team61.Team}. Each Figure is in possession of a name, health armor, mass and <p>
+ * status-conditions like paralysis, being stuck, poisoning and being digivolved.
  */
-
 public class Figure extends StackPane {
     public static final int NORMED_OBJECT_SIZE = 16;
 
     /** note that the actual speed is lower because gravity is subtracted before the figure actually jumps */
     private static final int MASS = 1000;
+    /** multiplier for horizontal movement */
     public static final int WALK_SPEED = 5;
+    /** multiplier for upward movement */
     public static final int JUMP_SPEED = 18 + (int)(MapWindow.GRAVITY.getY() * MASS);
     /** figures cannot accelerate further in negative (to top) y-direction when y-speed is greater than this during the current jump */
     public static final int MAX_Y_SPEED = (int)(1.2*JUMP_SPEED);
+    /** velocity endurable before damage by fall is caused */
     private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
+    /** Position for dead figures, to make them disappear from screen */
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
 
+    /** Name of the figure */
     private String name;
+    /** "Unicorn" or "Penguin" */
     private String figureType;
+    /** Health of a figure, every not positive value means death */
     private int health;
 
     /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
@@ -40,22 +49,31 @@ public class Figure extends StackPane {
     /** the maximal speed (absolute value) in y direction since last call of resetVelocity, used to limit jump speed */
     private double maxYSpeed = 0;
 
+    /** Booleans indicating status conditions */
     private boolean isParalyzed;
     private boolean isPoisoned;
     private boolean isStuck;
 
+    /** Used to highlight figure steered */
     private boolean isActive;
+    /** boolean indicating faced direction, used for velocityvector of projectiles and optical reasons */
     private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
-
+    /** Item hold */
     private Item selectedItem;
 
 //    private Rectangle hitRegionDebug; // TODO doesn't work
+    /** Hitbox of this figure */
     private Rectangle2D hitRegion;
+    /** Image of the figure */
     private ImageView figureImage;
+    /** Display of figure's name over its head */
     private Label nameTag;
+    /** Display of figure's health over its head */
     private Label hpLabel;
+    /** Overlay displaying conditions */
+    ImageView condition = null;
 
-    // properties for digitation
+    /** properties for digitation, which might modify other values */
     private boolean digitated = false;
     private double massFactor = 1;
     private int jumpDuringFallThreshold = 0;
@@ -64,6 +82,18 @@ public class Figure extends StackPane {
     private int recentlySufferedDamage = 0;
 
     // In and Out
+
+    /**
+     * Constructor setting up all variables and images
+     *
+     * @param name the Figure's name
+     * @param figureType Unicorn or penguin?
+     * @param hp health
+     * @param armor armorrating(Damagemodifier)
+     * @param isParalyzed Statuscondition
+     * @param isPoisoned Statuscondition
+     * @param isStuck Statuscondition
+     */
     public Figure(String name, String figureType, int hp, double armor, boolean isParalyzed, boolean isPoisoned, boolean isStuck){
         this.name   = name;
         this.figureType = figureType;
@@ -79,6 +109,11 @@ public class Figure extends StackPane {
         initialize();
     }
 
+    /**
+     * Constructor setting up all variables and images
+     *
+     * @param input JSONObject containing all variables specified in the other constructor <b>and position.x and .y</b>
+     */
     public Figure(JSONObject input){
         figureImage = new ImageView();
         position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
@@ -104,6 +139,10 @@ public class Figure extends StackPane {
         initialize();
     }
 
+    /** Extension of constructor, which takes over all tasks, which are identical for all constructors in this class<p>
+     * e.g. setting up hitboxes and images<p>
+     * or the Labels
+     */
     private void initialize() {
         selectedItem = null;
 
@@ -124,6 +163,7 @@ public class Figure extends StackPane {
         setPosition(getPosition()); //Set Graphics to their place
     }
 
+    /** Creates a JSONObject containing all variables' values of this instance (e.g. for saving) */
     public JSONObject toJson(){
         JSONObject output = new JSONObject();
         output.put("name", name);
@@ -155,10 +195,26 @@ public class Figure extends StackPane {
 //    public void setArmor(double armor) {this.armor = armor;}
 
     public boolean getIsParalyzed() {return isParalyzed;}
-    public void setIsParalyzed(boolean isParalyzed){this.isParalyzed = isParalyzed;}
+    public void setIsParalyzed(boolean isParalyzed){
+        this.isParalyzed = isParalyzed;
+      /*  if (isParalyzed){
+            condition = new ImageView("file:resources/figures/paralyzed.png");
+            condition.setTranslateX(figureImage.getTranslateX());
+            condition.setTranslateY(figureImage.getTranslateY());
+            this.getChildren().add(condition);
+        } else { if(condition != null){this.getChildren().remove(condition); condition = null;} }*/
+    }
 
     public boolean getIsPoisoned() {return isPoisoned;}
-    public void setIsPoisoned(boolean isPoisoned){this.isPoisoned = isPoisoned;}
+    public void setIsPoisoned(boolean isPoisoned){
+        this.isPoisoned = isPoisoned;
+        if (isPoisoned){
+            condition = new ImageView(new Image("file:resources/figures/poisoned.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
+            condition.setTranslateX(figureImage.getTranslateX());
+            condition.setTranslateY(figureImage.getTranslateY());
+            this.getChildren().add(condition);
+        } else { if(condition != null){this.getChildren().remove(condition); condition = null;} }
+    }
 
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
@@ -202,6 +258,10 @@ public class Figure extends StackPane {
             nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
             hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getWidth() / 2);
             hpLabel.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE);
+            if(condition != null){
+                condition.setTranslateX(figureImage.getTranslateX());
+                condition.setTranslateY(figureImage.getTranslateY());
+            }
 
             setSelectedItem(getSelectedItem()); // Update position of weapon
         });
@@ -247,7 +307,7 @@ public class Figure extends StackPane {
         health -= damage - (armor*damage);
         if(health <= 0) {
             health = 0;
-            Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+            Image image = new Image("file:resources/spawnpoint.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
             Platform.runLater(() -> figureImage.setImage(image));
             setPosition(GRAVEYARD);
             throw new DeathException(this);

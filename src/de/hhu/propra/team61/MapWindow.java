@@ -248,14 +248,14 @@ public class MapWindow extends Application implements Networkable {
                  (i>0 && teams.get(i).getNumberOfLivingFigures() != teams.get(i-1).getNumberOfLivingFigures())) {
                 System.err.println("Team " + i + " has " + teams.get(i).getNumberOfLivingFigures() + " living figures. Not enough spawn points?");
                 shutdown();
-                sceneController.switchToMenue();
+                sceneController.switchToMenu();
                 return;
             }
         }
 
         sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
-            sceneController.switchToMenue();
+            sceneController.switchToMenu();
         });
         gamePane = new BorderPane();
         // contains the terrain with figures
@@ -291,7 +291,7 @@ public class MapWindow extends Application implements Networkable {
         gamePane.setTop(topLine);
         gamePane.setCenter(ingameLabel);
         createPausePane();
-        rootPane.getChildren().addAll(gamePane, pausePane);
+        rootPane.getChildren().addAll(drawBackgroundImage(), gamePane, pausePane);
         drawing = new Scene(rootPane, 1600, 300);
         drawing.getStylesheets().add("file:resources/layout/css/mapwindow.css");
         drawing.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
@@ -336,6 +336,7 @@ public class MapWindow extends Application implements Networkable {
         windIndicator.setWindForce(terrain.getWindMagnitude());
         topLine.setRight(windIndicator);
 
+        VorbisPlayer.readVolumeSetting();
         VorbisPlayer.play(terrain.getBackgroundMusic(), true);
         if(!terrain.getBackgroundMusicName().isEmpty()) {
             Platform.runLater(() -> // using runLater assures that the comment is not visible before the terrain is visible
@@ -365,19 +366,19 @@ public class MapWindow extends Application implements Networkable {
                                     flyingProjectiles.remove(flyingProjectile); // we remove it here to prevent timing issue
                                     Platform.runLater(() -> {
                                         fieldPane.getChildren().remove(flyingProjectile);
-                                        //Get series of commands to send to the clients from
-                                        //Collisionhandling done by the weapon causing this exception
-                                        ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
-                                        if (commandList.contains("REMOVE_FLYING_PROJECTILE")) {
-                                            commandList.set(0, "REMOVE_FLYING_PROJECTILE " + k);
-                                        }
-                                        for (String command : commandList) {
-                                            server.send(command);
-                                        } //Send commands+
-                                        if (!commandList.contains("ADD_FLYING_PROJECTILE") && flyingProjectiles.size() == 0) {
-                                            endTurn();
-                                        }
                                     });
+                                    //Get series of commands to send to the clients from
+                                    //Collisionhandling done by the weapon causing this exception
+                                    ArrayList<String> commandList = collidingProjectile.handleCollision(terrain, teams, e.getCollidingPosition());
+                                    if (commandList.contains("REMOVE_FLYING_PROJECTILE")) {
+                                        commandList.set(0, "REMOVE_FLYING_PROJECTILE " + k);
+                                    }
+                                    for (String command : commandList) {
+                                        server.send(command);
+                                    } //Send commands+
+                                    if (!commandList.get(0).contains("ADD_FLYING_PROJECTILE") && !shootingIsAllowed && flyingProjectiles.size() == 0) {
+                                        endTurn();
+                                    }
                                 }
                             }
 
@@ -438,7 +439,9 @@ public class MapWindow extends Application implements Networkable {
                                                     figure.sufferDamage(figure.getDamageByLiquid());
                                                 }
                                             } catch (DeathException de) {
-                                                if (de.getFigure() == teams.get(currentTeam).getCurrentFigure()) {
+                                                // if the current figure dies by jumping, switch the team, unless this figures just shot
+                                                // (in this case, the projectile collision will trigger endTurn()) (#82)
+                                                if (de.getFigure() == teams.get(currentTeam).getCurrentFigure() && flyingProjectiles.size()==0) {
                                                     endTurn();
                                                 }
                                             }
@@ -487,9 +490,9 @@ public class MapWindow extends Application implements Networkable {
 
         pauseGrid.add(cont, 0, 1);
         pauseGrid.setHalignment(cont, HPos.CENTER);
-        Button exit = new Button("End game");
+        Button exit = new Button("Save and end game");
         exit.setOnAction(e -> {
-             sceneController.switchToMenue();
+             sceneController.switchToMenu();
              shutdown();
         });
         pauseGrid.add(exit, 1, 1);
@@ -510,6 +513,13 @@ public class MapWindow extends Application implements Networkable {
         pauseGrid.add(shortcutsList, 0, 5, 2, 8);
         pausePane.setId("pausePane");
         pausePane.setCenter(pauseGrid);
+    }
+
+    private Pane drawBackgroundImage() {
+        String image = "file:resources/levels/"+terrain.getBackgroundImage();
+        Pane backgroundPane = new Pane();
+        backgroundPane.setStyle("-fx-background-image: url('" + image + "')");
+        return backgroundPane;
     }
 
     /**
@@ -592,7 +602,9 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        while(flyingProjectiles.size() > 0){} //Wait until no objectmovements
+        if(flyingProjectiles.size() > 0) {
+            System.err.println("Hey, there are " + flyingProjectiles.size() + " projectiles, we shouldn't be here!");
+        }
 
         teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
         turnCount++; // TODO timing issue
@@ -953,8 +965,6 @@ public class MapWindow extends Application implements Networkable {
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
                 VorbisPlayer.stop();
-
-
                 ingameLabel.stopAllTimers();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
                 GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);

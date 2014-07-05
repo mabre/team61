@@ -26,9 +26,12 @@ import java.util.ArrayList;
  */
 public class VorbisPlayer {
 
-    static ArrayList<Thread> playerThreads = new ArrayList<>(); // we might want to extend this data structure to allow stopping specific files
-    static boolean stopped = false;
-    static int filesBeingPlayed = 0;
+    private static ArrayList<Thread> playerThreads = new ArrayList<>(); // we might want to extend this data structure to allow stopping specific files
+    private static boolean stopped = false;
+    private static int filesBeingPlayed = 0;
+
+    private static double volumeBGM = 0;
+    private static double volumeSFX = 0;
 
     private static void testPlay(String filename, boolean repeat) {
         try {
@@ -56,7 +59,7 @@ public class VorbisPlayer {
                     // Get AudioInputStream that will be decoded by underlying VorbisSPI
                     din = AudioSystem.getAudioInputStream(decodedFormat, in);
                     // Play now !
-                    rawplay(decodedFormat, din);
+                    rawplay(decodedFormat, din, repeat);
                     in.close();
                 }
             } while (repeat && !stopped);
@@ -72,11 +75,14 @@ public class VorbisPlayer {
         }
     }
 
-    private static void rawplay(AudioFormat targetFormat,
-                                AudioInputStream din) throws IOException, LineUnavailableException {
+    private static void rawplay(AudioFormat targetFormat, AudioInputStream din, boolean repeat) throws IOException, LineUnavailableException {
         byte[] data = new byte[4096];
         SourceDataLine line = getLine(targetFormat);
         if (line != null) {
+            FloatControl volumeControl = (FloatControl)line.getControl(FloatControl.Type.MASTER_GAIN);
+            float vMax = volumeControl.getMaximum();
+            float vMin = volumeControl.getMinimum();
+            volumeControl.setValue((float)(vMin + (vMax - vMin) * (repeat ? volumeBGM : volumeSFX)));
             // Start
             line.start();
             int nBytesRead = 0, nBytesWritten = 0;
@@ -106,10 +112,10 @@ public class VorbisPlayer {
      * {@code VorbisPlayer.play("resources/audio/SFX/sample.ogg", false);} for sound effects. If a new file is played,
      * {@link #stopped} is set to {@code false}.
      * @param file the path of the file
-     * @param repeat whether to repeat the file
+     * @param isBGM if true, the file is repeated
      */
-    public static void play(String file, boolean repeat) {
-        Thread t = new Thread(() -> testPlay(file, repeat));
+    public static void play(String file, boolean isBGM) {
+        Thread t = new Thread(() -> testPlay(file, isBGM));
         playerThreads.add(t);
         t.start();
     }
@@ -119,5 +125,14 @@ public class VorbisPlayer {
      */
     public static void stop() {
         stopped = true;
+    }
+
+    /**
+     * Call this method to get the volume settings from the settings file.
+     */
+    public static void readVolumeSetting() {
+        // log10 because db is a log scale
+        volumeBGM = Math.log10(Settings.getSavedInt("volumeBGM", 50))/Math.log10(100);
+        volumeSFX = Math.log10(Settings.getSavedInt("volumeSFX", 50))/Math.log10(100);
     }
 }

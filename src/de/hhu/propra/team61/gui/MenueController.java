@@ -86,6 +86,14 @@ public class MenueController {
     }
 
     /**
+     * Opens credits.
+     */
+    @FXML
+    public void handleCredits() {
+        CreditsWindow creditsWindow = new CreditsWindow(sceneController);
+    }
+
+    /**
      * Closes the game.
      */
     @FXML

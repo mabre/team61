@@ -11,9 +11,9 @@
         <ImageView fx:id="imageView" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="11" GridPane.halignment="CENTER"/>
         <Text text="Volume:" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2" />
         <Text text="Music:" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-        <Slider fx:id="volumeMusic" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.columnSpan="4" ShowTickMarks="true" ShowTickLabels="true"/>
+        <Slider fx:id="volumeBGM" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.columnSpan="4" ShowTickMarks="true" ShowTickLabels="true"/>
         <Text text="Effects:" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-        <Slider fx:id="volumeEffects" GridPane.columnIndex="2" GridPane.rowIndex="3" GridPane.columnSpan="4" ShowTickMarks="true" ShowTickLabels="true"/>
+        <Slider fx:id="volumeSFX" GridPane.columnIndex="2" GridPane.rowIndex="3" GridPane.columnSpan="4" ShowTickMarks="true" ShowTickLabels="true"/>
         <Text text="Rounds till sudden death:" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="3" />
         <TextField fx:id="suddenDeath" text="15" prefWidth="40" GridPane.columnIndex="4" GridPane.rowIndex="4" />
         <Text text="Wind force:" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="2" />
@@ -22,8 +22,8 @@
         <TextField fx:id="timePerTurn" text="40" prefWidth="40" GridPane.columnIndex="2" GridPane.rowIndex="6" />
         <Text text="seconds" GridPane.columnIndex="3" GridPane.rowIndex="6" GridPane.columnSpan="2" />
         <Text text="COMING SOON" GridPane.columnIndex="5" GridPane.rowIndex="6" GridPane.columnSpan="2" />
-        <CheckBox fx:id="fallDamage" text="Change round after suffering fall damage" GridPane.columnIndex="0" GridPane.rowIndex="7" GridPane.columnSpan="6" />
-        <Button text="Close" onAction="#handleOptionExit" GridPane.columnIndex="2" GridPane.rowIndex="14" GridPane.halignment="CENTER"/>
+        <CheckBox fx:id="fallDamage" text="Change round after suffering fall damage" GridPane.columnIndex="0" GridPane.rowIndex="7" GridPane.columnSpan="7" />
+        <Button fx:id="close" text="Close" onAction="#handleOptionExit" GridPane.columnIndex="3" GridPane.rowIndex="14" GridPane.halignment="CENTER" styleClass="mainButton"/>
     </children>
     <padding>
         <Insets bottom="25" left="25" right="25" top="25" />

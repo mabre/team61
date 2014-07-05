@@ -11,7 +11,8 @@
         <Button fx:id="startSaved" text="Start saved game" onAction="#handleStartSaved" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.halignment="CENTER"/>
         <Button fx:id="customize" text="Customize" onAction="#handleCustomize" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.halignment="CENTER"/>
         <Button fx:id="options" text="Options" onAction="#handleOptions" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.halignment="CENTER"/>
-        <Button fx:id="exit" text="Exit" onAction="#handleExit" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.halignment="CENTER"/>
+        <Button fx:id="credits" text="Credits" onAction="#handleCredits" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.halignment="CENTER"/>
+        <Button fx:id="exit" text="Exit" onAction="#handleExit" GridPane.columnIndex="0" GridPane.rowIndex="6" GridPane.halignment="CENTER"/>
     </children>
     <padding>
         <Insets bottom="25" left="25" right="25" top="25" />

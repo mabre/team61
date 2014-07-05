@@ -59,6 +59,8 @@ public class Terrain extends GridPane {
     /** a list of figures with which objects can collide */
     private ArrayList<Figure> figures;
     private String musicFile;
+    /** the background image for the chosen level */
+    private String backgroundImage;
     /** a list of crates with which //TODO all objects cann collide, figures pick up */
     private ArrayList<Crate> supplyDrops = new ArrayList<>();
 
@@ -89,6 +91,7 @@ public class Terrain extends GridPane {
     public Terrain(JSONObject terrain, boolean renderSpawnPoints) {
         load(terrain, renderSpawnPoints);
         musicFile = terrain.getString("music");
+        backgroundImage = terrain.getString("background");
         figures = new ArrayList<>();
     }
 
@@ -412,7 +415,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * Adds the given figures to the list of {@link figures} used for collision control.
+     * Adds the given figures to the list of {@link de.hhu.propra.team61.objects.Figure}s used for collision control.
      * @param figures the figures to be added
      */
     public void addFigures(ArrayList<Figure> figures) {
@@ -518,6 +521,7 @@ public class Terrain extends GridPane {
         }
         save.put("terrain", jsonTerrain);
         save.put("music", musicFile);
+        save.put("background", backgroundImage);
         return save;
 
     }
@@ -540,8 +544,16 @@ public class Terrain extends GridPane {
      * @return name of the background music file without ".ogg"
      */
     public String getBackgroundMusicName() {
-        if(musicFile.endsWith(".ogg")) return musicFile.substring(0, musicFile.length()-4);
+        if (musicFile.endsWith(".ogg")) return musicFile.substring(0, musicFile.length() - 4);
         return musicFile;
+    }
+
+    /**
+     * Gets the name of the background image for the chosen level.
+     * @return name of the background image
+     */
+    public String getBackgroundImage() {
+        return backgroundImage;
     }
 
     /**

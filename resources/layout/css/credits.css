@@ -5,10 +5,6 @@
     -fx-background-position: top left;
 }
 
-.optionsText {
-    -fx-fill: linear-gradient(from 0% 0% to 100% 200%, repeat, #ff5e30 0%, #ff2b30 50%);
-}
-
 .mainButton {
     -fx-background-color: rgba(254, 94, 47, 0.5);
     -fx-padding: 5 10 5 10;
