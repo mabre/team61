@@ -40,6 +40,8 @@ public class ScrollingLabel extends StackPane {
     private ArrayList<LabelLine> lines = new ArrayList<>();
     /** lines used to be shown in the label, needed to stop all timer threads // TODO don't know why */
     private ArrayList<LabelLine> oldLines = new ArrayList<>();
+    /** when all timer are stopped, do not create new ones */
+    private boolean acceptingNewLines = true;
 
     /**
      * A label which calls {@link #remove(de.hhu.propra.team61.gui.ScrollingLabel.LabelLine)} after a certain timeout.
@@ -96,6 +98,10 @@ public class ScrollingLabel extends StackPane {
      * @param lowPriority whether the line is overwritten right away when a new line is added
      */
     public void addLine(String text, boolean lowPriority) {
+        if(!acceptingNewLines) {
+            System.err.println("This label is destroyed!");
+            return;
+        }
         removeLowPriorityLine();
         LabelLine newLine = new LabelLine(text, lowPriority);
         lines.add(newLine);
@@ -141,6 +147,7 @@ public class ScrollingLabel extends StackPane {
      * Stops all timers and threads.
      */
     public void stopAllTimers() {
+        acceptingNewLines = false;
         for(LabelLine line: lines) {
             line.stopRemoveTimer();
         }
