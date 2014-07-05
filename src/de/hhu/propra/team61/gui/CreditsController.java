@@ -1,6 +1,8 @@
 package de.hhu.propra.team61.gui;
 
 import javafx.fxml.FXML;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 /**
  * Controls GUI for credits.
@@ -11,6 +13,10 @@ public class CreditsController {
 
     /** used to switch back to menu */
     private SceneController sceneController;
+    /** contains image */
+    @FXML private ImageView imageView = new ImageView();
+    /** contains heading */
+    private Image image = new Image("file:resources/layout/cover.png");
 
     /**
      * Initialize the sceneController
@@ -18,6 +24,7 @@ public class CreditsController {
      */
     public void initialize(SceneController sceneController) {
         this.sceneController = sceneController;
+        imageView.setImage(image);
     }
 
     /**

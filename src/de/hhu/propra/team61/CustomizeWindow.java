@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 /**
- * The window that is shown when clicking 'Customize' in main menue.
+ * The window that is shown when clicking 'Customize' in main menu.
  *
  * This class contains GUI for creating new teams, game styles and levels.
  * Custom teams, styles and levels can also be edited or deleted.
@@ -100,8 +100,8 @@ public class CustomizeWindow extends Application {
     Button save = new Button("Save");
     Button spawnPoint = new Button("Spawn point");
 
-    private BorderPane newMapPane = new BorderPane();
-    private CustomGrid newMapGrid = new CustomGrid();
+    private BorderPane newLevelPane = new BorderPane();
+    private CustomGrid newLevelGrid = new CustomGrid();
     /** ChoiceBox to choose map */
     private ChoiceBox<String> levelChooser = new ChoiceBox<>();
     /** ChoiceBox to choose background music */
@@ -113,9 +113,9 @@ public class CustomizeWindow extends Application {
     /** shows text of the button the mouse is focusing */
     private Text terrainType = new Text();
     /** the map to be loaded */
-    private String chosenMap = new String("editor/basic.lvl");
+    private String chosenLevel = new String("editor/basic.lvl");
     /** TextField for wanted name of a custom map */
-    private TextField mapNameField = new TextField("Custom map");
+    private TextField levelNameField = new TextField("Custom map");
     /** contains buttons to choose terrain */
     private CustomGrid selectionGrid = new CustomGrid();
     /** used for drawing the chosen terrain block */
@@ -144,7 +144,7 @@ public class CustomizeWindow extends Application {
     private Thread moveBlockThread = null;
 
     /**
-     * initializes all GUI-elements and switches to customizeScene
+     * Initializes all GUI-elements and switches to customizeScene
      * @param sceneController makes switching between scenes in one stage possible
      */
     public CustomizeWindow(SceneController sceneController) {
@@ -153,7 +153,7 @@ public class CustomizeWindow extends Application {
         createEditGrid();
         createTeam();
         createGameStyle();
-        createMap();
+        createLevel();
         createTopBox();
         root.setLeft(editGrid);
         Scene customizeScene = new Scene(root, 1000, 600);
@@ -162,7 +162,7 @@ public class CustomizeWindow extends Application {
     }
 
     /**
-     * creates menue to switch between teams, game styles, levels and the main menu
+     * Creates menu to switch between teams, game styles, levels and the main menu
      */
     private void createTopBox() {
         HBox topBox = new HBox(20);
@@ -191,9 +191,9 @@ public class CustomizeWindow extends Application {
         newMap.setOnAction(e -> {
             refresh();
             root.getChildren().remove(itemsGrid);
-            chosenMap = "editor/basic.lvl";
+            chosenLevel = "editor/basic.lvl";
             initializeLevelEditor();
-            root.setLeft(newMapPane);
+            root.setLeft(newLevelPane);
             scrollPane.requestFocus(); // to make cheat work right away
         });
         Button backToMenu = new Button("Go back to menu");
@@ -208,22 +208,22 @@ public class CustomizeWindow extends Application {
     }
 
     /**
-     * shows lists of all existing teams, game styles and levels
+     * Shows lists of all existing teams, game styles and levels
      */
     private void createEditGrid() {
         editGrid = new CustomGrid();
         Text teamsText = new Text("Teams:");
         teamsText.setFont(Font.font("Verdana", 20));
         editGrid.add(teamsText, 0, 0, 2, 1);
-        getTeams();
+        getListOfTeams();
         Text stylesText = new Text("Game Styles:");
         stylesText.setFont(Font.font("Verdana", 20));
         editGrid.add(stylesText, 1, 0, 2, 1);
-        getGameStyles();
-        Text mapsText = new Text("Maps:");
-        mapsText.setFont(Font.font("Verdana", 20));
-        editGrid.add(mapsText, 2, 0, 2, 1);
-        getMaps();
+        getListOfGameStyles();
+        Text levelsText = new Text("Levels:");
+        levelsText.setFont(Font.font("Verdana", 20));
+        editGrid.add(levelsText, 2, 0, 2, 1);
+        getListOfLevels();
         Image customizeImage = new Image("file:resources/layout/customize.png");
         editGrid.add(new ImageView(customizeImage), 3, 1, 3, 7);
     }
@@ -282,9 +282,9 @@ public class CustomizeWindow extends Application {
         });
         newGameStyleGrid.add(sizeText, 0, 3);
         newGameStyleGrid.add(sizeField, 1, 3);
-        Text chooseMapText = new Text("Choose level:");
-        chooseMapText.setFont(Font.font("Verdana", 15));
-        newGameStyleGrid.add(chooseMapText, 0, 4);
+        Text chooseLevelText = new Text("Choose level:");
+        chooseLevelText.setFont(Font.font("Verdana", 15));
+        newGameStyleGrid.add(chooseLevelText, 0, 4);
         levelChooser = new ChoiceBox<>();
         ArrayList<String> availableLevels = getLevels();
         int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
@@ -327,25 +327,25 @@ public class CustomizeWindow extends Application {
      * </ul>
      * Also contains EventFilter for Tetris-cheat.
      */
-    private void createMap() {
+    private void createLevel() {
         Text music = new Text("Background music:");
-        newMapGrid.add(music, 0, 0);
+        newLevelGrid.add(music, 0, 0);
         getBackgroundMusic();
-        newMapGrid.add(musicChooser, 1, 0);
+        newLevelGrid.add(musicChooser, 1, 0);
         Text image = new Text("Background image:");
-        newMapGrid.add(image, 2, 0);
+        newLevelGrid.add(image, 2, 0);
         getBackgroundImages();
-        newMapGrid.add(imageChooser, 3, 0);
+        newLevelGrid.add(imageChooser, 3, 0);
         imageChooser.valueProperty().addListener(new ChangeListener<String>() {
             public void changed(ObservableValue ov, String value, String new_value) {
                 background.setStyle("-fx-background-image: url('" + "file:resources/levels/"+new_value + ".png" + "')");
             }
         });
         Text liquid = new Text("Liquid:");
-        newMapGrid.add(liquid, 4, 0);
+        newLevelGrid.add(liquid, 4, 0);
         liquidChooser.getItems().addAll("Water", "Lava");
         liquidChooser.getSelectionModel().selectFirst();
-        newMapGrid.add(liquidChooser, 5, 0);
+        newLevelGrid.add(liquidChooser, 5, 0);
         liquidChooser.valueProperty().addListener((ov, value, new_value) -> {
             if (new_value.equals("Water")) {
                 for (int i = 0; i < levelTerrain.getTerrainWidth()/Terrain.BLOCK_SIZE; i++) {
@@ -357,11 +357,11 @@ public class CustomizeWindow extends Application {
                 }
             }
         });
-        Text mapName = new Text("Name:");
-        newMapGrid.add(mapName, 6, 0);
-        newMapGrid.add(mapNameField, 7, 0);
-        newMapPane.setTop(newMapGrid);
-        newMapPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
+        Text levelName = new Text("Name:");
+        newLevelGrid.add(levelName, 6, 0);
+        newLevelGrid.add(levelNameField, 7, 0);
+        newLevelPane.setTop(newLevelGrid);
+        newLevelPane.addEventFilter(KeyEvent.KEY_PRESSED, keyEvent -> {
             System.out.println("key pressed: " + keyEvent.getCode());
             if (!cheatEnabled) {
                 switch (keyEvent.getCode()) {
@@ -425,7 +425,7 @@ public class CustomizeWindow extends Application {
         selectionGrid.add(leftEdge, 0, 6);
         selectionGrid.add(terrainType, 0, 7, 5, 1);
         eraser.getStyleClass().add("mainButton");
-        actionForTerrainButton(eraser, "Erase parts of the map.", ' ');
+        actionForTerrainButton(eraser, "Erase parts of the level.", ' ');
         selectionGrid.add(eraser, 0, 11);
         spawnPoint.getStyleClass().add("mainButton");
         actionForTerrainButton(spawnPoint, "Set a spawn point", 'P');
@@ -438,13 +438,13 @@ public class CustomizeWindow extends Application {
         actionForTerrainButton(reset, "Remove your masterpiece :(", 'S');
         selectionGrid.add(reset, 0, 13);
         save.setOnAction(e -> {
-            CustomizeManager.saveLevel(mapToJson(), "levels/" + mapNameField.getText());
+            CustomizeManager.saveLevel(levelToJson(), "levels/" + levelNameField.getText());
             refresh();
             createEditGrid();
             root.setLeft(editGrid);
         });
         save.getStyleClass().add("mainButton");
-        actionForTerrainButton(save, "Save the map.", chosenTerrainType);
+        actionForTerrainButton(save, "Save the level.", chosenTerrainType);
         selectionGrid.add(save, 0, 14);
         Text brush = new Text("Brush width: ");
         selectionGrid.add(brush, 1, 0);
@@ -460,7 +460,7 @@ public class CustomizeWindow extends Application {
             }
         });
         selectionGrid.add(brushWidth, 1, 1, 1, 4);
-        newMapPane.setRight(selectionGrid);
+        newLevelPane.setRight(selectionGrid);
     }
 
     private void startCheat() {
@@ -617,8 +617,8 @@ public class CustomizeWindow extends Application {
      */
     private void initializeLevelEditor() {
         try {
-            fromJson(chosenMap, 3);
-            levelTerrain = new Terrain(TerrainManager.load(chosenMap), true);
+            fromJson(chosenLevel, 3);
+            levelTerrain = new Terrain(TerrainManager.load(chosenLevel), true);
             scrollPane = new ScrollPane();
             scrollPane.setPrefSize(750, 560);
             scrollPane.setMaxHeight(560);
@@ -638,7 +638,7 @@ public class CustomizeWindow extends Application {
             levelPane.setPrefSize(750, 560);
             levelPane.setMaxHeight(560);
             levelPane.getChildren().addAll(background, scrollPane);
-            newMapPane.setLeft(levelPane);
+            newLevelPane.setLeft(levelPane);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -730,7 +730,7 @@ public class CustomizeWindow extends Application {
      * Searches for existing teams and adds a button for each team. Clicking one button will call {@link #editTeam(String)}.
      * Also adds possibility to delete a team.
      */
-    private void getTeams() {
+    private void getListOfTeams() {
         ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
         ScrollPane teamPane = new ScrollPane();
         Pane teamList = new Pane();
@@ -768,7 +768,7 @@ public class CustomizeWindow extends Application {
      * Searches for existing game styles and adds a button for each style. Clicking one button will call {@link #editStyle(String)}.
      * Also adds possibility to delete a game style.
      */
-    private void getGameStyles() {
+    private void getListOfGameStyles() {
         ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
         ScrollPane stylePane = new ScrollPane();
         Pane styleList = new Pane();
@@ -807,41 +807,41 @@ public class CustomizeWindow extends Application {
      * {@link #initializeLevelEditor()} and load the chosen level into the editor.
      * Also adds possibility to delete a level.
      */
-    private void getMaps() {
-        ArrayList<String> availableMaps = CustomizeManager.getAvailableLevels();
-        ScrollPane mapPane = new ScrollPane();
-        Pane mapList = new Pane();
-        mapList.getStyleClass().add("list");
+    private void getListOfLevels() {
+        ArrayList<String> availableLevels = CustomizeManager.getAvailableLevels();
+        ScrollPane levelPane = new ScrollPane();
+        Pane levelList = new Pane();
+        levelList.getStyleClass().add("list");
         ArrayList<HBox> hboxes = new ArrayList<>();
-        CustomGrid mapGrid = new CustomGrid();
-        for (int i=0; i<availableMaps.size(); i++) {
-            Button chooseMapToEdit = new Button(JavaFxUtils.removeExtension(availableMaps.get(i), 4));
+        CustomGrid levelGrid = new CustomGrid();
+        for (int i=0; i<availableLevels.size(); i++) {
+            Button chooseLevelToEdit = new Button(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
             final int finalI = i;
-            chooseMapToEdit.setOnAction(e -> {
+            chooseLevelToEdit.setOnAction(e -> {
                 refresh();
-                chosenMap = availableMaps.get(finalI);
+                chosenLevel = availableLevels.get(finalI);
                 initializeLevelEditor();
-                mapNameField.setText(JavaFxUtils.removeExtension(chosenMap, 4));
-                root.setLeft(newMapPane);
+                levelNameField.setText(JavaFxUtils.removeExtension(chosenLevel, 4));
+                root.setLeft(newLevelPane);
             });
-            chooseMapToEdit.getStyleClass().add("listButton");
+            chooseLevelToEdit.getStyleClass().add("listButton");
             Button remove = new Button("X");
             remove.setId("removeButton");
             remove.setOnAction(e -> {
-                deleteFile("levels/" + chooseMapToEdit.getText() +".lvl");
+                deleteFile("levels/" + chooseLevelToEdit.getText() +".lvl");
             });
             hboxes.add(new HBox(20));
             hboxes.get(i).setAlignment(Pos.CENTER);
             hboxes.get(i).getStyleClass().add("listHBox");
-            hboxes.get(i).getChildren().addAll(chooseMapToEdit, remove);
-            mapGrid.add(hboxes.get(i), 0, i);
+            hboxes.get(i).getChildren().addAll(chooseLevelToEdit, remove);
+            levelGrid.add(hboxes.get(i), 0, i);
         }
-        mapList.getChildren().add(mapGrid);
-        mapPane.setContent(mapList);
-        mapPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        mapPane.getStyleClass().add("scrollPane");
-        mapPane.setPrefSize(220, 450);
-        editGrid.add(mapPane, 2, 1, 1, 10);
+        levelList.getChildren().add(levelGrid);
+        levelPane.setContent(levelList);
+        levelPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        levelPane.getStyleClass().add("scrollPane");
+        levelPane.setPrefSize(220, 450);
+        editGrid.add(levelPane, 2, 1, 1, 10);
     }
 
     /**
@@ -895,7 +895,7 @@ public class CustomizeWindow extends Application {
      * Saves the created level and additional settings as background music.
      * @return JSON-Object that contains all settings for the created level + the level itself
      */
-    private JSONObject mapToJson() {
+    private JSONObject levelToJson() {
         JSONObject output = new JSONObject();
         output.put("background", imageChooser.getValue()+".png");
         output.put("music", musicChooser.getValue()+".ogg");
@@ -905,7 +905,7 @@ public class CustomizeWindow extends Application {
     }
 
     /**
-     * Loads settings for either a chosen game style or a chosen team into the GUI-elements which can be edited afterwards.
+     * Loads settings for either a chosen game style, team or level into the GUI-elements which can be edited afterwards.
      * @param file File to load settings from
      * @param number integer to indicate whether a team, game style or level was chosen
      */
@@ -1005,7 +1005,7 @@ public class CustomizeWindow extends Application {
     }
 
     /**
-     * Sets all TextFields etc. back to default values when another menue-point is clicked.
+     * Sets all TextFields etc. back to default values when another menu-point is clicked.
      */
     private void refresh() {
         name.setText("player");
@@ -1030,7 +1030,7 @@ public class CustomizeWindow extends Application {
         levelChooser.getSelectionModel().selectFirst();
         musicChooser.getSelectionModel().selectFirst();
         newGameStyleGrid.add(levelChooser, 1, 4);
-        mapNameField.setText("Custom map");
+        levelNameField.setText("Custom level");
     }
 
     @Override

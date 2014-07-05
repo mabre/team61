@@ -22,17 +22,27 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
+ * Controls GUI-elements for GameSettings.
+ *
  * Created by Jessypet on 29.06.14.
  */
 public class SettingsController {
 
+    /** used to switch back to menu or to game */
     private SceneController sceneController;
+    /** contains all available game styles */
     @FXML private ChoiceBox<String> gameStyle;
+    /** shows the level of the currently chosen game style */
     @FXML private Text level = new Text();
+    /** shows the team-size of the currently chosen game style */
     @FXML private Text teamSize = new Text();
+    /** shows message e.g, in case of more than one player with the same team */
     @FXML private Text error = new Text();
+    /** contains all GUI-elements */
     @FXML private GridPane settingGrid = new GridPane();
+    /** click adds one more team */
     @FXML private Button plus = new Button();
+    /** click starts game */
     @FXML private Button cont = new Button();
 
     /** increased for every team that is added, used for color comparison */
@@ -45,6 +55,10 @@ public class SettingsController {
     Client client;
     Thread clientThread;
 
+    /**
+     * Initializes elements of ChoiceBoxes, the number of teams and some styling.
+     * @param sceneController used to switch back to menu or to game
+     */
     public void initialize(SceneController sceneController) {
         this.sceneController = sceneController;
         ArrayList<String> availableStyles = getStyles();
@@ -73,6 +87,9 @@ public class SettingsController {
         plus.setPrefWidth(100);
     }
 
+    /**
+     * Handles click on '+'-Button. A new team is added, as soon as the number of teams is 4 the button is set invisible.
+     */
     @FXML
     public void handlePlus() {
         numberOfTeams++;
@@ -82,11 +99,18 @@ public class SettingsController {
         }
     }
 
+    /**
+     * Handles click on 'Edit'. Switches to Customize.
+     */
     @FXML
     public void handleEdit() {
         CustomizeWindow customizeWindow = new CustomizeWindow(sceneController);
     }
 
+    /**
+     * Handles click on 'Start!'. The different teams and their colors are compared, if all teams and colors are different
+     * the game starts, otherwise an error message is shown.
+     */
     @FXML
     public void handleContinue() {
         //Check if there are two players with same team or with same color
@@ -130,6 +154,9 @@ public class SettingsController {
         }
     }
 
+    /**
+     * Handles click on 'Back'. Switches backto menu.
+     */
     @FXML
     public void handleBack() {
         sceneController.switchToMenu();
@@ -167,7 +194,7 @@ public class SettingsController {
      */
     private void showStyleInformation(String file) {
         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+file);
-        level.setText("Map: " + styleObject.getString("map"));
+        level.setText("Level: " + styleObject.getString("map"));
         teamSize.setText("Team-Size: "+styleObject.getString("team-size"));
     }
 

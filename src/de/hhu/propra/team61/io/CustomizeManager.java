@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Responsible for loading existing teams, game styles and map into {@link de.hhu.propra.team61.CustomizeWindow} and
+ * Responsible for loading existing teams, game styles and level into {@link de.hhu.propra.team61.CustomizeWindow} and
  * saving customized results.
  *
  * Created by Jessypet on 13.06.14.
@@ -82,7 +82,7 @@ public class CustomizeManager {
     }
 
     /**
-     * Loads all existing background images.
+     * Loads names all existing background images.
      * @return ArrayList of available backgrounds.
      */
     public static ArrayList<String> getAvailableBackgrounds() {
@@ -92,6 +92,10 @@ public class CustomizeManager {
         return backgrounds;
     }
 
+    /**
+     * Loads names of all existing background music files.
+     * @return ArrayList of available background music.
+     */
     public static ArrayList<String> getAvailableBackgroundMusic() {
         File dir = new File(CUSTOMIZE_DIR+"audio/BGM/");
         FilenameFilter filter = (f, s) -> s.toLowerCase().endsWith(".ogg");

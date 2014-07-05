@@ -506,6 +506,7 @@ public class MapWindow extends Application implements Networkable {
                 "↓/S\t\tmove crosshair down\n" +
                 //"E - open inventory\n" + TODO
                 "1 to 8\tchoose item\n" +
+                "0\t\tdeselect item\n" +
                 "Space\tshoot\n" +
                 "C\t\topen chat\n" +
                 "Z\t\tdisable/enable auto-scrolling\n" +
