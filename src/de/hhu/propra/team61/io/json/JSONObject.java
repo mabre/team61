@@ -6,7 +6,7 @@ import org.json.simple.JSONValue;
  * Wrapper class for org.json.simple.JSONObject providing convenience methods which are available in org.json.JSONObject.
  * <p>
  * The package from <a href="http://json.org/java">json.org</a> is released under the
- * <a href="http://www.json.org/license.html>JSON License</a>, which is
+ * <a href="http://www.json.org/license.html">JSON License</a>, which is
  * <a href="https://www.gnu.org/licenses/license-list.en.html#JSON">incompatible</a> with GPL 3. json-simple is available
  * under Apache License Version 2.0, which is <a href="https://www.gnu.org/licenses/license-list.en.html#apache2">compatible</a>
  * with GPL 3.
@@ -56,4 +56,31 @@ public class JSONObject extends org.json.simple.JSONObject {
     public JSONArray getJSONArray(String key) {
         return new JSONArray((org.json.simple.JSONArray)this.get(key));
     }
+
+    // specialized versions of HashMap.put(K, V) to suppress warnings about unchecked calls
+
+    public void put(String key, boolean value) {
+        super.put(key, value);
+    }
+
+    public void put(String key, int value) {
+        super.put(key, value);
+    }
+
+    public void put(String key, double value) {
+        super.put(key, value);
+    }
+
+    public void put(String key, String value) {
+        super.put(key, value);
+    }
+
+    public void put(String key, JSONObject value) {
+        super.put(key, value);
+    }
+
+    public void put(String key, JSONArray value) {
+        super.put(key, value);
+    }
+
 }
