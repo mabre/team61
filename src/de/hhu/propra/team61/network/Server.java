@@ -389,7 +389,8 @@ public class Server implements Runnable {
                 spectatorsArray.put(player);
             }
         }
-        return json.put("spectators", spectatorsArray).toString(); // TODO spectators still appropriate?
+        json.put("spectators", spectatorsArray);
+        return json.toString(); // TODO spectators still appropriate?
     }
 
     /**
