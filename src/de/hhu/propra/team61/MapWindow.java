@@ -376,7 +376,7 @@ public class MapWindow extends Application implements Networkable {
                                     for (String command : commandList) {
                                         server.send(command);
                                     } //Send commands+
-                                    if (!commandList.get(0).contains("ADD_FLYING_PROJECTILE") && !shootingIsAllowed && flyingProjectiles.size() == 0) {
+                                    if (!commandList.get(commandList.size()-1).contains("ADD_FLYING_PROJECTILES") && flyingProjectiles.size() == 0) {
                                         endTurn();
                                     }
                                 }
@@ -865,8 +865,12 @@ public class MapWindow extends Application implements Networkable {
                 if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
                     fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 }
-                teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getItem(Integer.parseInt(cmd[1]) - 1));
-                fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                if(Integer.parseInt(cmd[1]) != 0) { // 0 is defined as now weapon/deselect weapon
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getItem(Integer.parseInt(cmd[1]) - 1));
+                    fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                } else {
+                    teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
+                }
                 break;
             case "CURRENT_FIGURE_FACE_LEFT":
                 teams.get(currentTeam).getCurrentFigure().setFacingRight(false);
@@ -1154,62 +1158,64 @@ public class MapWindow extends Application implements Networkable {
             case "1":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
-                    server.send("SET_GAME_COMMENT 1 Bazooka: " + Bazooka.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Bazooka("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Bazooka.DESCRIPTION);
                     server.send("PLAY_SFX changeWeapon");
                 }
                 break;
             case "2":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
-                    server.send("SET_GAME_COMMENT 1 Grenade: " + Grenade.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Grenade("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Grenade.DESCRIPTION);
                     server.send("PLAY_SFX granade"); // TODO typo
                 }
                 break;
             case "3":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
-                    server.send("SET_GAME_COMMENT 1 Shotgun: " + Shotgun.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Shotgun("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Shotgun.DESCRIPTION);
                     server.send("PLAY_SFX shotgun");
                 }
                 break;
             case "4":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
-                    server.send("SET_GAME_COMMENT 1 Poisoned Arrow: " + PoisonedArrow.DESCRIPTION);
-                    server.send("PLAY_SFX poisonArrow");
+                    server.send("SET_GAME_COMMENT 1 Rifle("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Rifle.DESCRIPTION);
                 }
                 break;
             case "5":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 5");
-                    server.send("SET_GAME_COMMENT 1 Medipack: " + Medipack.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Poisoned Arrow("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + PoisonedArrow.DESCRIPTION);
+                    server.send("PLAY_SFX poisonArrow");
                 }
                 break;
             case "6":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
-                    server.send("SET_GAME_COMMENT 1 Rifle: " + Rifle.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Bananabomb("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Bananabomb.DESCRIPTION);
                 }
                 break;
             case "7":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
-                    server.send("SET_GAME_COMMENT 1 Digiwise: " + Digiwise.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Digiwise("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Digiwise.DESCRIPTION);
                 }
                 break;
             case "8":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
-                    server.send("SET_GAME_COMMENT 1 Bananabomb: " + Bananabomb.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Medipack("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Medipack.DESCRIPTION);
                 }
                 break;
             case "9":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 9");
+                    //server.send("SET_GAME_COMMENT 1 Bananabomb("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getMunition()+"): " + Bananabomb.DESCRIPTION);
+                    //
                 }
                 break;
-            case "E":
-                //inventory.toggleVisibility();
+            case "0": //Deselect Item
+                server.send("CURRENT_FIGURE_CHOOSE_WEAPON 0");
                 break;
             default:
                 System.out.println("handleOnServer: no event for key " + command);

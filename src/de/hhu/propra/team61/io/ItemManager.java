@@ -15,8 +15,8 @@ public class ItemManager {
     /** List of <b>all</b> {@link de.hhu.propra.team61.objects.Item}s(and {@link de.hhu.propra.team61.objects.Weapon}s) existent
      * in the game
      */
-    public final static String[] itemlist = {"Bazooka","Grenade","Shotgun","PoisonedArrow","Medipack","Rifle","Digiwise",
-                                             "Bananabomb"};
+    public final static String[] itemlist = {"Bazooka","Grenade","Shotgun","Rifle","PoisonedArrow","Bananabomb","Digiwise",
+                                             "Medipack"};
     /** Amount of those {@link de.hhu.propra.team61.objects.Item}s */
     public final static int numberOfItems = itemlist.length;
 
@@ -33,11 +33,11 @@ public class ItemManager {
         items.add(new Bazooka(inventory.getInt(0)));
         items.add(new Grenade(inventory.getInt(1)));
         items.add(new Shotgun(inventory.getInt(2)));
-        items.add(new PoisonedArrow(inventory.getInt(3)));
-        items.add(new Medipack(inventory.getInt(4)));
-        items.add(new Rifle(1)); //ToDo: Ask Jessi for more inputs in gui
-        items.add(new Digiwise(1));
+        items.add(new Rifle(3));
+        items.add(new PoisonedArrow(inventory.getInt(4)));
         items.add(new Bananabomb(5));
+        items.add(new Digiwise(6));
+        items.add(new Medipack(inventory.getInt(7)));
         return items;
     }
 
@@ -45,7 +45,7 @@ public class ItemManager {
      * This function creates an JSONArray containing the munitions of all {@link de.hhu.propra.team61.objects.Item}s in the Inventory<p>
      * The inventory is trough its generation in here correctly sorted, thus the Inventory is simply iterated
      *
-     * @param inventory
+     * @param inventory inventory(generated from here) to be put into the JSON
      * @return JSONArray of {@link java.lang.Integer} indicating the {@link de.hhu.propra.team61.objects.Item#munition} of an {@link de.hhu.propra.team61.objects.Item} to be saved
      */
     public static JSONArray inventoryToJsonArray(ArrayList<Item> inventory){
@@ -67,11 +67,11 @@ public class ItemManager {
             case "Bazooka":       return new Bazooka(1);
             case "Grenade":       return new Grenade(1);
             case "Shotgun":       return new Shotgun(1);
-            case "PoisonedArrow": return new PoisonedArrow(1);
-            case "Medipack":      return new Medipack(1);
             case "Rifle":         return new Rifle(1);
-            case "Digiwise":      return new Digiwise(1);
+            case "PoisonedArrow": return new PoisonedArrow(1);
             case "Bananabomb":    return new Bananabomb(1);
+            case "Digiwise":      return new Digiwise(1);
+            case "Medipack":      return new Medipack(1);
             default:              return null;
         }
     }

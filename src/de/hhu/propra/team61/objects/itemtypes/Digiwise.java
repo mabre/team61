@@ -34,9 +34,6 @@ public class Digiwise extends Item {
         super(NAME,DESCRIPTION,ITEM_IMG);
         this.munition = munition;
 
-        itemImage = new ImageView(new Image(ITEM_IMG, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
-        this.getChildren().add(itemImage);
-
         setAlignment(Pos.TOP_LEFT);
     }
 

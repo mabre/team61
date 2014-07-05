@@ -23,8 +23,6 @@ public abstract class Item extends StackPane{
     protected ImageView itemImage;
     /** Amount of times this item can be used */
     protected int munition; // Item can only be used when munition > 0
-    /** Label indicating left uses */
-    protected Label munitionDisplay;
 
     /**
      * Constructor for deriving classes, setting up variables and the Stackpane
@@ -81,10 +79,4 @@ public abstract class Item extends StackPane{
     public String getDescription() {
         return description;
     }
-    public ImageView getItemImage() {
-        return itemImage;
-    }
-
-
-
 }

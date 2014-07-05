@@ -378,27 +378,9 @@ public class NetLobby extends Application implements Networkable {
         output.put("map", levelChooser.getValue());
         output.put("game-style", style.getValue());
 
-        //TODO Here was originally some code reading out the weapons ArrayList<Textfield> which then had been put into the json
-        JSONArray weaponsSettings = new JSONArray();
-        weaponsSettings.put(5);
-        weaponsSettings.put(4);
-        weaponsSettings.put(3);
-        weaponsSettings.put(2);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1); // They are not all necessary, but before I forget that this also needs an long enough array
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-        weaponsSettings.put(1);
-
+        //Prepare inventory
+        JSONObject gameStyleSettings = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue()+".json");
+        JSONArray weaponsSettings = gameStyleSettings.getJSONArray("inventory");
         output.put("inventory", weaponsSettings);
 
         JSONArray teams = new JSONArray();

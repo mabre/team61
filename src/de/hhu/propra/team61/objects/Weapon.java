@@ -117,11 +117,7 @@ public abstract class Weapon extends Item {
         this.angle = 0;
 
         crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
-        this.getChildren().add(crosshairImage);
-
-        munitionDisplay = new Label("Uses left: "+this.munition);
-        munitionDisplay.setTextFill(Paint.valueOf("Yellow"));
-        this.getChildren().add(munitionDisplay);
+        this.getChildren().add(crosshairImage);;
 
         setAlignment(Pos.TOP_LEFT);
     }
@@ -149,7 +145,6 @@ public abstract class Weapon extends Item {
             Projectile shot = new Projectile(image, new Point2D(itemImage.getTranslateX()+xOffset, itemImage.getTranslateY()+yOffset), new Point2D(crosshairImage.getTranslateX()+xOffset, crosshairImage.getTranslateY()+yOffset), speed, this);
 
             munition--;
-            munitionDisplay.setText("Uses left: "+this.munition);
             System.out.println("munition left: " + munition);
 
             resetAngle();
@@ -196,7 +191,7 @@ public abstract class Weapon extends Item {
                         treatedFigure.addRecentlySufferedDamage(damage-distance/NORMED_BLOCK_SIZE);
                     } catch (DeathException e) {
                         System.out.println("WARNING: unhandled death exception");
-                        // TODO IMPORTANT
+                        // Not so important, exception mainly used for death by falldamage
                     }
                     commandList.add("SET_HP " + t + " " + f + " " + treatedFigure.getHealth());
                     if(treatedFigure.getHealth() == 0) {
@@ -216,7 +211,7 @@ public abstract class Weapon extends Item {
                 }
             }
         }
-        //ToDo setRoundTimer down to 5sec
+        //If(roundtimer exists) setRoundTimer down to 5sec here
         return commandList;
     }
 
@@ -281,8 +276,6 @@ public abstract class Weapon extends Item {
      * The crosshair is placed with a constant distance around the weaponimage depending on angle and faced direction
      */
     public void angleDraw(boolean faces_right){
-        munitionDisplay.setTranslateX(itemImage.getTranslateX() - NORMED_OBJECT_SIZE / 2);
-        munitionDisplay.setTranslateY(itemImage.getTranslateY() + NORMED_OBJECT_SIZE + 5);
         if(faces_right){
             crosshairImage.setTranslateX(itemImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
             itemImage.setScaleX(1); //Reverse mirroring
