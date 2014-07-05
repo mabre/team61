@@ -1,18 +1,21 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.animation.SpriteAnimation;
 import de.hhu.propra.team61.io.json.JSONObject;
-import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
+
+import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 // Created by kevin on 14.05.14.
 /**
@@ -35,6 +38,8 @@ public class Figure extends StackPane {
     private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
     /** Position for dead figures, to make them disappear from screen */
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
+    /** space between name and frame */
+    private static final int ACTIVE_INDICATOR_PADDING = 2;
 
     /** Name of the figure */
     private String name;
@@ -42,6 +47,10 @@ public class Figure extends StackPane {
     private String figureType;
     /** Health of a figure, every not positive value means death */
     private int health;
+    /** Color used for hpLabel etc. */
+    private Color color;
+    /** frame which is drawn around the active figure's name */
+    Rectangle activeIndicator = new Rectangle();
 
     /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
     private Point2D position = new Point2D(0,0);
@@ -67,9 +76,9 @@ public class Figure extends StackPane {
     /** Image of the figure */
     private ImageView figureImage;
     /** Display of figure's name over its head */
-    private Label nameTag;
+    private Text nameTag;
     /** Display of figure's health over its head */
-    private Label hpLabel;
+    private Text hpLabel;
     /** Overlay displaying conditions */
     ImageView condition = null;
 
@@ -139,9 +148,9 @@ public class Figure extends StackPane {
         initialize();
     }
 
-    /** Extension of constructor, which takes over all tasks, which are identical for all constructors in this class<p>
-     * e.g. setting up hitboxes and images<p>
-     * or the Labels
+    /**
+     * Extension of constructor which takes over all tasks which are identical for all constructors in this class
+     * e.g. setting up hitboxes and images or the labels.
      */
     private void initialize() {
         selectedItem = null;
@@ -155,12 +164,19 @@ public class Figure extends StackPane {
         figureImage.setImage(image);
         getChildren().add(figureImage);
 
-        nameTag = new Label(name);
-        hpLabel = new Label(digitated ? health+"+" : health+"");
+        nameTag = new Text(name);
+        hpLabel = new Text(digitated ? health+"+" : health+"");
         getChildren().add(nameTag);
         getChildren().add(hpLabel);
 
-        setPosition(getPosition()); //Set Graphics to their place
+        activeIndicator.setArcWidth(5);
+        activeIndicator.setArcHeight(5);
+        activeIndicator.setStroke(Color.rgb(255, 0, 0, .4));
+        activeIndicator.setStrokeWidth(1);
+        activeIndicator.setVisible(false);
+        this.getChildren().add(activeIndicator);
+
+        updatePositionsOfChildren();
     }
 
     /** Creates a JSONObject containing all variables' values of this instance (e.g. for saving) */
@@ -184,8 +200,20 @@ public class Figure extends StackPane {
     }
 
     public void setColor(Color color) {
-        nameTag.setTextFill(color);
-        hpLabel.setTextFill(color);
+        this.color = color;
+        String style = "-fx-fill: " + toHex(color) + ";";
+        nameTag.setStyle(style);
+        hpLabel.setStyle(style);
+        DropShadow ds = new DropShadow();
+        ds.setRadius(2);
+        ds.setColor(Color.rgb(250, 250, 250, .5));
+        nameTag.setEffect(ds);
+        hpLabel.setEffect(ds);
+//        if(color.getBrightness() < .5) {
+            activeIndicator.setFill(Color.rgb(250, 250, 250, .05));
+//        } else { // does not look as good as expected
+//            activeIndicator.setFill(Color.rgb(0, 0, 0, .1));
+//        }
     }
 
     public String getName(){return name;}
@@ -221,12 +249,7 @@ public class Figure extends StackPane {
 
     public void setActive(boolean isActive) {
         this.isActive = isActive;
-        if(isActive) {
-            // TODO move to css
-            nameTag.setStyle("-fx-border-color: rgba(255,0,0,.2); -fx-border-style: solid; -fx-border-width: 1px; -fx-border-radius: 5px;");
-        } else {
-            nameTag.setStyle("");
-        }
+        activeIndicator.setVisible(isActive);
     }
 
     /**
@@ -241,8 +264,6 @@ public class Figure extends StackPane {
             position = GRAVEYARD;
         }
 
-        int offset = NORMED_OBJECT_SIZE / 2;
-
         position = new Point2D(Math.round(newPosition.getX()*10)/10.0, Math.round(newPosition.getY()*10)/10.0); // round position to one decimal place, see above (10.0 must be double)
         hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
 //        getChildren().removeAll(hitRegionDebug);
@@ -251,18 +272,31 @@ public class Figure extends StackPane {
 //        hitRegionDebug.setTranslateY(position.getY());
 //        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
         //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
+        updatePositionsOfChildren();
+    }
+
+    /**
+     * Updates position of image, labels, and weapon.
+     * It is safe to call this function from non-JavaFX threads.
+     */
+    private void updatePositionsOfChildren() {
+        int offset = NORMED_OBJECT_SIZE / 2;
+
         Platform.runLater(() -> {
             figureImage.setTranslateX(Math.round(position.getX())); // round this position to prevent ugly subpixel rendering
             figureImage.setTranslateY(Math.round(position.getY()));
-            nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getWidth() / 2);
+            nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getLayoutBounds().getWidth() / 2);
             nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
-            hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getWidth() / 2);
+            hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getLayoutBounds().getWidth() / 2);
             hpLabel.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE);
+            activeIndicator.setTranslateX(Math.min(nameTag.getTranslateX(), hpLabel.getTranslateX()) - ACTIVE_INDICATOR_PADDING);
+            activeIndicator.setTranslateY(Math.min(nameTag.getTranslateY(), hpLabel.getTranslateY()) - ACTIVE_INDICATOR_PADDING);
+            activeIndicator.setWidth(Math.max(nameTag.getLayoutBounds().getWidth(), hpLabel.getLayoutBounds().getWidth()) + ACTIVE_INDICATOR_PADDING*2);
+            activeIndicator.setHeight(nameTag.getLayoutBounds().getHeight() + ACTIVE_INDICATOR_PADDING); // -2 since we otherwise overlap with the hpLabel
             if(condition != null){
                 condition.setTranslateX(figureImage.getTranslateX());
                 condition.setTranslateY(figureImage.getTranslateY());
             }
-
             setSelectedItem(getSelectedItem()); // Update position of weapon
         });
     }
@@ -312,14 +346,17 @@ public class Figure extends StackPane {
             setPosition(GRAVEYARD);
             throw new DeathException(this);
         }
-        Platform.runLater(() -> hpLabel.setText(health + (digitated ? "+" : "")));
+        Platform.runLater(() -> {
+            hpLabel.setText(health + (digitated ? "+" : ""));
+            updatePositionsOfChildren();
+        });
         System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health);
     }
 
     public void setHealth(int hp) {
         this.health = hp;
         try {
-            sufferDamage(0); // redraws the label and validated new hp
+            sufferDamage(0); // redraws the label and validates new hp
         } catch(DeathException e) {
             // cannot happen here
         }
@@ -414,6 +451,8 @@ public class Figure extends StackPane {
             digitationAnimation.setOnFinished((e) -> getChildren().removeAll(digitationAnimationImage));
             digitationAnimation.play();
             getChildren().add(digitationAnimationImage);
+
+            updatePositionsOfChildren();
         });
     }
 
