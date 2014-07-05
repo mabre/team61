@@ -19,9 +19,9 @@ import static de.hhu.propra.team61.JavaFxUtils.toHex;
 
 // Created by kevin on 14.05.14.
 /**
- * An instance of this class represents <U>one</U> Figure, which most likely will be part of a<p>
- * {@link de.hhu.propra.team61.Team}. Each Figure is in possession of a name, health armor, mass and <p>
- * status-conditions like paralysis, being stuck, poisoning and being digivolved.
+ * An instance of this class represents one Figure, which most likely will be part of a
+ * {@link de.hhu.propra.team61.Team}. Each Figure is in possession of a name, health armor, mass and
+ * status-conditions like paralysis, being stuck, poisoning and being degitates.
  */
 public class Figure extends StackPane {
     public static final int NORMED_OBJECT_SIZE = 16;
@@ -65,7 +65,7 @@ public class Figure extends StackPane {
 
     /** Used to highlight figure steered */
     private boolean isActive;
-    /** boolean indicating faced direction, used for velocityvector of projectiles and optical reasons */
+    /** boolean indicating faced direction, used for velocity vector of projectiles and optical reasons */
     private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
     /** Item hold */
     private Item selectedItem;
@@ -98,10 +98,10 @@ public class Figure extends StackPane {
      * @param name the Figure's name
      * @param figureType Unicorn or penguin?
      * @param hp health
-     * @param armor armorrating(Damagemodifier)
-     * @param isParalyzed Statuscondition
-     * @param isPoisoned Statuscondition
-     * @param isStuck Statuscondition
+     * @param armor armor rating (damage modifier)
+     * @param isParalyzed status condition
+     * @param isPoisoned status condition
+     * @param isStuck status condition
      */
     public Figure(String name, String figureType, int hp, double armor, boolean isParalyzed, boolean isPoisoned, boolean isStuck){
         this.name   = name;
@@ -119,8 +119,7 @@ public class Figure extends StackPane {
     }
 
     /**
-     * Constructor setting up all variables and images
-     *
+     * Constructor setting up all variables and images.
      * @param input JSONObject containing all variables specified in the other constructor <b>and position.x and .y</b>
      */
     public Figure(JSONObject input){
@@ -456,7 +455,7 @@ public class Figure extends StackPane {
         });
     }
 
-    public void dedigitate() {
+    public void degitate() {
         massFactor = 1;
         jumpDuringFallThreshold = 0;
         armor = 0;

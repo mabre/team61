@@ -254,7 +254,6 @@ public class TerrainBlock extends ImageView {
                     this.setImage(SKY_IMAGE);
             }
         } else {
-            System.err.println("HERE");
             Platform.runLater(this::drawImage);
         }
     }

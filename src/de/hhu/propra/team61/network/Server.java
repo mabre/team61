@@ -59,15 +59,15 @@ import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
  * see {@link de.hhu.propra.team61.objects.Figure#setFacingRight(boolean)} // TODO merge these commands
  * <li>{@code CURRENT_FIGURE_SHOOT}<br>
  * Makes the currently active figure shoot, and scrolls to the created projectile.<br>
- * see {@link de.hhu.propra.team61.objects.Figure#shoot(int)}
+ * see {@link de.hhu.propra.team61.objects.Figure#shoot()}
  * <li>{@code CURRENT_TEAM_END_ROUND $int_currentTeam} (*)<br>
  * see {@link de.hhu.propra.team61.Team#endRound()} // TODO rename
  * <li>{@code DEACTIVATE_FIGURE $int_currentTeam}<br>
  * Deactivates the currently active figure and allows shooting again.<br>
  * see {@link de.hhu.propra.team61.objects.Figure#setActive(boolean)}
- * <li>{@code DEDIGITATE $int_team $int_figure} (*)<br>
+ * <li>{@code DEGITATE $int_team $int_figure} (*)<br>
  * Degitates the given figure of the given team.<br>
- * see {@link de.hhu.propra.team61.objects.Figure#dedigitate()} // TODO rename
+ * see {@link de.hhu.propra.team61.objects.Figure#degitate()}
  * <li>{@code DIGITATE $int_team $int_figure} (*)<br>
  * Digitates the given figure of the given team.<br>
  * see {@link de.hhu.propra.team61.objects.Figure#digitate()}

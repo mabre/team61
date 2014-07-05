@@ -723,8 +723,8 @@ public class MapWindow extends Application implements Networkable {
         for (Team team : teams) {
             for (Figure figure : team.getFigures()) {
                 if (figure.getHealth() < DEDIGITATION_HEALTH_THRESHOLD) {
-                    figure.dedigitate();
-                    server.send("DEDIGITATE " + getFigureId(figure));
+                    figure.degitate();
+                    server.send("DEGITATE " + getFigureId(figure));
                 }
             }
         }
@@ -905,9 +905,9 @@ public class MapWindow extends Application implements Networkable {
                 fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
                 teams.get(currentTeam).getCurrentFigure().setSelectedItem(null);
                 break;
-            case "DEDIGITATE":
+            case "DEGITATE":
                 if(server == null) {
-                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).dedigitate();
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).degitate();
                 }
                 break;
             case "DIGITATE":
@@ -1245,7 +1245,7 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(0).getFigures().get(0).setHealth(1000);
                 System.out.println("Ate too much spinach.");
                 break;
-            case "dedigitate": // calls undoDigitations() method
+            case "degitate": // calls undoDigitations() method
                 undoDigitations();
                 server.send("SET_GAME_COMMENT 0 Returning to Baby I");
                 System.out.println("Returning to Baby I");
