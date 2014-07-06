@@ -73,6 +73,23 @@ public abstract class Item extends StackPane{
         return munition;
     }
 
+    /**
+     * Gets a string describing how much munition this weapon has.
+     * 0> → returns the number
+     * 0 → "no munition"
+     * // TODO
+     * 0 → "final shot"
+     * -1 → "no munition"
+     * @return
+     */
+    public String getFormattedMunition() {
+        if(munition > 0) {
+            return munition+"";
+        } else {
+            return "no munition";
+        }
+    }
+
     public String getName() {
         return name;
     }
