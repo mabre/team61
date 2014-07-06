@@ -409,11 +409,12 @@ public class Server implements Runnable {
     }
 
     /**
+     * Checks if all clients which have a team are ready.
      * @return true when all teams are ready
      */
     public static boolean teamsAreReady() {
         for (ClientConnection client: clients) {
-            if (!client.isReady) {
+            if (!client.isReady && client.associatedTeam > 0) {
                 return false;
             }
         }
