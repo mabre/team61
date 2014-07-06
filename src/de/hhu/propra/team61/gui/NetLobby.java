@@ -704,7 +704,9 @@ public class NetLobby extends Application implements Networkable {
         JSONArray teamsArray = currentSettings.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             if(i == team) {
-                teamsArray.getJSONObject(i).put("chosenTeam", clientSettings.getJSONArray("teams").getJSONObject(i).getString("chosenTeam"));
+                JSONObject teamObj = teamsArray.getJSONObject(i);
+                teamObj.put("chosenTeam", clientSettings.getJSONArray("teams").getJSONObject(i).getString("chosenTeam"));
+                teamsArray.set(i, teamObj);
             }
         }
         currentSettings.put("teams", teamsArray);
