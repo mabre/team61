@@ -105,6 +105,10 @@ public class TerrainBlock extends ImageView {
     private int x;
     /** y coordinate (in blocks) of this block in the terrain */
     private int y;
+    /** mirroring in x direction, used for terrain types which can be mirrored to make the terrain more varied */
+    private int scaleX;
+    /** mirroring in y direction, used for terrain types which can be mirrored to make the terrain more varied */
+    private int scaleY;
 
     /** Class for grouping the neighbouring blocks together and performing actions on them. */
     private class NeighbouringBlocks {
@@ -136,6 +140,9 @@ public class TerrainBlock extends ImageView {
         this.type = type;
         this.x = x;
         this.y = y;
+
+        scaleX = Math.random() > .5 ? -1 : 1;
+        scaleY = Math.random() > .5 ? -1 : 1;
 
         drawImage();
     }
@@ -184,23 +191,35 @@ public class TerrainBlock extends ImageView {
     private void drawImage() {
         // make calling this save from everywhere (called very often with different names), but only use runLater if necessary (performance impact when starting game/edit)
         if(Platform.isFxApplicationThread()) {
+            // reset this for the case that the block was replaced and mirroring does not make sense any more
+            this.setScaleX(1);
+            this.setScaleY(1);
+
             switch (type) {
                 case ' ':
                     this.setImage(SKY_IMAGE);
                     break;
                 case 'S':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(STONES_IMAGE);
                     break;
                 case 's':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(SAND_IMAGE);
                     break;
                 case 'E':
                     this.setImage(SOIL_IMAGE);
                     break;
                 case 'I':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(ICE_IMAGE);
                     break;
                 case 'i':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(SNOW_IMAGE);
                     break;
                 case '/': // TODO use ice when appropriate
