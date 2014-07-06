@@ -618,12 +618,13 @@ public class CustomizeWindow extends Application {
     private void initializeLevelEditor() {
         try {
             fromJson(chosenLevel, 3);
+            int PANE_HEIGHT = 470;
             levelTerrain = new Terrain(TerrainManager.load(chosenLevel), true);
             scrollPane = new ScrollPane();
-            scrollPane.setPrefSize(750, 560);
-            scrollPane.setMaxHeight(560);
+            scrollPane.setPrefSize(750, PANE_HEIGHT);
+            scrollPane.setMaxHeight(PANE_HEIGHT);
 
-            //anchor the editor to the bottom left corner (ScrollPane cannot do that)
+            //anchor the editor to the bottom left corner (ScrollPane cannot do that) // TODO add class for this?
             anchorPane = new AnchorPane();
             AnchorPane.setBottomAnchor(levelTerrain, 0.0);
             AnchorPane.setLeftAnchor(levelTerrain, 0.0);
@@ -635,8 +636,8 @@ public class CustomizeWindow extends Application {
             scrollPane.setContent(anchorPane);
             background.setStyle("-fx-background-image: url('" + "file:resources/levels/" + imageChooser.getValue() + ".png" + "')");
             levelPane = new StackPane();
-            levelPane.setPrefSize(750, 560);
-            levelPane.setMaxHeight(560);
+            levelPane.setPrefSize(750, PANE_HEIGHT);
+            levelPane.setMaxHeight(PANE_HEIGHT);
             levelPane.getChildren().addAll(background, scrollPane);
             newLevelPane.setLeft(levelPane);
         } catch (FileNotFoundException e) {
