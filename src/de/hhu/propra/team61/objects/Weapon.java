@@ -231,6 +231,9 @@ public abstract class Weapon extends Item {
 
      //Getter and Setter
     public String getProjectileImage() { return projectileImg; } //TODO MOVE?
+    /**
+     * @return angle in degrees // TODO measured from where?
+     */
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
     public boolean getDrifts() {
@@ -282,7 +285,7 @@ public abstract class Weapon extends Item {
             itemImage.setRotate(-angle);
         }
         else{
-            crosshairImage.setTranslateX(itemImage.getTranslateX() - Math.cos(toRadian (angle))* RADIUS);
+            crosshairImage.setTranslateX(itemImage.getTranslateX() - Math.cos(toRadian (angle)) * RADIUS);
             itemImage.setScaleX(-1); //Mirror Weapon, so its facing left
             itemImage.setRotate(angle);
         }

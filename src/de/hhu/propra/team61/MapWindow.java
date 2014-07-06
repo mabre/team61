@@ -260,6 +260,7 @@ public class MapWindow extends Application implements Networkable {
         gamePane = new BorderPane();
         // contains the terrain with figures
         scrollPane = new ScrollPane();
+        scrollPane.setPannable(true);
         centerPane = new StackPane();
         centerPane.setAlignment(Pos.TOP_LEFT);
         fieldPane = new StackPane();
@@ -273,9 +274,13 @@ public class MapWindow extends Application implements Networkable {
         anchorPane.getChildren().add(fieldPane);
 
         scrollPane.setId("scrollPane");
-        scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) ->
-                        anchorPane.setPrefSize(Math.max(fieldPane.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(fieldPane.getBoundsInParent().getMaxY(), newBounds.getHeight()))
-        );
+        scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) -> {
+            // this condition (partially) fixes the wired behaviour of the scroll pane when using the rifle
+            if((newBounds.getMinX() >= 0 && newBounds.getMinY() >= 0 && newBounds.getMaxY() < terrain.getTerrainHeight() + 10) ||
+                    oldBounds.getHeight() == 0) {
+                anchorPane.setPrefSize(Math.max(fieldPane.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(fieldPane.getBoundsInParent().getMaxY(), newBounds.getHeight()));
+            }
+        });
         scrollPane.setContent(anchorPane);
         scrollPane.setPrefSize(1000, 530);
         centerPane.getChildren().add(scrollPane);
@@ -738,11 +743,11 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void initBoss(String name) {
-        System.out.println(name + " appeared"); // TODO game comment
+        System.out.println(name + " appeared");
         setGameComment("Watch out guys! " + name + " has appeared!", false);
         boss = new Figure(name, "boss", 1000000, 1000000, false, false, false); // TODO short-hand constructor
         boss.setPosition(new Point2D(bossSpawnedLeft ? 0 : terrain.getTerrainWidth() - Figure.NORMED_OBJECT_SIZE, 0));
-        fieldPane.getChildren().add(boss);
+        Platform.runLater(() -> fieldPane.getChildren().add(boss));
     }
 
     private void moveBoss() {
@@ -948,7 +953,6 @@ public class MapWindow extends Application implements Networkable {
                 shootingIsAllowed = true;
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
                 break;
-
             case "DROP_SUPPLY":
                 supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(), cmd[2]));
                 fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size() - 1));

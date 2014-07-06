@@ -33,6 +33,7 @@ public class Rifle extends Weapon {
     private final static int     MASS          =    0;
     private final static int     SPEED         =   36;
     private final static boolean DRIFTS        = false;
+    private static final double POINTER_LENGTH = 1000;
 
     private Line redDot;
 
@@ -54,35 +55,31 @@ public class Rifle extends Weapon {
         this.getChildren().add(redDot);
     }
 
-    @Override
     /**
      * Actually only sets the Point and changes facing of weapon. It is drawn in MapWindow.
-     * This function needs to override {@link de.hhu.propra.team61.objects.Weapon#angleDraw(boolean)} since<p>
+     * This function needs to override {@link de.hhu.propra.team61.objects.Weapon#angleDraw(boolean)} since
      * the red Line is not handled up there.
      */
-    public void angleDraw(boolean faces_right){
-        super.angleDraw(faces_right);
+    @Override
+    public void angleDraw(boolean facesRight){
+        super.angleDraw(facesRight);
         int xOffset = NORMED_OBJECT_SIZE / 2;
         int yOffset = NORMED_OBJECT_SIZE / 2;
         //draw relatively from there
         redDot.setStartX(0);
         redDot.setStartY(0);
-        redDot.setEndX(100);
-        double endY = 100 * Math.sin(toRadian(getAngle()));
+        double endX = POINTER_LENGTH * Math.cos(toRadian(getAngle()));
+        redDot.setEndX(endX);
+        double endY = -POINTER_LENGTH * Math.sin(toRadian(getAngle()));
         redDot.setEndY(endY);
-        //set absolute position
-        redDot.setTranslateX(itemImage.getTranslateX());
-        redDot.setTranslateY(itemImage.getTranslateY() + Math.min(endY,0) + yOffset); // move the upper end of the canvas (wherever this comes from), so that the line does not tilt away
-
-
-/*
-        //relative Endpoint
-        if(faces_right){
-            redDot.setEndX(Math.sin(toRadian(getAngle())) * NORMED_OBJECT_SIZE);
+        // move the upper end of the canvas (wherever this comes from), so that the line does not tilt away
+        redDot.setTranslateY(itemImage.getTranslateY() + Math.min(endY, 0) + yOffset);
+        if(facesRight) {
+            redDot.setTranslateX(itemImage.getTranslateX() + xOffset);
+            redDot.setScaleX(1);
+        } else {
+            redDot.setTranslateX(itemImage.getTranslateX() + xOffset - endX);
+            redDot.setScaleX(-1);
         }
-        else{
-            redDot.setEndX(-Math.sin(toRadian(getAngle()))*NORMED_OBJECT_SIZE);
-        }
-        redDot.setEndY(Math.sin(toRadian(getAngle()))*NORMED_OBJECT_SIZE);*/
     }
 }
