@@ -1046,7 +1046,6 @@ public class MapWindow extends Application implements Networkable {
             case "SUDDEN_DEATH":
                 int teamToKill = Integer.parseInt(cmd[1]);
                 teams.get(teamToKill).suddenDeath();
-                if(teamToKill == currentTeam) endTurn(); // TODO IMPORTANT this cannot work on clients ...
                 break;
             case "TEAM_LABEL_SET_TEXT":
                 teamLabel.setText(arrayToString(cmd, 1));
@@ -1063,7 +1062,7 @@ public class MapWindow extends Application implements Networkable {
         if (teams.get(currentTeam).getCurrentFigure().getSelectedItem() != null) {
             fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
         }
-        if(weapon != 0) { // 0 is defined as now weapon/deselect weapon
+        if(weapon != 0) { // 0 is defined as no weapon/deselect weapon
             teams.get(currentTeam).getCurrentFigure().setSelectedItem(teams.get(currentTeam).getItem(weapon - 1));
             fieldPane.getChildren().add(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
         } else {
