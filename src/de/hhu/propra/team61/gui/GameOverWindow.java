@@ -116,7 +116,7 @@ public class GameOverWindow extends Application implements Networkable {
 //        } else if(command.contains("CHAT ")) { // TODO add chat ?
 //            chatBox.processChatCommand(command);
         } else {
-            System.out.println("NetLobby: unknown command " + command);
+            System.err.println("GameOverWindow: unknown command " + command);
         }
     }
 
