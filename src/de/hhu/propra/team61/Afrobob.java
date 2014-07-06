@@ -6,6 +6,7 @@ import de.hhu.propra.team61.gui.SceneController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
@@ -54,6 +55,7 @@ public class Afrobob extends Application {
         menueController = loader.getController();
         Scene scene = new Scene(root, 1000, 600);
         mainwindow.setScene(scene);
+        mainwindow.getIcons().add(new Image("file:resources/figures/Penguin.png"));
         scene.getStylesheets().add("file:resources/layout/css/menue.css");
         sceneController.setMenuScene(scene);
         menueController.setMainWindow(mainwindow, sceneController);
