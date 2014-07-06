@@ -77,7 +77,7 @@ public class CustomizeWindow extends Application {
     private CustomGrid itemsGrid = new CustomGrid();
     /**TextField for entering name of the game style */
     private TextField styleNameField = new TextField("Custom");
-    /** TextField for entering team-size of the game-style */
+    /** TextField for entering teamSize of the gameStyle */
     private TextField sizeField = new TextField("4");
     /** list of all items */
     private ArrayList<String> itemNames = new ArrayList<>();
@@ -881,8 +881,8 @@ public class CustomizeWindow extends Application {
     private JSONObject styleToJson() {
         JSONObject output = new JSONObject();
         output.put("name", styleNameField.getText());
-        output.put("team-size", sizeField.getText());
-        output.put("map", levelChooser.getValue());
+        output.put("teamSize", sizeField.getText());
+        output.put("level", levelChooser.getValue());
         JSONArray inventory = new JSONArray();
         for (int i=0; i< itemNames.size(); i++) {
             inventory.put((int) itemSliders.get(i).getValue());
@@ -933,11 +933,11 @@ public class CustomizeWindow extends Application {
                 if (savedStyle.has("name")) {
                     styleNameField.setText(savedStyle.getString("name"));
                 }
-                if (savedStyle.has("team-size")) {
-                    sizeField.setText(savedStyle.getString("team-size"));
+                if (savedStyle.has("teamSize")) {
+                    sizeField.setText(savedStyle.getString("teamSize"));
                 }
-                if (savedStyle.has("map")) {
-                    levelChooser.setValue(savedStyle.getString("map"));
+                if (savedStyle.has("level")) {
+                    levelChooser.setValue(savedStyle.getString("level"));
                 }
                 if (savedStyle.has("inventory")) {
                     JSONArray inventory = savedStyle.getJSONArray("inventory");

@@ -157,7 +157,7 @@ public class MapWindow extends Application implements Networkable {
 
         JSONObject settings = Settings.getSavedJson(file);
         this.teamquantity = settings.getInt("numberOfTeams");
-        this.teamsize = Integer.parseInt(settings.getString("team-size"));
+        this.teamsize = settings.getInt("teamSize");
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
 
