@@ -450,7 +450,7 @@ public class Figure extends StackPane {
             digitationAnimation.setOnFinished((e) -> getChildren().removeAll(digitationAnimationImage));
             digitationAnimation.play();
             getChildren().add(digitationAnimationImage);
-
+            figureImage.setImage(new Image("file:resources/figures/digi"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
             updatePositionsOfChildren();
         });
     }
@@ -460,7 +460,10 @@ public class Figure extends StackPane {
         jumpDuringFallThreshold = 0;
         armor = 0;
         digitated = false;
-        Platform.runLater(() -> hpLabel.setText(health + ""));
+        Platform.runLater(() -> {
+            hpLabel.setText(health + "");
+            figureImage.setImage(new Image("file:resources/figures/"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
+        });
     }
 
     public int getCausedHpDamage() {
