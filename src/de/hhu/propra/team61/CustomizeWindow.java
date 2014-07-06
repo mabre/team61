@@ -882,7 +882,7 @@ public class CustomizeWindow extends Application {
         JSONObject output = new JSONObject();
         output.put("name", styleNameField.getText());
         output.put("team-size", sizeField.getText());
-        output.put("map", levelChooser.getValue());
+        output.put("map", levelChooser.getValue()+".lvl");
         JSONArray inventory = new JSONArray();
         for (int i=0; i< itemNames.size(); i++) {
             inventory.put((int) itemSliders.get(i).getValue());
@@ -937,7 +937,7 @@ public class CustomizeWindow extends Application {
                     sizeField.setText(savedStyle.getString("team-size"));
                 }
                 if (savedStyle.has("map")) {
-                    levelChooser.setValue(savedStyle.getString("map"));
+                    levelChooser.setValue(JavaFxUtils.removeExtension(savedStyle.getString("map"), 4));
                 }
                 if (savedStyle.has("inventory")) {
                     JSONArray inventory = savedStyle.getJSONArray("inventory");

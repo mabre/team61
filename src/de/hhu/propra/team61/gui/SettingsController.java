@@ -194,7 +194,7 @@ public class SettingsController {
      */
     private void showStyleInformation(String file) {
         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+file);
-        level.setText("Level: " + styleObject.getString("map"));
+        level.setText("Level: " + JavaFxUtils.removeExtension(styleObject.getString("map"), 4));
         teamSize.setText("Team-Size: "+styleObject.getString("team-size"));
     }
 
