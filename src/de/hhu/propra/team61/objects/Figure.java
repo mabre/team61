@@ -288,9 +288,9 @@ public class Figure extends StackPane {
             nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
             hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getLayoutBounds().getWidth() / 2);
             hpLabel.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE);
-            activeIndicator.setTranslateX(Math.min(nameTag.getTranslateX(), hpLabel.getTranslateX()) - ACTIVE_INDICATOR_PADDING);
-            activeIndicator.setTranslateY(Math.min(nameTag.getTranslateY(), hpLabel.getTranslateY()) - ACTIVE_INDICATOR_PADDING);
-            activeIndicator.setWidth(Math.max(nameTag.getLayoutBounds().getWidth(), hpLabel.getLayoutBounds().getWidth()) + ACTIVE_INDICATOR_PADDING*2);
+            activeIndicator.setTranslateX(nameTag.getTranslateX() - ACTIVE_INDICATOR_PADDING);
+            activeIndicator.setTranslateY(nameTag.getTranslateY() - ACTIVE_INDICATOR_PADDING);
+            activeIndicator.setWidth(nameTag.getLayoutBounds().getWidth() + ACTIVE_INDICATOR_PADDING*2);
             activeIndicator.setHeight(nameTag.getLayoutBounds().getHeight() + ACTIVE_INDICATOR_PADDING); // -2 since we otherwise overlap with the hpLabel
             if(condition != null){
                 condition.setTranslateX(figureImage.getTranslateX());
