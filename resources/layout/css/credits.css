@@ -1,0 +1,16 @@
+@CHARSET "ISO-8859-1";
+
+.root{
+    -fx-background-color: #FFFFFF;
+    -fx-background-position: top left;
+}
+
+.mainButton {
+    -fx-background-color: rgba(254, 94, 47, 0.7);
+    -fx-padding: 5 10 5 10;
+    -fx-background-radius: 5;
+}
+
+.mainButton:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+}

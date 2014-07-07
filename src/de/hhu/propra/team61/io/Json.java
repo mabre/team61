@@ -11,13 +11,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 
 /**
- * Created by markus on 13.05.14.
+ * Class containing convenience function for handling JSONObjects.
  */
-class Json {
+public class Json {
 
     /**
-     * @param json is saved
-     * @param filename to this file
+     * Saves the given JSONObject to the given file.
+     * @param json JSONObject to be saved
+     * @param filename file to which the JSONObject is saved
      */
     public static void save(JSONObject json, String filename) {
         try(PrintWriter writer = new PrintWriter(filename, "UTF-8")) {
@@ -31,17 +32,18 @@ class Json {
     }
 
     /**
+     * Reads the contents of the given file in a JSONObject.
      * @param filename file to be read
-     * @return json found in the file
+     * @return json found in the file, empty json if the file does not exist
      */
     public static JSONObject getFromFile(String filename) {
         byte[] bytes = null;
         try {
             bytes = Files.readAllBytes(Paths.get(filename));
         } catch(FileNotFoundException | NoSuchFileException e) {
-            System.out.println("Json.getFromFile: " + filename + " not found, returning empty json object");
+            System.err.println("Json.getFromFile: " + filename + " not found, returning empty json object");
         } catch(IOException e) {
-            System.out.println("Json.getFromFile: problem loading " + filename + ", returning empty json object");
+            System.err.println("Json.getFromFile: problem loading " + filename + ", returning empty json object");
             e.printStackTrace();
         }
         if(bytes == null) {

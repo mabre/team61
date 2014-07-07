@@ -12,14 +12,55 @@
     -fx-text-fill: #cc0100;
 }
 
-#scrollPane  > .viewport {
-   -fx-background-color: transparent;
-}
-
-#scrollPane {
-   -fx-background-color: transparent;
-}
-
 #background {
     -fx-background-image: url("file:resources/levels/board.png");
 }
+
+.list {
+    -fx-background-image: url("file:resources/layout/rainbow.png");
+    -fx-background-repeat: repeat-y;
+    -fx-background-position: center;
+}
+
+.listHBox {
+    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-padding: 0 0 0 0;
+}
+
+.listHBox:hover {
+    -fx-background-color: rgba(254, 94, 47, 0.5);
+}
+
+.listButton {
+    -fx-background-insets: 50;
+}
+
+.mainButton {
+    -fx-background-color: rgba(254, 94, 47, 0.5);
+    -fx-padding: 5 10 5 10;
+    -fx-background-radius: 5;
+}
+
+.mainButton:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+}
+
+.scrollPane  > .viewport {
+   -fx-background-color: transparent;
+}
+
+.scrollPane {
+   -fx-background-color: transparent;
+}
+
+.scroll-bar {
+    -fx-background-color: rgba(254, 94, 47, 0.4);
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.4);
+    -fx-background-insets: 3;
+    -fx-background-radius: 5px;
+}
+
+

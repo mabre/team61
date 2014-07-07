@@ -9,6 +9,11 @@ import javafx.scene.paint.Color;
  */
 public class JavaFxUtils {
 
+    /**
+     * Gets a hexadecimal string (eg. #FF110A) representing the given color
+     * @param color color of which the hex representation is sought
+     * @return hex string for the given color
+     */
     public static String toHex(Color color) {
         return String.format("#%02X%02X%02X", (int)(color.getRed()*255), (int)(color.getGreen()*255), (int)(color.getBlue()*255));
     }
@@ -46,4 +51,14 @@ public class JavaFxUtils {
         return builder.toString();
     }
 
+    /**
+     * Removes a given number of characters from the end of a string.
+     * @param string string to be shortened
+     * @param howMany number of characters that are supposed to be removed
+     * @return the shortened string
+     */
+    public static String removeExtension(String string, int howMany) {
+        string = string.substring(0, string.length()-howMany);
+        return string;
+    }
 }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.image.ImageView?>
+
+<GridPane fx:id="creditsGrid" fx:controller="de.hhu.propra.team61.gui.CreditsController" alignment="CENTER" hgap="10" vgap="10" xmlns:fx="http://javafx.com/fxml">
+    <children>
+        <ImageView fx:id="imageView" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="7" GridPane.halignment="CENTER"/>
+        <Text text="Copyright (C) 2014 Markus Brenneis, Jan Ecknigk, Simon Franz, Kevin Gnyp, Jessica Petrasch" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="7"/>
+        <Text text="Charly in Madagascar is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License&#10;as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version." GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="7"/>
+        <Text text="Charly in Madagascar is distributed in the hope that it will be useful but WITHOUT ANY WARRANTY; without even the implied warranty&#10;of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details." GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="7"/>
+        <Text text="You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/." GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="7"/>
+        <Button text="Close" onAction="#handleClose" GridPane.columnIndex="0" GridPane.rowIndex="5" styleClass="mainButton"/>
+    </children>
+    <padding>
+        <Insets bottom="25" left="25" right="25" top="25" />
+    </padding>
+</GridPane>

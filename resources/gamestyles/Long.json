@@ -1,1 +1,1 @@
-{"team-size":"6","name":"Long","map":"Board.lvl","weapons":[{"weapon1":50},{"weapon2":50},{"weapon3":50},{"weapon4":50}]}
+{"teamSize":6,"name":"Long","inventory":[50,50,50,50,2,2,10,5],"level":"Board.lvl"}

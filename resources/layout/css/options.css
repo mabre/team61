@@ -8,3 +8,13 @@
 .optionsText {
     -fx-fill: linear-gradient(from 0% 0% to 100% 200%, repeat, #ff5e30 0%, #ff2b30 50%);
 }
+
+.mainButton {
+    -fx-background-color: rgba(254, 94, 47, 0.5);
+    -fx-padding: 5 10 5 10;
+    -fx-background-radius: 5;
+}
+
+.mainButton:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+}

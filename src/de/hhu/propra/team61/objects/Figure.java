@@ -1,39 +1,56 @@
 package de.hhu.propra.team61.objects;
 
+import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.animation.SpriteAnimation;
 import de.hhu.propra.team61.io.json.JSONObject;
-import de.hhu.propra.team61.MapWindow;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 
+import static de.hhu.propra.team61.JavaFxUtils.toHex;
+
+// Created by kevin on 14.05.14.
 /**
- * Created by kevin on 14.05.14.
+ * An instance of this class represents one Figure, which most likely will be part of a
+ * {@link de.hhu.propra.team61.Team}. Each Figure is in possession of a name, health armor, mass and
+ * status-conditions like paralysis, being stuck, poisoning and being degitates.
  */
-
 public class Figure extends StackPane {
     public static final int NORMED_OBJECT_SIZE = 16;
 
     /** note that the actual speed is lower because gravity is subtracted before the figure actually jumps */
     private static final int MASS = 1000;
+    /** multiplier for horizontal movement */
     public static final int WALK_SPEED = 5;
+    /** multiplier for upward movement */
     public static final int JUMP_SPEED = 18 + (int)(MapWindow.GRAVITY.getY() * MASS);
+    /** figures cannot accelerate further in negative (to top) y-direction when y-speed is greater than this during the current jump */
     public static final int MAX_Y_SPEED = (int)(1.2*JUMP_SPEED);
+    /** velocity endurable before damage by fall is caused */
     private static final int FALL_DAMAGE_THRESHOLD = JUMP_SPEED;
+    /** Position for dead figures, to make them disappear from screen */
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
+    /** space between name and frame */
+    private static final int ACTIVE_INDICATOR_PADDING = 2;
 
-    private boolean facing_right = true; //Needed for Weapon class, MapWindow, etc.
-
+    /** Name of the figure */
     private String name;
+    /** "Unicorn" or "Penguin" */
     private String figureType;
+    /** Health of a figure, every not positive value means death */
     private int health;
+    /** Color used for hpLabel etc. */
+    private Color color;
+    /** frame which is drawn around the active figure's name */
+    Rectangle activeIndicator = new Rectangle();
 
     /** position of the figure, has to be synced with translateX/Y (introduced to prevent timing issues on JavaFX thread) */
     private Point2D position = new Point2D(0,0);
@@ -41,22 +58,31 @@ public class Figure extends StackPane {
     /** the maximal speed (absolute value) in y direction since last call of resetVelocity, used to limit jump speed */
     private double maxYSpeed = 0;
 
-    private boolean isBurning;
+    /** Booleans indicating status conditions */
+    private boolean isParalyzed;
     private boolean isPoisoned;
     private boolean isStuck;
 
+    /** Used to highlight figure steered */
     private boolean isActive;
+    /** boolean indicating faced direction, used for velocity vector of projectiles and optical reasons */
     private boolean facingRight = true; //Needed for Weapon class, MapWindow, etc.
-
+    /** Item hold */
     private Item selectedItem;
 
 //    private Rectangle hitRegionDebug; // TODO doesn't work
+    /** Hitbox of this figure */
     private Rectangle2D hitRegion;
+    /** Image of the figure */
     private ImageView figureImage;
-    private Label nameTag;
-    private Label hpLabel;
+    /** Display of figure's name over its head */
+    private Text nameTag;
+    /** Display of figure's health over its head */
+    private Text hpLabel;
+    /** Overlay displaying conditions */
+    ImageView condition = null;
 
-    // properties for digitation
+    /** properties for digitation, which might modify other values */
     private boolean digitated = false;
     private double massFactor = 1;
     private int jumpDuringFallThreshold = 0;
@@ -65,13 +91,25 @@ public class Figure extends StackPane {
     private int recentlySufferedDamage = 0;
 
     // In and Out
-    public Figure(String name, String figureType, int hp, double armor, boolean isBurning, boolean isPoisoned, boolean isStuck){
+
+    /**
+     * Constructor setting up all variables and images
+     *
+     * @param name the Figure's name
+     * @param figureType Unicorn or penguin?
+     * @param hp health
+     * @param armor armor rating (damage modifier)
+     * @param isParalyzed status condition
+     * @param isPoisoned status condition
+     * @param isStuck status condition
+     */
+    public Figure(String name, String figureType, int hp, double armor, boolean isParalyzed, boolean isPoisoned, boolean isStuck){
         this.name   = name;
         this.figureType = figureType;
         this.health = hp;
         this.armor  = armor;
 
-        this.isBurning  = isBurning;
+        this.isParalyzed = isParalyzed;
         this.isPoisoned = isPoisoned;
         this.isStuck    = isStuck;
 
@@ -80,6 +118,10 @@ public class Figure extends StackPane {
         initialize();
     }
 
+    /**
+     * Constructor setting up all variables and images.
+     * @param input JSONObject containing all variables specified in the other constructor <b>and position.x and .y</b>
+     */
     public Figure(JSONObject input){
         figureImage = new ImageView();
         position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
@@ -90,45 +132,25 @@ public class Figure extends StackPane {
         this.figureType = input.getString("figureType");
         this.health = input.getInt("health");
         this.armor  = input.getDouble("armor");
-        this.digitated = input.getBoolean("digitated");
+
         this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
         this.massFactor = input.getDouble("massFactor");
         this.causedHpDamage = input.getInt("causedHpDamage");
-        this.isBurning  = input.getBoolean("isBurning");
+
+        this.digitated = input.getBoolean("digitated");
+        this.isParalyzed = input.getBoolean("isParalyzed");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
 
         System.out.println("FIGURE created from json");
-        printAllAttributes(this);
 
         initialize();
     }
 
-    @Deprecated
-    public Figure(String name, JSONObject input){ //Create Figures by giving a name and applying Options TODO: Minor Adjustments after implementation of Options
-        figureImage = new ImageView();
-        position = new Point2D(input.getDouble("position.x"), input.getDouble("position.y"));
-        figureImage.setTranslateX(position.getX());
-        figureImage.setTranslateY(position.getY());
-
-        this.name = name;
-        this.figureType = input.getString("figureType");
-        this.health = input.getInt("health");
-        this.armor  = input.getDouble("armor");
-        this.digitated = input.getBoolean("digitated");
-        this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
-        this.massFactor = input.getDouble("massFactor");
-        this.causedHpDamage = input.getInt("causedHpDamage");
-        this.isBurning  = input.getBoolean("isBurning");
-        this.isPoisoned = input.getBoolean("isPoisoned");
-        this.isStuck    = input.getBoolean("isStuck");
-
-        System.out.println("FIGURE created from OptionsJson");
-        printAllAttributes(this);
-
-        initialize();
-    }
-
+    /**
+     * Extension of constructor which takes over all tasks which are identical for all constructors in this class
+     * e.g. setting up hitboxes and images or the labels.
+     */
     private void initialize() {
         selectedItem = null;
 
@@ -136,19 +158,27 @@ public class Figure extends StackPane {
 
         hitRegion = new Rectangle2D(position.getX(), position.getY(),16,16);
 
-        System.out.println("Chosen figure: "+ figureType);
+        System.out.println("Chosen figure: " + figureType);
         Image image = new Image("file:resources/figures/"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         figureImage.setImage(image);
         getChildren().add(figureImage);
 
-        nameTag = new Label(name);
-        hpLabel = new Label(digitated ? health+"+" : health+"");
+        nameTag = new Text(name);
+        hpLabel = new Text(digitated ? health+"+" : health+"");
         getChildren().add(nameTag);
         getChildren().add(hpLabel);
 
-        setPosition(getPosition()); //Set Graphics to their place
+        activeIndicator.setArcWidth(5);
+        activeIndicator.setArcHeight(5);
+        activeIndicator.setStroke(Color.rgb(255, 0, 0, .4));
+        activeIndicator.setStrokeWidth(1);
+        activeIndicator.setVisible(false);
+        this.getChildren().add(activeIndicator);
+
+        updatePositionsOfChildren();
     }
 
+    /** Creates a JSONObject containing all variables' values of this instance (e.g. for saving) */
     public JSONObject toJson(){
         JSONObject output = new JSONObject();
         output.put("name", name);
@@ -159,18 +189,30 @@ public class Figure extends StackPane {
         output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
         output.put("massFactor", massFactor);
         output.put("causedHpDamage", causedHpDamage);
-        output.put("position.x", position.getX()); // TODO save as array
+        output.put("position.x", position.getX()); // TODO saveJson as array
         output.put("position.y", position.getY());
 
-        output.put("isBurning", isBurning);
+        output.put("isParalyzed", isParalyzed);
         output.put("isPoisoned", isPoisoned);
         output.put("isStuck", isStuck);
         return output;
     }
 
     public void setColor(Color color) {
-        nameTag.setTextFill(color);
-        hpLabel.setTextFill(color);
+        this.color = color;
+        String style = "-fx-fill: " + toHex(color) + ";";
+        nameTag.setStyle(style);
+        hpLabel.setStyle(style);
+        DropShadow ds = new DropShadow();
+        ds.setRadius(2);
+        ds.setColor(Color.rgb(250, 250, 250, .5));
+        nameTag.setEffect(ds);
+        hpLabel.setEffect(ds);
+//        if(color.getBrightness() < .5) {
+            activeIndicator.setFill(Color.rgb(250, 250, 250, .05));
+//        } else { // does not look as good as expected
+//            activeIndicator.setFill(Color.rgb(0, 0, 0, .1));
+//        }
     }
 
     public String getName(){return name;}
@@ -179,23 +221,34 @@ public class Figure extends StackPane {
     public double getArmor() {return armor;}
 //    public void setArmor(double armor) {this.armor = armor;}
 
-    public boolean getIsBurning() {return isBurning;}
-    public void setIsBurning(boolean isBurning){this.isBurning = isBurning;}
+    public boolean getIsParalyzed() {return isParalyzed;}
+    public void setIsParalyzed(boolean isParalyzed){
+        this.isParalyzed = isParalyzed;
+      /*  if (isParalyzed){
+            condition = new ImageView("file:resources/figures/paralyzed.png");
+            condition.setTranslateX(figureImage.getTranslateX());
+            condition.setTranslateY(figureImage.getTranslateY());
+            this.getChildren().add(condition);
+        } else { if(condition != null){this.getChildren().remove(condition); condition = null;} }*/
+    }
 
     public boolean getIsPoisoned() {return isPoisoned;}
-    public void setIsPoisoned(boolean isPoisoned){this.isPoisoned = isPoisoned;}
+    public void setIsPoisoned(boolean isPoisoned){
+        this.isPoisoned = isPoisoned;
+        if (isPoisoned){
+            condition = new ImageView(new Image("file:resources/figures/poisoned.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
+            condition.setTranslateX(figureImage.getTranslateX());
+            condition.setTranslateY(figureImage.getTranslateY());
+            this.getChildren().add(condition);
+        } else { if(condition != null){this.getChildren().remove(condition); condition = null;} }
+    }
 
     public boolean getIsStuck() {return isStuck;}
     public void setIsStuck(boolean isStuck){this.isStuck = isStuck;}
 
     public void setActive(boolean isActive) {
         this.isActive = isActive;
-        if(isActive) {
-            // TODO move to css
-            nameTag.setStyle("-fx-border-color: rgba(255,0,0,.2); -fx-border-style: solid; -fx-border-width: 1px; -fx-border-radius: 5px;");
-        } else {
-            nameTag.setStyle("");
-        }
+        activeIndicator.setVisible(isActive);
     }
 
     /**
@@ -210,8 +263,6 @@ public class Figure extends StackPane {
             position = GRAVEYARD;
         }
 
-        int offset = NORMED_OBJECT_SIZE / 2;
-
         position = new Point2D(Math.round(newPosition.getX()*10)/10.0, Math.round(newPosition.getY()*10)/10.0); // round position to one decimal place, see above (10.0 must be double)
         hitRegion = new Rectangle2D(position.getX(),position.getY(),hitRegion.getWidth(),hitRegion.getHeight());
 //        getChildren().removeAll(hitRegionDebug);
@@ -220,14 +271,31 @@ public class Figure extends StackPane {
 //        hitRegionDebug.setTranslateY(position.getY());
 //        hitRegionDebug.setFill(Color.web("rgba(255,0,0,.3)"));
         //getChildren().add(hitRegionDebug); // TODO brakes scroll pane?!
+        updatePositionsOfChildren();
+    }
+
+    /**
+     * Updates position of image, labels, and weapon.
+     * It is safe to call this function from non-JavaFX threads.
+     */
+    private void updatePositionsOfChildren() {
+        int offset = NORMED_OBJECT_SIZE / 2;
+
         Platform.runLater(() -> {
             figureImage.setTranslateX(Math.round(position.getX())); // round this position to prevent ugly subpixel rendering
             figureImage.setTranslateY(Math.round(position.getY()));
-            nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getWidth() / 2);
+            nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getLayoutBounds().getWidth() / 2);
             nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
-            hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getWidth() / 2);
+            hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getLayoutBounds().getWidth() / 2);
             hpLabel.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE);
-
+            activeIndicator.setTranslateX(nameTag.getTranslateX() - ACTIVE_INDICATOR_PADDING);
+            activeIndicator.setTranslateY(nameTag.getTranslateY() - ACTIVE_INDICATOR_PADDING);
+            activeIndicator.setWidth(nameTag.getLayoutBounds().getWidth() + ACTIVE_INDICATOR_PADDING*2);
+            activeIndicator.setHeight(nameTag.getLayoutBounds().getHeight() + ACTIVE_INDICATOR_PADDING); // -2 since we otherwise overlap with the hpLabel
+            if(condition != null){
+                condition.setTranslateX(figureImage.getTranslateX());
+                condition.setTranslateY(figureImage.getTranslateY());
+            }
             setSelectedItem(getSelectedItem()); // Update position of weapon
         });
     }
@@ -240,9 +308,6 @@ public class Figure extends StackPane {
         return selectedItem;
     }
     public void setSelectedItem(Item select){
-        if(selectedItem != null) {
-            selectedItem.hide();
-        }
         selectedItem = select;
         if(selectedItem != null) {
             select.setPosition(new Point2D(position.getX(), position.getY()));
@@ -275,19 +340,22 @@ public class Figure extends StackPane {
         health -= damage - (armor*damage);
         if(health <= 0) {
             health = 0;
-            Image image = new Image("file:resources/spawn.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
+            Image image = new Image("file:resources/spawnpoint.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
             Platform.runLater(() -> figureImage.setImage(image));
             setPosition(GRAVEYARD);
             throw new DeathException(this);
         }
-        Platform.runLater(() -> hpLabel.setText(health + (digitated ? "+" : "")));
+        Platform.runLater(() -> {
+            hpLabel.setText(health + (digitated ? "+" : ""));
+            updatePositionsOfChildren();
+        });
         System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health);
     }
 
     public void setHealth(int hp) {
         this.health = hp;
         try {
-            sufferDamage(0); // redraws the label and validated new hp
+            sufferDamage(0); // redraws the label and validates new hp
         } catch(DeathException e) {
             // cannot happen here
         }
@@ -302,9 +370,8 @@ public class Figure extends StackPane {
         return hitRegion;
     }
 
-    public Projectile shoot(int power) throws NoMunitionException {
-        // selectedItem.setPosition(new Point2D(imageView.getTranslateX(), imageView.getTranslateY())); // What is this for?
-        return selectedItem.shoot(power);
+    public Projectile shoot() throws NoMunitionException {
+        return selectedItem.use(this);
     }
 
     public Point2D getVelocity() {
@@ -364,7 +431,7 @@ public class Figure extends StackPane {
         switch(figureType) {
             case "Penguin":
                 massFactor = .5;
-                jumpDuringFallThreshold = MAX_Y_SPEED/2;
+                jumpDuringFallThreshold = MAX_Y_SPEED;
                 armor = .2;
                 break;
             case "Unicorn":
@@ -383,15 +450,20 @@ public class Figure extends StackPane {
             digitationAnimation.setOnFinished((e) -> getChildren().removeAll(digitationAnimationImage));
             digitationAnimation.play();
             getChildren().add(digitationAnimationImage);
+            figureImage.setImage(new Image("file:resources/figures/digi"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
+            updatePositionsOfChildren();
         });
     }
 
-    public void dedigitate() { // TODO degitate ?
+    public void degitate() {
         massFactor = 1;
         jumpDuringFallThreshold = 0;
         armor = 0;
         digitated = false;
-        Platform.runLater(() -> hpLabel.setText(health + ""));
+        Platform.runLater(() -> {
+            hpLabel.setText(health + "");
+            figureImage.setImage(new Image("file:resources/figures/"+ figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
+        });
     }
 
     public int getCausedHpDamage() {
@@ -411,19 +483,6 @@ public class Figure extends StackPane {
         int rsd = recentlySufferedDamage;
         recentlySufferedDamage = 0;
         return rsd;
-    }
-
-    //For testing purposes only
-    private static void printAllAttributes(Figure testwurm){
-        System.out.println("Health  : " + testwurm.getHealth());
-        System.out.println("Armor   : " + testwurm.getArmor());
-        System.out.println("Name    : " + testwurm.getName());
-        System.out.println("Burning : " + testwurm.getIsBurning());
-        System.out.println("Poisoned: " + testwurm.getIsPoisoned());
-        System.out.println("Stuck   : " + testwurm.getIsStuck());
-
-        System.out.println("Position: " + testwurm.getPosition());
-        System.out.println();
     }
 
     public int getDamageByLiquid() {

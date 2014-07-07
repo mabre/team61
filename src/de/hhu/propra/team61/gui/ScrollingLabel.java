@@ -3,6 +3,9 @@ package de.hhu.propra.team61.gui;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 
 import java.util.ArrayList;
 import java.util.Timer;
@@ -31,19 +34,23 @@ public class ScrollingLabel extends StackPane {
     /** regardless of the length, a line is visible at least this time (in seconds) */
     private static int MIN_TIMEOUT = 2;
     /** the time a line is shown depends on the letters in the line */
-    private static int LETTERS_PER_SECOND = 20;
+    private static int LETTERS_PER_SECOND = 10;
 
     /** lines currently shown in the label */
-    ArrayList<LabelLine> lines = new ArrayList<>();
+    private ArrayList<LabelLine> lines = new ArrayList<>();
+    /** lines used to be shown in the label, needed to stop all timer threads // TODO don't know why */
+    private ArrayList<LabelLine> oldLines = new ArrayList<>();
+    /** when all timer are stopped, do not create new ones */
+    private boolean acceptingNewLines = true;
 
     /**
      * A label which calls {@link #remove(de.hhu.propra.team61.gui.ScrollingLabel.LabelLine)} after a certain timeout.
      */
-    private class LabelLine extends Label {
+    private class LabelLine extends Text {
         /** low priority lines are overwritten right away */
         boolean lowPriority;
         /** on timeout, this line is removed */
-        Timer removeTimer = new Timer();
+        Timer removeTimer = new Timer(); // TODO IMPORTANT not all timer threads shut down !?
 
         /**
          * Creates a new line.
@@ -51,10 +58,13 @@ public class ScrollingLabel extends StackPane {
          * @param lowPriority whether the line is overwritten right away when a new line is added
          */
         LabelLine(String text, boolean lowPriority) {
+            this.setStyle("-fx-font: 16px Verdana;" +
+                    "-fx-fill: linear-gradient(to bottom, repeat, orange 0%, red 100%);" +
+                    "-fx-stroke: black;" +
+                    "-fx-stroke-width: .3;"); // TODO improve and move to css file
             this.lowPriority = lowPriority;
             setText(text);
-
-            final int timeout = Math.max(MIN_TIMEOUT, text.length()/LETTERS_PER_SECOND) * 1000;
+            final int timeout = Math.max(MIN_TIMEOUT, text.length() / LETTERS_PER_SECOND) * 1000;
             final LabelLine me = this;
             removeTimer.schedule(new TimerTask() {
                 @Override
@@ -88,6 +98,10 @@ public class ScrollingLabel extends StackPane {
      * @param lowPriority whether the line is overwritten right away when a new line is added
      */
     public void addLine(String text, boolean lowPriority) {
+        if(!acceptingNewLines) {
+            System.err.println("This label is destroyed!");
+            return;
+        }
         removeLowPriorityLine();
         LabelLine newLine = new LabelLine(text, lowPriority);
         lines.add(newLine);
@@ -95,7 +109,7 @@ public class ScrollingLabel extends StackPane {
 
         if(lines.size() > 1) { // new label is last element
             LabelLine lastLine = lines.get(lines.size() - 2);
-            newLine.setTranslateY(lastLine.getTranslateY() + lastLine.getHeight());
+            newLine.setTranslateY(lastLine.getTranslateY() + lastLine.prefHeight(1000));
         }
     }
 
@@ -109,6 +123,7 @@ public class ScrollingLabel extends StackPane {
                 lastLine.stopRemoveTimer();
                 getChildren().remove(lastLine);
                 lines.remove(lastLine);
+                oldLines.add(lastLine);
             }
         }
     }
@@ -121,11 +136,24 @@ public class ScrollingLabel extends StackPane {
         Platform.runLater(() -> {
             int lineIndex = lines.indexOf(line);
             getChildren().remove(line);
-            lines.remove(lineIndex);
+//            lines.remove(lineIndex);
             for(int i=lineIndex; i < lines.size(); i++) {
-                lines.get(i).setTranslateY(lines.get(i).getTranslateY() - line.getHeight());
+                lines.get(i).setTranslateY(lines.get(i).getTranslateY() - line.prefHeight(1000));
             }
         });
+    }
+
+    /**
+     * Stops all timers and threads.
+     */
+    public void stopAllTimers() {
+        acceptingNewLines = false;
+        for(LabelLine line: lines) {
+            line.stopRemoveTimer();
+        }
+        for(LabelLine line: oldLines) {
+            line.stopRemoveTimer();
+        }
     }
 
 }

@@ -7,8 +7,6 @@ import de.hhu.propra.team61.network.Client;
 import de.hhu.propra.team61.network.Networkable;
 import de.hhu.propra.team61.network.Server;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,6 +19,11 @@ import javafx.stage.Stage;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 
 /**
+ * Window that is shown when the game is over.
+ *
+ * Shows the winner of the game and gives the opportunity to either go back to the menue or play a revenge = another
+ * game with the same settings as before.
+ *
  * Created by Jessypet on 28.05.14.
  */
 
@@ -29,25 +32,22 @@ public class GameOverWindow extends Application implements Networkable {
     Server server;
     Client client;
     Thread clientThread, serverThread;
-    SceneController sceneController;
-
-    public static void main(String[] args) {
-        launch(args);
-    }
+    /** used to switch to menue or back to the game */
+    private SceneController sceneController;
 
     /**
-     * displays a game over window
-     * @param sceneController
+     * Displays the game over window.
+     * @param sceneController used to switch to menue or back to the game
      * @param winnerTeam the number of the winner team (counting starts from 0, -1 means draw)
      * @param winnerName the name of the winner team
-     * @param map
-     * @param file
+     * @param map the level that was just played in the game
+     * @param file the file containing the  saved settings of the last game
      * @param client the client object
      * @param clientThread the thread managing the client connection
      * @param server the server object
      * @param serverThread the thread managing the server connection
      */
-    public void showWinner(SceneController sceneController, int winnerTeam, String winnerName, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public GameOverWindow(SceneController sceneController, int winnerTeam, String winnerName, String map, String file, Client client, Thread clientThread, Server server, Thread serverThread) {
         BorderPane root = new BorderPane();
         this.sceneController = sceneController;
         this.server = server;
@@ -82,29 +82,22 @@ public class GameOverWindow extends Application implements Networkable {
         revenge.setOnAction(e -> {
             MapWindow mapwindow = new MapWindow(map, file, client, clientThread, server, serverThread, sceneController);
         });
-        if(server != null) {
-            server.registerCurrentNetworkable(this);
-        } else {
-            revenge.setDisable(true);
-        }
+        if(!client.isLocalGame()) revenge.setDisable(true); // TODO return to lobby in network mode (branch networkBackToLobby)
         client.registerCurrentNetworkable(this);
         Button end = new Button("End");
         end.setOnAction(e -> {
             shutdown();
-            sceneController.switchToMenue();
+            sceneController.switchToMenu();
         });
         overGrid.add(end, 0, 4);
         Scene overScene = new Scene(root);
         overScene.getStylesheets().add("file:resources/layout/css/gameover.css");
-        sceneController.setGameOverScene(overScene);
-        sceneController.switchToGameOver();
-
+        sceneController.switchScene(overScene, "Game over");
         VorbisPlayer.play("resources/audio/SFX/gameOver.ogg", false);
     }
 
     @Override
     public void start(Stage filler) { }
-
 
     private void shutdown() {
         clientThread.interrupt();
@@ -123,7 +116,7 @@ public class GameOverWindow extends Application implements Networkable {
 //        } else if(command.contains("CHAT ")) { // TODO add chat ?
 //            chatBox.processChatCommand(command);
         } else {
-            System.out.println("NetLobby: unknown command " + command);
+            System.err.println("GameOverWindow: unknown command " + command);
         }
     }
 

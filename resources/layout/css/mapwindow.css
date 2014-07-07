@@ -1,14 +1,24 @@
 @CHARSET "ISO-8859-1";
 
-.root {
-    -fx-background-image: url("file:resources/levels/board.png");
-    -fx-background-position: top left;
-}
-
 #scrollPane  > .viewport {
    -fx-background-color: transparent;
 }
 
 #scrollPane {
    -fx-background-color: transparent;
+}
+
+#pausePane {
+    -fx-background-color: rgba(225, 237, 231, 0.8);
+    -fx-padding: 60 0 0 330;
+}
+
+.button {
+    -fx-background-color: rgba(254, 94, 47, 0.5);
+    -fx-padding: 5 10 5 10;
+    -fx-background-radius: 5;
+}
+
+.button:hover  {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
 }

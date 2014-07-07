@@ -1,5 +1,6 @@
 package de.hhu.propra.team61.gui;
 
+import de.hhu.propra.team61.JavaFxUtils;
 import de.hhu.propra.team61.io.CustomizeManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
@@ -27,36 +28,64 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
+import static de.hhu.propra.team61.JavaFxUtils.removeExtension;
 
 /**
+ * The lobby that is shown when joining or hosting a network game.
+ *
+ * This class contains all GUI-elements for the lobby and the methods for exchanging information between host and clients
+ * before the game starts.
+ * In the lobby players can choose their team, the host can choose the game style (containing level etc.). The game can
+ * be started as soon as all clients are ready.
+ *
  * Created by Jessypet on 27.05.14.
  */
 public class NetLobby extends Application implements Networkable {
 
-    ArrayList<HBox> hboxes = new ArrayList<>();
-    ArrayList<ChoiceBox<String>> teamChoosers = new ArrayList();
-    ArrayList<Text> readys = new ArrayList<>();
-    ArrayList<String> spectators = new ArrayList<>();
-    ArrayList<Button> removeButtons = new ArrayList<>();
-    ArrayList<TextField> weapons = new ArrayList<>();
-    /** number of figures per team */
-    TextField sizeField = new TextField("4");
-    TextField numberOfTeams = new TextField("2");
-    ChoiceBox<String> mapChooser = new ChoiceBox<>();
-    CustomGrid overviewGrid = new CustomGrid();
-    int teamsCreated = 1;
-    Chat chatBox;
-    private VBox spectatorBox;
-    private CustomGrid listGrid;
-    CheckBox spectator = new CheckBox("Spectator");
-    SceneController sceneController = new SceneController();
-    Button start;
-    Button ready;
-    Text sameColor = new Text();
+    /** used to switch back to menu  or the game */
+    private SceneController sceneController = new SceneController();
 
-    boolean isHost;
+    /** contains all GUI-elements */
+    private CustomGrid overviewGrid = new CustomGrid();
+    /** every hbox contains information for one team */
+    private ArrayList<HBox> hboxes = new ArrayList<>();
+    /** to choose a custom team */
+    private ArrayList<ChoiceBox<String>> teamChoosers = new ArrayList<>();
+    /** indicators next to each team, shows if the player is ready */
+    private ArrayList<Text> readys = new ArrayList<>();
+    /** contains list of players/spectators */
+    private ArrayList<String> spectators = new ArrayList<>();
+    /** button next to each team, makes host able to remove player */
+    private ArrayList<Button> removeButtons = new ArrayList<>();
+
+    /** for choosing game style */
+    private ChoiceBox<String> style = new ChoiceBox<>();
+    /** for choosing the level */
+    private ChoiceBox<String> levelChooser = new ChoiceBox<>();
+    /** number of figures per team */
+    private TextField sizeField = new TextField("4");
+    /** number of allowed teams */
+    private TextField numberOfTeams = new TextField("2");
+    /** number of existing teams = players */
+    private int teamsCreated = 1;
+    /** contains spectatorBox and chatBox */
+    private CustomGrid listGrid;
+    /** contains chat */
+    Chat chatBox;
+    /** contains list of players and spectators */
+    private VBox spectatorBox;
+    /** clients can decide whether they want to play or watch the game */
+    private CheckBox spectator = new CheckBox("Spectator");
+    /** makes showing different buttons for host and clients possible */
+    private boolean isHost;
+    /** click starts game, only shown to host */
+    private Button start;
+    /** click marks player as ready, only shown to clients */
+    private Button ready;
+    /** shows error-message in case of same team/color twice */
+    private Text sameColor = new Text("You should not choose the same color or team!");
     /** -1 = spectator, 0 = host, 1+ = clients */
-    int associatedTeam;
+    private int associatedTeam;
 
     Server server;
     Thread serverThread;
@@ -102,7 +131,10 @@ public class NetLobby extends Application implements Networkable {
         client.registerCurrentNetworkable(this);
     }
 
-    public void buildGUI() {
+    /**
+     * builds basic GUI, adds first team and elements for choosing game style.
+     */
+    private void buildGUI() {
         sceneController.getStage().setOnCloseRequest(event -> {
             clientThread.interrupt();
             if(serverThread != null) serverThread.interrupt();
@@ -116,58 +148,80 @@ public class NetLobby extends Application implements Networkable {
         HBox topBox = addTopHBox();
         root.setTop(topBox);
         overviewGrid = new CustomGrid();
-        overviewGrid.setPrefWidth(672);
-        overviewGrid.setPrefHeight(550);
+        overviewGrid.setPrefSize(672, 550);
+        overviewGrid.setMaxSize(672, 550);
         root.setLeft(overviewGrid);
 
         Text teamsText = new Text("Teams:");
         teamsText.setFont(Font.font(16));
-        overviewGrid.add(teamsText, 0, 8);
+        overviewGrid.add(teamsText, 0, 7);
 
         Text team1 = new Text("Team 1");
         hboxes.add(new HBox(20));
         hboxes.get(0).getChildren().addAll(team1, teamChoosers.get(0));
-        overviewGrid.add(hboxes.get(0), 0, 10, 3, 1);
+        overviewGrid.add(hboxes.get(0), 0, 9, 3, 1);
 
-        Text generalSettings = new Text("Choose general settings:");
+        sameColor.setVisible(false);
+        overviewGrid.add(sameColor, 0, 14, 6, 1);
+        Text generalSettings = new Text("General settings:");
         generalSettings.setFont(Font.font(16));
         overviewGrid.add(generalSettings, 0, 0, 2, 1);
+        ArrayList<String> availableGameStyles = CustomizeManager.getAvailableGameStyles();
+        for (int i=0; i<availableGameStyles.size(); i++) {
+            style.getItems().add(JavaFxUtils.removeExtension(availableGameStyles.get(i), 5));
+        }
+        style.getSelectionModel().selectFirst();
+        style.valueProperty().addListener((ov, value, new_value) -> {
+            if(new_value != null) {
+                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + new_value + ".json");
+                levelChooser.setValue(removeExtension(styleObject.getString("level"), 4));
+                sizeField.setText(styleObject.getInt("teamSize")+"");
+                server.send(getStateForNewClient());
+            }
+        });
+        overviewGrid.add(style, 0, 1, 2, 1);
+        Text chooseLevelText = new Text("Level:");
+        overviewGrid.add(chooseLevelText, 2, 1);
+        ArrayList<String> availableLevels = getLevels();
+        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
+        for (int i=0; i<numberOfLevels; i++) {
+            levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
+        }
+        levelChooser.getSelectionModel().selectFirst();
+        overviewGrid.add(levelChooser, 3, 1, 2, 1);
+        levelChooser.valueProperty().addListener(new ChangeListener<String>() {
+            public void changed(ObservableValue ov, String value, String new_value) {
+                server.send(getStateForNewClient());
+            }
+        });
         Text teamSize = new Text("Size of teams: ");
-        overviewGrid.add(teamSize, 0, 1);
-        overviewGrid.add(sizeField, 1, 1);
+        overviewGrid.add(teamSize, 0, 2);
+        sizeField.setPrefWidth(40);
+        overviewGrid.add(sizeField, 1, 2);
         sizeField.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if (Integer.parseInt(newValue) > 6) {
+                    sizeField.setText("6");
+                } else if (Integer.parseInt(newValue) < 1) {
+                    sizeField.setText("1");
+                }
                 server.send(getStateForNewClient());
             }
         });
         Text teamNumber = new Text("Max. number of teams: ");
-        overviewGrid.add(teamNumber, 2, 1, 2, 1);
-        overviewGrid.add(numberOfTeams, 4, 1, 2, 1);
+        overviewGrid.add(teamNumber, 2, 2, 2, 1);
+        numberOfTeams.setPrefWidth(40);
+        overviewGrid.add(numberOfTeams, 4, 2);
         numberOfTeams.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 server.send(getStateForNewClient());
             }
         });
-        Text chooseMapText = new Text("Map:");
-        overviewGrid.add(chooseMapText, 0, 2);
-        ArrayList<String> availableLevels = getLevels();
-        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
-        for (int i=0; i<numberOfLevels; i++) {
-            mapChooser.getItems().add(availableLevels.get(i));
-        }
-        mapChooser.getSelectionModel().selectFirst();
-        overviewGrid.add(mapChooser, 1, 2);
-        mapChooser.valueProperty().addListener(new ChangeListener<String>() {
-            public void changed(ObservableValue ov, String value, String new_value) {
-                server.send(getStateForNewClient());
-            }
-        });
-
-        Text enter = new Text ("Enter the quantity of projectiles for each weapon:");
-        enter.setFont(Font.font(14));
-        overviewGrid.add(enter, 0, 3, 3, 1);
+        Text infoGameStyle = new Text("You can choose a game style and change level, teamSize and number \n" +
+                "of teams, but not items.");
+        overviewGrid.add(infoGameStyle, 0, 5, 6, 1);
 
         VBox rightBox = new VBox();
         rightBox.setPrefWidth(328);
@@ -187,13 +241,16 @@ public class NetLobby extends Application implements Networkable {
 
         HBox bottomBox = new HBox();
         Button back = new Button("Back");
-        bottomBox.getChildren().addAll(back, sameColor);
+        back.getStyleClass().add("mainButton");
+        bottomBox.getChildren().addAll(back);
         back.setOnAction(e -> {
             if(serverThread != null) serverThread.interrupt();
-            System.out.println("NetLobby server thread interrupted");
+            clientThread.interrupt();
+            System.out.println("NetLobby client/server threads interrupted");
             if(server != null) server.stop();
-            System.out.println("NetLobby server (if any) stopped");
-            sceneController.switchToMenue();
+            client.stop();
+            System.out.println("NetLobby client/server (if any) stopped");
+            sceneController.switchToMenu();
         });
         bottomBox.setId("bottomBox");
         root.setBottom(bottomBox);
@@ -202,39 +259,45 @@ public class NetLobby extends Application implements Networkable {
         lobbyScene.getStylesheets().add("file:resources/layout/css/lobby.css");
         overviewGrid.getStyleClass().add("overviewGrid");
         listGrid.getStyleClass().add("listGrid");
-        sceneController.setLobbyScene(lobbyScene);
-        sceneController.switchToLobby();
+        sceneController.switchScene(lobbyScene, "Network Lobby");
     }
 
-    public HBox addTopHBox() {
+    /**
+     * Creates the top menu containing a label and a button. Dependant on whether you're host or client you are shown
+     * the 'Start' or the 'Ready' button. When clicking 'Start' it is checked if there are two teams with the same color.
+     * Clicking 'Ready' will change the text next to the client's team.
+     * @return hbox that is set in top of the window in {@link #buildGUI()}.
+     */
+    private HBox addTopHBox() {
         HBox topBox = new HBox(850);
         HBox startBox = new HBox();
         Text lobbyText = new Text("Lobby");
         lobbyText.setFont(Font.font("Sans", 20));
         start = new Button("Start");
-        start.setDisable(!Server.teamsAreReady()); // enabled when clients are ready
+        start.setDisable(true); // enabled when clients are ready
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
                 boolean differentColors = true;
                 for (int i=0; i<teamsCreated-1; i++) {
-                    JSONObject objecti = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(i).getValue());
+                    JSONObject objecti = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(i).getValue()+".json");
                     for(int h=i+1; h<teamsCreated; h++) {
-                        JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(h).getValue());
+                        JSONObject objecth = CustomizeManager.getSavedSettings("teams/"+teamChoosers.get(h).getValue()+".json");
                         if (objecti.getString("color").equals(objecth.getString("color"))) {
                             differentColors = false;
                         }
                     }
                 }
                 if (differentColors) {
-                    Settings.save(toJson(), "NET_SETTINGS_FILE");
+                    Settings.saveJson(toJson(), "NET_SETTINGS_FILE");
                     System.out.println("Network-GameSettings: saved settings");
-                    MapWindow mapwindow = new MapWindow(mapChooser.getValue(), "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                    MapWindow mapwindow = new MapWindow(levelChooser.getValue()+".lvl", "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
                 } else {
-                    sameColor.setText("You should not choose the same color!");
+                    sameColor.setVisible(true);
                 }
             }
         });
+        start.getStyleClass().add("mainButton");
         ready = new Button("Ready");
         ready.setDisable(true); //enabled when disabling spectator mode
         ready.setOnAction(new EventHandler<ActionEvent>() {
@@ -243,9 +306,11 @@ public class NetLobby extends Application implements Networkable {
                 ready.setText("Waiting …");
                 ready.setDisable(true);
                 disableForbiddenSettings(-1);
-                client.send("CLIENT_READY " + toJson());
+                client.send("LOBBY_CHANGE " + toJson());
+                client.send("CLIENT_READY");
             }
         });
+        ready.getStyleClass().add("mainButton");
         startBox.setAlignment(Pos.CENTER_RIGHT);
         startBox.setPrefWidth(400);
         if (isHost) {
@@ -259,6 +324,9 @@ public class NetLobby extends Application implements Networkable {
         return topBox;
     }
 
+    /**
+     * Builds the spectators-box.
+     */
     private void generateSpectatorsBox() {
         spectator.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
@@ -277,6 +345,10 @@ public class NetLobby extends Application implements Networkable {
         listGrid.add(spectatorBox, 0, 1);
     }
 
+    /**
+     * The list of spectators is updated in this method.
+     * @param spectators contains current spectators
+     */
     private void updateSpectators(JSONObject spectators) {
         this.spectators.clear();
         JSONArray spectatorList = spectators.getJSONArray("spectators");
@@ -287,24 +359,36 @@ public class NetLobby extends Application implements Networkable {
         generateSpectatorsBox();
     }
 
-    public ArrayList<String> getLevels() {
+    /**
+     * Calls method {@link de.hhu.propra.team61.io.TerrainManager#getAvailableTerrains()} to search for existing levels that
+     * can be chosen by the host.
+     * @return ArrayList of available levels
+     */
+    private ArrayList<String> getLevels() {
         ArrayList<String> levels = TerrainManager.getAvailableTerrains();
         return levels;
     }
 
-    public JSONObject toJson() {
+    /**
+     * Saves all settings (teams and game style) in a JSON-Object when the game is started and also when a new client connects
+     * so that he can see the current settings.
+     * @return
+     */
+    private JSONObject toJson() {
+        if(style.getValue() == null) return new JSONObject();
+
         JSONObject output = new JSONObject();
-        output.put("numberOfTeams", numberOfTeams.getText());   //save max. number of teams
+        output.put("numberOfTeams", Integer.parseInt(numberOfTeams.getText()));   //save max. number of teams
         output.put("teamsCreated", teamsCreated);       //save current number of players
-        output.put("team-size", sizeField.getText()); //save size of teams
-        output.put("map", mapChooser.getValue());
-        JSONArray weaponsSettings = new JSONArray();
-        for(int i=0; i<4; i++) {
-            JSONObject weapon = new JSONObject();
-            weapon.put("weapon"+(i+1), 50);
-            weaponsSettings.put(weapon);
-        }
-        output.put("weapons", weaponsSettings);
+        output.put("teamSize", Integer.parseInt(sizeField.getText())); //save size of teams
+        output.put("level", levelChooser.getValue());
+        output.put("gameStyle", style.getValue());
+
+        //Prepare inventory
+        JSONObject gameStyleSettings = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue()+".json");
+        JSONArray weaponsSettings = gameStyleSettings.getJSONArray("inventory");
+        output.put("inventory", weaponsSettings);
+
         JSONArray teams = new JSONArray();
         JSONObject team1 = getJsonForTeam(teamChoosers.get(0).getValue(), readys.get(0));
         teams.put(team1);
@@ -324,9 +408,16 @@ public class NetLobby extends Application implements Networkable {
         return output;
     }
 
-    public JSONObject getJsonForTeam(String team, Text ready) {
-        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+team);
+    /**
+     * Saves all settings for one team in a JSONObject.
+     * @param team name of the team
+     * @param ready indicates if team is ready or not
+     * @return JSONObject containing all settings for one team
+     */
+    private JSONObject getJsonForTeam(String team, Text ready) {
+        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+team+".json");
         JSONObject teamSettings = new JSONObject();
+        teamSettings.put("chosenTeam", team);
         teamSettings.put("name", teamObject.getString("name"));
         teamSettings.put("color", teamObject.getString("color"));
         teamSettings.put("figure", teamObject.getString("figure"));
@@ -342,31 +433,32 @@ public class NetLobby extends Application implements Networkable {
         return teamSettings;
     }
 
-    public void fromJson(JSONObject json) {
+    /**
+     * Loads settings from a JSONObject. When a new client connects all current settings are loaded so that he can see them.
+     * @param json the JSONObject containing settings
+     */
+    private void fromJson(JSONObject json) {
         for (int i=0; i<=3 ;i++) {          //remove all teams first when sending state to new client
             removeTeam(i, false);
         }
         teamsCreated = 0;
         if(json.has("numberOfTeams")) {
-            numberOfTeams.setText(json.getString("numberOfTeams"));
+            numberOfTeams.setText(json.getInt("numberOfTeams")+"");
         }
-        if(json.has("team-size")) {
-            sizeField.setText(json.getString("team-size"));
+        if(json.has("teamSize")) {
+            sizeField.setText(json.getInt("teamSize")+"");
         }
-        if(json.has("map")) {
-            mapChooser.setValue(json.getString("map"));
+        if(json.has("level")) {
+            levelChooser.setValue(json.getString("level"));
         }
-        /*if(json.has("weapons")) {
-            JSONArray weaponsArray = json.getJSONArray("weapons");
-            for (int i=0; i<weaponsArray.length(); i++) {
-                weapons.get(i).setText(String.valueOf(weaponsArray.getJSONObject(i).getInt("weapon" + (i + 1))));
-            }
-        }*/
+        if(json.has("gameStyle")) {
+            style.setValue(json.getString("gameStyle"));
+        }
         if(json.has("teams")) {
             JSONArray teamsArray = json.getJSONArray("teams");
             for(int i=0; i<teamsArray.length(); i++) {
                 addTeam(i);
-                teamChoosers.get(i).setValue(teamsArray.getJSONObject(i).getString("name")+".json");
+                teamChoosers.get(i).setValue(teamsArray.getJSONObject(i).getString("chosenTeam"));
                 readys.get(i).setText(teamsArray.getJSONObject(i).getString("ready"));
             }
         }
@@ -376,7 +468,7 @@ public class NetLobby extends Application implements Networkable {
      * adds the team with the given number
      * @param number team number, counting starts from 0 = host
      */
-    public void addTeam(int number) {                   //add a new team
+    private void addTeam(int number) {                   //add a new team
         if(number != teamsCreated) {
             System.out.println("WARNING creating team #" + number + ", but " + teamsCreated + " teams already exist");
         }
@@ -391,10 +483,14 @@ public class NetLobby extends Application implements Networkable {
             return;
         }
         hboxes.get(number).getChildren().addAll(team, teamChoosers.get(number), readys.get(number), removeButtons.get(number));
-        overviewGrid.add(hboxes.get(number), 0, number + 10, 5, 1);
+        overviewGrid.add(hboxes.get(number), 0, number + 9, 5, 1);
         start.setDisable(!Server.teamsAreReady());
     }
 
+    /**
+     * Opens a pop-up asking the host if he really wants to remove the player.
+     * @param i index of the team that should be removed
+     */
     private void removePlayer(int i) {
         Stage popUp = new Stage();
         Text wantToRemove = new Text("Do you really want to remove this player?");
@@ -404,6 +500,8 @@ public class NetLobby extends Application implements Networkable {
             if(server != null) {
                 removeTeam(i, true);
                 server.changeTeamByNumber(i, -1); // change team to spectator
+                ready.setText("Ready");
+                disableForbiddenSettings(-1);
                 server.send(getStateForNewClient()); // send new lobby state to clients
             } else {
                 spectator.setSelected(true);
@@ -434,8 +532,8 @@ public class NetLobby extends Application implements Networkable {
      * @param changeClientsAssociatedTeam // TODO temporary work-around for the case we are removing all teams and re-add them
      */
     private void removeTeam(int team, boolean changeClientsAssociatedTeam) {
-        if(teamsCreated < team) {
-            System.out.println("WARNING " + teamsCreated + " teams exist, hence cannot remove team #" + team);
+        if(teamsCreated < team || teamsCreated == 0) {
+            System.err.println("WARNING " + teamsCreated + " teams exist, hence cannot remove team #" + team);
             return;
         }
 
@@ -455,15 +553,25 @@ public class NetLobby extends Application implements Networkable {
         teamsCreated--;
     }
 
-    public void initializeArrayLists() {
-        /*for (int j=0; j<=4; j++) {            //TODO fix
-            overviewGrid.add(new Text("Weapon "+(j+1)), 0, (j+4));
-            weapons.add(new TextField("50"));
-            overviewGrid.add(weapons.get(j), 1, (j+4));
-        }*/
+    /**
+     * Creates GUI-elements for 4 possible teams, including the ChoiceBox to choose the team, the ready-indicator and the
+     * button to remove.
+     */
+    private void initializeArrayLists() {
+        ArrayList<String> availableTeams = getTeams();
         for (int i=0; i<=3; i++) {
-            teamChoosers.add(new ChoiceBox<>(FXCollections.observableArrayList(getTeams())));
+            teamChoosers.add(new ChoiceBox<>());
+            for (int j=0; j<availableTeams.size(); j++) {
+                teamChoosers.get(i).getItems().add(JavaFxUtils.removeExtension(availableTeams.get(j), 5));
+            }
             teamChoosers.get(i).getSelectionModel().selectFirst();
+            final int thisTeam = i;
+            teamChoosers.get(i).valueProperty().addListener((ov, value, new_value) -> {
+//                if(!value.equals(new_value) && thisTeam == associatedTeam) { // TODO leads to recursive call
+//                    System.err.println(thisTeam);
+//                    client.send("LOBBY_CHANGE " + toJson());
+//                }
+            });
             readys.add(new Text("ready"));
             removeButtons.add(new Button("X"));
             removeButtons.get(i).getStyleClass().add("removeButton");
@@ -474,7 +582,11 @@ public class NetLobby extends Application implements Networkable {
         }
     }
 
-    public ArrayList<String> getTeams() {
+    /**
+     * Calls method {@link de.hhu.propra.team61.io.CustomizeManager#getAvailableTeams()} to search for existing teams.
+     * @return ArrayList of available teams
+     */
+    private ArrayList<String> getTeams() {
         ArrayList<String> availableTeams = CustomizeManager.getAvailableTeams();
         return availableTeams;
     }
@@ -502,6 +614,10 @@ public class NetLobby extends Application implements Networkable {
         }
     }
 
+    /**
+     * Gives a new team a number.
+     * @param newTeam number of the new team
+     */
     private void setAssociatedTeam(int newTeam) {
         associatedTeam = newTeam;
         disableForbiddenSettings(associatedTeam);
@@ -510,6 +626,11 @@ public class NetLobby extends Application implements Networkable {
         client.setAssociatedTeam(newTeam);
     }
 
+    /**
+     * Is called when the spectator-box is checked or unchecked. Depending on the state of the box some GUI-elements are
+     * enabled or disabled calling method {@link #disableForbiddenSettings(int)}.
+     * @param isChecked boolean that indicates whether spectator-box is checked or not
+     */
     public void spectatorBoxChanged(boolean isChecked) {
         if (isChecked) {
             System.out.println("Spectator is checked");
@@ -526,14 +647,21 @@ public class NetLobby extends Application implements Networkable {
         }
     }
 
+    /**
+     * Disables GUI-elements depending on what state of player you are:
+     * <ul>
+     *     <li>Host: team = 0, all elements are enabled.</li>
+     *     <li>Spectator: team = -1, all elements are disabled (except for spectator-box)</li>
+     *     <li>Team: team = 1 to 4, all elements except for the own settings and the 'Ready'-button are disabled.</li>
+     * </ul>
+     * @param team number of the team belonging to the client
+     */
     private void disableForbiddenSettings(int team) {
         if (!isHost) {
-            /*for (int i=0; i<=4; i++) {
-                weapons.get(i).setDisable(true);
-            }*/
+            style.setDisable(true);
             sizeField.setDisable(true);
             numberOfTeams.setDisable(true);
-            mapChooser.setDisable(true);
+            levelChooser.setDisable(true);
         }
         for (int i=0; i<=3; i++) {
             teamChoosers.get(i).setDisable(i != team);
@@ -556,9 +684,11 @@ public class NetLobby extends Application implements Networkable {
             handleSpectatorBoxChanged(checked, currentTeam, clientId);
         } else if (command.startsWith("READY")) {
             int team = Integer.parseInt(command.split(" ", 3)[1]);
+            setTeamReady(team);
+        } else if (command.startsWith("LOBBY_CHANGE")) {
+            int team = Integer.parseInt(command.split(" ", 3)[1]);
             JSONObject clientSettings = new JSONObject(command.split(" ", 3)[2]);
             applySettingsFromClient(clientSettings, team);
-            setTeamReady(team);
         } else {
             System.out.println("Lobby handleOnServer: unknown command " + command);
         }
@@ -571,16 +701,16 @@ public class NetLobby extends Application implements Networkable {
      */
     private void applySettingsFromClient(JSONObject clientSettings, int team) {
         JSONObject currentSettings = toJson();
-        // clients may only change the team settings, so replace the currently set team settings with the settings send from the team
-
+        // clients may only change the team settings, so replace the currently set team settings with the settings sent from the team
         JSONArray teamsArray = currentSettings.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             if(i == team) {
-                teamsArray.getJSONObject(i).put("name", clientSettings.getJSONArray("teams").getJSONObject(i).getString("name"));
-                teamsArray.getJSONObject(i).put("color", clientSettings.getJSONArray("teams").getJSONObject(i).getString("color"));
+                JSONObject teamObj = teamsArray.getJSONObject(i);
+                teamObj.put("chosenTeam", clientSettings.getJSONArray("teams").getJSONObject(i).getString("chosenTeam"));
+                teamsArray.set(i, teamObj);
             }
         }
-
+        currentSettings.put("teams", teamsArray);
         fromJson(currentSettings);
         server.send(getStateForNewClient());
     }
@@ -602,8 +732,8 @@ public class NetLobby extends Application implements Networkable {
                 return;
             }
             if(teamsCreated < Integer.parseInt(numberOfTeams.getText())) {
+                server.changeTeamById(clientId, teamsCreated); // associate client with last team; the team number is the number of teams created-1 (the new team has not been created here yet, so no -1)
                 addTeam(teamsCreated);
-                server.changeTeamById(clientId, teamsCreated-1); // associate client with last team
             } else {
                 System.out.println("Max. number of teams reached.");
                 server.changeTeamById(clientId, -1); // will reset the client's spectator checkbox

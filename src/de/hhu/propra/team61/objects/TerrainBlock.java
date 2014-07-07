@@ -13,7 +13,11 @@ import javafx.scene.image.ImageView;
  * <ul>
  * <li>{@code ' '}: sky (transparent)
  * <li>{@code 'P'} (player): spawn point: rendered like sky
+<<<<<<< HEAD
  * <li>{@code 'W'} (water): walkable liquid
+=======
+ * <li>{@code 'W'} (water): walkable liquid // TODO change collision: drop in? Yes please
+>>>>>>> items
  * <li>{@code 'L'} (lava): walkable liquid
  * <li>{@code 'S'} (stone): walkable ground with normal friction
  * <li>{@code 's'} (sand): walkable ground with higher friction
@@ -61,7 +65,7 @@ public class TerrainBlock extends ImageView {
     /** image looking like water with transparent region at the top */
     private final static Image WATER_TOP_IMAGE = new Image(imgPath + "water_top.png");
     /** image indicating a spawn point */
-    private final static Image SPAWN_POINT = new Image(imgPath + "spawn.png");
+    private final static Image SPAWN_POINT = new Image(imgPath + "spawnpoint.png");
 
     //Technical Blocks/Special Cases
     /** damage resistance of sky (used to limit range of weapons) */
@@ -69,8 +73,8 @@ public class TerrainBlock extends ImageView {
     /** damage resistance of liquids (liquids cannot be destroyed) */
     private final static double RESISTANCE_OF_LIQUIDS = 99999999;
     //Blocks
-    /** damage resistance of earth */
-    private final static double RESISTANCE_OF_EARTH = 25; // TODO drop OF_ ?
+    /** damage resistance of soil */
+    private final static double RESISTANCE_OF_SOIL = 25; // TODO drop OF_ ?
     /** damage resistance of sand */
     private final static double RESISTANCE_OF_SAND = 20;
     /** damage resistance of snow */
@@ -85,8 +89,8 @@ public class TerrainBlock extends ImageView {
 
     /** friction factor for ice */
     private final static double ICE_FRICTION = 2; // TODO rename to FRICTION_ICE
-    /** friction factor for earth */
-    private final static double EARTH_FRICTION = 1;
+    /** friction factor for soil */
+    private final static double SOIL_FRICTION = 1;
     /** friction factor for sand */ // TODO higher value = less friction?
     private final static double SAND_FRICTION = 0.5;
     /** friction factor for liquids */
@@ -101,6 +105,10 @@ public class TerrainBlock extends ImageView {
     private int x;
     /** y coordinate (in blocks) of this block in the terrain */
     private int y;
+    /** mirroring in x direction, used for terrain types which can be mirrored to make the terrain more varied */
+    private int scaleX;
+    /** mirroring in y direction, used for terrain types which can be mirrored to make the terrain more varied */
+    private int scaleY;
 
     /** Class for grouping the neighbouring blocks together and performing actions on them. */
     private class NeighbouringBlocks {
@@ -132,6 +140,9 @@ public class TerrainBlock extends ImageView {
         this.type = type;
         this.x = x;
         this.y = y;
+
+        scaleX = Math.random() > .5 ? -1 : 1;
+        scaleY = Math.random() > .5 ? -1 : 1;
 
         drawImage();
     }
@@ -180,23 +191,35 @@ public class TerrainBlock extends ImageView {
     private void drawImage() {
         // make calling this save from everywhere (called very often with different names), but only use runLater if necessary (performance impact when starting game/edit)
         if(Platform.isFxApplicationThread()) {
+            // reset this for the case that the block was replaced and mirroring does not make sense any more
+            this.setScaleX(1);
+            this.setScaleY(1);
+
             switch (type) {
                 case ' ':
                     this.setImage(SKY_IMAGE);
                     break;
                 case 'S':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(STONES_IMAGE);
                     break;
                 case 's':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(SAND_IMAGE);
                     break;
                 case 'E':
                     this.setImage(SOIL_IMAGE);
                     break;
                 case 'I':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(ICE_IMAGE);
                     break;
                 case 'i':
+                    this.setScaleX(scaleX);
+                    this.setScaleY(scaleY);
                     this.setImage(SNOW_IMAGE);
                     break;
                 case '/': // TODO use ice when appropriate
@@ -250,7 +273,6 @@ public class TerrainBlock extends ImageView {
                     this.setImage(SKY_IMAGE);
             }
         } else {
-            System.err.println("HERE");
             Platform.runLater(this::drawImage);
         }
     }
@@ -262,6 +284,7 @@ public class TerrainBlock extends ImageView {
     public double getResistance() {
         switch (type) {
             case ' ': return RESISTANCE_OF_SKY;
+            case '@': // TODO destroyed terrain boss
             case 'W':
             case 'L': return RESISTANCE_OF_LIQUIDS;
             case '/':
@@ -273,7 +296,7 @@ public class TerrainBlock extends ImageView {
                     return RESISTANCE_OF_SKY; // return an at least somewhat useful information
                 }
             case 'S': return RESISTANCE_OF_STONE;
-            case 'E': return RESISTANCE_OF_EARTH;
+            case 'E': return RESISTANCE_OF_SOIL;
             case 'I': return RESISTANCE_OF_ICE;
             case 'i': return RESISTANCE_OF_SNOW;
             case 's': return RESISTANCE_OF_SAND;
@@ -363,7 +386,7 @@ public class TerrainBlock extends ImageView {
             case 'I':
                 return ICE_FRICTION;
             case 'E':
-                return EARTH_FRICTION;
+                return SOIL_FRICTION;
             case 'W':
             case 'L':
                 return LIQUID_FRICTION;

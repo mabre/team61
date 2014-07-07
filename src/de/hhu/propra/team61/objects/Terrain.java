@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects; // TODO create own subpackage (after merging, otherwise resolving conflicts might become hard)
 
 import de.hhu.propra.team61.animation.SpriteAnimation;
+import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
@@ -44,7 +45,8 @@ public class Terrain extends GridPane {
     /** set to {@code true} to true to see the terrain grid */
     private static final boolean GRID_ENABLED = false;
     /** the size of a block within the terrain; you usually do NOT want to use this outside this class (notable exception: level editor) */
-    final static int BLOCK_SIZE = 8;
+    public final static int BLOCK_SIZE = 8;
+    private final char DESTROYED_TERRAIN = '#';
 
     /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
@@ -57,6 +59,10 @@ public class Terrain extends GridPane {
     /** a list of figures with which objects can collide */
     private ArrayList<Figure> figures;
     private String musicFile;
+    /** the background image for the chosen level */
+    private String backgroundImage;
+    /** a list of crates with which //TODO all objects cann collide, figures pick up */
+    private ArrayList<Crate> supplyDrops = new ArrayList<>();
 
     /** a vector representing wind force and direction */
     private Point2D wind = new Point2D(0,0);
@@ -69,7 +75,9 @@ public class Terrain extends GridPane {
 
     /**
      * Creates a new terrain from the given JSONObject.
+     * This is the same as calling {@code Terrain(terrain, false)}.
      * @param terrain a JSONObject containing the level whose terrain shall be displayed
+     * @see de.hhu.propra.team61.objects.Terrain
      */
     public Terrain(JSONObject terrain) {
         this(terrain, false);
@@ -83,6 +91,7 @@ public class Terrain extends GridPane {
     public Terrain(JSONObject terrain, boolean renderSpawnPoints) {
         load(terrain, renderSpawnPoints);
         musicFile = terrain.getString("music");
+        backgroundImage = terrain.getString("background");
         figures = new ArrayList<>();
     }
 
@@ -170,9 +179,9 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * creates new random wind
+     * Creates new random wind.
      * <p>
-     * The maximum wind force depends on the settings chosen by the user. (TODO actually not) Lower wind forces are more
+     * The maximum wind force depends on the settings chosen by the user. Lower wind forces are more
      * probable; for a maximum speed of 4, the absolute value of the wind force has the following probabilities:
      * <ul>
      * <li>[0, 1.3]: 50 %
@@ -182,7 +191,13 @@ public class Terrain extends GridPane {
      * </p>
      */
     public void rewind() {
-        double maxWindSpeed = MAX_WIND_SPEED_NORMAL; // TODO add option
+        double maxWindSpeed;
+        switch(Settings.getSavedInt("windForce", 2)) {
+            case 1: maxWindSpeed = MAX_WIND_SPEED_EASY; break;
+            case 2: maxWindSpeed = MAX_WIND_SPEED_NORMAL; break;
+            case 3: maxWindSpeed = MAX_WIND_SPEED_HARD; break;
+            default: maxWindSpeed = 0; break;
+        }
         double windSpeed = (Math.random() * maxWindSpeed) - maxWindSpeed / 2;
         if (Math.random() > .5) windSpeed *= 1.5; // make higher speed less probable
         else if (Math.random() > .75) windSpeed *= 2;
@@ -191,6 +206,7 @@ public class Terrain extends GridPane {
     }
 
     /**
+     * Gets the magnitude of the current wind vector, with the sign indicating the direction (positive meaning to the right)
      * @return the magnitude of the current wind vector, the sign indicates wind direction
      */
     public double getWindMagnitude() {
@@ -399,7 +415,7 @@ public class Terrain extends GridPane {
     }
 
     /**
-     * Adds the given figures to the list of {@link figures} used for collision control.
+     * Adds the given figures to the list of {@link de.hhu.propra.team61.objects.Figure}s used for collision control.
      * @param figures the figures to be added
      */
     public void addFigures(ArrayList<Figure> figures) {
@@ -427,7 +443,6 @@ public class Terrain extends GridPane {
      * @param explosionPower value to determine (int)if block (blockX,blockY) is destroyed
      */
     private void explode(ArrayList<String> commands, int blockX, int blockY, int explosionPower){
-        final char DESTROYED_TERRAIN = '#';
         char replacement = DESTROYED_TERRAIN;
 
         if (blockY < terrain.size() && blockY >=0 && blockX < terrain.get(blockY).size()&& blockX >=0
@@ -441,7 +456,8 @@ public class Terrain extends GridPane {
                 debugLog("Explosion of: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                 explosionPower -= resistanceOfBlock; //Reduce explosionPower
-                replaceBlock(blockX,blockY,' '); //Mark as destroyed
+                replaceBlock(blockX,blockY,replacement); //Mark as destroyed
+//                replaceBlock(blockX,blockY,' '); //see below
 
                 // Recursively continue destruction for all directions, OutOfBounds is done on top of this method
                 explode(commands, blockX, blockY + 1, explosionPower);
@@ -455,11 +471,11 @@ public class Terrain extends GridPane {
             } else { // Check if partially enough destructive Force
                 if(explosionPower > resistanceOfBlock * TerrainBlock.MODIFIER_FOR_SLANTS && !terrain.get(blockY).get(blockX).isSky()){ // BUT do not create slants out of air
 
-                    debugLog("now a Slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
+                    debugLog("now a slant: \"" + terrain.get(blockY).get(blockX) + "\" (" + blockX + " " + blockY + ")" + "Resistance: " + resistanceOfBlock + "; " + "Explosionpower: " + explosionPower);
 
                     if(blockX > 0 && blockX + 1 < terrain.get(blockY).size()){
                         if(terrain.get(blockY).get(blockX-1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX-1).getType() != ' '){
-//                            replaceBlock(blockX, blockY, '\\'); // influences further calculation, apply this on client // TODO quite hacky
+//                            replaceBlock(blockX, blockY, '\\'); // influences further calculation, apply this on client // TODO quite hacky // original idea: flooding does not work, now fixed above
                             commands.add("REPLACE_BLOCK " + blockX + " " + blockY + " " + '\\');
                         } else if(terrain.get(blockY).get(blockX+1).getType() != DESTROYED_TERRAIN && terrain.get(blockY).get(blockX+1).getType() != ' '){
 //                            replaceBlock(blockX, blockY, '/');
@@ -505,6 +521,7 @@ public class Terrain extends GridPane {
         }
         save.put("terrain", jsonTerrain);
         save.put("music", musicFile);
+        save.put("background", backgroundImage);
         return save;
 
     }
@@ -520,6 +537,23 @@ public class Terrain extends GridPane {
         } else {
             return "resources/audio/BGM/"+musicFile;
         }
+    }
+
+    /**
+     * Gets the name of the file of the background music for the loaded terrain without ".ogg".
+     * @return name of the background music file without ".ogg"
+     */
+    public String getBackgroundMusicName() {
+        if (musicFile.endsWith(".ogg")) return musicFile.substring(0, musicFile.length() - 4);
+        return musicFile;
+    }
+
+    /**
+     * Gets the name of the background image for the chosen level.
+     * @return name of the background image
+     */
+    public String getBackgroundImage() {
+        return backgroundImage;
     }
 
     /**
@@ -640,7 +674,7 @@ public class Terrain extends GridPane {
             }
             if(foundLiquidInRow != ' ') {
                 for(int column = 0; column < terrain.get(row).size(); column++) {
-                    if(terrain.get(row).get(column).isSky()) {
+                    if(terrain.get(row).get(column).isSky() || terrain.get(row).get(column).getType() == DESTROYED_TERRAIN) {
                         replaceBlock(column, row, foundLiquidInRow);
                         commands.add("REPLACE_BLOCK " + column + " " + row + " " + foundLiquidInRow);
                     }
