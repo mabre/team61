@@ -51,6 +51,6 @@ public class Settings {
      * @return the value for the key
      */
     public static int getSavedInt(String key, int defaultValue) {
-        return Json.getInt(Json.getFromFile(PREFS_FILE), key, defaultValue);
+        return Json.getFromFile(PREFS_FILE).getInt(key, defaultValue);
     }
 }

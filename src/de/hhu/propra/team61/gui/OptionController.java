@@ -87,7 +87,7 @@ public class OptionController {
         if(savedSettings.has("sd")) {
             suddenDeath.setText(savedSettings.getString("sd"));
         }
-        windForce.setValue(Json.getInt(savedSettings, "windForce", 2));
+        windForce.setValue(savedSettings.getInt("windForce", 2));
         if(savedSettings.has("timePerTurn")) {
             timePerTurn.setText(savedSettings.getString("timePerTurn"));
         }
