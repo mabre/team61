@@ -49,6 +49,7 @@ public class Afrobob extends Application {
      * @throws IOException in case FXML-file does not exist
      */
     public void start (Stage filler) throws IOException {
+        System.out.println("--- Afrobob 0.1a140701 ---");
         sceneController.setStage(mainwindow);
         FXMLLoader loader = new FXMLLoader(getClass().getResource("gui/menue.fxml"));
         root = loader.load();
