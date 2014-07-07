@@ -677,6 +677,7 @@ public class MapWindow extends Application implements Networkable {
         if(turnCount == teams.size() * teams.get(0).getFigures().size() * 2) {
             doDigitations();
             server.send("SET_GAME_COMMENT 0 Digitate, my brave hearts!");
+            server.send("PLAY_SFX digitation");
         } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
             undoDigitations();
         }
@@ -1278,6 +1279,7 @@ public class MapWindow extends Application implements Networkable {
                     }
                 }
                 server.send("SET_GAME_COMMENT 0 Mass-Digitation");
+                server.send("PLAY_SFX digitation");
                 System.out.println("Mass-Digitation.");
                 break;
             case "rewind": // sets wind to given value
