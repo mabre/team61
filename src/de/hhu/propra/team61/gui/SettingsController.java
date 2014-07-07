@@ -34,7 +34,7 @@ public class SettingsController {
     @FXML private ChoiceBox<String> gameStyle;
     /** shows the level of the currently chosen game style */
     @FXML private Text level = new Text();
-    /** shows the team-size of the currently chosen game style */
+    /** shows the teamSize of the currently chosen game style */
     @FXML private Text teamSize = new Text();
     /** shows message e.g, in case of more than one player with the same team */
     @FXML private Text error = new Text();
@@ -140,7 +140,7 @@ public class SettingsController {
                         Settings.saveJson(toJson(), "SETTINGS_FILE");
                         System.out.println("GameSettings: saved settings");
                         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue()+".json");
-                        String map = styleObject.getString("map");
+                        String map = styleObject.getString("level");
                         Platform.runLater(() -> new MapWindow(map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
                     }));
                     clientThread.start();
@@ -194,8 +194,8 @@ public class SettingsController {
      */
     private void showStyleInformation(String file) {
         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/"+file);
-        level.setText("Level: " + JavaFxUtils.removeExtension(styleObject.getString("map"), 4));
-        teamSize.setText("Team-Size: "+styleObject.getString("team-size"));
+        level.setText("Level: " + JavaFxUtils.removeExtension(styleObject.getString("level"), 4));
+        teamSize.setText("Team size: "+styleObject.getInt("teamSize"));
     }
 
     /**
@@ -206,8 +206,8 @@ public class SettingsController {
         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue()+".json");
         JSONObject output = new JSONObject();
         output.put("numberOfTeams", numberOfTeams);   //save number of teams
-        output.put("team-size", styleObject.getString("team-size")); //save size of teams
-        output.put("map", styleObject.getString("map"));
+        output.put("teamSize", styleObject.getInt("teamSize")); //save size of teams
+        output.put("level", styleObject.getString("level"));
         JSONArray weaponsStyle = styleObject.getJSONArray("inventory");
         JSONArray weaponsSettings = new JSONArray();
         for(int i=0; i<weaponsStyle.length(); i++) {

@@ -95,7 +95,7 @@ public class Projectile extends ImageView {
      */
     public JSONObject toJson(){
         JSONObject output = new JSONObject();
-        output.put("image",getImage());
+//        output.put("image",getImage()); // TODO huh?
         output.put("posX",getPosition().getX());
         output.put("posY",getPosition().getY());
         output.put("vx",velocity.getX());

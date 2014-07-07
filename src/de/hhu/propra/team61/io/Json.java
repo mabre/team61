@@ -52,19 +52,4 @@ public class Json {
         return new JSONObject(new String(bytes));
     }
 
-    /**
-     * Returns the value of the given integer property in the given JSONObject. If the key is not found, the given default is returned.
-     * @param json the json object
-     * @param key the key whose value shall be obtained
-     * @param defaultValue the fall back value
-     * @return the value for the key
-     */
-    public static int getInt(JSONObject json, String key, int defaultValue) {
-        if(json.has(key)) {
-            return json.getInt(key);
-        } else {
-            return defaultValue;
-        }
-    }
-
 }

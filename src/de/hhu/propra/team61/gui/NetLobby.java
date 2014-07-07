@@ -50,7 +50,7 @@ public class NetLobby extends Application implements Networkable {
     /** every hbox contains information for one team */
     private ArrayList<HBox> hboxes = new ArrayList<>();
     /** to choose a custom team */
-    private ArrayList<ChoiceBox<String>> teamChoosers = new ArrayList();
+    private ArrayList<ChoiceBox<String>> teamChoosers = new ArrayList<>();
     /** indicators next to each team, shows if the player is ready */
     private ArrayList<Text> readys = new ArrayList<>();
     /** contains list of players/spectators */
@@ -174,8 +174,8 @@ public class NetLobby extends Application implements Networkable {
         style.valueProperty().addListener((ov, value, new_value) -> {
             if(new_value != null) {
                 JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + new_value + ".json");
-                levelChooser.setValue(removeExtension(styleObject.getString("map"), 4));
-                sizeField.setText(styleObject.getString("team-size"));
+                levelChooser.setValue(removeExtension(styleObject.getString("level"), 4));
+                sizeField.setText(styleObject.getInt("teamSize")+"");
                 server.send(getStateForNewClient());
             }
         });
@@ -219,7 +219,7 @@ public class NetLobby extends Application implements Networkable {
                 server.send(getStateForNewClient());
             }
         });
-        Text infoGameStyle = new Text("You can choose a game style and change level, team-size and number \n" +
+        Text infoGameStyle = new Text("You can choose a game style and change level, teamSize and number \n" +
                 "of teams, but not items.");
         overviewGrid.add(infoGameStyle, 0, 5, 6, 1);
 
@@ -378,11 +378,11 @@ public class NetLobby extends Application implements Networkable {
         if(style.getValue() == null) return new JSONObject();
 
         JSONObject output = new JSONObject();
-        output.put("numberOfTeams", numberOfTeams.getText());   //save max. number of teams
+        output.put("numberOfTeams", Integer.parseInt(numberOfTeams.getText()));   //save max. number of teams
         output.put("teamsCreated", teamsCreated);       //save current number of players
-        output.put("team-size", sizeField.getText()); //save size of teams
-        output.put("map", levelChooser.getValue());
-        output.put("game-style", style.getValue());
+        output.put("teamSize", Integer.parseInt(sizeField.getText())); //save size of teams
+        output.put("level", levelChooser.getValue());
+        output.put("gameStyle", style.getValue());
 
         //Prepare inventory
         JSONObject gameStyleSettings = CustomizeManager.getSavedSettings("gamestyles/"+style.getValue()+".json");
@@ -443,16 +443,16 @@ public class NetLobby extends Application implements Networkable {
         }
         teamsCreated = 0;
         if(json.has("numberOfTeams")) {
-            numberOfTeams.setText(json.getString("numberOfTeams"));
+            numberOfTeams.setText(json.getInt("numberOfTeams")+"");
         }
-        if(json.has("team-size")) {
-            sizeField.setText(json.getString("team-size"));
+        if(json.has("teamSize")) {
+            sizeField.setText(json.getInt("teamSize")+"");
         }
-        if(json.has("map")) {
-            levelChooser.setValue(json.getString("map"));
+        if(json.has("level")) {
+            levelChooser.setValue(json.getString("level"));
         }
-        if(json.has("game-style")) {
-            style.setValue(json.getString("game-style"));
+        if(json.has("gameStyle")) {
+            style.setValue(json.getString("gameStyle"));
         }
         if(json.has("teams")) {
             JSONArray teamsArray = json.getJSONArray("teams");
@@ -532,8 +532,8 @@ public class NetLobby extends Application implements Networkable {
      * @param changeClientsAssociatedTeam // TODO temporary work-around for the case we are removing all teams and re-add them
      */
     private void removeTeam(int team, boolean changeClientsAssociatedTeam) {
-        if(teamsCreated < team) {
-            System.out.println("WARNING " + teamsCreated + " teams exist, hence cannot remove team #" + team);
+        if(teamsCreated < team || teamsCreated == 0) {
+            System.err.println("WARNING " + teamsCreated + " teams exist, hence cannot remove team #" + team);
             return;
         }
 
@@ -705,7 +705,9 @@ public class NetLobby extends Application implements Networkable {
         JSONArray teamsArray = currentSettings.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             if(i == team) {
-                teamsArray.getJSONObject(i).put("chosenTeam", clientSettings.getJSONArray("teams").getJSONObject(i).getString("chosenTeam"));
+                JSONObject teamObj = teamsArray.getJSONObject(i);
+                teamObj.put("chosenTeam", clientSettings.getJSONArray("teams").getJSONObject(i).getString("chosenTeam"));
+                teamsArray.set(i, teamObj);
             }
         }
         currentSettings.put("teams", teamsArray);

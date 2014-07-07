@@ -157,7 +157,7 @@ public class MapWindow extends Application implements Networkable {
 
         JSONObject settings = Settings.getSavedJson(file);
         this.teamquantity = settings.getInt("numberOfTeams");
-        this.teamsize = Integer.parseInt(settings.getString("team-size"));
+        this.teamsize = settings.getInt("teamSize");
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
 
@@ -982,9 +982,7 @@ public class MapWindow extends Application implements Networkable {
                 }
                 break;
             case "ADD_FLYING_PROJECTILES":
-                String puffer = "";
-                for(int i = 1; i < cmd.length; i++){ puffer += cmd[i]; }
-                JSONArray input = new JSONArray(puffer);
+                JSONArray input = new JSONArray(extractPart(command, "ADD_FLYING_PROJECTILES "));
                 for(int i = 0; i < input.length(); i++){
                     Projectile projectile = new Projectile(input.getJSONObject(i));
                     flyingProjectiles.add(projectile);
