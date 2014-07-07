@@ -28,6 +28,7 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
+import static de.hhu.propra.team61.JavaFxUtils.removeExtension;
 
 /**
  * The lobby that is shown when joining or hosting a network game.
@@ -170,14 +171,12 @@ public class NetLobby extends Application implements Networkable {
             style.getItems().add(JavaFxUtils.removeExtension(availableGameStyles.get(i), 5));
         }
         style.getSelectionModel().selectFirst();
-        style.valueProperty().addListener(new ChangeListener<String>() {
-            public void changed(ObservableValue ov, String value, String new_value) {
-                if(new_value != null) {
-                    JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + new_value + ".json");
-                    levelChooser.setValue(styleObject.getString("map"));
-                    sizeField.setText(styleObject.getString("team-size"));
-                    server.send(getStateForNewClient());
-                }
+        style.valueProperty().addListener((ov, value, new_value) -> {
+            if(new_value != null) {
+                JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + new_value + ".json");
+                levelChooser.setValue(removeExtension(styleObject.getString("map"), 4));
+                sizeField.setText(styleObject.getString("team-size"));
+                server.send(getStateForNewClient());
             }
         });
         overviewGrid.add(style, 0, 1, 2, 1);
