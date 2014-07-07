@@ -249,7 +249,6 @@ public class Server implements Runnable {
                     String address = ((InetAddress)addresses.nextElement()).getHostAddress();
                     if(!address.contains(":") && !address.startsWith("127.")) { // do not return IPv6 or loopback addresses
                         ips += address + ", ";
-                        System.err.println("2");
                     }
                 }
             }

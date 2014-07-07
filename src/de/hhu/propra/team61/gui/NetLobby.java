@@ -274,7 +274,7 @@ public class NetLobby extends Application implements Networkable {
         Text lobbyText = new Text("Lobby");
         lobbyText.setFont(Font.font("Sans", 20));
         start = new Button("Start");
-        start.setDisable(!Server.teamsAreReady()); // enabled when clients are ready
+        start.setDisable(true); // enabled when clients are ready
         start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
@@ -730,8 +730,8 @@ public class NetLobby extends Application implements Networkable {
                 return;
             }
             if(teamsCreated < Integer.parseInt(numberOfTeams.getText())) {
+                server.changeTeamById(clientId, teamsCreated); // associate client with last team; the team number is the number of teams created-1 (the new team has not been created here yet, so no -1)
                 addTeam(teamsCreated);
-                server.changeTeamById(clientId, teamsCreated-1); // associate client with last team
             } else {
                 System.out.println("Max. number of teams reached.");
                 server.changeTeamById(clientId, -1); // will reset the client's spectator checkbox
