@@ -23,7 +23,7 @@ public class Bananabomb extends Weapon {
     public final static String  DESCRIPTION    = "Do not put this into your ear.";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
-    private final static String  WEAPON_IMG     = "file:resources/weapons/temp0.png";
+    private final static String  WEAPON_IMG     = "file:resources/weapons/banana.png";
     private final static String  DAMAGETYPE     = "Explosiondamage";
     private final static int     DAMAGE         =  40;
     private final static int     EXPLOSIONPOWER = 100;
