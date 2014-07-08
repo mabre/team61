@@ -1177,7 +1177,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     currentFigureChooseWeapon(2);
                     server.send("SET_GAME_COMMENT 1 Grenade ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Grenade.DESCRIPTION);
-                    server.send("PLAY_SFX granade"); // TODO typo
+                    server.send("PLAY_SFX grenade"); // TODO typo
                 }
                 break;
             case "3":
@@ -1193,6 +1193,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     currentFigureChooseWeapon(4);
                     server.send("SET_GAME_COMMENT 1 Rifle ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Rifle.DESCRIPTION);
+                    server.send("PLAY_SFX rifle");
                 }
                 break;
             case "5":
@@ -1208,6 +1209,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
                     currentFigureChooseWeapon(6);
                     server.send("SET_GAME_COMMENT 1 Bananabomb ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Bananabomb.DESCRIPTION);
+                    server.send("PLAY_SFX banana");
                 }
                 break;
             case "7":
@@ -1215,6 +1217,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
                     currentFigureChooseWeapon(7);
                     server.send("SET_GAME_COMMENT 1 Digiwise ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Digiwise.DESCRIPTION);
+                    server.send("PLAY_SFX digiwise");
                 }
                 break;
             case "8":
@@ -1222,6 +1225,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
                     currentFigureChooseWeapon(8);
                     server.send("SET_GAME_COMMENT 1 Medipack ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Medipack.DESCRIPTION);
+                    server.send("PLAY_SFX medipack");
                 }
                 break;
             case "9":
