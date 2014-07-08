@@ -56,8 +56,8 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
-    /** number of turns until sudden death is started */
-    private final static int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
+    /** number of turns until sudden death is started, as set by the user */
+    private final int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
     private final static int SUDDEN_DEATH_TURNS = 20;
 

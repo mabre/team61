@@ -1,6 +1,5 @@
 package de.hhu.propra.team61.gui;
 
-import de.hhu.propra.team61.io.Json;
 import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.fxml.FXML;
@@ -30,7 +29,7 @@ public class OptionController {
     /** to change volume of sound effects */
     @FXML private Slider volumeSFX = new Slider();
     /** to enter how many rounds till sudden death */
-    @FXML private TextField suddenDeath = new TextField();
+    @FXML private TextField turnsTillSuddenDeath = new TextField();
     /** to choose wind force */
     @FXML private Slider windForce = new Slider();
     /** to enter time per turn */
@@ -84,9 +83,7 @@ public class OptionController {
         if(savedSettings.has("volumeSFX")) {
             volumeSFX.setValue(savedSettings.getDouble("volumeSFX"));
         }
-        if(savedSettings.has("turnsTillSuddenDeath")) {
-            suddenDeath.setText(savedSettings.getInt("turnsTillSuddenDeath")+"");
-        }
+        turnsTillSuddenDeath.setText(savedSettings.getInt("turnsTillSuddenDeath", 30)+""); // TODO DefaultOptions class (Settings?) holding default setting constants
         windForce.setValue(savedSettings.getInt("windForce", 2));
         if(savedSettings.has("timePerTurn")) {
             timePerTurn.setText(savedSettings.getString("timePerTurn"));
@@ -105,7 +102,7 @@ public class OptionController {
         output.put("volumeBGM", volumeBGM.getValue());
         output.put("volumeSFX", volumeSFX.getValue());
         try {
-            output.put("turnsTillSuddenDeath", Integer.parseInt(suddenDeath.getText()));
+            output.put("turnsTillSuddenDeath", Integer.parseInt(turnsTillSuddenDeath.getText()));
         } catch(NumberFormatException e) {
             output.put("turnsTillSuddenDeath", 30);
         }
