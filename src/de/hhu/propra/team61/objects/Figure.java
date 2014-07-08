@@ -2,6 +2,7 @@ package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.animation.SpriteAnimation;
+import de.hhu.propra.team61.io.Settings;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
@@ -40,6 +41,8 @@ public class Figure extends StackPane {
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
     /** space between name and frame */
     private static final int ACTIVE_INDICATOR_PADDING = 2;
+    /** when turn change on damage is activated, increases fall damage threshold */
+    private final int END_TURN_DAMAGE_ARMOR = (Settings.getSavedBoolean("endTurnOnDamage", false) ? 40 : 0);
 
     /** Name of the figure */
     private String name;
@@ -85,7 +88,7 @@ public class Figure extends StackPane {
     /** properties for digitation, which might modify other values */
     private boolean digitated = false;
     private double massFactor = 1;
-    private int jumpDuringFallThreshold = 0;
+    private int jumpDuringFallThreshold;
     private double armor = 0;
     private int causedHpDamage = 0;
     private int recentlySufferedDamage = 0;
@@ -114,6 +117,8 @@ public class Figure extends StackPane {
         this.isStuck    = isStuck;
 
         figureImage = new ImageView();
+
+        jumpDuringFallThreshold = END_TURN_DAMAGE_ARMOR;
 
         initialize();
     }
@@ -431,7 +436,7 @@ public class Figure extends StackPane {
         switch(figureType) {
             case "Penguin":
                 massFactor = .5;
-                jumpDuringFallThreshold = MAX_Y_SPEED;
+                jumpDuringFallThreshold = MAX_Y_SPEED + END_TURN_DAMAGE_ARMOR;
                 armor = .2;
                 break;
             case "Unicorn":
@@ -457,7 +462,7 @@ public class Figure extends StackPane {
 
     public void degitate() {
         massFactor = 1;
-        jumpDuringFallThreshold = 0;
+        jumpDuringFallThreshold = END_TURN_DAMAGE_ARMOR;
         armor = 0;
         digitated = false;
         Platform.runLater(() -> {

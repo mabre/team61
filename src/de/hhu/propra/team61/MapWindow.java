@@ -56,10 +56,12 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
-    /** number of turns until sudden death is started */
-    private final static int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
+    /** number of turns until sudden death is started, as set by the user */
+    private final int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
     private final static int SUDDEN_DEATH_TURNS = 20;
+    /** whether to end the turn when the current figure suffers damage (set by user) */
+    private final boolean END_TURN_ON_DAMAGE = Settings.getSavedBoolean("endTurnOnDamage", false);
 
     //JavaFX related variables
     private Scene drawing;
@@ -453,6 +455,9 @@ public class MapWindow extends Application implements Networkable {
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
                                                 server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
                                                 server.send("PLAY_SFX fallDamage");
+                                                if(END_TURN_ON_DAMAGE && figure == teams.get(currentTeam).getCurrentFigure()) {
+                                                    endTurn();
+                                                }
                                             }
                                         }
                                     }

@@ -43,9 +43,19 @@ public class Settings {
     }
 
     /**
+     * Gets the value of a boolean preference.
+     * @param key the key of the setting
+     * @param defaultValue fall back value
+     * @return the value for the key
+     */
+    public static boolean getSavedBoolean(String key, boolean defaultValue) {
+        return Json.getFromFile(PREFS_FILE).getBoolean(key, defaultValue);
+    }
+
+    /**
      * Gets the value of an integer preference.
-     * {@code getSavedInt("foo", 42, "SETTINGS.conf")} will return the value of the key foo, or {@code 42} if the value
-     * does not exist in the file, or the file does not exist.
+     * {@code getSavedInt("foo", 42)} will return the value of the key foo in {@code SETTINGS.conf}, or {@code 42} if
+     * the value does not exist in the file, or the file does not exist.
      * @param key the key of the setting
      * @param defaultValue fall back value
      * @return the value for the key
@@ -53,4 +63,5 @@ public class Settings {
     public static int getSavedInt(String key, int defaultValue) {
         return Json.getFromFile(PREFS_FILE).getInt(key, defaultValue);
     }
+
 }

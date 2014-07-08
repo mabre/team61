@@ -61,6 +61,20 @@ public class JSONObject extends org.json.simple.JSONObject {
     }
 
     /**
+     * Returns the value of the given boolean property. If the key is not found, the given default is returned.
+     * @param key the key whose value shall be obtained
+     * @param defaultValue the fall back value
+     * @return the value for the key
+     */
+    public boolean getBoolean(String key, boolean defaultValue) {
+        if(has(key)) {
+            return getBoolean(key);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    /**
      * Gets the integer value for the given key.
      * The caller has to assure that the key really holds an integer.
      * @param key the key whose value is obtained
@@ -179,5 +193,4 @@ public class JSONObject extends org.json.simple.JSONObject {
     public void put(String key, JSONArray value) {
         super.put(key, value);
     }
-
 }
