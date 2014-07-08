@@ -27,6 +27,9 @@ import java.io.IOException;
  */
 public class Afrobob extends Application {
 
+    public static String VERSION_NUMBER = "0.1b140708";
+    public static String VERSION_CODENAME = "Afrobob";
+
     /** public, because sceneController needs to change the stage's scene */
     public BigStage mainwindow = new BigStage("Charlie in Madagascar");
     /** used to switch between scenes in one stage */
@@ -50,7 +53,7 @@ public class Afrobob extends Application {
      * @throws IOException in case FXML-file does not exist
      */
     public void start (Stage filler) throws IOException {
-        System.out.println("--- Afrobob 0.1b140708 ---");
+        System.out.println("--- "+VERSION_CODENAME+" "+VERSION_NUMBER+" ---");
         sceneController.setStage(mainwindow);
         FXMLLoader loader = new FXMLLoader(getClass().getResource("gui/menue.fxml"));
         root = loader.load();
