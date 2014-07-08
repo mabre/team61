@@ -33,11 +33,12 @@ public class ItemManager {
         items.add(new Bazooka(inventory.getInt(0)));
         items.add(new Grenade(inventory.getInt(1)));
         items.add(new Shotgun(inventory.getInt(2)));
-        items.add(new Rifle(3));
+        items.add(new Rifle(inventory.getInt(3)));
         items.add(new PoisonedArrow(inventory.getInt(4)));
-        items.add(new Bananabomb(5));
-        items.add(new Digiwise(6));
+        items.add(new Bananabomb(inventory.getInt(5)));
+        items.add(new Digiwise(inventory.getInt(6)));
         items.add(new Medipack(inventory.getInt(7)));
+        items.add(new Skip(1));
         return items;
     }
 
@@ -72,6 +73,7 @@ public class ItemManager {
             case "Bananabomb":    return new Bananabomb(1);
             case "Digiwise":      return new Digiwise(1);
             case "Medipack":      return new Medipack(1);
+            case "Skip":          return new Skip(1);
             default:              return null;
         }
     }

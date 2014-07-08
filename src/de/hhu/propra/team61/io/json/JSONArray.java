@@ -55,6 +55,17 @@ public class JSONArray extends org.json.simple.JSONArray {
     }
 
     /**
+     * Gets the integer at the given array index, or returns the given default value when the index does not exist.
+     * The caller has to assure that the key really holds an integer.
+     * @param index the index whose value is obtained
+     * @return value mapped to the given key
+     */
+    public int getInt(int index, int defaultValue) {
+        if(index < length()) return getInt(index);
+        return defaultValue;
+    }
+
+    /**
      * Gets the string at the given array index.
      * The caller has to assure that the key really holds a string.
      * @param index the index whose value is obtained
@@ -106,5 +117,4 @@ public class JSONArray extends org.json.simple.JSONArray {
     public void set(int index, JSONObject value) {
         super.set(index, value);
     }
-
 }
