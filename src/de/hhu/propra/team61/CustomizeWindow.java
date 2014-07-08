@@ -102,7 +102,7 @@ public class CustomizeWindow extends Application {
 
     private BorderPane newLevelPane = new BorderPane();
     private CustomGrid newLevelGrid = new CustomGrid();
-    /** ChoiceBox to choose map */
+    /** ChoiceBox to choose level */
     private ChoiceBox<String> levelChooser = new ChoiceBox<>();
     /** ChoiceBox to choose background music */
     private ChoiceBox<String> musicChooser = new ChoiceBox<>();
@@ -112,10 +112,10 @@ public class CustomizeWindow extends Application {
     private ChoiceBox<String> liquidChooser = new ChoiceBox<>();
     /** shows text of the button the mouse is focusing */
     private Text terrainType = new Text();
-    /** the map to be loaded */
+    /** the level to be loaded */
     private String chosenLevel = new String("editor/basic.lvl");
-    /** TextField for wanted name of a custom map */
-    private TextField levelNameField = new TextField("Custom map");
+    /** TextField for wanted name of a custom level */
+    private TextField levelNameField = new TextField("Custom level");
     /** contains buttons to choose terrain */
     private CustomGrid selectionGrid = new CustomGrid();
     /** used for drawing the chosen terrain block */
@@ -166,7 +166,7 @@ public class CustomizeWindow extends Application {
      */
     private void createTopBox() {
         HBox topBox = new HBox(20);
-        Button edit = new Button("Edit team/game style/map");
+        Button edit = new Button("Edit team/game style/level");
         edit.getStyleClass().add("mainButton");
         edit.setOnAction(e -> {
             root.getChildren().remove(itemsGrid);
@@ -186,9 +186,9 @@ public class CustomizeWindow extends Application {
             refresh();
             root.setLeft(newGameStyleGrid);
         });
-        Button newMap = new Button("Create new map");
-        newMap.getStyleClass().add("mainButton");
-        newMap.setOnAction(e -> {
+        Button newLevel = new Button("Create new level");
+        newLevel.getStyleClass().add("mainButton");
+        newLevel.setOnAction(e -> {
             refresh();
             root.getChildren().remove(itemsGrid);
             chosenLevel = "editor/basic.lvl";
@@ -202,7 +202,7 @@ public class CustomizeWindow extends Application {
             stopCheat();
             sceneController.switchToMenu();
         });
-        topBox.getChildren().addAll(edit, newTeam, newGameStyle, newMap, backToMenu);
+        topBox.getChildren().addAll(edit, newTeam, newGameStyle, newLevel, backToMenu);
         topBox.setAlignment(Pos.CENTER);
         root.setTop(topBox);
     }

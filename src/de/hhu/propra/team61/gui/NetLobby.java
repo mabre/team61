@@ -482,7 +482,10 @@ public class NetLobby extends Application implements Networkable {
                     ", so we wanted to add a team which already exists.");
             return;
         }
-        hboxes.get(number).getChildren().addAll(team, teamChoosers.get(number), readys.get(number), removeButtons.get(number));
+        hboxes.get(number).getChildren().addAll(team, teamChoosers.get(number), readys.get(number));
+        if (number!=0) {
+            hboxes.get(number).getChildren().add(removeButtons.get(number));
+        }
         overviewGrid.add(hboxes.get(number), 0, number + 9, 5, 1);
         start.setDisable(!Server.teamsAreReady());
     }

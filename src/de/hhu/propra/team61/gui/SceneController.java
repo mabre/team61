@@ -21,6 +21,8 @@ public class SceneController {
     private Scene menuScene;
     /** contains game */
     private Scene gameScene;
+    /** title of the game to be shown at the top at all times */
+    public static final String GAME_TITLE = "Charly in Madagascar";
 
     /**
      * Sets the main stage.
@@ -60,7 +62,7 @@ public class SceneController {
      */
     public void switchScene(Scene scene, String title) {
         mainwindow.setScene(scene);
-        mainwindow.setTitle(title);
+        mainwindow.setTitle(GAME_TITLE + " - " + title);
     }
 
     /**
@@ -68,7 +70,7 @@ public class SceneController {
      */
     public void switchToMenu() {
         mainwindow.setScene(menuScene);
-        mainwindow.setTitle("Unicorns and penguins <3");
+        mainwindow.setTitle(GAME_TITLE);
     }
 
     /**
@@ -76,6 +78,6 @@ public class SceneController {
      */
     public void switchToMapwindow() {
         mainwindow.setScene(gameScene);
-        mainwindow.setTitle("The Playground");
+        mainwindow.setTitle(GAME_TITLE + " - The Playground");
     }
 }

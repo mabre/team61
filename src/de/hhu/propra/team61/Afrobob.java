@@ -31,7 +31,7 @@ public class Afrobob extends Application {
     public static String VERSION_CODENAME = "Afrobob";
 
     /** public, because sceneController needs to change the stage's scene */
-    public BigStage mainwindow = new BigStage("Charlie in Madagascar");
+    public BigStage mainwindow = new BigStage(SceneController.GAME_TITLE);
     /** used to switch between scenes in one stage */
     private SceneController sceneController = new SceneController();
     /** controls the GUI-elements loaded from menue.fxml */

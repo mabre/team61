@@ -21,9 +21,11 @@
 }
 
 .plus {
-    -fx-background-image: url("file:resources/layout/rainbow.png");
-    -fx-background-repeat: repeat-y;
-    -fx-background-radius: 10;
-    -fx-background-insets: 30;
-    -fx-text-fill: #cc0100;
+    -fx-background-color: rgba(254, 94, 47, 0.8);
+    -fx-background-radius: 5;
+    -fx-padding: 5 15 5 15;
+}
+
+.plus:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
 }

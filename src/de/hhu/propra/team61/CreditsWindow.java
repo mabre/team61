@@ -4,6 +4,7 @@ import de.hhu.propra.team61.gui.CreditsController;
 import de.hhu.propra.team61.gui.SceneController;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Pane;
 
 import java.io.IOException;
@@ -18,7 +19,8 @@ public class CreditsWindow {
     /** Controls GUI-elements from FXML-file */
     private CreditsController creditsController = new CreditsController();
     /** root for optionScene */
-    private Pane root;
+    private ScrollPane root = new ScrollPane();
+    private Pane grid = new Pane();
 
     /**
      * Loads GUI for credits.
@@ -27,7 +29,8 @@ public class CreditsWindow {
     public CreditsWindow(SceneController sceneController) {
         try {
             FXMLLoader creditsLoader = new FXMLLoader(getClass().getResource("gui/credits.fxml"));
-            root = creditsLoader.load();
+            grid = creditsLoader.load();
+            root.setContent(grid);
             creditsController = creditsLoader.getController();
             Scene creditsScene = new Scene(root, 1000, 600);
             creditsScene.getStylesheets().add("file:resources/layout/css/credits.css");

@@ -1,8 +1,10 @@
 package de.hhu.propra.team61.gui;
 
+import de.hhu.propra.team61.Afrobob;
 import javafx.fxml.FXML;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.text.Text;
 
 /**
  * Controls GUI for credits.
@@ -17,6 +19,7 @@ public class CreditsController {
     @FXML private ImageView imageView = new ImageView();
     /** contains heading */
     private Image image = new Image("file:resources/layout/cover.png");
+    @FXML private Text version = new Text();
 
     /**
      * Initialize the sceneController
@@ -25,6 +28,7 @@ public class CreditsController {
     public void initialize(SceneController sceneController) {
         this.sceneController = sceneController;
         imageView.setImage(image);
+        version.setText(Afrobob.VERSION_CODENAME + " Version: " + Afrobob.VERSION_NUMBER);
     }
 
     /**
