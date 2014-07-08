@@ -1226,7 +1226,10 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "9":
                 if(shootingIsAllowed) {
-//                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 9");
+                    server.send("CURRENT_FIGURE_CHOOSE_WEAPON 9");
+                    currentFigureChooseWeapon(9);
+                    server.send("SET_GAME_COMMENT 1 Skip (∞): " + Skip.DESCRIPTION);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().refill();
                 }
                 break;
             case "0": //Deselect Item
