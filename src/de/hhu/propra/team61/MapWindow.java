@@ -1169,7 +1169,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     currentFigureChooseWeapon(1);
                     server.send("SET_GAME_COMMENT 1 Bazooka ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Bazooka.DESCRIPTION);
-                    server.send("PLAY_SFX changeWeapon");
+                    server.send("PLAY_SFX bazooka");
                 }
                 break;
             case "2":
