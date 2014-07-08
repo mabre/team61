@@ -54,10 +54,10 @@ public class MapWindow extends Application implements Networkable {
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
     private final static int DIGITATION_MIN_HEALTH = 65;
-    private final static int DEDIGITATION_HEALTH_THRESHOLD = 25;
+    private final static int DEGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
     /** number of turns until sudden death is started */
-    private final static int TURNS_TILL_SUDDEN_DEATH = 30; // TODO pref?
+    private final static int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
     private final static int SUDDEN_DEATH_TURNS = 20;
 
@@ -728,7 +728,7 @@ public class MapWindow extends Application implements Networkable {
     private void undoDigitations() {
         for (Team team : teams) {
             for (Figure figure : team.getFigures()) {
-                if (figure.getHealth() < DEDIGITATION_HEALTH_THRESHOLD) {
+                if (figure.getHealth() < DEGITATION_HEALTH_THRESHOLD) {
                     figure.degitate();
                     server.send("DEGITATE " + getFigureId(figure));
                 }

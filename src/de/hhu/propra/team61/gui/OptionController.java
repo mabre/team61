@@ -84,8 +84,8 @@ public class OptionController {
         if(savedSettings.has("volumeSFX")) {
             volumeSFX.setValue(savedSettings.getDouble("volumeSFX"));
         }
-        if(savedSettings.has("sd")) {
-            suddenDeath.setText(savedSettings.getString("sd"));
+        if(savedSettings.has("turnsTillSuddenDeath")) {
+            suddenDeath.setText(savedSettings.getInt("turnsTillSuddenDeath")+"");
         }
         windForce.setValue(savedSettings.getInt("windForce", 2));
         if(savedSettings.has("timePerTurn")) {
@@ -104,10 +104,10 @@ public class OptionController {
         JSONObject output = new JSONObject();
         output.put("volumeBGM", volumeBGM.getValue());
         output.put("volumeSFX", volumeSFX.getValue());
-        if (suddenDeath.getText().equals("") || !suddenDeath.getText().matches("[0-9]*") || Integer.parseInt(suddenDeath.getText()) < 0) {
-            output.put("sd", String.valueOf(15));
-        } else {
-            output.put("sd", suddenDeath.getText());
+        try {
+            output.put("turnsTillSuddenDeath", Integer.parseInt(suddenDeath.getText()));
+        } catch(NumberFormatException e) {
+            output.put("turnsTillSuddenDeath", 30);
         }
         output.put("windForce", windForce.getValue());
         output.put("timePerTurn", timePerTurn.getText());
