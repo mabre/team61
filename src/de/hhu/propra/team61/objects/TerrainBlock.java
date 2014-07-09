@@ -238,7 +238,7 @@ public class TerrainBlock extends ImageView {
                     this.setScaleY(scaleY);
                     this.setImage(SNOW_IMAGE);
                     break;
-                case '/': // TODO use ice when appropriate
+                case '/':
                     this.setImage(getSlant('/'));
                     if(isTopSlant()) {
                         this.setScaleX(-1); // mirror image when slope is at ceiling
@@ -294,6 +294,12 @@ public class TerrainBlock extends ImageView {
         if (this.neighbours.bottom != null && this.neighbours.bottom.isSky())return true;
         else return false;
     }
+
+    /**
+     * rendering the correct slantimage for normal slants
+     * @param slash char that indicates the direction of the slant
+     * @return correct salntimage
+     */
     private Image getSlant(char slash){
         char right, left, top, bottom;
         if (this.neighbours.right != null) right = this.neighbours.right.type;
@@ -314,6 +320,12 @@ public class TerrainBlock extends ImageView {
             else return SLANT_LE_IMAGE;
         }
     }
+
+    /**
+     * rendering the correct slantimage for slants under liquid
+     * @param slash char that indicates the direction of the slant
+     * @return correct salntimage
+     */
     private Image getLiquidSlant (char slash){
         char right, left, top, bottom;
         if (this.neighbours.right != null) right = this.neighbours.right.type;
