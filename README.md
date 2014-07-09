@@ -14,11 +14,11 @@ Java 8 must be installed. On Ubuntu-based system with an older version of Java (
 
 In order to help us with finding bugs, you should create a log file when running the game by starting it using this command (we’ll add an automatic logging feature in the future):
 
-    java -jar team61.jar 2>&1 | tee `date +%H%M%S`.log
+    java -jar Charly_in_Madagascar.jar 2>&1 | tee `date +%H%M%S`.log
 
 If you happen not to use a Linux-based system, use the ordinary
 
-    java -jar team61.jar
+    java -jar Charly_in_Madagascar.jar
 
 command (or double-click if it works for you). Please make sure that the execution directory is the one containing the .jar file.
 

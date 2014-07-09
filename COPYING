@@ -18,6 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ==============================================================================
 
+ATTENTION: Some parts of this software distribution are published under
+different licenses, the most important of them listed below. Some files,
+especially those in resources/audio/BGM/, might have a different, more
+restrictive license. Folders with content which has a different license have a
+COPYING file containing more information.
+
+==============================================================================
+
 The Vorbis SPI package (lib/jogg-0.0.7.jar, lib/jorbis-0.0.15.jar,
 lib/tritonus_share.jar, lib/vorbisspi1.0.3.jar) is released under the
 following license:
