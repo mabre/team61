@@ -5,6 +5,7 @@ import de.hhu.propra.team61.objects.NoMunitionException;
 import de.hhu.propra.team61.objects.Projectile;
 import de.hhu.propra.team61.objects.Terrain;
 import de.hhu.propra.team61.objects.Weapon;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
 
@@ -50,7 +51,7 @@ public class Skip extends Weapon {
     }
 
     /**
-     * Calls standard-shoot function from {@link de.hhu.propra.team61.objects.Weapon} and re-adds the lost munition
+     * Overrites standard-shoot function from {@link de.hhu.propra.team61.objects.Weapon}
      * to simulate infinite munition
      *
      * @param power power of shot
@@ -58,9 +59,7 @@ public class Skip extends Weapon {
      * @throws NoMunitionException
      */
     public Projectile shoot(int power) throws NoMunitionException { //ToDo Actually use power OR calc Power and use
-        Projectile temp = super.shoot(power);
-        munition++;
-        return temp;
+        return new Projectile(new Image(PROJECTILE_IMG), new Point2D(itemImage.getTranslateX(), itemImage.getTranslateY()), new Point2D(crosshairImage.getTranslateX(), crosshairImage.getTranslateY()), SPEED, this);
     }
 
         /**
