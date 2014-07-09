@@ -58,6 +58,22 @@ public class TerrainBlock extends ImageView {
     private final static Image SLANT_RI_IMAGE = new Image(imgPath + "slant_ground_ri.png");
     /** image looking like a slant from bottom left to top right, with the other edge filled with water */
     private final static Image SLANT_RI_WATER_IMAGE = new Image(imgPath + "slant_ground_water_ri.png");
+    /** image looking like a stoneslant from top left to bottom right */
+    private final static Image SLANT_STONE_LE_IMAGE = new Image(imgPath + "slant_stone_le.png");
+    /** image looking like a stoneslant from top left to bottom right, with the other edge filled with lava */
+    private final static Image SLANT_STONE_LE_LAVA_IMAGE = new Image(imgPath + "slant_stone_lava_le.png");
+    /** image looking like a stoneslant from bottom left to top right */
+    private final static Image SLANT_STONE_RI_IMAGE = new Image(imgPath + "slant_stone_ri.png");
+    /** image looking like a stoneslant from bottom left to top right, with the other edge filled with lava */
+    private final static Image SLANT_STONE_RI_LAVA_IMAGE = new Image(imgPath + "slant_stone_lava_ri.png");
+    /** image looking like a iceslant from top left to bottom right */
+    private final static Image SLANT_ICE_LE_IMAGE = new Image(imgPath + "slant_ice_le.png");
+    /** image looking like a iceslant from top left to bottom right, with the other edge filled with water */
+    private final static Image SLANT_ICE_LE_WATER_IMAGE = new Image(imgPath + "slant_ice_water_le.png");
+    /** image looking like a iceslant from bottom left to top right */
+    private final static Image SLANT_ICE_RI_IMAGE = new Image(imgPath + "slant_ice_ri.png");
+    /** image looking like a iceslant from bottom left to top right, with the other edge filled with water */
+    private final static Image SLANT_ICE_RI_WATER_IMAGE = new Image(imgPath + "slant_ice_water_ri.png");
     /** image looking like stone */
     private final static Image STONES_IMAGE = new Image(imgPath + "stones.png");
     /** image looking like water */
@@ -223,36 +239,34 @@ public class TerrainBlock extends ImageView {
                     this.setImage(SNOW_IMAGE);
                     break;
                 case '/': // TODO use ice when appropriate
-                    this.setImage(SLANT_RI_IMAGE);
-                    if(neighbours.right != null && neighbours.right.isSky() && neighbours.bottom != null && neighbours.bottom.isSky()
-                            && (neighbours.top == null || !neighbours.top.isSky())) {
+                    this.setImage(getSlant('/'));
+                    if(isTopSlant()) {
                         this.setScaleX(-1); // mirror image when slope is at ceiling
                         this.setScaleY(-1);
-                        if(neighbours.right.getType() == 'W' || neighbours.bottom.getType() == 'W') {
-                            this.setImage(SLANT_RI_WATER_IMAGE);
+                        if(neighbours.right.isLiquid()|| neighbours.bottom.isLiquid()) {
+                            this.setImage(getLiquidSlant('/'));
                         }
                     } else {
                         this.setScaleX(1);
                         this.setScaleY(1);
                         if(neighbours.left != null) {
-                            if(neighbours.left.getType() == 'W') this.setImage(SLANT_RI_WATER_IMAGE);
+                            if(neighbours.left.isLiquid()) this.setImage(getLiquidSlant('/'));
                         }
                     }
                     break;
                 case '\\':
-                    this.setImage(SLANT_LE_IMAGE);
-                    if(neighbours.left != null && neighbours.left.isSky() && neighbours.bottom != null && neighbours.bottom.isSky()
-                            && (neighbours.top == null || !neighbours.top.isSky())) {
+                    this.setImage(getSlant('\\'));
+                    if(isTopSlant()) {
                         this.setScaleX(-1);
                         this.setScaleY(-1);
-                        if(neighbours.left.getType() == 'W' || neighbours.bottom.getType() == 'W') {
-                            this.setImage(SLANT_LE_WATER_IMAGE);
+                        if(neighbours.left.isLiquid()|| neighbours.bottom.isLiquid()) {
+                            this.setImage(getLiquidSlant('\\'));
                         }
                     } else {
                         this.setScaleX(1);
                         this.setScaleY(1);
                         if(neighbours.right != null) {
-                            if(neighbours.right.getType() == 'W') this.setImage(SLANT_LE_WATER_IMAGE);
+                            if(neighbours.right.isLiquid()) this.setImage(getLiquidSlant('\\'));
                         }
                     }
                     break;
@@ -274,6 +288,50 @@ public class TerrainBlock extends ImageView {
             }
         } else {
             Platform.runLater(this::drawImage);
+        }
+    }
+    private boolean isTopSlant(){
+        if (this.neighbours.bottom != null && this.neighbours.bottom.isSky())return true;
+        else return false;
+    }
+    private Image getSlant(char slash){
+        char right, left, top, bottom;
+        if (this.neighbours.right != null) right = this.neighbours.right.type;
+        else right = 'N';
+        if (this.neighbours.left != null) left = this.neighbours.left.type;
+        else left = 'N';
+        if (this.neighbours.top != null) top = this.neighbours.top.type;
+        else top = 'N';
+        if (this.neighbours.bottom != null) bottom = this.neighbours.bottom.type;
+        else bottom = 'N';
+        if (slash == '/'){
+            if (right == 'I'||left == 'I'||top == 'I'||bottom == 'I') return SLANT_ICE_RI_IMAGE;
+            else if (right == 'S'||left == 'S'||top == 'S'||bottom == 'S') return SLANT_STONE_RI_IMAGE;
+            else return SLANT_RI_IMAGE;
+        } else {
+            if (right == 'I'||left == 'I'||top == 'I'||bottom == 'I') return SLANT_ICE_LE_IMAGE;
+            else if (right == 'S'||left == 'S'||top == 'S'||bottom == 'S') return SLANT_STONE_LE_IMAGE;
+            else return SLANT_LE_IMAGE;
+        }
+    }
+    private Image getLiquidSlant (char slash){
+        char right, left, top, bottom;
+        if (this.neighbours.right != null) right = this.neighbours.right.type;
+        else right = 'N';
+        if (this.neighbours.left != null) left = this.neighbours.left.type;
+        else left = 'N';
+        if (this.neighbours.top != null) top = this.neighbours.top.type;
+        else top = 'N';
+        if (this.neighbours.bottom != null) bottom = this.neighbours.bottom.type;
+        else bottom = 'N';
+        if (slash == '/'){
+            if (right == 'I'||left == 'I'||top == 'I'||bottom == 'I') return SLANT_ICE_RI_WATER_IMAGE;
+            else if (right == 'S'||left == 'S'||top == 'S'||bottom == 'S') return SLANT_STONE_RI_LAVA_IMAGE;
+            else return SLANT_RI_WATER_IMAGE;
+        } else {
+            if (right == 'I'||left == 'I'||top == 'I'||bottom == 'I') return SLANT_ICE_LE_WATER_IMAGE;
+            else if (right == 'S'||left == 'S'||top == 'S'||bottom == 'S') return SLANT_STONE_LE_LAVA_IMAGE;
+            else return SLANT_LE_WATER_IMAGE;
         }
     }
 
