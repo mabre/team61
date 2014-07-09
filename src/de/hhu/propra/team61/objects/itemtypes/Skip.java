@@ -32,8 +32,8 @@ public class Skip extends Weapon {
     private final static boolean PARALYZES     = false; // toggle isBurning
     private final static boolean BLOCKS        = false; // toggle isStuck
 
-    private final static int     MASS          = 0;
-    private final static int     SPEED         = 2000;
+    private final static int     MASS          = 9999;
+    private final static int     SPEED         = 10;
     private final static boolean DRIFTS        = false;
 
 //    private int velocity;       // Power of shot, affects distance, flightspeed etc. //ToDo check if this will not be implemented as power in MapWindow
