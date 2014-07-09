@@ -882,7 +882,7 @@ public class CustomizeWindow extends Application {
     private JSONObject styleToJson() {
         JSONObject output = new JSONObject();
         output.put("name", styleNameField.getText());
-        output.put("teamSize", sizeField.getText());
+        output.put("teamSize", Integer.parseInt(sizeField.getText()));
         output.put("level", levelChooser.getValue()+".lvl");
         JSONArray inventory = new JSONArray();
         for (int i=0; i< itemNames.size(); i++) {

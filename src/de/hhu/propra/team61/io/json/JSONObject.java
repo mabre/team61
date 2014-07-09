@@ -52,22 +52,34 @@ public class JSONObject extends org.json.simple.JSONObject {
 
     /**
      * Gets the boolean value for the given key.
-     * The caller has to assure that the key really holds a boolean.
+     * If the key does not hold a boolean, false is returned.
      * @param key the key whose value is obtained
      * @return value mapped to the given key
      */
     public boolean getBoolean(String key) {
-        return (Boolean)this.get(key);
+        Object ret = this.get(key);
+        if(ret instanceof Boolean) {
+            return (Boolean)ret;
+        } else {
+            System.err.println(key + " is no Boolean");
+            return false;
+        }
     }
 
     /**
      * Gets the integer value for the given key.
-     * The caller has to assure that the key really holds an integer.
+     * If the key does not hold an integer, 0 is returned.
      * @param key the key whose value is obtained
      * @return value mapped to the given key
      */
     public int getInt(String key) {
-        return ((Number)this.get(key)).intValue();
+        Object ret = this.get(key);
+        if(ret instanceof Number) {
+            return ((Number) ret).intValue();
+        } else {
+            System.err.println(key + " is no Number");
+            return 0;
+        }
     }
 
     /**
@@ -86,42 +98,66 @@ public class JSONObject extends org.json.simple.JSONObject {
 
     /**
      * Gets the double value for the given key.
-     * The caller has to assure that the key really holds a double.
+     * If the key does not hold a double, 0 is returned.
      * @param key the key whose value is obtained
      * @return value mapped to the given key
      */
     public double getDouble(String key) {
-        return ((Number)this.get(key)).doubleValue();
+        Object ret = this.get(key);
+        if(ret instanceof Number) {
+            return ((Number)ret).doubleValue();
+        } else {
+            System.err.println(key + " is no Number");
+            return 0;
+        }
     }
 
     /**
      * Gets the string value for the given key.
-     * The caller has to assure that the key really holds a string.
+     * If the key does not hold a string, an empty string is returned.
      * @param key the key whose value is obtained
      * @return value mapped to the given key
      */
     public String getString(String key) {
-        return (String)this.get(key);
+        Object ret = this.get(key);
+        if(ret instanceof String) {
+            return (String)ret;
+        } else {
+            System.err.println(key + " is no String");
+            return "";
+        }
     }
 
     /**
      * Gets the JSONObject mapped to the given key.
-     * The caller has to assure that the key really holds a JSONObject.
+     * If the key does not hold a json object, an empty json object is returned.
      * @param key the key whose value is obtained
      * @return value mapped to the given key
      */
     public JSONObject getJSONObject(String key) {
-        return new JSONObject((org.json.simple.JSONObject)this.get(key));
+        Object ret = this.get(key);
+        if(ret instanceof org.json.simple.JSONObject) {
+            return new JSONObject((org.json.simple.JSONObject)this.get(key));
+        } else {
+            System.err.println(key + " is no org.json.simple.JSONObject");
+            return new JSONObject("{}");
+        }
     }
 
     /**
      * Gets the JSONArray mapped to the given key.
-     * The caller has to assure that the key really holds a JSONArray.
+     * If the key does not hold a json array, an empty json array is returned.
      * @param key the key whose value is obtained
      * @return value mapped to the given key
      */
     public JSONArray getJSONArray(String key) {
-        return new JSONArray((org.json.simple.JSONArray)this.get(key));
+        Object ret = this.get(key);
+        if(ret instanceof org.json.simple.JSONArray) {
+            return new JSONArray((org.json.simple.JSONArray)this.get(key));
+        } else {
+            System.err.println(key + " is no org.json.simple.JSONArray");
+            return new JSONArray("[]");
+        }
     }
 
     // specialized versions of HashMap.put(K, V) to suppress warnings about unchecked calls
