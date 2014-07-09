@@ -19,6 +19,7 @@ find out/Charly_in_Madagascar -iname '*.svg' -print0 | xargs -0 --no-run-if-empt
 find out/Charly_in_Madagascar -iname '*.xcf' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '.*' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '*~' -print0 | xargs -0 --no-run-if-empty rm -v
+find out/Charly_in_Madagascar/resources -iname '*Test*' -print0 | xargs -0 --no-run-if-empty rm -v # TODO check
 rm -rv out/Charly_in_Madagascar/resources/audio/user
 
 echo -e "\e[00;33mcopying other files ...\e[00m"

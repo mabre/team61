@@ -13,11 +13,7 @@ import javafx.scene.image.ImageView;
  * <ul>
  * <li>{@code ' '}: sky (transparent)
  * <li>{@code 'P'} (player): spawn point: rendered like sky
-<<<<<<< HEAD
  * <li>{@code 'W'} (water): walkable liquid
-=======
- * <li>{@code 'W'} (water): walkable liquid // TODO change collision: drop in? Yes please
->>>>>>> items
  * <li>{@code 'L'} (lava): walkable liquid
  * <li>{@code 'S'} (stone): walkable ground with normal friction
  * <li>{@code 's'} (sand): walkable ground with higher friction
@@ -240,10 +236,10 @@ public class TerrainBlock extends ImageView {
                     break;
                 case '/':
                     this.setImage(getSlant('/'));
-                    if(isTopSlant()) {
+                    if(slantHasToBeMirrored('/')) {
                         this.setScaleX(-1); // mirror image when slope is at ceiling
                         this.setScaleY(-1);
-                        if(neighbours.right.isLiquid()|| neighbours.bottom.isLiquid()) {
+                        if(neighbours.right != null && neighbours.right.isLiquid() || neighbours.bottom!= null && neighbours.bottom.isLiquid()) {
                             this.setImage(getLiquidSlant('/'));
                         }
                     } else {
@@ -256,10 +252,10 @@ public class TerrainBlock extends ImageView {
                     break;
                 case '\\':
                     this.setImage(getSlant('\\'));
-                    if(isTopSlant()) {
+                    if(slantHasToBeMirrored('\\')) {
                         this.setScaleX(-1);
                         this.setScaleY(-1);
-                        if(neighbours.left.isLiquid()|| neighbours.bottom.isLiquid()) {
+                        if((neighbours.left != null && neighbours.left.isLiquid()) || (neighbours.bottom != null && neighbours.bottom.isLiquid())) {
                             this.setImage(getLiquidSlant('\\'));
                         }
                     } else {
@@ -291,13 +287,14 @@ public class TerrainBlock extends ImageView {
         }
     }
 
-    /**
-     * returns true if bottom is sky, else returns false
-     * @return trivial
-     */
-    private boolean isTopSlant(){
-        if (this.neighbours.bottom != null && this.neighbours.bottom.isSky())return true;
-        else return false;
+    private boolean slantHasToBeMirrored(char slantType) {
+        if(slantType == '\\') {
+            return ((neighbours.top == null || !neighbours.top.isSkyOrLiquid()) && (neighbours.right == null || !neighbours.right.isSkyOrLiquid())) ||
+                    ((neighbours.left == null || neighbours.left.isSkyOrLiquid()) && (neighbours.bottom == null || neighbours.bottom.isSkyOrLiquid()));
+        } else {
+            return ((neighbours.top == null || !neighbours.top.isSkyOrLiquid()) && (neighbours.left == null || !neighbours.left.isSkyOrLiquid())) ||
+                    ((neighbours.right == null || neighbours.right.isSkyOrLiquid()) && (neighbours.bottom == null || neighbours.bottom.isSkyOrLiquid()));
+        }
     }
 
     /**
@@ -448,6 +445,10 @@ public class TerrainBlock extends ImageView {
      */
     public boolean isLiquid() {
         return (type == 'W' || type == 'L');
+    }
+
+    private boolean isSkyOrLiquid() {
+        return (isSky() || isLiquid());
     }
 
     /**
