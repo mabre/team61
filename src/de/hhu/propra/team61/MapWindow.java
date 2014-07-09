@@ -49,7 +49,7 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
     /** Chance of a crate spawning (Compared to {@link Math#random()}); TODO give this an true probability, set by Customize */
-    private final static double SUPPLY_DROP_PROBABILITY = 0.75; // TODO probability is actually .25
+    private final static double SUPPLY_DROP_PROBABILITY = 0.25;
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
@@ -692,8 +692,8 @@ public class MapWindow extends Application implements Networkable {
             undoDigitations();
         }
 
-        if(Math.random() > SUPPLY_DROP_PROBABILITY){
-            Crate drop = new Crate(terrain.toArrayList().get(0).size()-Terrain.BLOCK_SIZE);
+        if(Math.random() < SUPPLY_DROP_PROBABILITY){
+            Crate drop = new Crate((terrain.toArrayList().get(0).size()-1)/Terrain.BLOCK_SIZE);
             server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent());
             server.send("SET_GAME_COMMENT 0 Nice, a present. That’s like a corollary, it’s for free.");
         }
