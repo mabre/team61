@@ -737,7 +737,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void spawnBoss() {
-        String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar"); // similarity to Vel’Koz and Kog’Maw is purely coincidental
+        String bossName = (Math.random() > .33 ? (Math.random() > .5 ? "Marʔoz" : "ʔock’mar") : "Ånsgar"); // similarity to Vel’Koz, Kog’Maw, and a town in Norway is purely coincidental
         bossSpawnedLeft = (Math.random() > .5);
         initBoss(bossName);
         server.send("SD BOSS SPAWN " + bossName + " " + bossSpawnedLeft);
