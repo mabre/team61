@@ -3,10 +3,10 @@
 # Note that tar.gz is better for Linux since it preserves the executable attribute.
 
 version=`grep -m 1 VERSION_NUMBER src/de/hhu/propra/team61/Afrobob.java | sed -E s/.*\"\(.*\)\".*/\\\\1/`
-echo -e "\e[00;32m creating release $version\e[00m"
+echo -e "\e[00;32mcreating release $version\e[00m"
 echo -e "\e[01;30m======================================================\e[00m"
 
-echo -e "\e[00;33m creating out/Charly_in_Madagascar ...\e[00m"
+echo -e "\e[00;33mcreating out/Charly_in_Madagascar ...\e[00m"
 rm -r out/Charly_in_Madagascar
 mkdir out/Charly_in_Madagascar
 
@@ -19,6 +19,9 @@ find out/Charly_in_Madagascar -iname '*.svg' -print0 | xargs -0 --no-run-if-empt
 find out/Charly_in_Madagascar -iname '*.xcf' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '.*' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '*~' -print0 | xargs -0 --no-run-if-empty rm -v
+find out/Charly_in_Madagascar -iname '*Test*' -print0 | xargs -0 --no-run-if-empty rm -v
+rm -v out/Charly_in_Madagascar/resources/levels/High.lvl
+rm -v out/Charly_in_Madagascar/resources/levels/Flat.lvl
 rm -rv out/Charly_in_Madagascar/resources/audio/user
 
 echo -e "\e[00;33mcopying other files ...\e[00m"
