@@ -290,6 +290,11 @@ public class TerrainBlock extends ImageView {
             Platform.runLater(this::drawImage);
         }
     }
+
+    /**
+     * returns true if bottom is sky, else returns false
+     * @return trivial
+     */
     private boolean isTopSlant(){
         if (this.neighbours.bottom != null && this.neighbours.bottom.isSky())return true;
         else return false;
