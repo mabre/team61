@@ -56,6 +56,9 @@ public class MapWindow extends Application implements Networkable {
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
+    public static final int HIGH_DAMAGE_THRESHOLD = 50;
+    public static final int RAMPAGE_THRESHOLD = 75;
+    public static final double NO_HIT_COMMENT_PROBABILITY = .5;
     /** number of turns until sudden death is started, as set by the user */
     private final int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
@@ -612,7 +615,14 @@ public class MapWindow extends Application implements Networkable {
             System.err.println("Hey, there are " + flyingProjectiles.size() + " projectiles, we shouldn't be here!");
         }
 
-        teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
+        int causedDamageInTurn = collectRecentlyCausedDamage();
+        if (causedDamageInTurn >= HIGH_DAMAGE_THRESHOLD) {
+            server.send("PLAY_SFX highDamage");
+            if(causedDamageInTurn >= RAMPAGE_THRESHOLD) server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
+        } else if (causedDamageInTurn == 0 && Math.random() < NO_HIT_COMMENT_PROBABILITY) {
+            server.send("SET_GAME_COMMENT 0 " + generateNoHitComment(teams.get(currentTeam).getCurrentFigure().getName())); // TODO class for generating random comments.
+        }
+        teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(causedDamageInTurn);
         turnCount++; // TODO timing issue
         server.send("SET_TURN_COUNT " + turnCount);
 
@@ -698,8 +708,17 @@ public class MapWindow extends Application implements Networkable {
         System.out.println(teamLabelText);
     }
 
+    private String generateNoHitComment(String name) {
+        switch ((int)(Math.random()*2)) {
+            case 0:
+                return "Is " + name + " drunk?";
+            default:
+                return name + " seems to be a partyfist.";
+        }
+    }
+
     /**
-     * Sums up the hp damage caused since last time calling this function. Plays a sound when it is >= 50.
+     * Sums up the hp damage caused since last time calling this function.
      * @return hp damage caused since last time calling this function
      * @see de.hhu.propra.team61.objects.Figure#popRecentlySufferedDamage()
      */
@@ -710,7 +729,6 @@ public class MapWindow extends Application implements Networkable {
                 recentlyCausedDamage += figure.popRecentlySufferedDamage();
             }
         }
-        if (recentlyCausedDamage >= 50) server.send("PLAY_SFX highDamage");
         return recentlyCausedDamage;
     }
 

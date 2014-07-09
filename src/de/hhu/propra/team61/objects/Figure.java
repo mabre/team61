@@ -326,7 +326,7 @@ public class Figure extends StackPane {
 
     /**
      * Lets the figure suffer damage.
-     * If {@see armor} is greater than 0, the damage is reduced.
+     * If {@link #armor} is greater than 0, the damage is reduced.
      * Examples:
      * <ul>
      *     <li>hp is at 80, {@code armor=0}, {@code sufferDamage(40)} is called. hp is now at 40.</li>
