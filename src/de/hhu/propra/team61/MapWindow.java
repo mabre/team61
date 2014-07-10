@@ -513,7 +513,7 @@ public class MapWindow extends Application implements Networkable {
                 "↑/W\t\tjump, move crosshair up\n" +
                 "↓/S\t\tmove crosshair down\n" +
                 //"E - open inventory\n" + TODO
-                "1 to 8\tchoose item\n" +
+                "1 to 9\tchoose item\n" +
                 "0\t\tdeselect item\n" +
                 "Space\tshoot\n" +
                 "C\t\topen chat\n" +
@@ -688,9 +688,8 @@ public class MapWindow extends Application implements Networkable {
             doDigitations();
             server.send("SET_GAME_COMMENT 0 Digitate, my brave hearts!");
             server.send("PLAY_SFX digitation");
-        } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
-            undoDigitations();
         }
+        undoDigitations(); // do it also when turnCount condition is not met (when a digiwise was used, we also have to undo that digitation)
 
         if(Math.random() < SUPPLY_DROP_PROBABILITY){
             Crate drop = new Crate((terrain.toArrayList().get(0).size()-1)/Terrain.BLOCK_SIZE);
