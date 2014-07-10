@@ -1,5 +1,6 @@
 @echo off
 :: Launcher script, tested on Windows 7
+:: IF YOU SEE THIS TEXT, PLEASE REFER TO THE MANUAL (FAQ)
 echo Charly in Madagascar
 echo Do NOT close this window.
 echo =========================
