@@ -293,7 +293,7 @@ public class MapWindow extends Application implements Networkable {
             fieldPane.getChildren().add(team);
             terrain.addFigures(team.getFigures());
         }
-        teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         topLine.setLeft(teamLabel);
         gamePane.setTop(topLine);
