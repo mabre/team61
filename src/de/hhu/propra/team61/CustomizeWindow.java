@@ -989,12 +989,30 @@ public class CustomizeWindow extends Application {
             itemsGrid.add(itemCheckBoxes.get(i), 0, i + 6);
         }
         for (int i=0; i<itemNames.size(); i++) {
-            double h = Math.random()*100;
-            itemSliders.add(new Slider(0, 100, (int)h));
-            itemSliders.get(i).setShowTickMarks(true);
-            itemSliders.get(i).setShowTickLabels(true);
-            itemSliders.get(i).setBlockIncrement(50);
-            itemsGrid.add(itemSliders.get(i), 1, i + 6, 3, 1);
+            String item = itemNames.get(i);
+            if (item == "Poisoned arrow" || item == "Medipack" || item == "Banana-Bomb" || item == "Digiwise") {
+                double h = Math.random()*10;
+                itemSliders.add(new Slider(0, 10, (int)h));
+                itemSliders.get(i).setShowTickMarks(true);
+                itemSliders.get(i).setShowTickLabels(true);
+                itemSliders.get(i).setMajorTickUnit(5);
+                itemSliders.get(i).setMinorTickCount(1);
+                itemSliders.get(i).setBlockIncrement(2);
+                itemsGrid.add(itemSliders.get(i), 1, i + 6, 3, 1);
+            } else {
+                if (item == "Pistol") {
+                    Text infinite = new Text("Infinite");
+                    itemsGrid.add(infinite, 1, i+6, 3, 1);
+                    itemSliders.add(new Slider(0, 100000, 100000));
+                } else {
+                    double h = Math.random() * 50;
+                    itemSliders.add(new Slider(0, 50, (int) h));
+                    itemSliders.get(i).setShowTickMarks(true);
+                    itemSliders.get(i).setShowTickLabels(true);
+                    itemSliders.get(i).setBlockIncrement(25);
+                    itemsGrid.add(itemSliders.get(i), 1, i + 6, 3, 1);
+                }
+            }
         }
     }
 
