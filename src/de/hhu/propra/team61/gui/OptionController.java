@@ -32,10 +32,6 @@ public class OptionController {
     @FXML private TextField turnsTillSuddenDeath = new TextField();
     /** to choose wind force */
     @FXML private Slider windForce = new Slider();
-    /** to enter time per turn */
-    @FXML private TextField timePerTurn = new TextField();
-    /** to decide whether turn is over after getting fal damage */
-    @FXML private CheckBox fallDamage = new CheckBox();
 
     /**
      * Called when options are opened. Sets the header-image and labels of the windforce-slider, which are supposed
@@ -45,7 +41,6 @@ public class OptionController {
     public void initialize(SceneController sceneController) {
         this.sceneController = sceneController;
         imageView.setImage(image);
-        timePerTurn.setDisable(true);
         loadSavedOptions();
         windForce.setLabelFormatter(new StringConverter<Double>() {
             @Override
@@ -85,12 +80,6 @@ public class OptionController {
         }
         turnsTillSuddenDeath.setText(savedSettings.getInt("turnsTillSuddenDeath", 30)+""); // TODO DefaultOptions class (Settings?) holding default setting constants
         windForce.setValue(savedSettings.getInt("windForce", 2));
-        if(savedSettings.has("timePerTurn")) {
-            timePerTurn.setText(savedSettings.getString("timePerTurn"));
-        }
-        if(savedSettings.has("fallDamage")) {
-            fallDamage.setSelected(savedSettings.getBoolean("fallDamage"));
-        }
     }
 
     /**
@@ -107,8 +96,6 @@ public class OptionController {
             output.put("turnsTillSuddenDeath", 30);
         }
         output.put("windForce", windForce.getValue());
-        output.put("timePerTurn", timePerTurn.getText());
-        output.put("fallDamage", fallDamage.isSelected());
         return output;
     }
 }
