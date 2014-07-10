@@ -31,7 +31,7 @@ public class NetPopUp extends Application {
         Stage netpopup = new Stage();
         netpopup.initModality(Modality.APPLICATION_MODAL);
         netpopup.setTitle("Start network game");
-        netpopup.setWidth(500);
+        netpopup.setWidth(400);
         netpopup.setHeight(200);
         netpopup.setResizable(false);
         CustomGrid popGrid = new CustomGrid();
@@ -62,8 +62,8 @@ public class NetPopUp extends Application {
             }
         });
         ipField.setPromptText("IP address of host:");
-        ipField.setText("localhost");
-        popGrid.add(nameField, 2, 0); // keep tab order in mind
+        ipField.setText("127.0.0.1");
+        popGrid.add(nameField, 1, 0); // keep tab order in mind
         popGrid.add(ipField, 1, 2);
         popGrid.add(hostGame, 0, 1);
         popGrid.add(joinGame, 0, 2);
