@@ -347,12 +347,14 @@ public class TerrainBlock extends ImageView {
         if (slash == '/'){
             if (right == 'I'||left == 'I'||top == 'I'||bottom == 'I') { lastSlantLiquidType = 'W'; return SLANT_ICE_RI_WATER_IMAGE; }
             else if (liquid == 'L' && (right == 'S'||left == 'S'||top == 'S'||bottom == 'S')) { lastSlantLiquidType = 'L'; return SLANT_STONE_RI_LAVA_IMAGE; }
+            else if (right == 'E'||left == 'E'||top == 'E'||bottom == 'E') { lastSlantLiquidType = ' '; return SLANT_RI_WATER_IMAGE; }
             else if(lastSlantLiquidType == 'W') return SLANT_ICE_RI_WATER_IMAGE;
             else if(lastSlantLiquidType == 'L') return SLANT_STONE_RI_LAVA_IMAGE;
             else { lastSlantLiquidType = ' '; return SLANT_RI_WATER_IMAGE; }
         } else {
             if (right == 'I'||left == 'I'||top == 'I'||bottom == 'I') { lastSlantLiquidType = 'W'; return SLANT_ICE_LE_WATER_IMAGE; }
             else if (liquid == 'L' && (right == 'S'||left == 'S'||top == 'S'||bottom == 'S')) { lastSlantLiquidType = 'L'; return SLANT_STONE_LE_LAVA_IMAGE; }
+            else if (right == 'E'||left == 'E'||top == 'E'||bottom == 'E') { lastSlantLiquidType = ' '; return SLANT_LE_WATER_IMAGE; }
             else if(lastSlantLiquidType == 'W') return SLANT_ICE_LE_WATER_IMAGE;
             else if(lastSlantLiquidType == 'L') return SLANT_STONE_LE_LAVA_IMAGE;
             else { lastSlantLiquidType = ' '; return SLANT_LE_WATER_IMAGE; }

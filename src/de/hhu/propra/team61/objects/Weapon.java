@@ -135,7 +135,7 @@ public abstract class Weapon extends Item {
      * Munition is also count down in here and the angle is reset, since the instance is not closed afterwards, but kept instead.
      *
      * @return a Projectile attaching its own reference to it.
-     * @throws {@link de.hhu.propra.team61.objects.NoMunitionException} when not enough munition left
+     * @throws NoMunitionException {@link de.hhu.propra.team61.objects.NoMunitionException} when not enough munition left
      */
     public Projectile shoot(int power) throws NoMunitionException{ //ToDo Actually use power OR calc Power and use
         if(munition > 0) {

@@ -14,8 +14,8 @@
         <ChoiceBox fx:id="gameStyle" GridPane.columnIndex="4" GridPane.rowIndex="2" GridPane.columnSpan="2"/>
         <Text fx:id="level" GridPane.columnIndex="4" GridPane.rowIndex="3"/>
         <Text fx:id="teamSize" GridPane.columnIndex="4" GridPane.rowIndex="4" GridPane.columnSpan="2"/>
-        <Button fx:id="edit" text="Edit" onAction="#handleEdit" GridPane.columnIndex="6" GridPane.rowIndex="1" styleClass="mainButton"/>
-        <Text text="Here you can change team size, level and items." GridPane.columnIndex="7" GridPane.rowIndex="1" GridPane.columnSpan="5"/>
+        <Button fx:id="edit" text="Edit" onAction="#handleEdit" GridPane.columnIndex="6" GridPane.rowIndex="2" styleClass="mainButton"/>
+        <Text text="Here you can change team size, level and items." GridPane.columnIndex="7" GridPane.rowIndex="2" GridPane.columnSpan="5"/>
         <Button fx:id="back" text="Back" onAction="#handleBack" GridPane.columnIndex="0" GridPane.rowIndex="14" styleClass="mainButton"/>
         <Button fx:id="cont" text="Start!" onAction="#handleContinue" GridPane.columnIndex="5" GridPane.rowIndex="14" GridPane.columnSpan="3"/>
         <Text fx:id="error" GridPane.columnIndex="0" GridPane.rowIndex="15" GridPane.columnSpan="5"/>

@@ -70,7 +70,7 @@ public class Projectile extends ImageView {
      * Constructor from JSONObject, needed for client-server interaction.<p>
      * Since instances cannot be passed around by JSON in our server-client-architecture a new instance is temporarily created.
      *
-     * @param input JSON-String, which <u><b>must</b></u> contain all variables needed in {@link de.hhu.propra.team61.objects.Projectile#Projectile(javafx.scene.image.Image, javafx.geometry.Point2D, javafx.geometry.Point2D, int, Weapon)} and an boolean isShard
+     * @param input JSON-String, which must contain all variables needed in {@link de.hhu.propra.team61.objects.Projectile#Projectile(javafx.scene.image.Image, javafx.geometry.Point2D, javafx.geometry.Point2D, int, Weapon)} and an boolean isShard
      */
     public Projectile(JSONObject input){
         setTranslateX(input.getInt("posX"));

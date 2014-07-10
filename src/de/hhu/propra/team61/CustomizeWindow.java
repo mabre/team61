@@ -1033,7 +1033,7 @@ public class CustomizeWindow extends Application {
                 itemSliders.get(i).setValue((int)j);
             }
             levelChooser.getItems().clear();
-            ArrayList<String> availableLevels = new ArrayList();
+            ArrayList<String> availableLevels = new ArrayList<>();
             availableLevels = getLevels();
             int numberOfLevels = availableLevels.size();
             for (int i=0; i<numberOfLevels; i++) {
