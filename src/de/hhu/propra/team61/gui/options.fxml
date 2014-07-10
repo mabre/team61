@@ -18,11 +18,6 @@
         <TextField fx:id="turnsTillSuddenDeath" text="30" prefWidth="40" GridPane.columnIndex="4" GridPane.rowIndex="4" />
         <Text text="Wind force:" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="2" />
         <Slider fx:id="windForce" GridPane.columnIndex="2" GridPane.rowIndex="5" GridPane.columnSpan="10" prefWidth="280" min="0" max="3" minorTickCount="0" majorTickUnit="1" snapToTicks="true" ShowTickMarks="true" ShowTickLabels="true"/>
-        <Text text="Time per turn:" GridPane.columnIndex="0" GridPane.rowIndex="6" GridPane.columnSpan="2" />
-        <TextField fx:id="timePerTurn" text="40" prefWidth="40" GridPane.columnIndex="2" GridPane.rowIndex="6" />
-        <Text text="seconds" GridPane.columnIndex="3" GridPane.rowIndex="6" GridPane.columnSpan="2" />
-        <Text text="COMING SOON" GridPane.columnIndex="5" GridPane.rowIndex="6" GridPane.columnSpan="2" />
-        <CheckBox fx:id="fallDamage" text="Change round after suffering fall damage" GridPane.columnIndex="0" GridPane.rowIndex="7" GridPane.columnSpan="7" />
         <Button fx:id="close" text="Close" onAction="#handleOptionExit" GridPane.columnIndex="3" GridPane.rowIndex="14" GridPane.halignment="CENTER" styleClass="mainButton"/>
     </children>
     <padding>

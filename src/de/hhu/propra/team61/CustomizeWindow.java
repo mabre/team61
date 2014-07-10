@@ -176,20 +176,20 @@ public class CustomizeWindow extends Application {
         Button newTeam = new Button("Create new team");
         newTeam.getStyleClass().add("mainButton");
         newTeam.setOnAction(e -> {
-            refresh();
+            initializeAndRefreshGui();
             root.setLeft(newTeamGrid);
             root.getChildren().remove(itemsGrid);
         });
         Button newGameStyle = new Button("Create new game style");
         newGameStyle.getStyleClass().add("mainButton");
         newGameStyle.setOnAction(e -> {
-            refresh();
+            initializeAndRefreshGui();
             root.setLeft(newGameStyleGrid);
         });
         Button newLevel = new Button("Create new level");
         newLevel.getStyleClass().add("mainButton");
         newLevel.setOnAction(e -> {
-            refresh();
+            initializeAndRefreshGui();
             root.getChildren().remove(itemsGrid);
             chosenLevel = "editor/basic.lvl";
             initializeLevelEditor();
@@ -285,13 +285,7 @@ public class CustomizeWindow extends Application {
         Text chooseLevelText = new Text("Choose level:");
         chooseLevelText.setFont(Font.font("Verdana", 15));
         newGameStyleGrid.add(chooseLevelText, 0, 4);
-        levelChooser = new ChoiceBox<>();
-        ArrayList<String> availableLevels = getLevels();
-        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
-        for (int i=0; i<numberOfLevels; i++) {
-            levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
-        }
-        levelChooser.getSelectionModel().selectFirst();
+        initializeAndRefreshGui();
         newGameStyleGrid.add(levelChooser, 1, 4);
         Button saveGameStyle = new Button("Save");
         saveGameStyle.getStyleClass().add("mainButton");
@@ -439,7 +433,6 @@ public class CustomizeWindow extends Application {
         selectionGrid.add(reset, 0, 13);
         save.setOnAction(e -> {
             CustomizeManager.saveLevel(levelToJson(), "levels/" + levelNameField.getText());
-            refresh();
             createEditGrid();
             root.setLeft(editGrid);
         });
@@ -742,7 +735,7 @@ public class CustomizeWindow extends Application {
             Button chooseTeamToEdit = new Button(JavaFxUtils.removeExtension(availableTeams.get(i), 5));
             final int finalI = i;
             chooseTeamToEdit.setOnAction(e -> {
-                refresh();
+                initializeAndRefreshGui();
                 editTeam(availableTeams.get(finalI));
             });
             chooseTeamToEdit.getStyleClass().add("listButton");
@@ -780,7 +773,7 @@ public class CustomizeWindow extends Application {
             Button chooseStyleToEdit = new Button(JavaFxUtils.removeExtension(availableGameStyles.get(i), 5));
             final int finalI = i;
             chooseStyleToEdit.setOnAction(e -> {
-                refresh();
+                initializeAndRefreshGui();
                 editStyle(availableGameStyles.get(finalI));
             });
             chooseStyleToEdit.getStyleClass().add("listButton");
@@ -819,7 +812,7 @@ public class CustomizeWindow extends Application {
             Button chooseLevelToEdit = new Button(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
             final int finalI = i;
             chooseLevelToEdit.setOnAction(e -> {
-                refresh();
+                initializeAndRefreshGui();
                 chosenLevel = availableLevels.get(finalI);
                 initializeLevelEditor();
                 levelNameField.setText(JavaFxUtils.removeExtension(chosenLevel, 4));
@@ -1008,30 +1001,29 @@ public class CustomizeWindow extends Application {
     /**
      * Sets all TextFields etc. back to default values when another menu-point is clicked.
      */
-    private void refresh() {
-        name.setText("player");
-        color.setValue(Color.web("#663366"));
-        for (int i=0; i<6; i++) {
-            figureNames.get(i).setText("Character"+(i+1));
-        }
-        styleNameField.setText("Custom");
-        sizeField.setText("4");
-        for (int i=0; i< itemNames.size(); i++) {
-            itemCheckBoxes.get(i).setSelected(true);
-            double j = Math.random()*100;
-            itemSliders.get(i).setValue((int)j);
-        }
-        levelChooser.getSelectionModel().selectFirst();
-        levelChooser = new ChoiceBox<>();
-        ArrayList<String> availableLevels = getLevels();
-        int numberOfLevels = TerrainManager.getNumberOfAvailableTerrains();
-        for (int i=0; i<numberOfLevels; i++) {
-            levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
-        }
-        levelChooser.getSelectionModel().selectFirst();
-        musicChooser.getSelectionModel().selectFirst();
-        newGameStyleGrid.add(levelChooser, 1, 4);
-        levelNameField.setText("Custom level");
+    private void initializeAndRefreshGui() {
+            name.setText("player");
+            color.setValue(Color.web("#663366"));
+            for (int i=0; i<6; i++) {
+                figureNames.get(i).setText("Character"+(i+1));
+            }
+            styleNameField.setText("Custom");
+            sizeField.setText("4");
+            for (int i=0; i< itemNames.size(); i++) {
+                itemCheckBoxes.get(i).setSelected(true);
+                double j = Math.random()*100;
+                itemSliders.get(i).setValue((int)j);
+            }
+            levelChooser.getItems().clear();
+            ArrayList<String> availableLevels = new ArrayList();
+            availableLevels = getLevels();
+            int numberOfLevels = availableLevels.size();
+            for (int i=0; i<numberOfLevels; i++) {
+                levelChooser.getItems().add(JavaFxUtils.removeExtension(availableLevels.get(i), 4));
+            }
+            levelChooser.getSelectionModel().selectFirst();
+            musicChooser.getSelectionModel().selectFirst();
+            levelNameField.setText("Custom level");
     }
 
     @Override
