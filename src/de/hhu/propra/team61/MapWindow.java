@@ -1260,6 +1260,7 @@ public class MapWindow extends Application implements Networkable {
                     currentFigureChooseWeapon(9);
                     server.send("SET_GAME_COMMENT 1 Skip (∞): " + Skip.DESCRIPTION);
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().refill();
+                    server.send("PLAY_SFX skipTurn");
                 }
                 break;
             case "Numpad 0":
