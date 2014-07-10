@@ -49,13 +49,16 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 public class MapWindow extends Application implements Networkable {
     private final static int DAMAGE_BY_POISON = 10;
     /** Chance of a crate spawning (Compared to {@link Math#random()}); TODO give this an true probability, set by Customize */
-    private final static double SUPPLY_DROP_PROBABILITY = 0.75; // TODO probability is actually .25
+    private final static double SUPPLY_DROP_PROBABILITY = 0.25;
     private final static int FPS = 10;
     /** vertical speed change of a object with weight 1 caused by gravity in 1s (in our physics, the speed change by gravity is proportional to object mass) */
     public final static Point2D GRAVITY = new Point2D(0, .01);
     private final static int DIGITATION_MIN_HEALTH = 65;
     private final static int DEGITATION_HEALTH_THRESHOLD = 25;
     private final static int DIGITATION_MIN_CAUSED_DAMAGE = 30;
+    public static final int HIGH_DAMAGE_THRESHOLD = 50;
+    public static final int RAMPAGE_THRESHOLD = 75;
+    public static final double NO_HIT_COMMENT_PROBABILITY = .5;
     /** number of turns until sudden death is started, as set by the user */
     private final int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
@@ -510,7 +513,7 @@ public class MapWindow extends Application implements Networkable {
                 "↑/W\t\tjump, move crosshair up\n" +
                 "↓/S\t\tmove crosshair down\n" +
                 //"E - open inventory\n" + TODO
-                "1 to 8\tchoose item\n" +
+                "1 to 9\tchoose item\n" +
                 "0\t\tdeselect item\n" +
                 "Space\tshoot\n" +
                 "C\t\topen chat\n" +
@@ -612,7 +615,14 @@ public class MapWindow extends Application implements Networkable {
             System.err.println("Hey, there are " + flyingProjectiles.size() + " projectiles, we shouldn't be here!");
         }
 
-        teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(collectRecentlyCausedDamage());
+        int causedDamageInTurn = collectRecentlyCausedDamage();
+        if (causedDamageInTurn >= HIGH_DAMAGE_THRESHOLD) {
+            server.send("PLAY_SFX highDamage");
+            if(causedDamageInTurn >= RAMPAGE_THRESHOLD) server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
+        } else if (causedDamageInTurn == 0 && Math.random() < NO_HIT_COMMENT_PROBABILITY) {
+            server.send("SET_GAME_COMMENT 0 " + generateNoHitComment(teams.get(currentTeam).getCurrentFigure().getName())); // TODO class for generating random comments.
+        }
+        teams.get(currentTeam).getCurrentFigure().addCausedHpDamage(causedDamageInTurn);
         turnCount++; // TODO timing issue
         server.send("SET_TURN_COUNT " + turnCount);
 
@@ -678,12 +688,11 @@ public class MapWindow extends Application implements Networkable {
             doDigitations();
             server.send("SET_GAME_COMMENT 0 Digitate, my brave hearts!");
             server.send("PLAY_SFX digitation");
-        } else if(turnCount > teams.size() * teams.get(0).getFigures().size() * 2) {
-            undoDigitations();
         }
+        undoDigitations(); // do it also when turnCount condition is not met (when a digiwise was used, we also have to undo that digitation)
 
-        if(Math.random() > SUPPLY_DROP_PROBABILITY){
-            Crate drop = new Crate(terrain.toArrayList().get(0).size()-Terrain.BLOCK_SIZE);
+        if(Math.random() < SUPPLY_DROP_PROBABILITY){
+            Crate drop = new Crate((terrain.toArrayList().get(0).size()-1)/Terrain.BLOCK_SIZE);
             server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent());
             server.send("SET_GAME_COMMENT 0 Nice, a present. That’s like a corollary, it’s for free.");
         }
@@ -698,8 +707,17 @@ public class MapWindow extends Application implements Networkable {
         System.out.println(teamLabelText);
     }
 
+    private String generateNoHitComment(String name) {
+        switch ((int)(Math.random()*2)) {
+            case 0:
+                return "Is " + name + " drunk?";
+            default:
+                return name + " seems to be a partyfist.";
+        }
+    }
+
     /**
-     * Sums up the hp damage caused since last time calling this function. Plays a sound when it is >= 50.
+     * Sums up the hp damage caused since last time calling this function.
      * @return hp damage caused since last time calling this function
      * @see de.hhu.propra.team61.objects.Figure#popRecentlySufferedDamage()
      */
@@ -710,7 +728,6 @@ public class MapWindow extends Application implements Networkable {
                 recentlyCausedDamage += figure.popRecentlySufferedDamage();
             }
         }
-        if (recentlyCausedDamage >= 50) server.send("PLAY_SFX highDamage");
         return recentlyCausedDamage;
     }
 
@@ -737,7 +754,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void spawnBoss() {
-        String bossName = (Math.random() > .5 ? "Marʔoz" : "ʔock’mar"); // similarity to Vel’Koz and Kog’Maw is purely coincidental
+        String bossName = (Math.random() > .33 ? (Math.random() > .5 ? "Marʔoz" : "ʔock’mar") : "Ånsgar"); // similarity to Vel’Koz, Kog’Maw, and a town in Norway is purely coincidental
         bossSpawnedLeft = (Math.random() > .5);
         initBoss(bossName);
         server.send("SD BOSS SPAWN " + bossName + " " + bossSpawnedLeft);
@@ -1164,22 +1181,25 @@ public class MapWindow extends Application implements Networkable {
                 server.send("CURRENT_FIGURE_FACE_RIGHT");
                 moveCurrentlyActiveFigure(new Point2D(Figure.WALK_SPEED, 0));
                 break;
+            case "Numpad 1":
             case "1":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     currentFigureChooseWeapon(1);
                     server.send("SET_GAME_COMMENT 1 Bazooka ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Bazooka.DESCRIPTION);
-                    server.send("PLAY_SFX changeWeapon");
+                    server.send("PLAY_SFX bazooka");
                 }
                 break;
+            case "Numpad 2":
             case "2":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     currentFigureChooseWeapon(2);
                     server.send("SET_GAME_COMMENT 1 Grenade ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Grenade.DESCRIPTION);
-                    server.send("PLAY_SFX grenade"); // TODO typo
+                    server.send("PLAY_SFX grenade");
                 }
                 break;
+            case "Numpad 3":
             case "3":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
@@ -1188,6 +1208,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX shotgun");
                 }
                 break;
+            case "Numpad 4":
             case "4":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
@@ -1196,6 +1217,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX rifle");
                 }
                 break;
+            case "Numpad 5":
             case "5":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 5");
@@ -1204,6 +1226,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX poisonArrow");
                 }
                 break;
+            case "Numpad 6":
             case "6":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
@@ -1212,6 +1235,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX banana");
                 }
                 break;
+            case "Numpad 7":
             case "7":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
@@ -1220,6 +1244,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX digiwise");
                 }
                 break;
+            case "Numpad 8":
             case "8":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
@@ -1228,6 +1253,7 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX medipack");
                 }
                 break;
+            case "Numpad 9":
             case "9":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 9");
@@ -1236,6 +1262,7 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().refill();
                 }
                 break;
+            case "Numpad 0":
             case "0": //Deselect Item
                 server.send("CURRENT_FIGURE_CHOOSE_WEAPON 0");
                 currentFigureChooseWeapon(0);

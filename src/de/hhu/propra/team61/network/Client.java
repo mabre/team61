@@ -63,7 +63,7 @@ public class Client implements Runnable {
 
     /**
      * Convenience constructor for a client connecting with localhost.
-     * This constructur is typically used for the client running on the host. Equivalent to calling
+     * This constructor is typically used for the client running on the host. Equivalent to calling
      * {@code Client("127.0.0.1", name, listener);}.
      * @param name the name of the player creating sitting in front of this client
      * @param listener function which is called when the client successfully established a connection with the server

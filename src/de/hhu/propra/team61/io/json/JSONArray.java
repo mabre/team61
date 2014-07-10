@@ -46,12 +46,18 @@ public class JSONArray extends org.json.simple.JSONArray {
 
     /**
      * Gets the integer at the given array index.
-     * The caller has to assure that the key really holds an integer.
+     * If the index does not hold a double, 0 is returned.
      * @param index the index whose value is obtained
      * @return value mapped to the given key
      */
     public int getInt(int index) {
-        return ((Number)this.get(index)).intValue();
+        Object ret = this.get(index);
+        if(ret instanceof Number) {
+            return ((Number)this.get(index)).intValue();
+        } else {
+            System.err.println(index + " is no Number");
+            return 0;
+        }
     }
 
     /**
@@ -67,22 +73,34 @@ public class JSONArray extends org.json.simple.JSONArray {
 
     /**
      * Gets the string at the given array index.
-     * The caller has to assure that the key really holds a string.
+     * If the index does not hold a string, an empty string is returned.
      * @param index the index whose value is obtained
      * @return value mapped to the given key
      */
     public String getString(int index) {
-        return ((String)this.get(index));
+        Object ret = this.get(index);
+        if(ret instanceof String) {
+            return (String)ret;
+        } else {
+            System.err.println(index + " is no String");
+            return "";
+        }
     }
 
     /**
      * Gets the JSONObject at the given array index.
-     * The caller has to assure that the key really holds a JSONObject.
+     * If the index does not hold a json object, an empty json object is returned.
      * @param index the index whose value is obtained
      * @return value mapped to the given key
      */
     public JSONObject getJSONObject(int index) {
-        return new JSONObject((org.json.simple.JSONObject)this.get(index));
+        Object ret = this.get(index);
+        if(ret instanceof org.json.simple.JSONObject) {
+            return new JSONObject((org.json.simple.JSONObject)this.get(index));
+        } else {
+            System.err.println(index + " is no org.json.simple.JSONObject");
+            return new JSONObject("{}");
+        }
     }
 
     /**

@@ -14,3 +14,7 @@
 .mainButton:hover {
     -fx-background-color: rgba(255, 255, 255, 0.7);
 }
+
+.grid {
+    -fx-padding: 0 0 0 170;
+}

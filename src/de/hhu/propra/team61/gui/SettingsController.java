@@ -84,7 +84,6 @@ public class SettingsController {
         settingGrid.add(teams.get(0), 0, 2, 3, 1);
         settingGrid.add(teams.get(1), 0, 3, 3, 1);
         cont.getStyleClass().addAll("mainButton", "startButton");
-        plus.setPrefWidth(100);
     }
 
     /**

@@ -3,17 +3,22 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Text?>
 <?import javafx.scene.image.ImageView?>
 
-<GridPane fx:id="creditsGrid" fx:controller="de.hhu.propra.team61.gui.CreditsController" alignment="CENTER" hgap="10" vgap="10" xmlns:fx="http://javafx.com/fxml">
+<GridPane fx:controller="de.hhu.propra.team61.gui.CreditsController" fx:id="creditsGrid" maxWidth="300" styleClass="grid" alignment="CENTER" hgap="10" vgap="10" xmlns:fx="http://javafx.com/fxml">
     <children>
         <ImageView fx:id="imageView" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="7" GridPane.halignment="CENTER"/>
-        <Text text="Copyright (C) 2014 Markus Brenneis, Jan Ecknigk, Simon Franz, Kevin Gnyp, Jessica Petrasch" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="7"/>
-        <Text text="Charly in Madagascar is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License&#10;as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version." GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="7"/>
-        <Text text="Charly in Madagascar is distributed in the hope that it will be useful but WITHOUT ANY WARRANTY; without even the implied warranty&#10;of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details." GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="7"/>
-        <Text text="You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/." GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="7"/>
-        <Button text="Close" onAction="#handleClose" GridPane.columnIndex="0" GridPane.rowIndex="5" styleClass="mainButton"/>
+        <Label fx:id="version" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <Label wrapText="true" text="Copyright (C) 2014 Markus Brenneis, Jan Ecknigk, Simon Franz, Kevin Gnyp, Jessica Petrasch" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="Charly in Madagascar is free software: you can redistribute it and/or modify it under the terms of the GNU General Public Licenseas published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version." GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="Charly in Madagascar is distributed in the hope that it will be useful but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details." GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/." GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="The Vorbis SPI package (http://www.javazoom.net) is free software; you can redistribute it and/or modify it under the terms of the GNU Library General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version." GridPane.columnIndex="0" GridPane.rowIndex="6" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="The json-simple package (https://code.google.com/p/json-simple/) is licensed under the Apache License, Version 2.0 (the “License”); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0." GridPane.columnIndex="0" GridPane.rowIndex="7" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="Some files of the game distribution might have more restrictive licenses, especially the contained background music. See the relevant COPYING file for details." GridPane.columnIndex="0" GridPane.rowIndex="8" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="We’d like to express thanks to all the persons who tested our software; special thanks go to Maximilian Bauer and Timo Bornfleth, who have conducted thorough tests with the pre-release versions of Charly in Madagascar. Special thanks also go to the Band Storm Seeker (https://fb.com/Stormseekerband), which provided the background music contained in the standard distribution." GridPane.columnIndex="0" GridPane.rowIndex="9" GridPane.columnSpan="7"/>
+        <Label wrapText="true" text="Charly in Madagascar was originally started as a project for the lecture Programmierpraktikum at Heinrich-Heine-Universität. We also thank our tutor Tobi." GridPane.columnIndex="0" GridPane.rowIndex="10" GridPane.columnSpan="7"/>
+        <Button text="Close" onAction="#handleClose" styleClass="mainButton" GridPane.columnIndex="0" GridPane.rowIndex="11"/>
     </children>
     <padding>
         <Insets bottom="25" left="25" right="25" top="25" />

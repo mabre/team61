@@ -35,6 +35,7 @@ public class ScrollingLabel extends StackPane {
     private static int MIN_TIMEOUT = 2;
     /** the time a line is shown depends on the letters in the line */
     private static int LETTERS_PER_SECOND = 10;
+    private static int LINE_HEIGHT = 23;
 
     /** lines currently shown in the label */
     private ArrayList<LabelLine> lines = new ArrayList<>();
@@ -104,12 +105,14 @@ public class ScrollingLabel extends StackPane {
         }
         removeLowPriorityLine();
         LabelLine newLine = new LabelLine(text, lowPriority);
-        lines.add(newLine);
-        getChildren().add(newLine);
+        synchronized (lines) {
+            lines.add(newLine);
+            getChildren().add(newLine);
 
-        if(lines.size() > 1) { // new label is last element
-            LabelLine lastLine = lines.get(lines.size() - 2);
-            newLine.setTranslateY(lastLine.getTranslateY() + lastLine.prefHeight(1000));
+            if (lines.size() > 1) { // new label is last element
+                LabelLine lastLine = lines.get(lines.size() - 2);
+                newLine.setTranslateY((int)lastLine.getTranslateY() + LINE_HEIGHT);
+            }
         }
     }
 
@@ -117,13 +120,15 @@ public class ScrollingLabel extends StackPane {
      * Removes the last line if it has low priority.
      */
     private void removeLowPriorityLine() {
-        if(lines.size() > 0) {
-            LabelLine lastLine = lines.get(lines.size() - 1);
-            if (lastLine.isLowPriority()) {
-                lastLine.stopRemoveTimer();
-                getChildren().remove(lastLine);
-                lines.remove(lastLine);
-                oldLines.add(lastLine);
+        synchronized (lines) {
+            if (lines.size() > 0) {
+                LabelLine lastLine = lines.get(lines.size() - 1);
+                if (lastLine.isLowPriority()) {
+                    lastLine.stopRemoveTimer();
+                    getChildren().remove(lastLine);
+                    lines.remove(lastLine);
+                    oldLines.add(lastLine);
+                }
             }
         }
     }
@@ -134,11 +139,13 @@ public class ScrollingLabel extends StackPane {
      */
     private void remove(LabelLine line) {
         Platform.runLater(() -> {
-            int lineIndex = lines.indexOf(line);
-            getChildren().remove(line);
+            synchronized (lines) {
+                int lineIndex = lines.indexOf(line);
+                getChildren().remove(line);
 //            lines.remove(lineIndex);
-            for(int i=lineIndex; i < lines.size(); i++) {
-                lines.get(i).setTranslateY(lines.get(i).getTranslateY() - line.prefHeight(1000));
+                for (int i = lineIndex; i < lines.size(); i++) {
+                    lines.get(i).setTranslateY((int)lines.get(i).getTranslateY() - LINE_HEIGHT);
+                }
             }
         });
     }
@@ -148,11 +155,13 @@ public class ScrollingLabel extends StackPane {
      */
     public void stopAllTimers() {
         acceptingNewLines = false;
-        for(LabelLine line: lines) {
-            line.stopRemoveTimer();
-        }
-        for(LabelLine line: oldLines) {
-            line.stopRemoveTimer();
+        synchronized (lines) {
+            for (LabelLine line : lines) {
+                line.stopRemoveTimer();
+            }
+            for (LabelLine line : oldLines) {
+                line.stopRemoveTimer();
+            }
         }
     }
 

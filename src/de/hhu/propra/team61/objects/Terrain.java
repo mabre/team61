@@ -50,6 +50,7 @@ public class Terrain extends GridPane {
 
     /** hold the image for the destroy animation of the sudden death type "boss" */
     private static Image RIFT_IMAGE = new Image("file:resources/animations/boss_rift.png");
+    private static Image LEAF_IMAGE = new Image("file:resources/animations/leafs.png");
 
     //ArrayLists
     /** a list containing the terrain blocks which are rendered, [row][column], counting starts from [0][0] in the top left corner */
@@ -612,6 +613,16 @@ public class Terrain extends GridPane {
             riftAnimation.setDelay(new Duration((fromLeft ? colEnd - i : i - colStart) * 40 + 500));
             riftAnimation.play();
         }
+    }
+
+    /**
+     * generates the animation of falling leafs in the background
+     * respondes to direction of the wind
+     */
+    private void backgroundFallingLeafs(){
+        ImageView leafsImageView = new ImageView(LEAF_IMAGE);
+        SpriteAnimation leafAnimation = new SpriteAnimation(leafsImageView, 1000, 8, -1);
+
     }
 
     /**
