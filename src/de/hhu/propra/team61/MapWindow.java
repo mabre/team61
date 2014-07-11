@@ -163,11 +163,16 @@ public class MapWindow extends Application implements Networkable {
         this.teamsize = settings.getInt("teamSize");
         teams = new ArrayList<>();
         JSONArray teamsArray = settings.getJSONArray("teams");
+        JSONArray cratesArray = settings.getJSONArray("crates");
 
         //ToDo: Prepare start inventory of all teams
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Item> inventory = ItemManager.generateInventory(settings.getJSONArray("inventory")); //ToDo add startInventory to settings
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
+        }
+
+        for(int i=0; i<cratesArray.length(); i++) {
+            supplyDrops.add(new Crate(cratesArray.getJSONObject(i)));
         }
 
         initialize();
@@ -196,6 +201,12 @@ public class MapWindow extends Application implements Networkable {
         JSONArray teamsArray = input.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             teams.add(new Team(teamsArray.getJSONObject(i)));
+        }
+
+        supplyDrops = new ArrayList<>();
+        JSONArray cratesArray = input.getJSONArray("crates");
+        for(int i=0; i<cratesArray.length(); i++) {
+            supplyDrops.add(new Crate(cratesArray.getJSONObject(i)));
         }
 
         turnCount = input.getInt("turnCount");
@@ -231,6 +242,12 @@ public class MapWindow extends Application implements Networkable {
         JSONArray teamsArray = input.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             teams.add(new Team(teamsArray.getJSONObject(i)));
+        }
+
+        supplyDrops = new ArrayList<>();
+        JSONArray cratesArray = input.getJSONArray("crates");
+        for(int i=0; i<cratesArray.length(); i++) {
+            supplyDrops.add(new Crate(cratesArray.getJSONObject(i)));
         }
 
         turnCount = input.getInt("turnCount");
@@ -295,6 +312,9 @@ public class MapWindow extends Application implements Networkable {
         for(Team team: teams) {
             fieldPane.getChildren().add(team);
             terrain.addFigures(team.getFigures());
+        }
+        for(Crate c: supplyDrops) {
+            fieldPane.getChildren().add(c);
         }
         teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
@@ -544,7 +564,12 @@ public class MapWindow extends Application implements Networkable {
         for(Team t: teams) {
             teamsArray.put(t.toJson());
         }
+        JSONArray cratesArray = new JSONArray();
+        for(Crate c : supplyDrops){
+            cratesArray.put(c.toJson());
+        }
         output.put("teams", teamsArray);
+        output.put("crates", cratesArray);
         output.put("turnCount", turnCount);
         output.put("currentTeam", currentTeam);
         output.put("terrain", terrain.toJson());
@@ -695,7 +720,7 @@ public class MapWindow extends Application implements Networkable {
         undoDigitations(); // do it also when turnCount condition is not met (when a digiwise was used, we also have to undo that digitation)
 
         if(Math.random() < SUPPLY_DROP_PROBABILITY){
-            Crate drop = new Crate((terrain.toArrayList().get(0).size()-2)/Terrain.BLOCK_SIZE); // -1 for getting max index, -1 for crate width
+            Crate drop = new Crate(terrain.getTerrainWidth()/Terrain.BLOCK_SIZE-2); // -1 for getting max index, -1 for crate width
             server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent());
             server.send("SET_GAME_COMMENT 0 Nice, a present. That’s like a corollary, it’s for free.");
         }
@@ -969,7 +994,7 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
                 break;
             case "DROP_SUPPLY":
-                supplyDrops.add(new Crate(terrain.toArrayList().get(0).size(), cmd[2]));
+                supplyDrops.add(new Crate(terrain.getTerrainWidth()/Terrain.BLOCK_SIZE-2, cmd[2]));
                 fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size() - 1));
                 break;
             case "REMOVE_SUPPLY":

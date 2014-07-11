@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.objects;
 
 import de.hhu.propra.team61.io.ItemManager;
+import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
@@ -55,6 +56,19 @@ public class Crate extends ImageView {
         initialize(xSize);
     }
 
+    /**
+     * Constructor for saved games
+     * @param input JSONObject containing content and position
+     */
+    public Crate(JSONObject input){
+        this.content = input.getString("content");
+        setTranslateX(input.getInt("posX"));
+        setTranslateY(input.getInt("posY"));
+
+        setImage(new Image(IMGSRC, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
+        hitRegion = new Rectangle2D(getTranslateX(), getTranslateY(),NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE);
+        //ToDo add yourself to terrain for collisionhandling
+    }
 
     /**
      * extension of the constructor, which takes over <u>all</u> tasks, which all contructors have in common
@@ -62,7 +76,7 @@ public class Crate extends ImageView {
      * @param xSize width of {@link de.hhu.propra.team61.objects.Terrain}
      */
     private void initialize(int xSize){
-        setImage(new Image(IMGSRC,NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
+        setImage(new Image(IMGSRC, NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true));
         setTranslateX(Math.random()*xSize*NORMED_BLOCK_SIZE);
         setTranslateY(0);
 
@@ -72,6 +86,14 @@ public class Crate extends ImageView {
 
     public String getContent() {
         return content;
+    }
+
+    public JSONObject toJson() {
+        JSONObject output = new JSONObject();
+        output.put("content",content);
+        output.put("posX",getTranslateX());
+        output.put("posY",getTranslateY());
+        return output;
     }
 
     /**
