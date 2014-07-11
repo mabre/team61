@@ -847,7 +847,7 @@ public class CustomizeWindow extends Application {
         output.put("figure", figureChooser.getValue());
         JSONObject figureNamesJson = new JSONObject();
         for (int i=0; i<6; i++) {
-            figureNamesJson.put("figure"+i, figureNames.get(i).getText());
+            figureNamesJson.put("figure"+i, figureNames.get(i).getText()); // TODO array!
         }
         output.put("figure-names", figureNamesJson);
         return output;
@@ -886,7 +886,7 @@ public class CustomizeWindow extends Application {
     /**
      * Loads settings for either a chosen game style, team or level into the GUI-elements which can be edited afterwards.
      * @param file File to load settings from
-     * @param number integer to indicate whether a team, game style or level was chosen
+     * @param number integer to indicate whether a team, game style or level was chosen // TODO enum
      */
     private void fromJson(String file, int number) {
         if (number == 1) {
@@ -950,12 +950,12 @@ public class CustomizeWindow extends Application {
         }
         itemNames.add("Bazooka");
         itemNames.add("Grenade");
-        itemNames.add("Pistol");
-        itemNames.add("Poisoned arrow");
-        itemNames.add("Medipack");
+        itemNames.add("Shotgun");
         itemNames.add("Rifle");
-        itemNames.add("Banana-Bomb");
+        itemNames.add("Poisoned Arrow");
+        itemNames.add("Bananabomb");
         itemNames.add("Digiwise");
+        itemNames.add("Medipack");
         for (int i=0; i< itemNames.size(); i++) {
             itemCheckBoxes.add(new CheckBox(itemNames.get(i)));
             itemCheckBoxes.get(i).setSelected(true);
@@ -977,16 +977,17 @@ public class CustomizeWindow extends Application {
         }
         for (int i=0; i<itemNames.size(); i++) {
             String item = itemNames.get(i);
-            if (item.equals("Poisoned arrow") || item.equals("Medipack") || item.equals("Banana-Bomb") || item.equals("Digiwise")) {
+            if (item.equals("Poisoned Arrow") || item.equals("Medipack") || item.equals("Bananabomb") || item.equals("Digiwise")) {
                 double h = Math.random() * 10;
                 itemSliders.add(new Slider(0, 10, (int)h));
                 itemSliders.get(i).setShowTickMarks(true);
                 itemSliders.get(i).setShowTickLabels(true);
                 itemSliders.get(i).setMajorTickUnit(2);
-                itemSliders.get(i).setBlockIncrement(1);
+                itemSliders.get(i).setMinorTickCount(1);
+                itemSliders.get(i).setSnapToTicks(true);
                 newGameStyleGrid.add(itemSliders.get(i), 7, i + 4, 3, 1);
             } else {
-                if (item.equals("Pistol")) {
+                if (item.equals("Shotgun")) {
                     Text infinite = new Text("Infinite");
                     newGameStyleGrid.add(infinite, 7, i+4, 3, 1);
                     itemSliders.add(new Slider(0, 100000, 100000));
@@ -996,7 +997,9 @@ public class CustomizeWindow extends Application {
                     itemSliders.get(i).setShowTickMarks(true);
                     itemSliders.get(i).setShowTickLabels(true);
                     itemSliders.get(i).setMajorTickUnit(10);
+                    itemSliders.get(i).setMinorTickCount(9);
                     itemSliders.get(i).setBlockIncrement(1);
+                    itemSliders.get(i).setSnapToTicks(true);
                     newGameStyleGrid.add(itemSliders.get(i), 7, i + 4, 3, 1);
                 }
             }

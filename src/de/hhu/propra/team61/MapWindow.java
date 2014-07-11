@@ -719,9 +719,9 @@ public class MapWindow extends Application implements Networkable {
         }
         undoDigitations(); // do it also when turnCount condition is not met (when a digiwise was used, we also have to undo that digitation)
 
-        if(Math.random() < SUPPLY_DROP_PROBABILITY){
+        if(Math.random() < SUPPLY_DROP_PROBABILITY) {
             Crate drop = new Crate(terrain.getTerrainWidth()/Terrain.BLOCK_SIZE-2); // -1 for getting max index, -1 for crate width
-            server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent());
+            server.send("DROP_SUPPLY" + " " + drop.getPosition().getX() + " " + drop.getContent()); // actually, on client side, the crate spawns at an renadom position, but we overwrite it later
             server.send("SET_GAME_COMMENT 0 Nice, a present. That’s like a corollary, it’s for free.");
         }
 
