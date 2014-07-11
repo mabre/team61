@@ -19,7 +19,7 @@ import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
 /**
  * Game Server which handles all events triggered on the client.
  * <p>
- * Only one server should run at the same time. To create a new thread running a game server, use
+ * Only one server should be running at the same time. To create a new thread running a game server, use
  * {@code serverThread = new Thread(server = new Server(() -> {callbackFunkction};} and start the thread using
  * {@code serverThread.start();}. When the server is ready to accept connection, the given callback function is callced.
  * After creating a new server object, {@link #registerCurrentNetworkable(Networkable)} should be called with
@@ -102,6 +102,9 @@ import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
  * <li>{@code SET_HP $int_team $int_figure $int_hp} (*)<br>
  * Sets the hp of the given figure of the given team to the given values.<br>
  * see {@link de.hhu.propra.team61.objects.Figure#setHealth(int)}
+ * <li>{@code SET_GAME_COMMENT $int_mask $String_comment}<br>
+ * Adds a game comment. Mask: 0 = high prio, 1 = low prio<br>
+ * see {@link #changeTeamById(String, int)}, {@link de.hhu.propra.team61.MapWindow#setGameComment(String, boolean)}
  * <li>{@code SET_TEAM_NUMBER $int_team} (**)<br>
  * Sets the team number for the client.<br>
  * see {@link #changeTeamById(String, int)}, {@link #changeTeamByNumber(int, int)}
@@ -274,6 +277,24 @@ public class Server implements Runnable {
             }
         }
     }
+
+    /**
+     * Sends the given command to the client associated with the given team (all teams if in local game).
+     * @param command the command to be sent
+     * @param team team number
+     */
+    public static void send(String command, int team) {
+        synchronized (clients) {
+            for (ClientConnection client : clients) {
+                if(client.associatedTeam == team || Client.isLocalGame()) {
+                    client.out.println(command);
+                    System.out.println("SERVER sent command to " + client.id + "/" + client.name + ": " + command);
+                    break;
+                }
+            }
+        }
+    }
+
 
     /**
      * Sends the given commands to all connected clients.

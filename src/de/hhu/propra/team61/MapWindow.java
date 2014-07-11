@@ -1189,7 +1189,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     currentFigureChooseWeapon(1);
-                    server.send("SET_GAME_COMMENT 1 Bazooka ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Bazooka.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Bazooka ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Bazooka.DESCRIPTION, currentTeam);
                     server.send("PLAY_SFX bazooka");
                 }
                 break;
@@ -1198,7 +1198,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     currentFigureChooseWeapon(2);
-                    server.send("SET_GAME_COMMENT 1 Grenade ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Grenade.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Grenade ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Grenade.DESCRIPTION, currentTeam);
                     server.send("PLAY_SFX grenade");
                 }
                 break;
@@ -1207,7 +1207,8 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     currentFigureChooseWeapon(3);
-                    server.send("SET_GAME_COMMENT 1 Shotgun (∞): " + Shotgun.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Shotgun (∞): " + Shotgun.DESCRIPTION, currentTeam);
+                    teams.get(currentTeam).getCurrentFigure().getSelectedItem().refill();
                     server.send("PLAY_SFX shotgun");
                 }
                 break;
@@ -1216,7 +1217,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     currentFigureChooseWeapon(4);
-                    server.send("SET_GAME_COMMENT 1 Rifle ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Rifle.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Rifle ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Rifle.DESCRIPTION, currentTeam);
                     server.send("PLAY_SFX rifle");
                 }
                 break;
@@ -1225,7 +1226,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 5");
                     currentFigureChooseWeapon(5);
-                    server.send("SET_GAME_COMMENT 1 Poisoned Arrow ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + PoisonedArrow.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Poisoned Arrow ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + PoisonedArrow.DESCRIPTION, currentTeam);
                     server.send("PLAY_SFX poisonArrow");
                 }
                 break;
@@ -1234,7 +1235,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
                     currentFigureChooseWeapon(6);
-                    server.send("SET_GAME_COMMENT 1 Bananabomb ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Bananabomb.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Bananabomb ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Bananabomb.DESCRIPTION, currentTeam);
                     server.send("PLAY_SFX banana");
                 }
                 break;
@@ -1243,7 +1244,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
                     currentFigureChooseWeapon(7);
-                    server.send("SET_GAME_COMMENT 1 Digiwise ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Digiwise.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Digiwise ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Digiwise.DESCRIPTION, currentTeam);
                     server.send("PLAY_SFX digiwise");
                 }
                 break;
@@ -1252,7 +1253,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
                     currentFigureChooseWeapon(8);
-                    server.send("SET_GAME_COMMENT 1 Medipack ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Medipack.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Medipack ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Medipack.DESCRIPTION, currentTeam);
                     server.send("PLAY_SFX medipack");
                 }
                 break;
@@ -1261,7 +1262,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 9");
                     currentFigureChooseWeapon(9);
-                    server.send("SET_GAME_COMMENT 1 Skip (∞): " + Skip.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Skip (∞): " + Skip.DESCRIPTION, currentTeam);
                     teams.get(currentTeam).getCurrentFigure().getSelectedItem().refill();
                     server.send("PLAY_SFX skipTurn");
                 }

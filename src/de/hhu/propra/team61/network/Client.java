@@ -15,7 +15,7 @@ import static de.hhu.propra.team61.JavaFxUtils.extractPart;
 /**
  * Game Client which handles all events received from the connected game server.
  * <p>
- * Only one client should run at the same time. To create a new thread running a game client, use
+ * Only one client should be running at the same time. To create a new thread running a game client, use
  * {@code clientThread = new Thread(client = new client(() -> {callbackFunction};} and start the thread using
  * {@code clientThread.start();}. When the client is ready to accept connection, the given callback function is called.
  * After creating a new client object, {@link #registerCurrentNetworkable(Networkable)} should be called with
@@ -40,7 +40,7 @@ public class Client implements Runnable {
     /** the number of the team which is controlled by this client, counting starts from 0 = host, -1 = spectator */
     private int associatedTeam;
     /** true if the client is connected to a local game (ie. only one client is running) */
-    private boolean isLocalGame = false;
+    private static boolean isLocalGame = false;
 
     /** method being called when the client has successfully connected with the server (ie. id and name are accepted) */
     private Runnable readyListener;
@@ -182,7 +182,7 @@ public class Client implements Runnable {
      * Checks if the client is connected with a local game.
      * @return true if the client is connected with a local game
      */
-    public boolean isLocalGame() {
+    public static boolean isLocalGame() {
         return isLocalGame;
     }
 
