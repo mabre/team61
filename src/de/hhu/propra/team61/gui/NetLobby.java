@@ -2,6 +2,7 @@ package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.JavaFxUtils;
 import de.hhu.propra.team61.io.CustomizeManager;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.io.Settings;
@@ -14,7 +15,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -136,12 +136,7 @@ public class NetLobby extends Application implements Networkable {
      */
     private void buildGUI() {
         sceneController.getStage().setOnCloseRequest(event -> {
-            clientThread.interrupt();
-            if(serverThread != null) serverThread.interrupt();
-            System.out.println("NetLobby threads interrupted");
-            client.stop();
-            if(server != null) server.stop();
-            System.out.println("NetLobby client/server (if any) stopped");
+            shutdown();
         });
 
         BorderPane root = new BorderPane();
@@ -244,12 +239,7 @@ public class NetLobby extends Application implements Networkable {
         back.getStyleClass().add("mainButton");
         bottomBox.getChildren().addAll(back);
         back.setOnAction(e -> {
-            if(serverThread != null) serverThread.interrupt();
-            clientThread.interrupt();
-            System.out.println("NetLobby client/server threads interrupted");
-            if(server != null) server.stop();
-            client.stop();
-            System.out.println("NetLobby client/server (if any) stopped");
+            shutdown();
             sceneController.switchToMenu();
         });
         bottomBox.setId("bottomBox");
@@ -260,6 +250,23 @@ public class NetLobby extends Application implements Networkable {
         overviewGrid.getStyleClass().add("overviewGrid");
         listGrid.getStyleClass().add("listGrid");
         sceneController.switchScene(lobbyScene, "Network Lobby");
+
+        System.err.println("2");
+        VorbisPlayer.readVolumeSetting();
+        VorbisPlayer.play("resources/audio/BGM/Storm Seeker - Lobby.ogg", true);
+    }
+
+    /**
+     * Shuts down server/client threads, stops BGM
+     */
+    private void shutdown() {
+        if(serverThread != null) serverThread.interrupt();
+        clientThread.interrupt();
+        System.out.println("NetLobby client/server threads interrupted");
+        if(server != null) server.stop();
+        client.stop();
+        System.out.println("NetLobby client/server (if any) stopped");
+        VorbisPlayer.stop();
     }
 
     /**
@@ -289,6 +296,7 @@ public class NetLobby extends Application implements Networkable {
                     }
                 }
                 if (differentColors) {
+                    VorbisPlayer.stop();
                     Settings.saveJson(toJson(), "NET_SETTINGS_FILE");
                     System.out.println("Network-GameSettings: saved settings");
                     MapWindow mapwindow = new MapWindow(levelChooser.getValue()+".lvl", "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
@@ -600,6 +608,7 @@ public class NetLobby extends Application implements Networkable {
     @Override
     public void handleOnClient(String command) {
         if(command.startsWith("STATUS MAPWINDOW")) {
+            VorbisPlayer.stop();
             JSONObject state = new JSONObject(extractPart(command, "STATUS MAPWINDOW "));
             new MapWindow(state, client, clientThread, sceneController);
         } else if(command.startsWith("STATUS LOBBY")) {

@@ -1008,7 +1008,11 @@ public class MapWindow extends Application implements Networkable {
             case "SUPPLY_PICKED_UP":
                 teams.get(Integer.parseInt(cmd[1])).getItem(cmd[2]).refill();
                 if(client.getAssociatedTeam() == Integer.parseInt(cmd[1]) || client.isLocalGame()) { // only current team should see what has been picked up // TODO what happends if a crate falls on a figure?
-                    setGameComment("Cool, a new " + cmd[2], false);
+                    if(cmd[2].equals("Shotgun")) {
+                        setGameComment("Useless, a new " + cmd[2] + ".", false);
+                    } else {
+                        setGameComment("Cool, a new " + cmd[2] + "!", false);
+                    }
                 }
                 break;
             case "GAME_OVER":
