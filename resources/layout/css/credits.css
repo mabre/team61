@@ -1,7 +1,7 @@
 @CHARSET "ISO-8859-1";
 
 .root{
-    -fx-background-color: #FFFFFF;
+    -fx-background-image: url("file:resources/layout/back.png");
     -fx-background-position: top left;
 }
 
@@ -17,4 +17,12 @@
 
 .grid {
     -fx-padding: 0 0 0 170;
+}
+
+.scrollPane  > .viewport {
+   -fx-background-color: transparent;
+}
+
+.scrollPane {
+   -fx-background-color: transparent;
 }

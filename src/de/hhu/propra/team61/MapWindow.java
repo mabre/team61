@@ -1207,7 +1207,7 @@ public class MapWindow extends Application implements Networkable {
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     currentFigureChooseWeapon(3);
-                    server.send("SET_GAME_COMMENT 1 Shotgun ("+teams.get(currentTeam).getCurrentFigure().getSelectedItem().getFormattedMunition()+"): " + Shotgun.DESCRIPTION);
+                    server.send("SET_GAME_COMMENT 1 Shotgun (∞): " + Shotgun.DESCRIPTION);
                     server.send("PLAY_SFX shotgun");
                 }
                 break;

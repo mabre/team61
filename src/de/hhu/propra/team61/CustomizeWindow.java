@@ -73,8 +73,6 @@ public class CustomizeWindow extends Application {
     ///Style editor
     /** grid for all GUI-elements for creating a game style */
     private CustomGrid newGameStyleGrid = new CustomGrid();
-    /** grid containing elements for changing items */
-    private CustomGrid itemsGrid = new CustomGrid();
     /**TextField for entering name of the game style */
     private TextField styleNameField = new TextField("Custom");
     /** TextField for entering teamSize of the gameStyle */
@@ -169,7 +167,6 @@ public class CustomizeWindow extends Application {
         Button edit = new Button("Edit team/game style/level");
         edit.getStyleClass().add("mainButton");
         edit.setOnAction(e -> {
-            root.getChildren().remove(itemsGrid);
             createEditGrid();
             root.setLeft(editGrid);
         });
@@ -178,7 +175,6 @@ public class CustomizeWindow extends Application {
         newTeam.setOnAction(e -> {
             initializeAndRefreshGui();
             root.setLeft(newTeamGrid);
-            root.getChildren().remove(itemsGrid);
         });
         Button newGameStyle = new Button("Create new game style");
         newGameStyle.getStyleClass().add("mainButton");
@@ -190,7 +186,6 @@ public class CustomizeWindow extends Application {
         newLevel.getStyleClass().add("mainButton");
         newLevel.setOnAction(e -> {
             initializeAndRefreshGui();
-            root.getChildren().remove(itemsGrid);
             chosenLevel = "editor/basic.lvl";
             initializeLevelEditor();
             root.setLeft(newLevelPane);
@@ -255,7 +250,6 @@ public class CustomizeWindow extends Application {
             CustomizeManager.save(teamToJson(), "teams/" + name.getText());
             createEditGrid();
             root.setLeft(editGrid);
-            root.getChildren().remove(itemsGrid);
         });
         newTeamGrid.add(saveTeam, 0, 10);
     }
@@ -293,23 +287,14 @@ public class CustomizeWindow extends Application {
             CustomizeManager.save(styleToJson(), "gamestyles/"+styleNameField.getText());
             createEditGrid();
             root.setLeft(editGrid);
-            root.getChildren().remove(itemsGrid);
         });
-        newGameStyleGrid.add(saveGameStyle, 0, 10);
-        Button changeItems = new Button("Change items");
-        changeItems.getStyleClass().add("mainButton");
-        newGameStyleGrid.add(changeItems, 0, 5);
-        changeItems.setOnAction(e -> {
-            root.setRight(itemsGrid);
-        });
-        Text whatIsChangeItems = new Text("Add/remove/edit weapons or other items.");
-        newGameStyleGrid.add(whatIsChangeItems, 1, 5, 2, 1);
+        newGameStyleGrid.add(saveGameStyle, 0, 12);
         Label items = new Label("Items");
         items.setFont(Font.font("Verdana", 20));
-        itemsGrid.add(items, 0, 2);
+        newGameStyleGrid.add(items, 6, 2);
         Text enter = new Text ("Enter the quantity of each item.\n " +
                 "(number of projectiles for weapons)");
-        itemsGrid.add(enter, 0, 3, 2, 2);
+        newGameStyleGrid.add(enter, 6, 3, 2, 1);
     }
 
     /**
@@ -961,7 +946,7 @@ public class CustomizeWindow extends Application {
     private void initializeArrayLists() {
         for (int i=0; i<6; i++) {
             figureNames.add(new TextField("Character" + (i+1)));
-            newTeamGrid.add(figureNames.get(i), 0, i+3);
+            newTeamGrid.add(figureNames.get(i), 0, i+4);
         }
         itemNames.add("Bazooka");
         itemNames.add("Grenade");
@@ -980,37 +965,39 @@ public class CustomizeWindow extends Application {
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                     if (!newValue) {
                         itemSliders.get(finalI).setValue(0);
+                        itemSliders.get(finalI).setDisable(true);
                     } else {
                         double j = Math.random()*100;
                         itemSliders.get(finalI).setValue((int)j);
+                        itemSliders.get(finalI).setDisable(false);
                     }
                 }
             });
-            itemsGrid.add(itemCheckBoxes.get(i), 0, i + 6);
+            newGameStyleGrid.add(itemCheckBoxes.get(i), 6, i + 4);
         }
         for (int i=0; i<itemNames.size(); i++) {
             String item = itemNames.get(i);
-            if (item == "Poisoned arrow" || item == "Medipack" || item == "Banana-Bomb" || item == "Digiwise") {
-                double h = Math.random()*10;
+            if (item.equals("Poisoned arrow") || item.equals("Medipack") || item.equals("Banana-Bomb") || item.equals("Digiwise")) {
+                double h = Math.random() * 10;
                 itemSliders.add(new Slider(0, 10, (int)h));
                 itemSliders.get(i).setShowTickMarks(true);
                 itemSliders.get(i).setShowTickLabels(true);
-                itemSliders.get(i).setMajorTickUnit(5);
-                itemSliders.get(i).setMinorTickCount(1);
-                itemSliders.get(i).setBlockIncrement(2);
-                itemsGrid.add(itemSliders.get(i), 1, i + 6, 3, 1);
+                itemSliders.get(i).setMajorTickUnit(2);
+                itemSliders.get(i).setBlockIncrement(1);
+                newGameStyleGrid.add(itemSliders.get(i), 7, i + 4, 3, 1);
             } else {
-                if (item == "Pistol") {
+                if (item.equals("Pistol")) {
                     Text infinite = new Text("Infinite");
-                    itemsGrid.add(infinite, 1, i+6, 3, 1);
+                    newGameStyleGrid.add(infinite, 7, i+4, 3, 1);
                     itemSliders.add(new Slider(0, 100000, 100000));
                 } else {
                     double h = Math.random() * 50;
                     itemSliders.add(new Slider(0, 50, (int) h));
                     itemSliders.get(i).setShowTickMarks(true);
                     itemSliders.get(i).setShowTickLabels(true);
-                    itemSliders.get(i).setBlockIncrement(25);
-                    itemsGrid.add(itemSliders.get(i), 1, i + 6, 3, 1);
+                    itemSliders.get(i).setMajorTickUnit(10);
+                    itemSliders.get(i).setBlockIncrement(1);
+                    newGameStyleGrid.add(itemSliders.get(i), 7, i + 4, 3, 1);
                 }
             }
         }
