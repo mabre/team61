@@ -13,7 +13,7 @@ mkdir out/Charly_in_Madagascar
 echo -e "\e[00;33mcopying jar file created by IntelliJ ...\e[00m"
 cp out/artifacts/team61_jar/team61.jar out/Charly_in_Madagascar/Charly_in_Madagascar.jar
 
-echo -e "\e[00;33mcopying resources, removing unneded files ...\e[00m"
+echo -e "\e[00;33mcopying resources, removing unneeded files ...\e[00m"
 cp -r resources out/Charly_in_Madagascar/
 find out/Charly_in_Madagascar -iname '*.svg' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '*.xcf' -print0 | xargs -0 --no-run-if-empty rm -v

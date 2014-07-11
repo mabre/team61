@@ -256,6 +256,9 @@ public class MapWindow extends Application implements Networkable {
             }
         }
 
+        Rifle.setTerrainHeight(terrain.getTerrainHeight());
+        Rifle.setTerrainWidth(terrain.getTerrainWidth());
+
         sceneController.getStage().setOnCloseRequest(event -> {
             shutdown();
             sceneController.switchToMenu();
