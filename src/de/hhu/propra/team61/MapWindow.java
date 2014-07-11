@@ -1184,8 +1184,8 @@ public class MapWindow extends Application implements Networkable {
                 server.send("CURRENT_FIGURE_FACE_RIGHT");
                 moveCurrentlyActiveFigure(new Point2D(Figure.WALK_SPEED, 0));
                 break;
-            case "Numpad 1":
             case "1":
+            case "Numpad 1":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 1");
                     currentFigureChooseWeapon(1);
@@ -1193,8 +1193,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX bazooka");
                 }
                 break;
-            case "Numpad 2":
             case "2":
+            case "Numpad 2":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 2");
                     currentFigureChooseWeapon(2);
@@ -1202,8 +1202,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX grenade");
                 }
                 break;
-            case "Numpad 3":
             case "3":
+            case "Numpad 3":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 3");
                     currentFigureChooseWeapon(3);
@@ -1212,8 +1212,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX shotgun");
                 }
                 break;
-            case "Numpad 4":
             case "4":
+            case "Numpad 4":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 4");
                     currentFigureChooseWeapon(4);
@@ -1221,8 +1221,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX rifle");
                 }
                 break;
-            case "Numpad 5":
             case "5":
+            case "Numpad 5":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 5");
                     currentFigureChooseWeapon(5);
@@ -1230,8 +1230,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX poisonArrow");
                 }
                 break;
-            case "Numpad 6":
             case "6":
+            case "Numpad 6":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 6");
                     currentFigureChooseWeapon(6);
@@ -1239,8 +1239,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX banana");
                 }
                 break;
-            case "Numpad 7":
             case "7":
+            case "Numpad 7":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 7");
                     currentFigureChooseWeapon(7);
@@ -1248,8 +1248,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX digiwise");
                 }
                 break;
-            case "Numpad 8":
             case "8":
+            case "Numpad 8":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 8");
                     currentFigureChooseWeapon(8);
@@ -1257,8 +1257,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX medipack");
                 }
                 break;
-            case "Numpad 9":
             case "9":
+            case "Numpad 9":
                 if(shootingIsAllowed) {
                     server.send("CURRENT_FIGURE_CHOOSE_WEAPON 9");
                     currentFigureChooseWeapon(9);
@@ -1267,8 +1267,8 @@ public class MapWindow extends Application implements Networkable {
                     server.send("PLAY_SFX skipTurn");
                 }
                 break;
-            case "Numpad 0":
             case "0": //Deselect Item
+            case "Numpad 0":
                 server.send("CURRENT_FIGURE_CHOOSE_WEAPON 0");
                 currentFigureChooseWeapon(0);
                 break;
