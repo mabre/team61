@@ -730,6 +730,10 @@ public class MapWindow extends Application implements Networkable {
         server.send("CURRENT_TEAM_END_ROUND " + currentTeam);
         server.send("ACTIVATE_FIGURE " + currentTeam);
 
+        if(teams.get(currentTeam).getCurrentFigure().getHealth() <= 10) {
+            server.send("PLAY_SFX heartbeat");
+        }
+
         String teamLabelText = "Turn " + turnCount + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.send("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
