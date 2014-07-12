@@ -214,7 +214,7 @@ public class NetLobby extends Application implements Networkable {
                 server.send(getStateForNewClient());
             }
         });
-        Text infoGameStyle = new Text("You can choose a game style and change level, teamSize and number \n" +
+        Text infoGameStyle = new Text("You can choose a game style and change level, team size, and number \n" +
                 "of teams, but not items.");
         overviewGrid.add(infoGameStyle, 0, 5, 6, 1);
 

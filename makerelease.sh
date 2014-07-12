@@ -31,9 +31,9 @@ cp COPYING README.md manual.pdf out/Charly_in_Madagascar/
 
 echo -e "\e[00;33mpacking ...\e[00m"
 cd out
-tar -zcf Charly_in_Madagascar_$version.tar.gz Charly_in_Madagascar
+GZIP=-9 tar -zcf Charly_in_Madagascar_$version.tar.gz Charly_in_Madagascar
 mv Charly_in_Madagascar_$version.tar.gz ..
-zip -rq Charly_in_Madagascar_$version.zip Charly_in_Madagascar
+zip -9rq Charly_in_Madagascar_$version.zip Charly_in_Madagascar
 mv Charly_in_Madagascar_$version.zip ..
 cd ..
 
