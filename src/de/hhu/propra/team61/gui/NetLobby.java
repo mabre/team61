@@ -251,9 +251,8 @@ public class NetLobby extends Application implements Networkable {
         listGrid.getStyleClass().add("listGrid");
         sceneController.switchScene(lobbyScene, "Network Lobby");
 
-        System.err.println("2");
         VorbisPlayer.readVolumeSetting();
-        VorbisPlayer.play("resources/audio/BGM/Storm Seeker - Lobby.ogg", true);
+        VorbisPlayer.play("resources/audio/BGM/Storm Seeker - Sail with us Remix.ogg", true);
     }
 
     /**

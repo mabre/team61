@@ -19,10 +19,11 @@ import java.util.ArrayList;
  * licensed under LGPL. To use this class, make sure that the {@code lib} directory has been added to the libraries of
  * the project. If the library is missing, a {@code javax.sound.sampled.UnsupportedAudioFileException} will be thrown.
  * <p>
- * Use {@code VorbisPlayer.play("resources/audio/BGM/sample.ogg", true);} to play a background music, and
- * {@code VorbisPlayer.play("resources/audio/SFX/sample.ogg", false);} for sound effects. To stop playback, use
- * {@code VorbisPlayer.stop();}; if you do not call this method, the player threads are shut down when all files have
- * been played, which might be never if one file is repeated.
+ * Use {@code VorbisPlayer.play("resources/audio/BGM/sample.ogg", true)} to play a background music, and
+ * {@code VorbisPlayer.play("resources/audio/SFX/sample.ogg", false)} for sound effects. To stop playback, use
+ * {@code VorbisPlayer.stop()}; if you do not call this method, the player threads are shut down when all files have
+ * been played, which might be never if one file is repeated. The default volume is 0, so make sure to call
+ * {@code VorbisPlayer.readVolumeSetting()} before playing a file.
  */
 public class VorbisPlayer {
 
