@@ -15,8 +15,8 @@ cp out/artifacts/team61_jar/team61.jar out/Charly_in_Madagascar/Charly_in_Madaga
 
 echo -e "\e[00;33mcopying resources, removing unneeded files ...\e[00m"
 cp -r resources out/Charly_in_Madagascar/
-find out/Charly_in_Madagascar -iname '*.svg' -print0 | xargs -0 --no-run-if-empty rm -v
-find out/Charly_in_Madagascar -iname '*.xcf' -print0 | xargs -0 --no-run-if-empty rm -v
+find out/Charly_in_Madagascar -iname '*.svg*' -print0 | xargs -0 --no-run-if-empty rm -v
+find out/Charly_in_Madagascar -iname '*.xcf*' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '.*' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '*~' -print0 | xargs -0 --no-run-if-empty rm -v
 find out/Charly_in_Madagascar -iname '*Test*' -print0 | xargs -0 --no-run-if-empty rm -v
