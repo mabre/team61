@@ -1,6 +1,7 @@
 package de.hhu.propra.team61.gui;
 
 import de.hhu.propra.team61.Afrobob;
+import de.hhu.propra.team61.io.VorbisPlayer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -34,7 +35,7 @@ public class CreditsController {
     public void initialize(SceneController sceneController) {
         this.sceneController = sceneController;
         imageView.setImage(image);
-        version.setText(Afrobob.VERSION_CODENAME + " Version: " + Afrobob.VERSION_NUMBER);
+        version.setText("Version " + Afrobob.VERSION_NUMBER + " " + Afrobob.VERSION_CODENAME);
 
         creditsGrid.addEventHandler(KeyEvent.KEY_PRESSED, keyEvent -> {
             System.out.println("key pressed: " + keyEvent.getCode() + " " + keysEntered);
@@ -50,6 +51,12 @@ public class CreditsController {
                         keysEntered = "";
                     } else if (keysEntered.equals("SHIFTAFROBOB")) {
                         System.out.println("Evolutionary.");
+                        keysEntered = "";
+                        VorbisPlayer.readVolumeSetting();
+                        VorbisPlayer.play("resources/audio/BGM/pachelbel.ogg", false);
+                        imageView.setImage(new Image("file:resources/animations/evolution.gif"));
+                        imageView.setFitWidth(1600*.9);
+                        imageView.setFitHeight(600*.9);
                     }
                     break;
                 default:

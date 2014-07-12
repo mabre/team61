@@ -298,7 +298,7 @@ public class MapWindow extends Application implements Networkable {
 
         scrollPane.setId("scrollPane");
         scrollPane.viewportBoundsProperty().addListener((observableValue, oldBounds, newBounds) -> {
-            // this condition (partially) fixes the wired behaviour of the scroll pane when using the rifle
+            // this condition (partially) fixes the wired behaviour of the scroll pane when using the rifle // TODO can be removed now?
             if((newBounds.getMinX() >= 0 && newBounds.getMinY() >= 0 && newBounds.getMaxY() < terrain.getTerrainHeight() + 10) ||
                     oldBounds.getHeight() == 0) {
                 anchorPane.setPrefSize(Math.max(fieldPane.getBoundsInParent().getMaxX(), newBounds.getWidth()), Math.max(fieldPane.getBoundsInParent().getMaxY(), newBounds.getHeight()));
