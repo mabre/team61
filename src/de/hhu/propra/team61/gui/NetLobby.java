@@ -252,7 +252,7 @@ public class NetLobby extends Application implements Networkable {
         sceneController.switchScene(lobbyScene, "Network Lobby");
 
         VorbisPlayer.readVolumeSetting();
-        VorbisPlayer.play("resources/audio/BGM/Storm Seeker - Sail with us Remix.ogg", true);
+        VorbisPlayer.play("resources/audio/BGM/Storm Seeker - Elevator.ogg", true);
     }
 
     /**

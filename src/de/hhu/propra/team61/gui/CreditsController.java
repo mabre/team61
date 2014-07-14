@@ -53,6 +53,7 @@ public class CreditsController {
                         System.out.println("Evolutionary.");
                         keysEntered = "";
                         VorbisPlayer.readVolumeSetting();
+                        VorbisPlayer.play("resources/audio/BGM/dummy.ogg", false);
                         VorbisPlayer.play("resources/audio/BGM/pachelbel.ogg", false);
                         imageView.setImage(new Image("file:resources/animations/evolution.gif"));
                         imageView.setFitWidth(1600*.9);

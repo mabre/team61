@@ -227,14 +227,14 @@ public class CustomizeWindow extends Application {
      * GUI for creating and saving a new team
      */
     private void createTeam() {
-        Text wormNamesText = new Text("Figures-names:");
+        Text wormNamesText = new Text("Figure Names:");
         wormNamesText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(wormNamesText, 0, 2);
-        Text nameText = new Text("Team-Name:");
+        Text nameText = new Text("Team Name:");
         nameText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(nameText, 2, 2);
         newTeamGrid.add(name, 2, 3, 2, 1);
-        Text colorText = new Text("Team-Color:");
+        Text colorText = new Text("Team Color:");
         colorText.setFont(Font.font("Verdana", 15));
         newTeamGrid.add(colorText, 2, 4);
         newTeamGrid.add(color, 2, 5);
@@ -258,11 +258,11 @@ public class CustomizeWindow extends Application {
      * GUI for creating and saving a new game style
      */
     private void createGameStyle() {
-        Text styleName = new Text("Style-Name:");
+        Text styleName = new Text("Style Name:");
         styleName.setFont(Font.font("Verdana", 15));
         newGameStyleGrid.add(styleName, 0, 2);
         newGameStyleGrid.add(styleNameField, 1, 2);
-        Text sizeText = new Text("Team-Size:");
+        Text sizeText = new Text("Team Size:");
         sizeText.setFont(Font.font("Verdana", 15));
         sizeField.textProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -276,7 +276,7 @@ public class CustomizeWindow extends Application {
         });
         newGameStyleGrid.add(sizeText, 0, 3);
         newGameStyleGrid.add(sizeField, 1, 3);
-        Text chooseLevelText = new Text("Choose level:");
+        Text chooseLevelText = new Text("Level:");
         chooseLevelText.setFont(Font.font("Verdana", 15));
         newGameStyleGrid.add(chooseLevelText, 0, 4);
         initializeAndRefreshGui();
@@ -307,11 +307,11 @@ public class CustomizeWindow extends Application {
      * Also contains EventFilter for Tetris-cheat.
      */
     private void createLevel() {
-        Text music = new Text("Background music:");
+        Text music = new Text("Background Music:");
         newLevelGrid.add(music, 0, 0);
         getBackgroundMusic();
         newLevelGrid.add(musicChooser, 1, 0);
-        Text image = new Text("Background image:");
+        Text image = new Text("Background Image:");
         newLevelGrid.add(image, 2, 0);
         getBackgroundImages();
         newLevelGrid.add(imageChooser, 3, 0);
