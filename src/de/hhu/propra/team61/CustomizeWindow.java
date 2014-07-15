@@ -311,6 +311,7 @@ public class CustomizeWindow extends Application {
         newLevelGrid.add(music, 0, 0);
         getBackgroundMusic();
         newLevelGrid.add(musicChooser, 1, 0);
+        musicChooser.setMaxWidth(200);
         Text image = new Text("Background Image:");
         newLevelGrid.add(image, 2, 0);
         getBackgroundImages();
