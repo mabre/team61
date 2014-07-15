@@ -99,6 +99,7 @@ public class MapWindow extends Application implements Networkable {
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
     private ArrayList<Team> teams;
     private int currentTeam = 0;
+    /** number of turns played, ie. during first turn, the value is 0 */
     private int turnCount = 0;
     private int teamquantity;
     private int teamsize;
@@ -316,7 +317,7 @@ public class MapWindow extends Application implements Networkable {
         for(Crate c: supplyDrops) {
             fieldPane.getChildren().add(c);
         }
-        teamLabel = new Label("Team " + teams.get(currentTeam).getName() + "'s turn. What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
+        teamLabel = new Label("Turn " + (turnCount + 1) + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?");
         teams.get(currentTeam).getCurrentFigure().setActive(true);
         topLine.setLeft(teamLabel);
         gamePane.setTop(topLine);
@@ -734,7 +735,7 @@ public class MapWindow extends Application implements Networkable {
             server.send("PLAY_SFX heartbeat");
         }
 
-        String teamLabelText = "Turn " + turnCount + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
+        String teamLabelText = "Turn " + (turnCount + 1) + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.send("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
     }
@@ -885,11 +886,9 @@ public class MapWindow extends Application implements Networkable {
         if(cmd[0].equals("PAUSE")){
             pause = Boolean.parseBoolean(cmd[1]);
             if(pause) {
-                teamLabel.setText("Pause - If(Host){Press P or ESC to continue}"); //ToDo ugly temporary implementation
                 pauseHelpImageView.setImage(pauseImage);
                 pausePane.setVisible(true);
             } else {
-                teamLabel.setText("Continue");
                 pausePane.setVisible(false);
             }
         }
