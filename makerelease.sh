@@ -36,6 +36,7 @@ mv Charly_in_Madagascar_$version.tar.gz ..
 zip -9rq Charly_in_Madagascar_$version.zip Charly_in_Madagascar
 mv Charly_in_Madagascar_$version.zip ..
 cd ..
+git archive --format=tar --prefix=Charly_in_Madagascar_source/ HEAD | gzip -9 > Charly_in_Madagascar_source_$version.tar.gz
 
 echo -e "\e[01;30m======================================================\e[00m"
 echo -e "\e[00;32mfinished packing Charly_in_Madagascar_$version\e[00m"
