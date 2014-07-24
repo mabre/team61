@@ -344,8 +344,8 @@ public class Figure extends StackPane {
 
     /**
      * Lets the figure suffer damage.
-     * If {@link #armor} is greater than 0, the damage is reduced. Calling this function with {@code damage=0} simply
-     * redraws the hp label.
+     * If {@link #armor} is greater than 0, the damage is reduced. {@link #healthShield} can reduce the effect on the
+     * actual hp value. Calling this function with {@code damage=0} simply redraws the hp label.
      * Examples:
      * <ul>
      *     <li>hp is at 80, {@code armor=0}, {@code sufferDamage(40)} is called. hp is now at 40.</li>
@@ -353,9 +353,10 @@ public class Figure extends StackPane {
      *     <li>hp is at 40, {@code sufferDamage(40)} is called. hp is now at 0, the figure becomes invisible, and a {@link DeathException} is thrown.</li>
      * </ul>
      * @param damage the damage (armor will reduce the damage)
+     * @param countAsRecentlySufferedDamage if true, the effective damage (ie. after considering armor) is added to {@link #recentlySufferedDamage}
      * @throws DeathException thrown when the figure is dead after suffering the given damage
      */
-    public void sufferDamage(int damage) throws DeathException {
+    public void sufferDamage(int damage, boolean countAsRecentlySufferedDamage) throws DeathException {
         int damageAfterArmor = (int)Math.ceil(damage - (armor*damage)); // round up so that digitated figures still suffer 1 hp damage on water
         if(healthShield >= damageAfterArmor) {
             healthShield -= damageAfterArmor;
@@ -364,7 +365,10 @@ public class Figure extends StackPane {
             healthShield = 0;
             health -= damageAfterArmor;
         }
-        addRecentlySufferedDamage(damageAfterArmor); // do this before a DeathException can be thrown
+
+        if(countAsRecentlySufferedDamage) {
+            addRecentlySufferedDamage(damageAfterArmor);
+        }
 
         if(health <= 0) {
             health = 0;
@@ -381,6 +385,17 @@ public class Figure extends StackPane {
             updatePositionsOfChildren();
         });
         System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health);
+    }
+
+    /**
+     * Lets the figure suffer damage which is not counted as {@link #recentlySufferedDamage}.
+     * Same as calling {@code sufferDamage(damage, false)}
+     * @param damage the damage to be suffered (armor will reduce the damage)
+     * @throws DeathException
+     * @see #sufferDamage(int, boolean)
+     */
+    public void sufferDamage(int damage) throws DeathException {
+        sufferDamage(damage, true);
     }
 
     public void setHealth(int hp) {
