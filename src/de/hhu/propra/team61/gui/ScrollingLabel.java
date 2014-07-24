@@ -51,7 +51,7 @@ public class ScrollingLabel extends StackPane {
         /** low priority lines are overwritten right away */
         boolean lowPriority;
         /** on timeout, this line is removed */
-        Timer removeTimer = new Timer(); // TODO IMPORTANT not all timer threads shut down !?
+        Timer removeTimer = new Timer();
 
         /**
          * Creates a new line.

@@ -478,7 +478,7 @@ public class MapWindow extends Application implements Networkable {
                                                 }
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
-                                                server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                                server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth()); // TODO IMPORTANT shield update
                                                 server.send("PLAY_SFX fallDamage");
                                             }
                                         }
@@ -647,14 +647,15 @@ public class MapWindow extends Application implements Networkable {
         int causedDamageInTurn = collectRecentlyCausedDamage();
 
         if(teams.get(currentTeam).getCurrentFigure().isOnRampage()) {
-            teams.get(currentTeam).getCurrentFigure().endRampage(causedDamageInTurn); // TODO important server
+            teams.get(currentTeam).getCurrentFigure().endRampage(causedDamageInTurn);
+            Server.send("END_RAMPAGE " + getFigureId(teams.get(currentTeam).getCurrentFigure()) + " " + causedDamageInTurn);
         }
 
         if (causedDamageInTurn >= HIGH_DAMAGE_THRESHOLD) {
             server.send("PLAY_SFX highDamage");
             if(causedDamageInTurn >= RAMPAGE_THRESHOLD) {
                 teams.get(currentTeam).getCurrentFigure().startRampage();
-                server.send("SET_RAMPAGE 1 " + getFigureId(teams.get(currentTeam).getCurrentFigure())); // TODO important
+                Server.send("START_RAMPAGE " + getFigureId(teams.get(currentTeam).getCurrentFigure()));
                 server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
             }
         } else if (causedDamageInTurn == 0 && Math.random() < NO_HIT_COMMENT_PROBABILITY) {
@@ -972,6 +973,11 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).digitate();
                 }
                 break;
+            case "END_RAMPAGE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).endRampage(Integer.parseInt(cmd[3]));
+                }
+                break;
             case "FIGURE_SET_POSITION":
                 Point2D position = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
                 Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
@@ -1012,6 +1018,11 @@ public class MapWindow extends Application implements Networkable {
             case "REMOVE_SUPPLY":
                 fieldPane.getChildren().remove(supplyDrops.get(Integer.parseInt(cmd[1])));
                 supplyDrops.remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                break;
+            case "START_RAMPAGE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).startRampage();
+                }
                 break;
             case "SUPPLY_SET_POSITION":
                 position = new Point2D(Double.parseDouble(cmd[2]), Double.parseDouble(cmd[3]));

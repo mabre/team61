@@ -412,10 +412,19 @@ public class Figure extends StackPane {
         return health;
     }
 
+    /**
+     * Tells whether this figure is on rampage
+     * @return true if figure is on rampage
+     */
     public boolean isOnRampage() {
         return isOnRampage;
     }
 
+    /**
+     * Ends the rampage of the figure.
+     * The figure gets a hp bonus depending on the given hp value (typically caused damage in round) and the {@link #healthShield}.
+     * @param hp a hp value used to calculate life steal (typically caused damage in round)
+     */
     public void endRampage(int hp) {
         isOnRampage = false;
         int hpBonus = (int)(hp*RAMPAGE_HP_BONUS_FACTOR)+healthShield;
@@ -427,6 +436,11 @@ public class Figure extends StackPane {
         setHealth(health); // redraw hpLabel
     }
 
+    /**
+     * Starts rampage of figure.
+     * Unless it is the figures turn, it will result is a higher mass (see {@link #getMass()} (making effect of weapon
+     * shock waves smaller), adds a life shield, and draws a red circle around the figure.
+     */
     public void startRampage() {
         if(isOnRampage) {
             System.err.println(name + " already is on rampage");
