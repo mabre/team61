@@ -645,9 +645,18 @@ public class MapWindow extends Application implements Networkable {
         }
 
         int causedDamageInTurn = collectRecentlyCausedDamage();
+
+        if(teams.get(currentTeam).getCurrentFigure().isOnRampage()) {
+            teams.get(currentTeam).getCurrentFigure().endRampage(causedDamageInTurn); // TODO important server
+        }
+
         if (causedDamageInTurn >= HIGH_DAMAGE_THRESHOLD) {
             server.send("PLAY_SFX highDamage");
-            if(causedDamageInTurn >= RAMPAGE_THRESHOLD) server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
+            if(causedDamageInTurn >= RAMPAGE_THRESHOLD) {
+                teams.get(currentTeam).getCurrentFigure().startRampage();
+                server.send("SET_RAMPAGE 1 " + getFigureId(teams.get(currentTeam).getCurrentFigure())); // TODO important
+                server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
+            }
         } else if (causedDamageInTurn == 0 && Math.random() < NO_HIT_COMMENT_PROBABILITY) {
             server.send("SET_GAME_COMMENT 0 " + generateNoHitComment(teams.get(currentTeam).getCurrentFigure().getName())); // TODO class for generating random comments.
         }
@@ -1326,6 +1335,17 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(0).getFigures().get(0).setHealth(100);
                 server.send("SET_GAME_COMMENT 0 Ate my spinach.");
                 System.out.println("Ate my spinach.");
+                break;
+            case "up+": // 1000 live for all living figures
+                for(Team t: teams) {
+                    for(Figure f: t.getFigures()) {
+                        if(f.getHealth() > 0) {
+                            f.setHealth(1000);
+                        }
+                    }
+                }
+                server.send("SET_GAME_COMMENT 0 Spinach bomb.");
+                System.out.println("Spinach bomb.");
                 break;
             case "1up+": // 1000 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(1000);

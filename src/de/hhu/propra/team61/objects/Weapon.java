@@ -188,7 +188,6 @@ public abstract class Weapon extends Item {
                     //1.1 make them suffer
                     try {
                         int effectiveDamage = damage-distance/NORMED_BLOCK_SIZE;
-                        treatedFigure.addRecentlySufferedDamage(effectiveDamage); // do this before a DeathException can be thrown
                         treatedFigure.sufferDamage(effectiveDamage);
                     } catch (DeathException e) {
                         System.out.println("WARNING: unhandled death exception");
