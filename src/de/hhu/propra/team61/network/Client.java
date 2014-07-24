@@ -157,6 +157,7 @@ public class Client implements Runnable {
      * Stops this client by closing the {@link #socket}.
      */
     public void stop() {
+        isLocalGame = false; // reset to false so that new clients have to be told explicitly that it is a local game (#113)
         System.out.println("CLIENT stopping");
         try {
             if(socket != null) {
