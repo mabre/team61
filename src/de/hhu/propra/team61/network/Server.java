@@ -271,6 +271,10 @@ public class Server implements Runnable {
      */
     public static void send(String command) {
         synchronized (clients) {
+            if(clients.size() == 0) {
+                System.err.println("Server has no client. Sure that we are host?");
+                return;
+            }
             for (ClientConnection client : clients) {
                 client.out.println(command);
                 System.out.println("SERVER sent command to " + client.id + "/" + client.name + ": " + command);

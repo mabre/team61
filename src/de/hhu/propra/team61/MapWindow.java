@@ -453,14 +453,14 @@ public class MapWindow extends Application implements Networkable {
                                             final Point2D newPos; // TODO code duplication
                                             figure.addVelocity(GRAVITY.multiply(figure.getMass()));
                                             newPos = terrain.getPositionForDirection(oldPos, figure.getVelocity(), figure.getHitRegion(), false, true, false, true);
-                                            if (!oldPos.equals(newPos)) { // do not send a message when position is unchanged
+                                            if (oldPos.distance(newPos) > .01) { // do not send a message when position is unchanged
                                                 figure.setPosition(new Point2D(newPos.getX(), newPos.getY())); // needed to prevent timing issue when calculating new position before client is handled on server
                                                 server.send("FIGURE_SET_POSITION " + t + " " + f + " " + (newPos.getX()) + " " + (newPos.getY()) + " " + scrollToFigure);
                                             }
                                         } catch (CollisionException e) {
-                                            if (!e.getLastGoodPosition().equals(oldPos)) {
+                                            if (e.getLastGoodPosition().distance(oldPos) > .01) {
                                                 System.out.println("CollisionWithTerrainException");
-                                                figure.setPosition(new Point2D(e.getLastGoodPosition().getX(), e.getLastGoodPosition().getY()));
+                                                figure.setPosition(e.getLastGoodPosition());
                                                 server.send("FIGURE_SET_POSITION " + t + " " + f + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                             }
                                             int oldHp = figure.getHealth();
@@ -997,7 +997,7 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(Integer.parseInt(cmd[1])).getCurrentFigure().setActive(false);
                 break;
             case "DROP_SUPPLY":
-                supplyDrops.add(new Crate(terrain.getTerrainWidth()/Terrain.BLOCK_SIZE-2, cmd[2]));
+                supplyDrops.add(new Crate(terrain.getTerrainWidth() / Terrain.BLOCK_SIZE - 2, cmd[2]));
                 fieldPane.getChildren().add(supplyDrops.get(supplyDrops.size() - 1));
                 break;
             case "REMOVE_SUPPLY":
