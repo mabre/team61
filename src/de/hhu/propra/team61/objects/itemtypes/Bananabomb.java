@@ -67,7 +67,7 @@ public class Bananabomb extends Weapon {
 
         if(!isShard) {
             for (int i = 0; i < SHARDS; i++) {
-                Projectile shot = new Projectile(new Image(PROJECTILE_IMG,4,4,true,true), impactPoint, impactPoint.add(-Math.random() * 10, -Math.random() * 10), 8, this);
+                Projectile shot = new Projectile(new Image(PROJECTILE_IMG,4,4,true,true), impactPoint, impactPoint.add((-Math.random() * 20 + 10), -Math.random() * 10), 8, this);
                 shot.setShard();
                 shards.put(shot.toJson());
             }
