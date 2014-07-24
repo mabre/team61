@@ -40,8 +40,6 @@ public class Figure extends StackPane {
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
     /** space between name and frame */
     private static final int ACTIVE_INDICATOR_PADDING = 2;
-    /** image which is drawn above figures which are on a rampage */
-    private final static Image RAMPAGE_OVERLAY = new Image("file:resources/weapons/temp0.png");
     /** initial health shield value for figures on rampage; the shield left is added as life bonus (in addition to {@link #RAMPAGE_HP_BONUS_FACTOR} */
     private final static int RAMPAGE_SHIELD = 30;
     /** figures on rampage are less effected by shock waves, implemented by increased mass
@@ -49,6 +47,8 @@ public class Figure extends StackPane {
     private static final int RAMPAGE_MASS_FACTOR = 2;
     /** life steal factor; life steal also considers the {@link #RAMPAGE_SHIELD} left */
     private static final double RAMPAGE_HP_BONUS_FACTOR = .2;
+    /** padding in px for rampage overlay */
+    private static final int RAMPAGE_IMAGE_PADDING = 2;
 
     /** Name of the figure */
     private String name;
@@ -91,6 +91,8 @@ public class Figure extends StackPane {
     private Text hpLabel;
     /** Overlay displaying conditions */
     ImageView condition = null;
+    /** image overlay which is drawn above figures which are on a rampage */
+    private final ImageView rampageOverlay = new ImageView(new Image("file:resources/figures/rampage.png", NORMED_OBJECT_SIZE+2*RAMPAGE_IMAGE_PADDING, NORMED_OBJECT_SIZE+2*RAMPAGE_IMAGE_PADDING, true, true));
 
     /** properties for digitation, which might modify other values */
     private boolean digitated = false;
@@ -173,6 +175,9 @@ public class Figure extends StackPane {
         Image image = new Image("file:resources/figures/"+ (digitated?"digi":"") + figureType +".png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
         figureImage.setImage(image);
         getChildren().add(figureImage);
+
+        getChildren().add(rampageOverlay);
+        rampageOverlay.setVisible(false);
 
         nameTag = new Text(name);
         hpLabel = new Text(digitated ? health+"+" : health+"");
@@ -295,6 +300,8 @@ public class Figure extends StackPane {
         Platform.runLater(() -> {
             figureImage.setTranslateX(Math.round(position.getX())); // round this position to prevent ugly subpixel rendering
             figureImage.setTranslateY(Math.round(position.getY()));
+            rampageOverlay.setTranslateX(Math.round(position.getX()) - RAMPAGE_IMAGE_PADDING);
+            rampageOverlay.setTranslateY(Math.round(position.getY()) - RAMPAGE_IMAGE_PADDING);
             nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getLayoutBounds().getWidth() / 2);
             nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
             hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getLayoutBounds().getWidth() / 2);
@@ -303,7 +310,7 @@ public class Figure extends StackPane {
             activeIndicator.setTranslateY(nameTag.getTranslateY() - ACTIVE_INDICATOR_PADDING);
             activeIndicator.setWidth(nameTag.getLayoutBounds().getWidth() + ACTIVE_INDICATOR_PADDING*2);
             activeIndicator.setHeight(nameTag.getLayoutBounds().getHeight() + ACTIVE_INDICATOR_PADDING); // -2 since we otherwise overlap with the hpLabel
-            if(condition != null){
+            if(condition != null){ // TODO do it like rampageOverlay?
                 condition.setTranslateX(figureImage.getTranslateX());
                 condition.setTranslateY(figureImage.getTranslateY());
             }
@@ -349,7 +356,7 @@ public class Figure extends StackPane {
      * @throws DeathException thrown when the figure is dead after suffering the given damage
      */
     public void sufferDamage(int damage) throws DeathException {
-        int damageAfterArmor = (int)(damage - (armor*damage));
+        int damageAfterArmor = (int)Math.ceil(damage - (armor*damage)); // round up so that digitated figures still suffer 1 hp damage on water
         if(healthShield >= damageAfterArmor) {
             healthShield -= damageAfterArmor;
         } else {
@@ -401,6 +408,7 @@ public class Figure extends StackPane {
         health += hpBonus;
         isOnRampage = false;
         healthShield = 0;
+        Platform.runLater(() -> rampageOverlay.setVisible(false));
         setHealth(health); // redraw hpLabel
     }
 
@@ -411,6 +419,7 @@ public class Figure extends StackPane {
         }
         isOnRampage = true;
         healthShield = RAMPAGE_SHIELD;
+        Platform.runLater(() -> rampageOverlay.setVisible(true));
         setHealth(health); // redraw hpLabel
     }
 
