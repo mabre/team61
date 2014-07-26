@@ -3,6 +3,7 @@ package de.hhu.propra.team61.objects;
 import de.hhu.propra.team61.MapWindow;
 import de.hhu.propra.team61.animation.SpriteAnimation;
 import de.hhu.propra.team61.io.json.JSONObject;
+import de.hhu.propra.team61.objects.itemtypes.Rifle;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -307,10 +308,19 @@ public class Figure extends StackPane {
     public Item getSelectedItem(){
         return selectedItem;
     }
+
     public void setSelectedItem(Item select){
+        double previousAngle = -1337;
+        if(selectedItem != null && selectedItem instanceof Weapon && // TODO @Kegny is there a better way than using instanceof? Keep angle in Figure?
+           !(selectedItem instanceof Rifle) && !(select instanceof Rifle) // do not give aim aid by aiming with rifle before shooting with other weapon
+           && select instanceof Weapon) { // do not reset angle when choosing item (so returning to the previous weapon preserves angle)
+            previousAngle = ((Weapon)selectedItem).getAngle();
+            ((Weapon)selectedItem).resetAngle();
+        }
         selectedItem = select;
         if(selectedItem != null) {
-            select.setPosition(new Point2D(position.getX(), position.getY()));
+            selectedItem.setPosition(new Point2D(position.getX(), position.getY()));
+            if(selectedItem instanceof Weapon && previousAngle != -1337) ((Weapon)selectedItem).setAngle(previousAngle);
             selectedItem.angleDraw(facingRight);
         }
     }

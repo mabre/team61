@@ -117,7 +117,7 @@ public abstract class Weapon extends Item {
         this.angle = 0;
 
         crosshairImage = new ImageView(new Image("file:resources/weapons/crosshair.png",NORMED_OBJECT_SIZE,NORMED_OBJECT_SIZE,true,true));
-        this.getChildren().add(crosshairImage);;
+        this.getChildren().add(crosshairImage);
 
         setAlignment(Pos.TOP_LEFT);
     }
@@ -233,7 +233,8 @@ public abstract class Weapon extends Item {
      //Getter and Setter
     public String getProjectileImage() { return projectileImg; } //TODO MOVE?
     /**
-     * @return angle in degrees // TODO measured from where?
+     * angle between horizon and direction aimed at, between -90 and +90
+     * @return angle in degrees
      */
     public double getAngle() { return angle; }
     public int getMass() { return mass; }
@@ -242,17 +243,15 @@ public abstract class Weapon extends Item {
     }
 
     //----------------------------------Crosshair-Related Functions---------------------------------
-    /**
-     * Math.sin() uses Radian-Values[2*PI <=> 1 Circle], this function transforms angles [360° <=> 1Circle]
-     * into this scheme by aplying a basic function.
-     * @return the respective radianvalue
-     */
-    public double toRadian(double grad) { // This function transforms angles to rad which are needed for sin/cos etc.
-        return grad * Math.PI / 180;
-    }
 
     /** Resetting is necessary since, the instances are kept, until closing the game */
-    public void resetAngle() { angle = 0; }
+    public void resetAngle() {
+        angle = 0;
+    }
+
+    public void setAngle(double angle) {
+        this.angle = angle;
+    }
 
     @Override
     /** Overriden from @link #Item; Enables aiming higher by adjusting angle, setting the maximum to +90° */
@@ -281,15 +280,15 @@ public abstract class Weapon extends Item {
      */
     public void angleDraw(boolean faces_right){
         if(faces_right){
-            crosshairImage.setTranslateX(itemImage.getTranslateX() + Math.cos(toRadian(angle)) * RADIUS);
+            crosshairImage.setTranslateX(itemImage.getTranslateX() + Math.cos(Math.toRadians(angle)) * RADIUS);
             itemImage.setScaleX(1); //Reverse mirroring
             itemImage.setRotate(-angle);
         }
         else{
-            crosshairImage.setTranslateX(itemImage.getTranslateX() - Math.cos(toRadian (angle)) * RADIUS);
+            crosshairImage.setTranslateX(itemImage.getTranslateX() - Math.cos(Math.toRadians(angle)) * RADIUS);
             itemImage.setScaleX(-1); //Mirror Weapon, so its facing left
             itemImage.setRotate(angle);
         }
-        crosshairImage.setTranslateY(itemImage.getTranslateY() - Math.sin(toRadian(angle)) * RADIUS);
+        crosshairImage.setTranslateY(itemImage.getTranslateY() - Math.sin(Math.toRadians(angle)) * RADIUS);
     }
 }
