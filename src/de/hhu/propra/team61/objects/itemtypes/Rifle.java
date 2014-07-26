@@ -16,7 +16,7 @@ public class Rifle extends Weapon {
     private final static int NORMED_OBJECT_SIZE = 16;
 
     private final static String  NAME           = "Rifle";
-    public final static String  DESCRIPTION    = "Camper!";
+    public final static String   DESCRIPTION    = "Camper!";
 
     private final static String  PROJECTILE_IMG = "file:resources/weapons/temp0.png";
     private final static String  WEAPON_IMG     = "file:resources/weapons/rifle.png";
@@ -35,6 +35,8 @@ public class Rifle extends Weapon {
     private final static boolean DRIFTS        = false;
     private static final double MAX_POINTER_LENGTH = 1000;
 
+    /** holds the width of the loaded terrain (must be set externally),so that the rifle knows how long the pointer may be
+     * if not set correctly, the pointer might move the terrain around when aiming down */
     private static int terrainWidth;
     private static int terrainHeight;
 
@@ -73,25 +75,32 @@ public class Rifle extends Weapon {
             //draw relatively from there
             redDot.setStartX(0);
             redDot.setStartY(0);
-            double endX = MAX_POINTER_LENGTH*i/50 * Math.cos(toRadian(getAngle()));
+            double endX = MAX_POINTER_LENGTH*i/50 * Math.cos(Math.toRadians(getAngle()));
             redDot.setEndX(endX);
-            double endY = -MAX_POINTER_LENGTH*i/50 * Math.sin(toRadian(getAngle()));
+            double endY = -MAX_POINTER_LENGTH*i/50 * Math.sin(Math.toRadians(getAngle()));
             redDot.setEndY(endY);
             // move the upper end of the canvas (this is at the position of the weapon), so that the line does not tilt away
             redDot.setTranslateY(itemImage.getTranslateY() + Math.min(endY, 0) + yOffset);
             if(facesRight) {
                 redDot.setTranslateX(itemImage.getTranslateX() + xOffset);
                 redDot.setScaleX(1);
-                if( endY+redDot.getTranslateY() > 0 && endY+redDot.getTranslateY() < terrainHeight &&
-                    endX+redDot.getTranslateX() > 0 && endX+redDot.getTranslateX() < terrainWidth) { // do not further shorten when end point is within level
-                    break;
+                // do not further shorten when end point is within level
+                if(endX + redDot.getTranslateX() > 0 && endX + redDot.getTranslateX() < terrainWidth) {
+                    if(getAngle() < 0) { // ie. if aiming down
+                        if(endY + redDot.getTranslateY() > 0 && endY + redDot.getTranslateY() < terrainHeight) break;
+                    } else {
+                        if(-endY < terrainHeight) break;
+                    }
                 }
             } else {
                 redDot.setTranslateX(itemImage.getTranslateX() + xOffset - endX);
                 redDot.setScaleX(-1);
-                if( endY+redDot.getTranslateY() > 0 && endY+redDot.getTranslateY() < terrainHeight &&
-                    redDot.getTranslateX() > 0 && redDot.getTranslateX() < terrainWidth) {
-                    break;
+                if(redDot.getTranslateX() > 0 && redDot.getTranslateX() < terrainWidth) {
+                    if(getAngle() < 0) {
+                        if(endY + redDot.getTranslateY() > 0 && endY + redDot.getTranslateY() < terrainHeight) break;
+                    } else {
+                        if(-endY < terrainHeight) break;
+                    }
                 }
             }
         }
