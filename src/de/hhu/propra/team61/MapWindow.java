@@ -39,6 +39,7 @@ import java.io.FileNotFoundException;
 
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
 import static de.hhu.propra.team61.JavaFxUtils.extractPart;
@@ -63,6 +64,8 @@ public class MapWindow extends Application implements Networkable {
     private final int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
     private final static int SUDDEN_DEATH_TURNS = 20;
+    private final static int MILLISECONDS_PER_TURN = 10 * 1000; // TODO IMPORTANT pref, doc
+    private static final int MILLISECONDS_BETWEEN_TURNS = 1000;
     /** names the boss can have (chosen randomly) */
     private final static String[] BOSS_NAMES = {"Marʔoz", "ʔock’mar", "Ånsgar", "Apfel"}; // similarity to Vel’Koz, Kog’Maw, a town in Norway, and an evil fruit is purely coincidental
 
@@ -105,6 +108,9 @@ public class MapWindow extends Application implements Networkable {
     private int turnCount = 0;
     private int teamquantity;
     private int teamsize;
+    /** time left for the current turn in ms */
+    private final AtomicInteger turnTimer = new AtomicInteger(-MILLISECONDS_BETWEEN_TURNS); // TODO IMPORTANT json
+    private Thread turnTimerThread;
 
     /** dynamic list containing all drops on the screen */
     private ArrayList<Crate> supplyDrops = new ArrayList<>();
@@ -377,8 +383,11 @@ public class MapWindow extends Application implements Networkable {
             );
         }
 
+        turnTimerThread = new Thread(this::turnTimerFunction);
+        turnTimerThread.start();
+
         if(server != null) { // only the server should do calculations
-            moveObjectsThread = new Thread(() -> { // TODO move this code to own class
+            moveObjectsThread = new Thread(() -> { // TODO move this code to own class / functionn
                 try {
                     long before = System.currentTimeMillis(), now, sleep;
                     while (true) {
@@ -499,6 +508,39 @@ public class MapWindow extends Application implements Networkable {
                 }
             });
             moveObjectsThread.start();
+        }
+    }
+
+    private void turnTimerFunction() {
+        final int INTERVAL = 1000;
+        try {
+            long before = System.currentTimeMillis(), now, sleep;
+            while (true) {
+                if(!pause) {
+                    synchronized(turnTimer) {
+                        if(turnTimer.get() > 0) {
+                            if (turnTimer.addAndGet(-INTERVAL) == 0 && flyingProjectiles.size() == 0) {
+                                Platform.runLater(() -> {
+                                    currentFigureChooseWeapon(9); // TODO hard-coded weapon 9 to Skip @Kegny
+                                    handleOnClient("CURRENT_FIGURE_SHOOT"); // TODO IMPORTANT network
+                                });
+                            }
+                        } else if(turnTimer.get() < 0) {
+                            if(turnTimer.addAndGet(INTERVAL) == 0) {
+                                turnTimer.set(MILLISECONDS_PER_TURN); // TODO IMPORTANT investigate case where figure dies by shock wave
+                            }
+                        }
+                        System.out.println(turnTimer.get() + "ms");
+                    }
+                }
+                // sleep thread, and assure constant frame rate
+                now = System.currentTimeMillis();
+                sleep = Math.max(0, (INTERVAL) - (now - before));
+                Thread.sleep(sleep);
+                before = System.currentTimeMillis();
+            }
+        } catch (InterruptedException e) {
+            System.out.println("turnTimerThread shut down");
         }
     }
 
@@ -638,11 +680,18 @@ public class MapWindow extends Application implements Networkable {
     public void endTurn() {
         if(turnCount == -42) { // cheat mode
             shootingIsAllowed = true;
+            turnTimer.set(MILLISECONDS_PER_TURN);
             return;
         }
 
         if(flyingProjectiles.size() > 0) {
             System.err.println("Hey, there are " + flyingProjectiles.size() + " projectiles, we shouldn't be here!");
+        }
+
+        synchronized(turnTimer) {
+            if (turnTimer.get() < 0) {
+                System.err.println("turnTimer " + turnTimer.get() + ", stopping endTurn()");
+            }
         }
 
         int causedDamageInTurn = collectRecentlyCausedDamage();
@@ -739,6 +788,10 @@ public class MapWindow extends Application implements Networkable {
         String teamLabelText = "Turn " + (turnCount + 1) + ": It’s Team " + teams.get(currentTeam).getName() + "’s turn! What will " + teams.get(currentTeam).getCurrentFigure().getName() + " do?";
         server.send("TEAM_LABEL_SET_TEXT " + teamLabelText);
         System.out.println(teamLabelText);
+
+        synchronized(turnTimer) {
+            turnTimer.set(-MILLISECONDS_BETWEEN_TURNS); // TODO IMPORTANT network
+        }
     }
 
     private String generateNoHitComment(String name) {
@@ -820,6 +873,7 @@ public class MapWindow extends Application implements Networkable {
         ingameLabel.stopAllTimers();
 
         if(moveObjectsThread != null) moveObjectsThread.interrupt();
+        if(turnTimerThread != null) turnTimerThread.interrupt();
 
         GameState.save(this.toJson());
         System.out.println("MapWindow: saved game state");
@@ -1021,6 +1075,7 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "GAME_OVER":
                 if (moveObjectsThread != null) moveObjectsThread.interrupt();
+                if (turnTimerThread != null) turnTimerThread.interrupt();
                 VorbisPlayer.stop();
                 ingameLabel.stopAllTimers();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
@@ -1180,6 +1235,11 @@ public class MapWindow extends Application implements Networkable {
 
         if(pause) {
             System.out.println("Game paused, ignoring command " + command);
+            return;
+        }
+
+        if(turnTimer.get() <= 0) {
+            System.out.println("turnTimer at " + turnTimer.get() + ", ignoring command" + command);
             return;
         }
 
