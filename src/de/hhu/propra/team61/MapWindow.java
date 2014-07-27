@@ -278,7 +278,7 @@ public class MapWindow extends Application implements Networkable {
         }
 
         turnCount = input.getInt("turnCount");
-        turnTimer.set(input.getInt("turnCount", MILLISECONDS_BETWEEN_TURNS));
+        turnTimer.set(input.getInt("turnTimer", MILLISECONDS_BETWEEN_TURNS));
         currentTeam = input.getInt("currentTeam");
         terrain.setWind(input.getDouble("windForce"));
 
