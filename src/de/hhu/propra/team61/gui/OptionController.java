@@ -28,6 +28,8 @@ public class OptionController {
     @FXML private Slider volumeBGM = new Slider();
     /** to change volume of sound effects */
     @FXML private Slider volumeSFX = new Slider();
+    /** to enter how many seconds till round ends */
+    @FXML private TextField secondsPerTurn = new TextField();
     /** to enter how many rounds till sudden death */
     @FXML private TextField turnsTillSuddenDeath = new TextField();
     /** to choose wind force */
@@ -79,6 +81,7 @@ public class OptionController {
             volumeSFX.setValue(savedSettings.getDouble("volumeSFX"));
         }
         turnsTillSuddenDeath.setText(savedSettings.getInt("turnsTillSuddenDeath", 30)+""); // TODO DefaultOptions class (Settings?) holding default setting constants
+        secondsPerTurn.setText(savedSettings.getInt("secondsPerTurn", 30)+"");
         windForce.setValue(savedSettings.getInt("windForce", 2));
     }
 
@@ -94,6 +97,11 @@ public class OptionController {
             output.put("turnsTillSuddenDeath", Integer.parseInt(turnsTillSuddenDeath.getText()));
         } catch(NumberFormatException e) {
             output.put("turnsTillSuddenDeath", 30);
+        }
+        try {
+            output.put("secondsPerTurn", Integer.parseInt(secondsPerTurn.getText()));
+        } catch(NumberFormatException e) {
+            output.put("secondsPerTurn", 30);
         }
         output.put("windForce", windForce.getValue());
         return output;

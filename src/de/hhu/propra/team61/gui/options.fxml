@@ -14,10 +14,12 @@
         <Slider fx:id="volumeBGM" GridPane.columnIndex="2" GridPane.rowIndex="2" GridPane.columnSpan="4" ShowTickMarks="true" ShowTickLabels="true" value="50"/>
         <Text text="Effects:" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
         <Slider fx:id="volumeSFX" GridPane.columnIndex="2" GridPane.rowIndex="3" GridPane.columnSpan="4" ShowTickMarks="true" ShowTickLabels="true" value="50"/>
-        <Text text="Turns till sudden death:" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="3" />
-        <TextField fx:id="turnsTillSuddenDeath" text="30" prefWidth="40" GridPane.columnIndex="4" GridPane.rowIndex="4" />
-        <Text text="Wind force:" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="2" />
-        <Slider fx:id="windForce" GridPane.columnIndex="2" GridPane.rowIndex="5" GridPane.columnSpan="10" prefWidth="280" min="0" max="3" minorTickCount="0" majorTickUnit="1" snapToTicks="true" ShowTickMarks="true" ShowTickLabels="true"/>
+        <Text text="Seconds per turn:" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="3" />
+        <TextField fx:id="secondsPerTurn" text="30" prefWidth="40" GridPane.columnIndex="4" GridPane.rowIndex="4" />
+        <Text text="Turns till sudden death:" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="3" />
+        <TextField fx:id="turnsTillSuddenDeath" text="30" prefWidth="40" GridPane.columnIndex="4" GridPane.rowIndex="5" />
+        <Text text="Wind force:" GridPane.columnIndex="0" GridPane.rowIndex="6" GridPane.columnSpan="2" />
+        <Slider fx:id="windForce" GridPane.columnIndex="2" GridPane.rowIndex="6" GridPane.columnSpan="10" prefWidth="280" min="0" max="3" minorTickCount="0" majorTickUnit="1" snapToTicks="true" ShowTickMarks="true" ShowTickLabels="true"/>
         <Button fx:id="close" text="Close" onAction="#handleOptionExit" GridPane.columnIndex="3" GridPane.rowIndex="14" GridPane.halignment="CENTER" styleClass="mainButton"/>
     </children>
     <padding>
