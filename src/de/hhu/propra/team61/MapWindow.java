@@ -227,6 +227,7 @@ public class MapWindow extends Application implements Networkable {
         }
 
         turnCount = input.getInt("turnCount");
+        turnTimer.set(input.getInt("turnCount", MILLISECONDS_BETWEEN_TURNS));
         currentTeam = input.getInt("currentTeam");
         terrain.setWind(input.getDouble("windForce"));
         initialize();
@@ -268,6 +269,7 @@ public class MapWindow extends Application implements Networkable {
         }
 
         turnCount = input.getInt("turnCount");
+        turnTimer.set(input.getInt("turnCount", MILLISECONDS_BETWEEN_TURNS));
         currentTeam = input.getInt("currentTeam");
         terrain.setWind(input.getDouble("windForce"));
 
@@ -523,14 +525,17 @@ public class MapWindow extends Application implements Networkable {
                     synchronized(turnTimer) {
                         if(turnTimer.get() > 0) {
                             if (turnTimer.addAndGet(-INTERVAL) == 0 && flyingProjectiles.size() == 0) {
-                                Platform.runLater(() -> {
-                                    currentFigureChooseWeapon(9); // TODO hard-coded weapon 9 to Skip @Kegny
-                                    handleOnClient("CURRENT_FIGURE_SHOOT"); // TODO IMPORTANT network
-                                });
+                                if(server != null) {
+                                    Platform.runLater(() -> {
+                                        currentFigureChooseWeapon(9); // TODO hard-coded weapon 9 to Skip @Kegny
+                                        handleOnClient("CURRENT_FIGURE_SHOOT"); // TODO IMPORTANT network
+                                    });
+                                }
                             }
                         } else if(turnTimer.get() < 0) {
                             if(turnTimer.addAndGet(INTERVAL) == 0) {
                                 turnTimer.set(MILLISECONDS_PER_TURN); // TODO IMPORTANT investigate case where figure dies by shock wave
+                                if(server != null) Server.send("SET_TURN_TIMER " + turnTimer.get());
                             }
                         }
                         updateTurnTimerLabelText();
@@ -550,7 +555,7 @@ public class MapWindow extends Application implements Networkable {
     private void updateTurnTimerLabelText() {
         final int value = turnTimer.get();
         Platform.runLater(() -> turnTimerLabel.setText(String.format("%.1f", value/1000.0)));
-        System.out.println(value + "ms");
+//        System.out.println(value + "ms");
     }
 
     /**
@@ -624,6 +629,7 @@ public class MapWindow extends Application implements Networkable {
         output.put("teams", teamsArray);
         output.put("crates", cratesArray);
         output.put("turnCount", turnCount);
+        output.put("turnTimer", turnTimer.get());
         output.put("currentTeam", currentTeam);
         output.put("terrain", terrain.toJson());
         output.put("windForce", terrain.getWindMagnitude());
@@ -691,6 +697,7 @@ public class MapWindow extends Application implements Networkable {
             shootingIsAllowed = true;
             synchronized(turnTimer) {
                 turnTimer.set(MILLISECONDS_PER_TURN);
+                if(server != null) Server.send("SET_TURN_TIMER " + turnTimer.get());
                 updateTurnTimerLabelText();
             }
             return;
@@ -802,7 +809,8 @@ public class MapWindow extends Application implements Networkable {
         System.out.println(teamLabelText);
 
         synchronized(turnTimer) {
-            turnTimer.set(-MILLISECONDS_BETWEEN_TURNS); // TODO IMPORTANT network
+            turnTimer.set(-MILLISECONDS_BETWEEN_TURNS);
+            Server.send("SET_TURN_TIMER " + turnTimer.get());
             updateTurnTimerLabelText();
         }
     }
@@ -1162,6 +1170,9 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "SET_TURN_COUNT":
                 turnCount = Integer.parseInt(cmd[1]);
+                break;
+            case "SET_TURN_TIMER":
+                turnTimer.set(Integer.parseInt(cmd[1]));
                 break;
             case "SUDDEN_DEATH":
                 int teamToKill = Integer.parseInt(cmd[1]);
