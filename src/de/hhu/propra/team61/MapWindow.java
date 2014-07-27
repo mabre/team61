@@ -474,6 +474,7 @@ public class MapWindow extends Application implements Networkable {
                                                 server.send("FIGURE_SET_POSITION " + t + " " + f + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                             }
                                             int oldHp = figure.getHealth();
+                                            int oldShield = figure.getShield();
                                             try {
                                                 figure.resetVelocity();
                                                 if (terrain.standingOnLiquid(figure.getPosition())) {
@@ -488,8 +489,11 @@ public class MapWindow extends Application implements Networkable {
                                                 }
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
-                                                server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
-                                                server.send("PLAY_SFX fallDamage");
+                                                Server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                                Server.send("PLAY_SFX fallDamage");
+                                            }
+                                            if (figure.getShield() != oldShield) {
+                                                Server.send("SET_SHIELD " + getFigureId(figure) + " " + figure.getShield());
                                             }
                                         }
                                     }
@@ -655,9 +659,19 @@ public class MapWindow extends Application implements Networkable {
         }
 
         int causedDamageInTurn = collectRecentlyCausedDamage();
+
+        if(teams.get(currentTeam).getCurrentFigure().isOnRampage()) {
+            teams.get(currentTeam).getCurrentFigure().endRampage(causedDamageInTurn);
+            Server.send("END_RAMPAGE " + getFigureId(teams.get(currentTeam).getCurrentFigure()) + " " + causedDamageInTurn);
+        }
+
         if (causedDamageInTurn >= HIGH_DAMAGE_THRESHOLD) {
             server.send("PLAY_SFX highDamage");
-            if(causedDamageInTurn >= RAMPAGE_THRESHOLD) server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
+            if(causedDamageInTurn >= RAMPAGE_THRESHOLD) {
+                teams.get(currentTeam).getCurrentFigure().startRampage();
+                Server.send("START_RAMPAGE " + getFigureId(teams.get(currentTeam).getCurrentFigure()));
+                server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
+            }
         } else if (causedDamageInTurn == 0 && Math.random() < NO_HIT_COMMENT_PROBABILITY) {
             server.send("SET_GAME_COMMENT 0 " + generateNoHitComment(teams.get(currentTeam).getCurrentFigure().getName())); // TODO class for generating random comments.
         }
@@ -694,7 +708,7 @@ public class MapWindow extends Application implements Networkable {
                 for (Figure f : t.getFigures()) {
                     if(f.getHealth() > 0) { //Avoid reviving the poisoned dead
                         if (f.getIsPoisoned()) {
-                            f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON));
+                            f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON)); // note that we ignore the shield here
                             server.send("SET_HP " + getFigureId(f) + " " + f.getHealth());
                         }
                     }
@@ -761,14 +775,21 @@ public class MapWindow extends Application implements Networkable {
 
     /**
      * Sums up the hp damage caused since last time calling this function.
+     * Does not include the damage caused at the currently active figure, put its recently suffered damage is poped anyway.
      * @return hp damage caused since last time calling this function
      * @see de.hhu.propra.team61.objects.Figure#popRecentlySufferedDamage()
      */
     private int collectRecentlyCausedDamage() {
         int recentlyCausedDamage = 0;
-        for(Team team: teams) {
-            for(Figure figure: team.getFigures()) {
-                recentlyCausedDamage += figure.popRecentlySufferedDamage();
+        for (int i = 0; i < teams.size(); i++) {
+            Team team = teams.get(i);
+            ArrayList<Figure> figures = team.getFigures();
+            for (Figure figure : figures) {
+                if (i == currentTeam && team.getCurrentFigure() == figure) {
+                    figure.popRecentlySufferedDamage();
+                } else {
+                    recentlyCausedDamage += figure.popRecentlySufferedDamage();
+                }
             }
         }
         return recentlyCausedDamage;
@@ -973,6 +994,11 @@ public class MapWindow extends Application implements Networkable {
                     teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).digitate();
                 }
                 break;
+            case "END_RAMPAGE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).endRampage(Integer.parseInt(cmd[3]));
+                }
+                break;
             case "FIGURE_SET_POSITION":
                 Point2D position = new Point2D(Double.parseDouble(cmd[3]), Double.parseDouble(cmd[4]));
                 Figure f = teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2]));
@@ -1013,6 +1039,11 @@ public class MapWindow extends Application implements Networkable {
             case "REMOVE_SUPPLY":
                 fieldPane.getChildren().remove(supplyDrops.get(Integer.parseInt(cmd[1])));
                 supplyDrops.remove(supplyDrops.get(Integer.parseInt(cmd[1])));
+                break;
+            case "START_RAMPAGE":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).startRampage();
+                }
                 break;
             case "SUPPLY_SET_POSITION":
                 position = new Point2D(Double.parseDouble(cmd[2]), Double.parseDouble(cmd[3]));
@@ -1079,6 +1110,11 @@ public class MapWindow extends Application implements Networkable {
             case "SET_HP":
                 if(server == null) {
                     teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+                }
+                break;
+            case "SET_SHIELD":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setShield(Integer.parseInt(cmd[3]));
                 }
                 break;
             case "CONDITION":
@@ -1336,6 +1372,17 @@ public class MapWindow extends Application implements Networkable {
                 teams.get(0).getFigures().get(0).setHealth(100);
                 server.send("SET_GAME_COMMENT 0 Ate my spinach.");
                 System.out.println("Ate my spinach.");
+                break;
+            case "up+": // 1000 live for all living figures
+                for(Team t: teams) {
+                    for(Figure f: t.getFigures()) {
+                        if(f.getHealth() > 0) {
+                            f.setHealth(1000);
+                        }
+                    }
+                }
+                server.send("SET_GAME_COMMENT 0 Spinach bomb.");
+                System.out.println("Spinach bomb.");
                 break;
             case "1up+": // 1000 live for first figure of first team
                 teams.get(0).getFigures().get(0).setHealth(1000);

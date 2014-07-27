@@ -41,6 +41,15 @@ public class Figure extends StackPane {
     private static final Point2D GRAVEYARD = new Point2D(-1000,-1000);
     /** space between name and frame */
     private static final int ACTIVE_INDICATOR_PADDING = 2;
+    /** initial health shield value for figures on rampage; the shield left is added as life bonus (in addition to {@link #RAMPAGE_HP_BONUS_FACTOR} */
+    private final static int RAMPAGE_SHIELD = 30;
+    /** figures on rampage are less effected by shock waves, implemented by increased mass
+     * NB: If the factor is too high, figures suffer fall damage by standing around, TODO maybe change the way wo achieve less shock wave effect */
+    private static final int RAMPAGE_MASS_FACTOR = 2;
+    /** life steal factor; life steal also considers the {@link #RAMPAGE_SHIELD} left */
+    private static final double RAMPAGE_HP_BONUS_FACTOR = .2;
+    /** padding in px for rampage overlay */
+    private static final int RAMPAGE_IMAGE_PADDING = 2;
 
     /** Name of the figure */
     private String name;
@@ -48,6 +57,8 @@ public class Figure extends StackPane {
     private String figureType;
     /** Health of a figure, every not positive value means death */
     private int health;
+    /** Health shield absorbing hp damage */
+    private int healthShield = 0;
     /** Color used for hpLabel etc. */
     private Color color;
     /** frame which is drawn around the active figure's name */
@@ -82,9 +93,12 @@ public class Figure extends StackPane {
     private Text hpLabel;
     /** Overlay displaying conditions */
     ImageView condition = null;
+    /** image overlay which is drawn above figures which are on a rampage */
+    private final ImageView rampageOverlay = new ImageView(new Image("file:resources/figures/rampage.png", NORMED_OBJECT_SIZE+2*RAMPAGE_IMAGE_PADDING, NORMED_OBJECT_SIZE+2*RAMPAGE_IMAGE_PADDING, true, true));
 
     /** properties for digitation, which might modify other values */
     private boolean digitated = false;
+    private boolean isOnRampage = false;
     private double massFactor = 1;
     private int jumpDuringFallThreshold = 0;
     private double armor = 0;
@@ -132,6 +146,7 @@ public class Figure extends StackPane {
         this.name = input.getString("name"); // TODO json.get wrapper which checks if property exists an can return default value
         this.figureType = input.getString("figureType");
         this.health = input.getInt("health");
+        this.healthShield = input.getInt("healthShield");
         this.armor  = input.getDouble("armor");
 
         this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
@@ -139,6 +154,7 @@ public class Figure extends StackPane {
         this.causedHpDamage = input.getInt("causedHpDamage");
 
         this.digitated = input.getBoolean("digitated");
+        this.isOnRampage = input.getBoolean("isOnRampage");
         this.isParalyzed = input.getBoolean("isParalyzed");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -164,8 +180,11 @@ public class Figure extends StackPane {
         figureImage.setImage(image);
         getChildren().add(figureImage);
 
+        getChildren().add(rampageOverlay);
+        rampageOverlay.setVisible(false);
+
         nameTag = new Text(name);
-        hpLabel = new Text(digitated ? health+"+" : health+"");
+        hpLabel = new Text();
         getChildren().add(nameTag);
         getChildren().add(hpLabel);
 
@@ -176,7 +195,9 @@ public class Figure extends StackPane {
         activeIndicator.setVisible(false);
         this.getChildren().add(activeIndicator);
 
-        updatePositionsOfChildren();
+        Platform.runLater(() -> rampageOverlay.setVisible(isOnRampage));
+
+        updateHpLabelText();
     }
 
     /** Creates a JSONObject containing all variables' values of this instance (e.g. for saving) */
@@ -185,8 +206,10 @@ public class Figure extends StackPane {
         output.put("name", name);
         output.put("figureType", figureType);
         output.put("health", health);
+        output.put("healthShield", healthShield);
         output.put("armor", armor);
         output.put("digitated", digitated);
+        output.put("isOnRampage", isOnRampage);
         output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
         output.put("massFactor", massFactor);
         output.put("causedHpDamage", causedHpDamage);
@@ -285,6 +308,8 @@ public class Figure extends StackPane {
         Platform.runLater(() -> {
             figureImage.setTranslateX(Math.round(position.getX())); // round this position to prevent ugly subpixel rendering
             figureImage.setTranslateY(Math.round(position.getY()));
+            rampageOverlay.setTranslateX(Math.round(position.getX()) - RAMPAGE_IMAGE_PADDING);
+            rampageOverlay.setTranslateY(Math.round(position.getY()) - RAMPAGE_IMAGE_PADDING);
             nameTag.setTranslateX(figureImage.getTranslateX() + offset - nameTag.getLayoutBounds().getWidth() / 2);
             nameTag.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE * 2);
             hpLabel.setTranslateX(figureImage.getTranslateX() + offset - hpLabel.getLayoutBounds().getWidth() / 2);
@@ -293,7 +318,7 @@ public class Figure extends StackPane {
             activeIndicator.setTranslateY(nameTag.getTranslateY() - ACTIVE_INDICATOR_PADDING);
             activeIndicator.setWidth(nameTag.getLayoutBounds().getWidth() + ACTIVE_INDICATOR_PADDING*2);
             activeIndicator.setHeight(nameTag.getLayoutBounds().getHeight() + ACTIVE_INDICATOR_PADDING); // -2 since we otherwise overlap with the hpLabel
-            if(condition != null){
+            if(condition != null){ // TODO do it like rampageOverlay?
                 condition.setTranslateX(figureImage.getTranslateX());
                 condition.setTranslateY(figureImage.getTranslateY());
             }
@@ -336,7 +361,8 @@ public class Figure extends StackPane {
 
     /**
      * Lets the figure suffer damage.
-     * If {@link #armor} is greater than 0, the damage is reduced.
+     * If {@link #armor} is greater than 0, the damage is reduced. {@link #healthShield} can reduce the effect on the
+     * actual hp value. Calling this function with {@code damage=0} simply redraws the hp label.
      * Examples:
      * <ul>
      *     <li>hp is at 80, {@code armor=0}, {@code sufferDamage(40)} is called. hp is now at 40.</li>
@@ -344,10 +370,23 @@ public class Figure extends StackPane {
      *     <li>hp is at 40, {@code sufferDamage(40)} is called. hp is now at 0, the figure becomes invisible, and a {@link DeathException} is thrown.</li>
      * </ul>
      * @param damage the damage (armor will reduce the damage)
+     * @param countAsRecentlySufferedDamage if true, the effective damage (ie. after considering armor) is added to {@link #recentlySufferedDamage}
      * @throws DeathException thrown when the figure is dead after suffering the given damage
      */
-    public void sufferDamage(int damage) throws DeathException {
-        health -= damage - (armor*damage);
+    public void sufferDamage(final int damage, final boolean countAsRecentlySufferedDamage) throws DeathException {
+        int damageAfterArmor = (int)Math.ceil(damage - (armor*damage)); // round up so that digitated figures still suffer 1 hp damage on water
+        if(healthShield >= damageAfterArmor) {
+            healthShield -= damageAfterArmor;
+        } else {
+            damageAfterArmor -= healthShield;
+            healthShield = 0;
+            health -= damageAfterArmor;
+        }
+
+        if(countAsRecentlySufferedDamage) {
+            addRecentlySufferedDamage(damageAfterArmor);
+        }
+
         if(health <= 0) {
             health = 0;
             Image image = new Image("file:resources/spawnpoint.png", NORMED_OBJECT_SIZE, NORMED_OBJECT_SIZE, true, true);
@@ -355,11 +394,33 @@ public class Figure extends StackPane {
             setPosition(GRAVEYARD);
             throw new DeathException(this);
         }
+        updateHpLabelText();
+        System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health + "~" + healthShield);
+    }
+
+    /**
+     * Updates the hp label with the current health, shield, and digitation status, and updates the position of the labels.
+     * It is save to call this method from non-fx threads.
+     */
+    private void updateHpLabelText() {
         Platform.runLater(() -> {
-            hpLabel.setText(health + (digitated ? "+" : ""));
+            String hpLabelText = health + "";
+            if(healthShield > 0) hpLabelText += "~" + healthShield;
+            if(digitated) hpLabelText += "+";
+            hpLabel.setText(hpLabelText);
             updatePositionsOfChildren();
         });
-        System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health);
+    }
+
+    /**
+     * Lets the figure suffer damage which is not counted as {@link #recentlySufferedDamage}.
+     * Same as calling {@code sufferDamage(damage, false)}
+     * @param damage the damage to be suffered (armor will reduce the damage)
+     * @throws DeathException
+     * @see #sufferDamage(int, boolean)
+     */
+    public void sufferDamage(final int damage) throws DeathException {
+        sufferDamage(damage, true);
     }
 
     public void setHealth(int hp) {
@@ -374,6 +435,54 @@ public class Figure extends StackPane {
 
     public int getHealth() {
         return health;
+    }
+
+    public int getShield() {
+        return healthShield;
+    }
+
+    public void setShield(int shield) {
+        this.healthShield = shield;
+    }
+
+    /**
+     * Tells whether this figure is on rampage
+     * @return true if figure is on rampage
+     */
+    public boolean isOnRampage() {
+        return isOnRampage;
+    }
+
+    /**
+     * Ends the rampage of the figure.
+     * The figure gets a hp bonus depending on the given hp value (typically caused damage in round) and the {@link #healthShield}.
+     * @param hp a hp value used to calculate life steal (typically caused damage in round)
+     */
+    public void endRampage(int hp) {
+        isOnRampage = false;
+        int hpBonus = (int)(hp*RAMPAGE_HP_BONUS_FACTOR)+healthShield;
+        System.out.println("rampage hp bonus: " + hpBonus);
+        health += hpBonus;
+        isOnRampage = false;
+        healthShield = 0;
+        Platform.runLater(() -> rampageOverlay.setVisible(false));
+        updateHpLabelText();
+    }
+
+    /**
+     * Starts rampage of figure.
+     * Unless it is the figures turn, it will result is a higher mass (see {@link #getMass()} (making effect of weapon
+     * shock waves smaller), adds a life shield, and draws a red circle around the figure.
+     */
+    public void startRampage() {
+        if(isOnRampage) {
+            System.err.println(name + " already is on rampage");
+            return;
+        }
+        isOnRampage = true;
+        healthShield = RAMPAGE_SHIELD;
+        Platform.runLater(() -> rampageOverlay.setVisible(true));
+        updateHpLabelText();
     }
 
     public Rectangle2D getHitRegion() {
@@ -434,7 +543,7 @@ public class Figure extends StackPane {
     }
 
     public int getMass() {
-        return (int)(MASS*massFactor);
+        return (int)(MASS * massFactor * ((isOnRampage && !isActive) ? RAMPAGE_MASS_FACTOR : 1));
     }
 
     public void digitate() { // similarity to digivolution is purely coincidental
@@ -451,8 +560,7 @@ public class Figure extends StackPane {
         digitated = true;
 
         Platform.runLater(() -> {
-            hpLabel.setText(health + "+");
-
+            updateHpLabelText();
             ImageView digitationAnimationImage = new ImageView("file:resources/animations/digitation.png");
             digitationAnimationImage.setTranslateX(figureImage.getTranslateX() - NORMED_OBJECT_SIZE/2);
             digitationAnimationImage.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE/2);
@@ -485,7 +593,7 @@ public class Figure extends StackPane {
         System.out.println(name + " caused " + damage + " hp damage this round");
     }
 
-    public void addRecentlySufferedDamage(int damage) {
+    private void addRecentlySufferedDamage(int damage) {
         recentlySufferedDamage += damage;
     }
 
