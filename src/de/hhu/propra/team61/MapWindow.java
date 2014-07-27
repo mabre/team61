@@ -111,6 +111,7 @@ public class MapWindow extends Application implements Networkable {
     /** time left for the current turn in ms */
     private final AtomicInteger turnTimer = new AtomicInteger(-MILLISECONDS_BETWEEN_TURNS); // TODO IMPORTANT json
     private Thread turnTimerThread;
+    private Label turnTimerLabel = new Label();
 
     /** dynamic list containing all drops on the screen */
     private ArrayList<Crate> supplyDrops = new ArrayList<>();
@@ -375,6 +376,8 @@ public class MapWindow extends Application implements Networkable {
         windIndicator.setWindForce(terrain.getWindMagnitude());
         topLine.setRight(windIndicator);
 
+        topLine.setCenter(turnTimerLabel);
+
         VorbisPlayer.readVolumeSetting();
         VorbisPlayer.play(terrain.getBackgroundMusic(), true);
         if(!terrain.getBackgroundMusicName().isEmpty()) {
@@ -512,7 +515,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void turnTimerFunction() {
-        final int INTERVAL = 1000;
+        final int INTERVAL = 100;
         try {
             long before = System.currentTimeMillis(), now, sleep;
             while (true) {
@@ -530,7 +533,7 @@ public class MapWindow extends Application implements Networkable {
                                 turnTimer.set(MILLISECONDS_PER_TURN); // TODO IMPORTANT investigate case where figure dies by shock wave
                             }
                         }
-                        System.out.println(turnTimer.get() + "ms");
+                        updateTurnTimerLabelText();
                     }
                 }
                 // sleep thread, and assure constant frame rate
@@ -542,6 +545,12 @@ public class MapWindow extends Application implements Networkable {
         } catch (InterruptedException e) {
             System.out.println("turnTimerThread shut down");
         }
+    }
+
+    private void updateTurnTimerLabelText() {
+        final int value = turnTimer.get();
+        Platform.runLater(() -> turnTimerLabel.setText(String.format("%.1f", value/1000.0)));
+        System.out.println(value + "ms");
     }
 
     /**
@@ -680,7 +689,10 @@ public class MapWindow extends Application implements Networkable {
     public void endTurn() {
         if(turnCount == -42) { // cheat mode
             shootingIsAllowed = true;
-            turnTimer.set(MILLISECONDS_PER_TURN);
+            synchronized(turnTimer) {
+                turnTimer.set(MILLISECONDS_PER_TURN);
+                updateTurnTimerLabelText();
+            }
             return;
         }
 
@@ -791,6 +803,7 @@ public class MapWindow extends Application implements Networkable {
 
         synchronized(turnTimer) {
             turnTimer.set(-MILLISECONDS_BETWEEN_TURNS); // TODO IMPORTANT network
+            updateTurnTimerLabelText();
         }
     }
 
