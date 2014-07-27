@@ -1,8 +1,11 @@
 package de.hhu.propra.team61.network;
 
+import de.hhu.propra.team61.gui.SceneController;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
 import javafx.application.Platform;
+import org.controlsfx.dialog.DialogStyle;
+import org.controlsfx.dialog.Dialogs;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -204,6 +207,14 @@ public class Server implements Runnable {
             }
         } catch(BindException e) {
             System.err.println("ERROR " + e.getLocalizedMessage());
+
+            Platform.runLater(() -> Dialogs.create()
+                    .owner(SceneController.getStage())
+                    .masthead("Another instance of this programme is already running.")
+                    .message("Another programme is already using port " + Server.PORT + ". Make sure that no other instance of the game is running (maybe use the system monitor to kill java processes running Afrobob, or log out and in again).")
+                    .style(DialogStyle.UNDECORATED)
+                    .lightweight()
+                    .showException(e));
         } catch (IOException e) {
             e.printStackTrace();
         }

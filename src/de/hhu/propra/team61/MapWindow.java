@@ -34,6 +34,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.controlsfx.dialog.DialogStyle;
+import org.controlsfx.dialog.Dialogs;
 
 import java.io.FileNotFoundException;
 
@@ -170,6 +172,13 @@ public class MapWindow extends Application implements Networkable {
 
         if(teamsArray.length() * teamsize > terrain.getNumberOfAvailableSpawnPoints()) {
             System.err.println("ERROR: Not enough spawn points: " + teamsArray.length() + " teams with " + teamsize + " figures requested, but only " + terrain.getNumberOfAvailableSpawnPoints() + " spawn points");
+            Dialogs.create()
+                    .owner(sceneController.getStage())
+                    .masthead("Not enough starting points available.")
+                    .message("Try adding spawn points using the level editor.")
+                    .style(DialogStyle.UNDECORATED)
+                    .lightweight()
+                    .showInformation();
             shutdown();
             sceneController.switchToMenu();
             return;
@@ -1380,7 +1389,7 @@ public class MapWindow extends Application implements Networkable {
                             if (cmd.length > 2) {
                                 floodLevel = Integer.parseInt(cmd[2]);
                             } else {
-                                if(floodLevel != -1) {
+                                if (floodLevel != -1) {
                                     terrain.increaseFlood(++floodLevel);
                                 } else {
                                     floodLevel = 0;

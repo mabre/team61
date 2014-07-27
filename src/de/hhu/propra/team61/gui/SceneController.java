@@ -16,11 +16,11 @@ import javafx.scene.Scene;
 public class SceneController {
 
     /** The main window */
-    private BigStage mainwindow;
+    private static BigStage mainwindow;
     /** contains main menu */
-    private Scene menuScene;
+    private static Scene menuScene;
     /** contains game */
-    private Scene gameScene;
+    private static Scene gameScene;
     /** title of the game to be shown at the top at all times */
     public static final String GAME_TITLE = "Charly in Madagascar";
 
@@ -36,7 +36,7 @@ public class SceneController {
      * Returns the main stage.
      * @return the main stage
      */
-    public BigStage getStage() {
+    public static BigStage getStage() { // TODO @Jessypet Can we make everything static, so that we do not need to pass the references to sceneController around?
         return mainwindow;
     }
 

@@ -1,12 +1,17 @@
 package de.hhu.propra.team61.network;
 
+import de.hhu.propra.team61.gui.SceneController;
 import javafx.application.Platform;
 import javafx.scene.input.KeyCode;
+import org.controlsfx.dialog.DialogStyle;
+import org.controlsfx.dialog.Dialogs;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.net.SocketException;
 
@@ -99,19 +104,19 @@ public class Client implements Runnable {
 
             while (true) {
                 String line = in.readLine();
-                if(line == null) {
+                if (line == null) {
                     System.err.println("CLIENT RECEIVED NULL!?");
                     return;
                 }
                 System.out.println("CLIENT RECEIVED: " + line);
-                if(line.startsWith("SUBMITNAME")) {
-                    id = "client"+(int)(Math.random()*1000)+(int)(System.currentTimeMillis()%100000/100);
+                if (line.startsWith("SUBMITNAME")) {
+                    id = "client" + (int) (Math.random() * 1000) + (int) (System.currentTimeMillis() % 100000 / 100);
                     System.out.println("CLIENT id: " + id + " / " + name);
                     out.println(id + " " + name);
-                } else if(line.startsWith("NAMEACCEPTED")) {
+                } else if (line.startsWith("NAMEACCEPTED")) {
                     System.out.println("CLIENT: connected");
                     readyListener.run();
-                } else if(line.startsWith("EXIT")) {
+                } else if (line.startsWith("EXIT")) {
                     System.out.println("CLIENT: exit");
                     break;
                 } else {
@@ -120,8 +125,26 @@ public class Client implements Runnable {
                     Platform.runLater(() -> currentNetworkable.handleOnClient(line));
                 }
             }
+        } catch (ConnectException e) {
+            System.err.println("CLIENT readLine() interrupted by ConnectException: " + e.getMessage());
+            Platform.runLater(() -> Dialogs.create()
+                    .owner(SceneController.getStage())
+                    .masthead("Could not connect with " + serverAddress + ".")
+                    .message("Please make sure that the host is ready and the IP address is correct.")
+                    .style(DialogStyle.UNDECORATED)
+                    .lightweight()
+                    .showException(e));
+        } catch (NoRouteToHostException e) {
+            System.err.println("CLIENT readLine() interrupted by NoRouteToHostException: " + e.getMessage());
+            Platform.runLater(() -> Dialogs.create()
+                    .owner(SceneController.getStage())
+                    .masthead("Could not connect with " + serverAddress + ".")
+                    .message("Please make sure that the host is not behind a firewall blocking connections on port " + Server.PORT + ".")
+                    .style(DialogStyle.UNDECORATED)
+                    .lightweight()
+                    .showException(e));
         } catch (SocketException e) {
-            System.err.println("CLIENT readLine() interrupted by SocketException: " + e.getMessage());
+            System.err.println("CLIENT readLine() interrupted by SocketException: " + e.getClass() + " " + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
         }
