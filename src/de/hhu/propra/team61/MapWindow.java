@@ -63,6 +63,8 @@ public class MapWindow extends Application implements Networkable {
     private final int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
     private final static int SUDDEN_DEATH_TURNS = 20;
+    /** names the boss can have (chosen randomly) */
+    private final static String[] BOSS_NAMES = {"Marʔoz", "ʔock’mar", "Ånsgar", "Apfel"}; // similarity to Vel’Koz, Kog’Maw, a town in Norway, and an evil fruit is purely coincidental
 
     //JavaFX related variables
     private Scene drawing;
@@ -789,7 +791,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     private void spawnBoss() {
-        String bossName = (Math.random() > .33 ? (Math.random() > .5 ? "Marʔoz" : "ʔock’mar") : "Ånsgar"); // similarity to Vel’Koz, Kog’Maw, and a town in Norway is purely coincidental
+        String bossName = BOSS_NAMES[(int)(Math.random() * BOSS_NAMES.length)];
         bossSpawnedLeft = (Math.random() > .5);
         initBoss(bossName);
         server.send("SD BOSS SPAWN " + bossName + " " + bossSpawnedLeft);
