@@ -180,6 +180,14 @@ public class Terrain extends GridPane {
     }
 
     /**
+     * Gets the number of spawn points available, ie. not counting spawn points already returned by {@link #getRandomSpawnPoint()}.
+     * @return number of available spawn points
+     */
+    public int getNumberOfAvailableSpawnPoints() {
+        return spawnPoints.size();
+    }
+
+    /**
      * Creates new random wind.
      * <p>
      * The maximum wind force depends on the settings chosen by the user. Lower wind forces are more
