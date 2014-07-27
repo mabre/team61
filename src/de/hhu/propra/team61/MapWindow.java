@@ -1475,6 +1475,11 @@ public class MapWindow extends Application implements Networkable {
                 });
                 System.out.println("Premature Death");
                 break;
+            case "time+": // increases turnTimer by given value (s), or by 20 s if no value is given
+                turnTimer.addAndGet(cmd.length > 1 ? Integer.parseInt(cmd[1])*1000 : 20000);
+                server.send("SET_GAME_COMMENT 0 It's about time.");
+                System.out.println("It’s about time.");
+                break;
             default:
                 client.sendChatMessage("««« Haw-haw! This user failed to cheat … »»» " + arrayToString(cmd, 0));
                 server.send("SET_GAME_COMMENT 0 No cheating, please!");
