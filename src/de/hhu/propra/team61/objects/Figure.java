@@ -56,6 +56,7 @@ public class Figure extends StackPane {
     private String figureType;
     /** Health of a figure, every not positive value means death */
     private int health;
+
     private int healthShield = 0; // TODO important JSON, javadoc
     /** Color used for hpLabel etc. */
     private Color color;
@@ -356,7 +357,7 @@ public class Figure extends StackPane {
      * @param countAsRecentlySufferedDamage if true, the effective damage (ie. after considering armor) is added to {@link #recentlySufferedDamage}
      * @throws DeathException thrown when the figure is dead after suffering the given damage
      */
-    public void sufferDamage(int damage, boolean countAsRecentlySufferedDamage) throws DeathException {
+    public void sufferDamage(final int damage, final boolean countAsRecentlySufferedDamage) throws DeathException {
         int damageAfterArmor = (int)Math.ceil(damage - (armor*damage)); // round up so that digitated figures still suffer 1 hp damage on water
         if(healthShield >= damageAfterArmor) {
             healthShield -= damageAfterArmor;
@@ -384,7 +385,7 @@ public class Figure extends StackPane {
             hpLabel.setText(hpLabelText);
             updatePositionsOfChildren();
         });
-        System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health);
+        System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health + "~" + healthShield);
     }
 
     /**
@@ -394,7 +395,7 @@ public class Figure extends StackPane {
      * @throws DeathException
      * @see #sufferDamage(int, boolean)
      */
-    public void sufferDamage(int damage) throws DeathException {
+    public void sufferDamage(final int damage) throws DeathException {
         sufferDamage(damage, true);
     }
 
@@ -410,6 +411,14 @@ public class Figure extends StackPane {
 
     public int getHealth() {
         return health;
+    }
+
+    public int getShield() {
+        return healthShield;
+    }
+
+    public void setShield(int shield) {
+        this.healthShield = shield;
     }
 
     /**

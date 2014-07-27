@@ -464,6 +464,7 @@ public class MapWindow extends Application implements Networkable {
                                                 server.send("FIGURE_SET_POSITION " + t + " " + f + " " + (e.getLastGoodPosition().getX()) + " " + (e.getLastGoodPosition().getY()) + " " + scrollToFigure);
                                             }
                                             int oldHp = figure.getHealth();
+                                            int oldShield = figure.getShield();
                                             try {
                                                 figure.resetVelocity();
                                                 if (terrain.standingOnLiquid(figure.getPosition())) {
@@ -478,8 +479,11 @@ public class MapWindow extends Application implements Networkable {
                                                 }
                                             }
                                             if (figure.getHealth() != oldHp) { // only send hp update when hp has been changed
-                                                server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth()); // TODO IMPORTANT shield update
-                                                server.send("PLAY_SFX fallDamage");
+                                                Server.send("SET_HP " + getFigureId(figure) + " " + figure.getHealth());
+                                                Server.send("PLAY_SFX fallDamage");
+                                            }
+                                            if (figure.getShield() != oldShield) {
+                                                Server.send("SET_SHIELD " + getFigureId(figure) + " " + figure.getShield());
                                             }
                                         }
                                     }
@@ -694,7 +698,7 @@ public class MapWindow extends Application implements Networkable {
                 for (Figure f : t.getFigures()) {
                     if(f.getHealth() > 0) { //Avoid reviving the poisoned dead
                         if (f.getIsPoisoned()) {
-                            f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON));
+                            f.setHealth(Math.max(1, f.getHealth() - DAMAGE_BY_POISON)); // note that we ignore the shield here
                             server.send("SET_HP " + getFigureId(f) + " " + f.getHealth());
                         }
                     }
@@ -761,14 +765,21 @@ public class MapWindow extends Application implements Networkable {
 
     /**
      * Sums up the hp damage caused since last time calling this function.
+     * Does not include the damage caused at the currently active figure, put its recently suffered damage is poped anyway.
      * @return hp damage caused since last time calling this function
      * @see de.hhu.propra.team61.objects.Figure#popRecentlySufferedDamage()
      */
     private int collectRecentlyCausedDamage() {
         int recentlyCausedDamage = 0;
-        for(Team team: teams) {
-            for(Figure figure: team.getFigures()) {
-                recentlyCausedDamage += figure.popRecentlySufferedDamage();
+        for (int i = 0; i < teams.size(); i++) {
+            Team team = teams.get(i);
+            ArrayList<Figure> figures = team.getFigures();
+            for (Figure figure : figures) {
+                if (i == currentTeam && team.getCurrentFigure() == figure) {
+                    figure.popRecentlySufferedDamage();
+                } else {
+                    recentlyCausedDamage += figure.popRecentlySufferedDamage();
+                }
             }
         }
         return recentlyCausedDamage;
@@ -1089,6 +1100,11 @@ public class MapWindow extends Application implements Networkable {
             case "SET_HP":
                 if(server == null) {
                     teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setHealth(Integer.parseInt(cmd[3]));
+                }
+                break;
+            case "SET_SHIELD":
+                if(server == null) {
+                    teams.get(Integer.parseInt(cmd[1])).getFigures().get(Integer.parseInt(cmd[2])).setShield(Integer.parseInt(cmd[3]));
                 }
                 break;
             case "CONDITION":

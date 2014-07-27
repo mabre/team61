@@ -187,13 +187,14 @@ public abstract class Weapon extends Item {
                 if(distance < NORMED_BLOCK_SIZE*4){
                     //1.1 make them suffer
                     try {
-                        int effectiveDamage = damage-distance/NORMED_BLOCK_SIZE;
-                        treatedFigure.sufferDamage(effectiveDamage, true);
+                        int effectiveDamage = damage-distance/NORMED_BLOCK_SIZE; // can become negative for 0-damage-weapons like Skip
+                        if(effectiveDamage > 0) treatedFigure.sufferDamage(effectiveDamage, true);
                     } catch (DeathException e) {
                         System.out.println("WARNING: unhandled death exception");
                         // Not so important, exception mainly used for death by falldamage
                     }
                     commandList.add("SET_HP " + t + " " + f + " " + treatedFigure.getHealth());
+                    commandList.add("SET_SHIELD " + t + " " + f + " " + treatedFigure.getShield());
                     if(treatedFigure.getHealth() == 0) {
                         commandList.add("SET_GAME_COMMENT 0 " + generateKillComment(treatedFigure.getName()));
                     }

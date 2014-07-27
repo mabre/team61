@@ -100,8 +100,11 @@ import static de.hhu.propra.team61.JavaFxUtils.removeLastChar;
  * Sets the current team to the given team, and disabled the figure of the previously active team, // TODO why?
  * see {@link de.hhu.propra.team61.MapWindow#currentTeam}
  * <li>{@code SET_HP $int_team $int_figure $int_hp} (*)<br>
- * Sets the hp of the given figure of the given team to the given values.<br>
+ * Sets the hp of the given figure of the given team to the given value.<br>
  * see {@link de.hhu.propra.team61.objects.Figure#setHealth(int)}
+ * <li>{@code SET_SHIELD $int_team $int_figure $int_shield} (*)<br>
+ * Sets the health shield of the given figure of the given team to the given value.<br>
+ * see {@link de.hhu.propra.team61.objects.Figure#setShield(int)}
  * <li>{@code SET_GAME_COMMENT $int_mask $String_comment}<br>
  * Adds a game comment. Mask: 0 = high prio, 1 = low prio<br>
  * see {@link #changeTeamById(String, int)}, {@link de.hhu.propra.team61.MapWindow#setGameComment(String, boolean)}
