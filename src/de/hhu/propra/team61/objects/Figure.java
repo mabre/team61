@@ -56,8 +56,8 @@ public class Figure extends StackPane {
     private String figureType;
     /** Health of a figure, every not positive value means death */
     private int health;
-
-    private int healthShield = 0; // TODO important JSON, javadoc
+    /** Health shield absorbing hp damage */
+    private int healthShield = 0;
     /** Color used for hpLabel etc. */
     private Color color;
     /** frame which is drawn around the active figure's name */
@@ -145,6 +145,7 @@ public class Figure extends StackPane {
         this.name = input.getString("name"); // TODO json.get wrapper which checks if property exists an can return default value
         this.figureType = input.getString("figureType");
         this.health = input.getInt("health");
+        this.healthShield = input.getInt("healthShield");
         this.armor  = input.getDouble("armor");
 
         this.jumpDuringFallThreshold = input.getInt("jumpDuringFallThreshold");
@@ -152,6 +153,7 @@ public class Figure extends StackPane {
         this.causedHpDamage = input.getInt("causedHpDamage");
 
         this.digitated = input.getBoolean("digitated");
+        this.isOnRampage = input.getBoolean("isOnRampage");
         this.isParalyzed = input.getBoolean("isParalyzed");
         this.isPoisoned = input.getBoolean("isPoisoned");
         this.isStuck    = input.getBoolean("isStuck");
@@ -181,7 +183,7 @@ public class Figure extends StackPane {
         rampageOverlay.setVisible(false);
 
         nameTag = new Text(name);
-        hpLabel = new Text(digitated ? health+"+" : health+"");
+        hpLabel = new Text();
         getChildren().add(nameTag);
         getChildren().add(hpLabel);
 
@@ -192,7 +194,9 @@ public class Figure extends StackPane {
         activeIndicator.setVisible(false);
         this.getChildren().add(activeIndicator);
 
-        updatePositionsOfChildren();
+        Platform.runLater(() -> rampageOverlay.setVisible(isOnRampage));
+
+        updateHpLabelText();
     }
 
     /** Creates a JSONObject containing all variables' values of this instance (e.g. for saving) */
@@ -201,8 +205,10 @@ public class Figure extends StackPane {
         output.put("name", name);
         output.put("figureType", figureType);
         output.put("health", health);
+        output.put("healthShield", healthShield);
         output.put("armor", armor);
         output.put("digitated", digitated);
+        output.put("isOnRampage", isOnRampage);
         output.put("jumpDuringFallThreshold", jumpDuringFallThreshold);
         output.put("massFactor", massFactor);
         output.put("causedHpDamage", causedHpDamage);
@@ -378,6 +384,15 @@ public class Figure extends StackPane {
             setPosition(GRAVEYARD);
             throw new DeathException(this);
         }
+        updateHpLabelText();
+        System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health + "~" + healthShield);
+    }
+
+    /**
+     * Updates the hp label with the current health, shield, and digitation status, and updates the position of the labels.
+     * It is save to call this method from non-fx threads.
+     */
+    private void updateHpLabelText() {
         Platform.runLater(() -> {
             String hpLabelText = health + "";
             if(healthShield > 0) hpLabelText += "~" + healthShield;
@@ -385,7 +400,6 @@ public class Figure extends StackPane {
             hpLabel.setText(hpLabelText);
             updatePositionsOfChildren();
         });
-        System.out.println(name + " got damage " + damage + " (* 1-"+ armor +"), health at " + health + "~" + healthShield);
     }
 
     /**
@@ -442,7 +456,7 @@ public class Figure extends StackPane {
         isOnRampage = false;
         healthShield = 0;
         Platform.runLater(() -> rampageOverlay.setVisible(false));
-        setHealth(health); // redraw hpLabel
+        updateHpLabelText();
     }
 
     /**
@@ -458,7 +472,7 @@ public class Figure extends StackPane {
         isOnRampage = true;
         healthShield = RAMPAGE_SHIELD;
         Platform.runLater(() -> rampageOverlay.setVisible(true));
-        setHealth(health); // redraw hpLabel
+        updateHpLabelText();
     }
 
     public Rectangle2D getHitRegion() {
@@ -536,7 +550,7 @@ public class Figure extends StackPane {
         digitated = true;
 
         Platform.runLater(() -> {
-            setHealth(health); // redraw label // TODO own method
+            updateHpLabelText();
             ImageView digitationAnimationImage = new ImageView("file:resources/animations/digitation.png");
             digitationAnimationImage.setTranslateX(figureImage.getTranslateX() - NORMED_OBJECT_SIZE/2);
             digitationAnimationImage.setTranslateY(figureImage.getTranslateY() - NORMED_OBJECT_SIZE/2);
