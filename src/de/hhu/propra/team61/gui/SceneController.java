@@ -62,7 +62,7 @@ public class SceneController {
      */
     public void switchScene(Scene scene, String title) {
         mainwindow.setScene(scene);
-        mainwindow.setTitle(GAME_TITLE + " - " + title);
+        mainwindow.setTitle(GAME_TITLE + " – " + title);
     }
 
     /**
@@ -78,6 +78,6 @@ public class SceneController {
      */
     public void switchToMapwindow() {
         mainwindow.setScene(gameScene);
-        mainwindow.setTitle(GAME_TITLE + " - The Playground");
+        mainwindow.setTitle(GAME_TITLE + " – The Playground");
     }
 }
