@@ -27,7 +27,7 @@ rm -rv out/Charly_in_Madagascar/resources/audio/user
 echo -e "\e[00;33mcopying other files ...\e[00m"
 chmod a+x Launch.sh
 cp Launch.bat Launch.sh out/Charly_in_Madagascar/
-cp COPYING README.md manual.pdf out/Charly_in_Madagascar/
+cp CHANGES COPYING README.md manual.pdf out/Charly_in_Madagascar/
 
 echo -e "\e[00;33mpacking ...\e[00m"
 cd out
