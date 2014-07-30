@@ -47,7 +47,7 @@ public class Figure extends StackPane {
      * NB: If the factor is too high, figures suffer fall damage by standing around, TODO maybe change the way wo achieve less shock wave effect */
     private static final int RAMPAGE_MASS_FACTOR = 2;
     /** life steal factor; life steal also considers the {@link #RAMPAGE_SHIELD} left */
-    private static final double RAMPAGE_HP_BONUS_FACTOR = .2;
+    private static final double RAMPAGE_HP_BONUS_FACTOR = .4;
     /** padding in px for rampage overlay */
     private static final int RAMPAGE_IMAGE_PADDING = 2;
 
@@ -460,7 +460,10 @@ public class Figure extends StackPane {
      */
     public void endRampage(int hp) {
         isOnRampage = false;
-        int hpBonus = (int)(hp*RAMPAGE_HP_BONUS_FACTOR)+healthShield;
+        // causing 50 damage with 30 shield -> 42 bonus (coincidence, really)
+        // causing 50 damage with 0 shield -> 20 bonus
+        // causing 0 damage with 30 shield -> 15 bonus
+        int hpBonus = (int)(hp * (RAMPAGE_HP_BONUS_FACTOR + healthShield/2.0/100.0) + healthShield/2.0);
         System.out.println("rampage hp bonus: " + hpBonus);
         health += hpBonus;
         isOnRampage = false;
