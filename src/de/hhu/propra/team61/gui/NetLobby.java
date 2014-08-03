@@ -296,9 +296,7 @@ public class NetLobby extends Application implements Networkable {
                 }
                 if (differentColors) {
                     VorbisPlayer.stop();
-                    Settings.saveJson(toJson(), "NET_SETTINGS_FILE");
-                    System.out.println("Network-GameSettings: saved settings");
-                    MapWindow mapwindow = new MapWindow(levelChooser.getValue()+".lvl", "NET_SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController);
+                    MapWindow mapwindow = new MapWindow(levelChooser.getValue()+".lvl", toJson(), client, clientThread, server, serverThread, sceneController);
                 } else {
                     sameColor.setVisible(true);
                 }

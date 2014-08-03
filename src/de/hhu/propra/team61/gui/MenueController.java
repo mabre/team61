@@ -61,7 +61,7 @@ public class MenueController {
     // our local game is also client/server based, with server running on localhost
         serverThread = new Thread(server = new Server(() -> {
             clientThread = new Thread(client = new Client(() -> {
-                Platform.runLater(() -> new MapWindow(GameState.getSavedGameState(), "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                Platform.runLater(() -> new MapWindow(GameState.getSavedGameState(), client, clientThread, server, serverThread, sceneController));
             }));
             clientThread.start();
         }));

@@ -104,7 +104,7 @@ public class MapWindow extends Application implements Networkable {
     private final static Image helpImage = new Image("file:resources/layout/help.png");
     //Team related variables
     /** dynamic list containing all playing teams (also contains teams which do not have any living figures) */
-    private ArrayList<Team> teams;
+    private ArrayList<Team> teams = new ArrayList<>();
     private int currentTeam = 0;
     /** number of turns played, ie. during first turn, the value is 0 */
     private int turnCount = 0;
@@ -140,19 +140,20 @@ public class MapWindow extends Application implements Networkable {
     private String map; // TODO do we need this?
     private Chat chat;
     private SceneController sceneController;
-    private int k;
+    /** json holding the settings for the current game */
+    private JSONObject gameSettings;
 
     /**
-     * Creates a new map window.
+     * Creates a new map window. Used by new local game, server, and game over window.
      * @param map the filename of the level to be loaded
-     * @param file file containing the settings for the game to be started
+     * @param gameSettings JSONObject containing the settings for the game to be started
      * @param client a client object
      * @param clientThread the thread executing the client
      * @param server a server object, might be null
      * @param serverThread the thread executing the server, might be null
      * @param sceneController
      */
-    public MapWindow(String map, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
+    public MapWindow(String map, JSONObject gameSettings, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.map = map;
         this.client = client;
@@ -170,12 +171,11 @@ public class MapWindow extends Application implements Networkable {
             e.printStackTrace();
         }
 
-        JSONObject settings = Settings.getSavedJson(file);
-        this.teamquantity = settings.getInt("numberOfTeams");
-        this.teamsize = settings.getInt("teamSize");
-        teams = new ArrayList<>();
-        JSONArray teamsArray = settings.getJSONArray("teams");
-        JSONArray cratesArray = settings.getJSONArray("crates");
+        this.gameSettings = gameSettings;
+        this.teamquantity = gameSettings.getInt("numberOfTeams");
+        this.teamsize = gameSettings.getInt("teamSize");
+        JSONArray teamsArray = gameSettings.getJSONArray("teams");
+        JSONArray cratesArray = gameSettings.getJSONArray("crates");
 
         if(teamsArray.length() * teamsize > terrain.getNumberOfAvailableSpawnPoints()) {
             System.err.println("ERROR: Not enough spawn points: " + teamsArray.length() + " teams with " + teamsize + " figures requested, but only " + terrain.getNumberOfAvailableSpawnPoints() + " spawn points");
@@ -193,7 +193,7 @@ public class MapWindow extends Application implements Networkable {
 
         //ToDo: Prepare start inventory of all teams
         for(int i=0; i<teamsArray.length(); i++) {
-            ArrayList<Item> inventory = ItemManager.generateInventory(settings.getJSONArray("inventory")); //ToDo add startInventory to settings
+            ArrayList<Item> inventory = ItemManager.generateInventory(gameSettings.getJSONArray("inventory")); //ToDo add startInventory to settings
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
         }
 
@@ -207,7 +207,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * Creates a new map window.
+     * Creates a new map window. Used by clients connecting to a running game.
      * @param input a json object representing the state of the map window
      * @param client a client object
      * @param clientThread the thread executing the client
@@ -223,7 +223,6 @@ public class MapWindow extends Application implements Networkable {
         // TODO implement fromJson (code duplication) -> bring the two json formats into line (weapons are team properties)
         this.terrain = new Terrain(input.getJSONObject("terrain"));
 
-        teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             teams.add(new Team(teamsArray.getJSONObject(i)));
@@ -243,7 +242,7 @@ public class MapWindow extends Application implements Networkable {
     }
 
     /**
-     * Creates a new map window.
+     * Creates a new map window. Used for loading saved game.
      * @param input a json object representing the state of the map window
      * @param client a client object
      * @param clientThread the thread executing the client
@@ -252,7 +251,7 @@ public class MapWindow extends Application implements Networkable {
      * @param sceneController
      * @see #toJson()
      */
-    public MapWindow(JSONObject input, String file, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
+    public MapWindow(JSONObject input, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
         this.sceneController = sceneController;
         this.client = client;
         this.clientThread = clientThread;
@@ -261,11 +260,22 @@ public class MapWindow extends Application implements Networkable {
         this.serverThread = serverThread;
         if(server != null) server.registerCurrentNetworkable(this);
 
+        if(input.isEmpty()) {
+            System.err.println("ERROR: MapWindow input is empty: " + input.toJSONString());
+            Dialogs.create()
+                    .owner(sceneController.getStage())
+                    .masthead("The game which should be loaded is empty.")
+                    .message("If you tried to load a saved game, than there’s probably no saved game.")
+                    .style(DialogStyle.UNDECORATED)
+                    .lightweight()
+                    .showInformation();
+            shutdown();
+            sceneController.switchToMenu();
+            return;
+        }
+
         this.terrain = new Terrain(input.getJSONObject("terrain"));
 
-        JSONObject settings = Settings.getSavedJson(file); //ToDo Obsolete or roundtimer etc in there?
-
-        teams = new ArrayList<>();
         JSONArray teamsArray = input.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             teams.add(new Team(teamsArray.getJSONObject(i)));
@@ -406,7 +416,7 @@ public class MapWindow extends Application implements Networkable {
                     long before = System.currentTimeMillis(), now, sleep;
                     while (true) {
                         if (!pause) {
-                            for (k = 0; k < flyingProjectiles.size(); k++) {
+                            for (int k = 0; k < flyingProjectiles.size(); k++) {
                                 Projectile flyingProjectile = flyingProjectiles.get(k);
                                 try {
                                     final Point2D newPos;
@@ -644,8 +654,10 @@ public class MapWindow extends Application implements Networkable {
         output.put("turnCount", turnCount);
         output.put("turnTimer", turnTimer.get());
         output.put("currentTeam", currentTeam);
-        output.put("terrain", terrain.toJson());
-        output.put("windForce", terrain.getWindMagnitude());
+        if(terrain != null) {
+            output.put("terrain", terrain.toJson());
+            output.put("windForce", terrain.getWindMagnitude());
+        }
         // TODO include sudden death status
         return output;
     }
@@ -1140,7 +1152,7 @@ public class MapWindow extends Application implements Networkable {
                 VorbisPlayer.stop();
                 ingameLabel.stopAllTimers();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
-                GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread);
+                GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, gameSettings, client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 if(server==null) { // TODO code duplication should be avoided

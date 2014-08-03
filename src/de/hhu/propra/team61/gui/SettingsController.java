@@ -136,11 +136,9 @@ public class SettingsController {
                 // our local game is also client/server based, with server running on localhost
                 serverThread = new Thread(server = new Server(() -> {
                     clientThread = new Thread(client = new Client(() -> {
-                        Settings.saveJson(toJson(), "SETTINGS_FILE");
-                        System.out.println("GameSettings: saved settings");
                         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue()+".json");
                         String map = styleObject.getString("level");
-                        Platform.runLater(() -> new MapWindow(map, "SETTINGS_FILE.conf", client, clientThread, server, serverThread, sceneController));
+                        Platform.runLater(() -> new MapWindow(map, toJson(), client, clientThread, server, serverThread, sceneController));
                     }));
                     clientThread.start();
                 }));
