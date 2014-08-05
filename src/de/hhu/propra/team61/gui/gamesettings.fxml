@@ -10,6 +10,7 @@
     <children>
         <Text text="Choose teams:" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="3"/>
         <Button fx:id="plus" text="+ one more team" onAction="#handlePlus" visible="true" GridPane.columnIndex="0" GridPane.rowIndex="6" styleClass="plus"/>
+        <Button fx:id="minus" text="- one less team" onAction="#handleMinus" visible="false" GridPane.columnIndex="0" GridPane.rowIndex="7" styleClass="plus"/>
         <Text text="Choose Game Style:" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
         <ChoiceBox fx:id="gameStyle" GridPane.columnIndex="4" GridPane.rowIndex="2" GridPane.columnSpan="2"/>
         <Text fx:id="level" GridPane.columnIndex="4" GridPane.rowIndex="3"/>

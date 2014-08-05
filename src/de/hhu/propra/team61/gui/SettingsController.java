@@ -42,6 +42,8 @@ public class SettingsController {
     @FXML private GridPane settingGrid = new GridPane();
     /** click adds one more team */
     @FXML private Button plus = new Button();
+    /** click removes the last team */
+    @FXML private Button minus = new Button();
     /** click starts game */
     @FXML private Button cont = new Button();
 
@@ -79,10 +81,10 @@ public class SettingsController {
                 teams.get(i).getItems().add(JavaFxUtils.removeExtension(availableTeams.get(j), 5));
             }
             teams.get(i).getSelectionModel().select(i);
+            settingGrid.add(teams.get(i), 0, i+2, 3, 1);
+            teams.get(i).setVisible(i<2);
         }
         numberOfTeams = 2;
-        settingGrid.add(teams.get(0), 0, 2, 3, 1);
-        settingGrid.add(teams.get(1), 0, 3, 3, 1);
         cont.getStyleClass().addAll("mainButton", "startButton");
     }
 
@@ -91,11 +93,22 @@ public class SettingsController {
      */
     @FXML
     public void handlePlus() {
+        changeTeams(numberOfTeams, true);
         numberOfTeams++;
-        addTeam(numberOfTeams);
-        if (numberOfTeams==4) {
-            plus.setVisible(false);
-        }
+        plus.setVisible(numberOfTeams<4);
+        minus.setVisible(numberOfTeams>2);
+    }
+
+    /**
+     * Handles click on '-'-Button. The last team will be removed.
+     */
+    @FXML
+    public void handleMinus() {
+        numberOfTeams--;
+        changeTeams(numberOfTeams, false);
+        System.out.println("Removed");
+        plus.setVisible(numberOfTeams<4);
+        minus.setVisible(numberOfTeams>2);
     }
 
     /**
@@ -160,11 +173,11 @@ public class SettingsController {
     }
 
     /**
-     * Shows another ChoiceBox for new team
-     * @param number number of teams already existing, index for ArrayList of ChoiceBoxes
+     * Removes the last team
+     * @param number number of teams existing before removing one
      */
-    private void addTeam(int number) {
-        settingGrid.add(teams.get(number-1), 0, number+1, 3, 1);
+    private void changeTeams(int number, boolean bool) {
+        teams.get(number).setVisible(bool);
     }
 
     /**
