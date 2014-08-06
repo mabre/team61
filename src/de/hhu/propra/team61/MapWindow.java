@@ -265,7 +265,7 @@ public class MapWindow extends Application implements Networkable {
             Dialogs.create()
                     .owner(sceneController.getStage())
                     .masthead("The game which should be loaded is empty.")
-                    .message("If you tried to load a saved game, than there’s probably no saved game.")
+                    .message("If you tried to load a saved game, then there’s probably no saved game.")
                     .style(DialogStyle.UNDECORATED)
                     .lightweight()
                     .showInformation();
