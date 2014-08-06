@@ -9,6 +9,7 @@ new features and enhancements:
 fixed problems:
 * bananabomb: correct calculation of random x value for initial velocity of shards
 * rifle: the pointer was too short when aiming up (#117)
+* skip: no longer causes negative damage to nearby figures
 * network game: sometimes it was possible for all players to control the current figure (#113)
 * loading saved game: loading a saved game with dead figures was not possible (#114)
 
