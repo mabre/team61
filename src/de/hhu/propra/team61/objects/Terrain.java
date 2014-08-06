@@ -660,7 +660,7 @@ public class Terrain extends GridPane {
         final int maxY = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
         final int minY = maxY - (Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE;
 
-        if(maxY >= terrain.size()) {
+        if(maxY >= terrain.size() || maxY < 0 || maxX < 0 || maxX >= terrain.get(0).size()) {
             return false;
         }
 
