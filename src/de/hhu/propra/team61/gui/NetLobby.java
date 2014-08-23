@@ -103,7 +103,7 @@ public class NetLobby extends Application implements Networkable {
         this.sceneController = sceneController;
         serverThread = new Thread(server = new Server(() -> {
             clientThread = new Thread(client = new Client(hostName, () -> {
-                client.send("GET_STATUS"); // TODO race condition
+                client.send("GET_STATUS");
                 Platform.runLater(() -> buildGUI());
             }));
             clientThread.start();
@@ -330,7 +330,7 @@ public class NetLobby extends Application implements Networkable {
     }
 
     /**
-     * Builds the spectators-box.
+     * Builds the spectators-box, also displaying the ip(s) of the server
      */
     private void generateSpectatorsBox() {
         spectator.selectedProperty().addListener(new ChangeListener<Boolean>() {
@@ -341,6 +341,12 @@ public class NetLobby extends Application implements Networkable {
         });
         if(spectatorBox != null) listGrid.getChildren().removeAll(spectatorBox);
         spectatorBox = new VBox();
+
+        if(server != null) {
+            Text ips = new Text("Your IP address: " + Server.getIps() + "\n");
+            spectatorBox.getChildren().add(ips);
+        }
+
         Text spectatorText = new Text("Spectators & Players:");
         spectatorBox.getChildren().add(spectatorText);
         for (int i=0; i<spectators.size(); i++) {

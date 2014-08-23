@@ -280,6 +280,31 @@ public class Server implements Runnable {
     }
 
     /**
+     * Gets the first IPv4 addresses of the network interface of this computer.
+     * 127.0.0.1 is returned if no address could be found.
+     * @return an IP for this machine
+     * @see #getIps()
+     */
+    public static String getFirstIp() {
+        try {
+            Enumeration e = NetworkInterface.getNetworkInterfaces();
+            while(e.hasMoreElements()) {
+                NetworkInterface networkInterface = (NetworkInterface)e.nextElement();
+                Enumeration addresses = networkInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    String address = ((InetAddress)addresses.nextElement()).getHostAddress();
+                    if(!address.contains(":") && !address.startsWith("127.")) { // do not return IPv6 or loopback addresses
+                        return address;
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        return "127.0.0.1";
+    }
+
+    /**
      * Sends the given command to all connected clients.
      * @param command the command to be sent
      */

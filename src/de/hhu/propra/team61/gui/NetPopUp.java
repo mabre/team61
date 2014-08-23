@@ -31,44 +31,43 @@ public class NetPopUp extends Application {
         Stage netpopup = new Stage();
         netpopup.initModality(Modality.APPLICATION_MODAL);
         netpopup.setTitle("Start network game");
-        netpopup.setWidth(400);
-        netpopup.setHeight(200);
-        netpopup.setResizable(false);
+        netpopup.setWidth(500);
+        netpopup.setHeight(140);
+        netpopup.setResizable(true);
         CustomGrid popGrid = new CustomGrid();
         popGrid.setAlignment(Pos.CENTER_LEFT);
         popGrid.getColumnConstraints().add(new ColumnConstraints(110));
         popGrid.getColumnConstraints().add(new ColumnConstraints(210));
 
-        Text enterName = new Text("Your name:");
-        popGrid.add(enterName, 0, 0, 1, 1);
-        Text ipError = new Text();
-        popGrid.add(ipError, 0, 5);
-        Button hostGame = new Button("Host a game");
-        hostGame.setOnAction(e -> {
+        Text nameFieldLabel = new Text("Your name: ");
+        Text errorLabel = new Text();
+        Button hostGameButton = new Button("Host a game");
+        hostGameButton.setOnAction(e -> {
             if (nameField.getText().length() > 0) {
                 netpopup.close();
                 NetLobby netlobby = new NetLobby(nameField.getText(), sceneController);
             } else {
-                ipError.setText("Please enter your name.");
+                errorLabel.setText("Please enter your name.");
             }
         });
-        Button joinGame = new Button("Join a game");
-        joinGame.setOnAction(e -> {
+        Button joinGameButton = new Button("Join a game");
+        joinGameButton.setOnAction(e -> {
             if (ipField.getText().length() > 0 && nameField.getText().length() > 0) {
                 netpopup.close();
                 NetLobby netlobby = new NetLobby(ipField.getText(), nameField.getText(), sceneController);
             } else {
-                ipError.setText("You forgot to enter the IP address or name.");
+                errorLabel.setText("You forgot to enter the IP address or name.");
             }
         });
-        ipField.setPromptText("IP address of host:");
-        ipField.setText("127.0.0.1");
+        ipField.setText(Server.getFirstIp());
+        Text ipFieldLabel = new Text("IP address of host: ");
         popGrid.add(nameField, 1, 0); // keep tab order in mind
-        popGrid.add(ipField, 1, 2);
-        popGrid.add(hostGame, 0, 1);
-        popGrid.add(joinGame, 0, 2);
-        Text ips = new Text("Your IP address: " + Server.getIps());
-        popGrid.add(ips, 1, 1, 2, 1);
+        popGrid.add(nameFieldLabel, 0, 0);
+        popGrid.add(ipField, 1, 1);
+        popGrid.add(ipFieldLabel, 0, 1);
+        popGrid.add(hostGameButton, 2, 0);
+        popGrid.add(joinGameButton, 2, 1);
+        popGrid.add(errorLabel, 0, 3, 3, 1);
         Scene popScene = new Scene(popGrid);
         netpopup.setScene(popScene);
         netpopup.show();
