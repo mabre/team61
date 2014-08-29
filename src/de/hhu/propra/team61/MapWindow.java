@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence;
 import de.hhu.propra.team61.gui.*;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
@@ -194,7 +195,7 @@ public class MapWindow extends Application implements Networkable {
         //ToDo: Prepare start inventory of all teams
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Item> inventory = ItemManager.generateInventory(gameSettings.getJSONArray("inventory")); //ToDo add startInventory to settings
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names"), i));
         }
 
         for(int i=0; i<cratesArray.length(); i++) {
@@ -850,6 +851,19 @@ public class MapWindow extends Application implements Networkable {
         }
     }
 
+    private void handleAiTurn(ArrayList<String> commands) {
+        int aiTeam = currentTeam;
+        try {
+            for(int i=0; i<commands.size() && turnTimer.get()>0 && currentTeam == aiTeam; i++) {
+                Thread.sleep(1000); // TODO IMPORTANT const, race condition?
+                final int I = i;
+                Platform.runLater(() -> handleOnServer(commands.get(I)));
+            }
+        } catch(InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private String generateNoHitComment(String name) {
         switch ((int)(Math.random()*2)) {
             case 0:
@@ -1286,13 +1300,11 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        Point2D v = null;
-
         int team = -1;
         try {
             team = Integer.parseInt(command.split(" ", 2)[0]);
         } catch(NumberFormatException e) {
-            System.out.println("handleOnServer: NumberFormatException" + e.getMessage());
+            System.out.println("handleOnServer: NumberFormatException " + e.getMessage());
             return;
         }
         command = command.split(" ", 2)[1];
@@ -1489,6 +1501,9 @@ public class MapWindow extends Application implements Networkable {
                 server.send("SET_GAME_COMMENT 0 Returning to Baby I");
                 System.out.println("Returning to Baby I");
                 break;
+            case "ai": // makes the basic ai do the current turn
+                ArtificialIntelligence ai = new ArtificialIntelligence(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
+                handleAiTurn(ai.makeMove());
             case "digitate": // calls doDigitations() method
                 doDigitations();
                 server.send("SET_GAME_COMMENT 0 Digitation.");

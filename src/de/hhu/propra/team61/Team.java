@@ -35,6 +35,7 @@ public class Team extends StackPane {
     private Color color;
     /** name of the team */
     private String name;
+    private int number;
 
     /**
      * Creates a new team with the given properties.
@@ -44,11 +45,13 @@ public class Team extends StackPane {
      * @param name the name of the team
      * @param chosenFigure the figure type ({@link de.hhu.propra.team61.objects.Figure#figureType}) for the figures of the team
      * @param figureNames the names of the figures
+     * @param number the number of the team, counting starts from 0
      */
-    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Item> inventory, Color color, String name, String chosenFigure, JSONArray figureNames) {
+    public Team(ArrayList<Point2D> spawnPoints, ArrayList<Item> inventory, Color color, String name, String chosenFigure, JSONArray figureNames, int number) {
         this.inventory = inventory;
         this.color = color;
         this.name = name;
+        this.number = number;
         figures = new ArrayList<>();
         for (int j=0; j < spawnPoints.size(); j++) {
             Point2D sp = spawnPoints.get(j);
@@ -70,6 +73,7 @@ public class Team extends StackPane {
     public Team(JSONObject state) {
         color = Color.web(state.getString("color"));
         name = state.getString("name");
+        number = state.getInt("number");
         figures = new ArrayList<>();
         JSONArray figuresArray = state.getJSONArray("figures");
         for(int i=0; i<figuresArray.length(); i++) {
@@ -99,6 +103,7 @@ public class Team extends StackPane {
         output.put("inventory", ItemManager.inventoryToJsonArray(inventory));
         output.put("color", toHex(color));
         output.put("name", name);
+        output.put("number", number);
         output.put("currentFigure", currentFigure);
         return output;
     }
@@ -201,5 +206,9 @@ public class Team extends StackPane {
         for (Figure figure: figures){
             figure.setHealth(0);
         }
+    }
+
+    public int getNumber() {
+        return number;
     }
 }
