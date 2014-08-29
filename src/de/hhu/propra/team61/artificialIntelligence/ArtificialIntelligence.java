@@ -17,7 +17,6 @@ public class ArtificialIntelligence {
     protected final Terrain terrain;
     protected final ArrayList<Crate> crates;
     protected final JSONObject gameSettings;
-    protected final JSONObject gameSettings;
 
     public ArtificialIntelligence(Team ownTeam, ArrayList<Team> teams, Terrain terrain, ArrayList<Crate> crates, JSONObject gameSettings) {
         this.ownTeam = ownTeam;
