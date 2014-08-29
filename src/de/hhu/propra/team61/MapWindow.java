@@ -1,6 +1,7 @@
 package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence;
+import de.hhu.propra.team61.artificialIntelligence.SimpleAI;
 import de.hhu.propra.team61.gui.*;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
@@ -1504,6 +1505,11 @@ public class MapWindow extends Application implements Networkable {
             case "ai": // makes the basic ai do the current turn
                 ArtificialIntelligence ai = new ArtificialIntelligence(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
                 handleAiTurn(ai.makeMove());
+                break;
+            case "ais": // makes the simple ai do the current turn
+                ArtificialIntelligence ais = new SimpleAI(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
+                handleAiTurn(ais.makeMove());
+                break;
             case "digitate": // calls doDigitations() method
                 doDigitations();
                 server.send("SET_GAME_COMMENT 0 Digitation.");

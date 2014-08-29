@@ -37,7 +37,10 @@ public abstract class Weapon extends Item {
     /** Graphical constant sizes in px */
     private final int NORMED_OBJECT_SIZE = 16;
     private final int NORMED_BLOCK_SIZE  =  8;
-    private final int RADIUS = 20; // Distance between Crosshair to Figure
+    /** Distance between Crosshair and Figure */
+    private final int RADIUS = 20;
+    /** angle chage per key press, public for ai */
+    public static final int ANGLE_STEP = 2;
     /** Paths to the Images to be used for the overlay */
     private String projectileImg;
     /** Actual images used for the overlay */
@@ -256,13 +259,13 @@ public abstract class Weapon extends Item {
     @Override
     /** Overriden from @link #Item; Enables aiming higher by adjusting angle, setting the maximum to +90° */
     public void angleUp(boolean faces_right){
-        angle = Math.min(90, angle + 2);
+        angle = Math.min(90, angle + ANGLE_STEP);
         angleDraw(faces_right);
     }
     @Override
     /** Overriden from @link #Item; Enables aiming lower by adjusting angle, setting the minimum to -90° */
     public void angleDown(boolean faces_right){
-        angle = Math.max(-90, angle - 2);
+        angle = Math.max(-90, angle - ANGLE_STEP);
         angleDraw(faces_right);
     }
 

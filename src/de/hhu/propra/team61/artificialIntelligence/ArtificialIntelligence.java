@@ -12,11 +12,12 @@ import java.util.ArrayList;
  */
 public class ArtificialIntelligence {
 
-    protected Team ownTeam;
-    protected ArrayList<Team> enemyTeams;
-    protected Terrain terrain;
-    protected ArrayList<Crate> crates;
-    protected JSONObject gameSettings;
+    protected final Team ownTeam;
+    protected final ArrayList<Team> enemyTeams;
+    protected final Terrain terrain;
+    protected final ArrayList<Crate> crates;
+    protected final JSONObject gameSettings;
+    protected final JSONObject gameSettings;
 
     public ArtificialIntelligence(Team ownTeam, ArrayList<Team> teams, Terrain terrain, ArrayList<Crate> crates, JSONObject gameSettings) {
         this.ownTeam = ownTeam;
