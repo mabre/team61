@@ -379,7 +379,9 @@ public class MapWindow extends Application implements Networkable {
                         System.out.println("camera autoscroll: " + autoScroll);
                         break;
                     default:
-                        client.sendKeyEvent(keyEvent.getCode());
+                        if(!(Client.isLocalGame() && teams.get(currentTeam).hasAI())) { // do not allow user to control AIs (cannot be done in handleOnServer because we cannot distinguish between user and ai input)
+                            client.sendKeyEvent(keyEvent.getCode());
+                        }
                 }
                 // we do not want the scrollPane to receive a key event
                 keyEvent.consume();
@@ -850,9 +852,13 @@ public class MapWindow extends Application implements Networkable {
             Server.send("SET_TURN_TIMER " + turnTimer.get());
             updateTurnTimerLabelText();
         }
+
+//        if(teams.get(currentTeam).hasAI()) {
+//            handleAITurn(teams.get(currentTeam).makeAIMove());
+//        }
     }
 
-    private void handleAiTurn(ArrayList<String> commands) {
+    private void handleAITurn(ArrayList<String> commands) {
         int aiTeam = currentTeam;
         try {
             for(int i=0; i<commands.size() && turnTimer.get()>0 && currentTeam == aiTeam; i++) {
@@ -1504,11 +1510,11 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "ai": // makes the basic ai do the current turn
                 ArtificialIntelligence ai = new ArtificialIntelligence(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
-                handleAiTurn(ai.makeMove());
+                handleAITurn(ai.makeMove());
                 break;
             case "ais": // makes the simple ai do the current turn
                 ArtificialIntelligence ais = new SimpleAI(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
-                handleAiTurn(ais.makeMove());
+                handleAITurn(ais.makeMove());
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();

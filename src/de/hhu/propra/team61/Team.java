@@ -1,5 +1,7 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.artificialIntelligence.AIType;
+import de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence;
 import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
@@ -31,6 +33,8 @@ public class Team extends StackPane {
     private ArrayList<Figure> figures;
     /** list of inventory the figures of this team can use */
     private ArrayList<Item> inventory;
+    /** artificial intelligence controlling the figures */
+    private ArtificialIntelligence ai;
     /** colors of the team */
     private Color color;
     /** name of the team */
