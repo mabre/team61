@@ -3,6 +3,7 @@ package de.hhu.propra.team61.artificialIntelligence;
 import de.hhu.propra.team61.Team;
 import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.objects.Crate;
+import de.hhu.propra.team61.objects.Figure;
 import de.hhu.propra.team61.objects.Terrain;
 
 import java.util.ArrayList;
@@ -18,6 +19,12 @@ public class ArtificialIntelligence {
     protected final ArrayList<Crate> crates;
     protected final JSONObject gameSettings;
 
+    protected enum AIState {
+        NEW_TURN, TARGET_FOUND, TARGET_FACED, TARGET_AIMED, TURN_FINISHED
+    }
+
+    protected AIState state;
+
     public ArtificialIntelligence(Team ownTeam, ArrayList<Team> teams, Terrain terrain, ArrayList<Crate> crates, JSONObject gameSettings) {
         this.ownTeam = ownTeam;
         this.enemyTeams = new ArrayList<>();
@@ -26,6 +33,7 @@ public class ArtificialIntelligence {
         this.terrain = terrain;
         this.crates = crates;
         this.gameSettings = gameSettings;
+        this.state = AIState.NEW_TURN;
     }
 
     public ArrayList<String> makeMove() {
@@ -33,6 +41,39 @@ public class ArtificialIntelligence {
         commands.add(ownTeam.getNumber() + " 9");
         commands.add(ownTeam.getNumber() + " Space");
         return commands;
+    }
+
+    public void endTurn() {
+        state = AIState.NEW_TURN;
+    }
+
+    protected ArrayList<Figure> getEnemiesByDistance() {
+        ArrayList<Figure> enemiesByDistance = new ArrayList<>();
+        ArrayList<Figure> enemies = new ArrayList<>();
+
+        for(Team t: enemyTeams) {
+            for(Figure f: t.getFigures()) {
+                if(f.getHealth() > 0) {
+                    enemies.add(f);
+                }
+            }
+        }
+
+        while(!enemies.isEmpty()) {
+            double smallestDistance = -1;
+            Figure closestFigure = enemies.get(0);
+            for (Figure f : enemies) {
+                double distance = f.getPosition().distance(ownTeam.getCurrentFigure().getPosition());
+                if (smallestDistance == -1 || distance < smallestDistance) {
+                    smallestDistance = distance;
+                    closestFigure = f;
+                }
+            }
+            enemiesByDistance.add(closestFigure);
+            enemies.remove(closestFigure);
+        }
+
+        return enemiesByDistance;
     }
 
 }
