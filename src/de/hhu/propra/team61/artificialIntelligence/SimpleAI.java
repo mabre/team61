@@ -13,6 +13,15 @@ import java.util.ArrayList;
  */
 public class SimpleAI extends ArtificialIntelligence {
 
+    private Figure currentFigure; // TODO IMPORTANT doc
+    Point2D currentFigurePosition;
+
+    Figure closestEnemy;
+    Point2D closestEnemyPosition;
+
+    double angleToEnemy;
+    boolean angleDown;
+
     public SimpleAI(Team ownTeam, ArrayList<Team> teams, Terrain terrain, ArrayList<Crate> crates, JSONObject gameSettings) {
         super(ownTeam, teams, terrain, crates, gameSettings);
     }
@@ -20,17 +29,71 @@ public class SimpleAI extends ArtificialIntelligence {
     public ArrayList<String> makeMove() {
         ArrayList<String> commands = new ArrayList<>();
 
-        Figure currentFigure = ownTeam.getCurrentFigure();
-        Point2D currentFigurePosition = currentFigure.getPosition();
+        switch(state) {
+            case NEW_TURN:
+            case TARGET_FOUND:
+                prepareAim(commands);
+                break;
+            case TARGET_FACED:
+                aim(commands);
+                break;
+            case TARGET_AIMED:
+                commands.add(ownTeam.getNumber() + " Space");
+                state = AIState.TURN_FINISHED;
+                break;
+            case TURN_FINISHED:
+                System.err.println("We are finished.");
+                return commands;
+            default:
+                System.err.println("??");
+                return commands;
+        }
+
+        if(commands.size() == 0) {
+            commands.add("NOOP");
+        }
+
+        return commands;
+    }
+
+    private void chooseEnemy(int n) {
+        currentFigure = ownTeam.getCurrentFigure();
+        currentFigurePosition = currentFigure.getPosition();
         currentFigurePosition = currentFigurePosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
 
-        Figure closestEnemy = getEnemiesByDistance().get(0); // TODO IMPORTANT index check
-        Point2D closestEnemyPosition = closestEnemy.getPosition();
+        ArrayList<Figure> enemiesByDistance = getEnemiesByDistance();
+        if(n < enemiesByDistance.size()) {
+            closestEnemy = getEnemiesByDistance().get(n); // TODO IMPORTANT index check
+        } else if(enemiesByDistance.size() == 0) {
+            System.err.println("TODO IMPORTANT What now?");
+        } else {
+            closestEnemy = getEnemiesByDistance().get(0);
+        }
+        closestEnemyPosition = closestEnemy.getPosition();
         closestEnemyPosition = closestEnemyPosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
 
-        double angleToEnemy = Math.toDegrees(Math.acos((closestEnemyPosition.getY()-currentFigurePosition.getY()) / currentFigurePosition.distance(closestEnemyPosition)));
+        angleToEnemy = Math.toDegrees(Math.acos((closestEnemyPosition.getY()-currentFigurePosition.getY()) / currentFigurePosition.distance(closestEnemyPosition)));
         angleToEnemy = Math.abs(90 - angleToEnemy); // we want to have the angle to the horizontal
-        boolean angleDown = (closestEnemyPosition.getY() > currentFigurePosition.getY());
+        angleDown = (closestEnemyPosition.getY() > currentFigurePosition.getY());
+    }
+
+    private void aim(ArrayList<String> commands) {
+        for(int i = (int)(angleToEnemy/Weapon.ANGLE_STEP); i > 0; i--) {
+            if(angleDown) {
+                commands.add(ownTeam.getNumber() + " Down");
+            } else {
+                commands.add(ownTeam.getNumber() + " Up");
+            }
+        }
+        state = AIState.TARGET_AIMED;
+    }
+
+    private void prepareAim(ArrayList<String> commands) {
+        currentFigure = ownTeam.getCurrentFigure();
+        currentFigurePosition = currentFigure.getPosition();
+        currentFigurePosition = currentFigurePosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
+
+        chooseEnemy(0);
 
         try {
             Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1)*Math.cos(angleToEnemy) * Figure.NORMED_OBJECT_SIZE,
@@ -44,24 +107,24 @@ public class SimpleAI extends ArtificialIntelligence {
                 System.out.println("angle " + angleToEnemy + ", steps " + (int)(angleToEnemy/Weapon.ANGLE_STEP));
                 System.out.println("first enemy not good");
 
-                closestEnemy = getEnemiesByDistance().get(1); // TODO IMPORTANT index check; code duplication
-                closestEnemyPosition = closestEnemy.getPosition();
-                closestEnemyPosition = closestEnemyPosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
-
-                angleToEnemy = Math.toDegrees(Math.acos((closestEnemyPosition.getY()-currentFigurePosition.getY()) / currentFigurePosition.distance(closestEnemyPosition)));
-                angleToEnemy = Math.abs(90 - angleToEnemy); // we want to have the angle to the horizontal
-                angleDown = (closestEnemyPosition.getY() > currentFigurePosition.getY());
+                chooseEnemy(1);
             } else {
                 System.err.println("first enemy is good (hit)");
             }
         }
 
+        state = AIState.TARGET_FOUND;
+
         // turn to enemy
         if(closestEnemyPosition.getX() < currentFigurePosition.getX()) {
+            commands.add(ownTeam.getNumber() + " Right"); // so final position is (nearly [friction, wind]) equal to original position
             commands.add(ownTeam.getNumber() + " Left");
         } else {
+            commands.add(ownTeam.getNumber() + " Left");
             commands.add(ownTeam.getNumber() + " Right");
         }
+
+        state = AIState.TARGET_FACED;
 
         // choose weapon
         commands.add(ownTeam.getNumber() + " " + ((int)(Math.random()*4)+1));
@@ -69,46 +132,6 @@ public class SimpleAI extends ArtificialIntelligence {
         // aim
         System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
         System.out.println("angle " + angleToEnemy + ", steps " + (int)(angleToEnemy/Weapon.ANGLE_STEP));
-        for(int i = (int)(angleToEnemy/Weapon.ANGLE_STEP); i > 0; i--) {
-            if(angleDown) {
-                commands.add(ownTeam.getNumber() + " Down");
-            } else {
-                commands.add(ownTeam.getNumber() + " Up");
-            }
-        }
-
-        // shoot
-        commands.add(ownTeam.getNumber() + " Space");
-        return commands;
-    }
-
-    private ArrayList<Figure> getEnemiesByDistance() {
-        ArrayList<Figure> enemiesByDistance = new ArrayList<>();
-        ArrayList<Figure> enemies = new ArrayList<>();
-
-        for(Team t: enemyTeams) {
-            for(Figure f: t.getFigures()) {
-                if(f.getHealth() > 0) {
-                    enemies.add(f);
-                }
-            }
-        }
-
-        while(!enemies.isEmpty()) {
-            double smallestDistance = -1;
-            Figure closestFigure = enemies.get(0);
-            for (Figure f : enemies) {
-                double distance = f.getPosition().distance(ownTeam.getCurrentFigure().getPosition());
-                if (smallestDistance == -1 || distance < smallestDistance) {
-                    smallestDistance = distance;
-                    closestFigure = f;
-                }
-            }
-            enemiesByDistance.add(closestFigure);
-            enemies.remove(closestFigure);
-        }
-
-        return enemiesByDistance;
     }
 
 }
