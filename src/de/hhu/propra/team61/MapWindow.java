@@ -43,6 +43,8 @@ import java.io.FileNotFoundException;
 
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
@@ -198,6 +200,10 @@ public class MapWindow extends Application implements Networkable {
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Item> inventory = ItemManager.generateInventory(gameSettings.getJSONArray("inventory")); //ToDo add startInventory to settings
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names"), i));
+        }
+
+        for(int i=0; i<teams.size(); i++) {
+            teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings)); // TODO IMPORTANT config
         }
 
         for(int i=0; i<cratesArray.length(); i++) {
@@ -541,6 +547,8 @@ public class MapWindow extends Application implements Networkable {
                 }
             });
             moveObjectsThread.start();
+
+            handleAITurn(teams.get(currentTeam).getAI());
         }
     }
 
@@ -854,27 +862,34 @@ public class MapWindow extends Application implements Networkable {
             updateTurnTimerLabelText();
         }
 
-//        if(teams.get(currentTeam).hasAI()) {
-//            handleAITurn(teams.get(currentTeam).makeAIMove());
-//        }
+        if(teams.get(currentTeam).hasAI()) {
+            handleAITurn(teams.get(currentTeam).getAI());
+        }
     }
 
-    private void handleAiTurn(ArtificialIntelligence ai) {
-        int aiTeam = currentTeam;
-        try {
-            ArrayList<String> commands;
-            while(turnTimer.get()>0 && currentTeam == aiTeam && (commands=ai.makeMove()).size() > 0) {
-                final ArrayList<String> COMMANDS = commands;
-                for (int i = 0; i < commands.size() && turnTimer.get() > 0 && currentTeam == aiTeam; i++) {
-                    final int I = i;
-                    Platform.runLater(() -> handleOnServer(COMMANDS.get(I)));
-                    Thread.sleep(AI_TIME_BETWEEN_KEY_PRESSES); // TODO IMPORTANT race condition?
+    private void handleAITurn(ArtificialIntelligence ai) {
+        new Thread(() -> { // new thread in order not to block JavaFX thread
+            int aiTeam = currentTeam;
+
+            try {
+                while (aiTeam == currentTeam && turnTimer.get() <= 0) {
+                    Thread.sleep(1000); // wait till the freeze between turns is over
                 }
+
+                ArrayList<String> commands;
+                while (turnTimer.get() > 0 && currentTeam == aiTeam && (commands = ai.makeMove()).size() > 0) {
+                    final ArrayList<String> COMMANDS = commands;
+                    for (int i = 0; i < commands.size() && turnTimer.get() > 0 && currentTeam == aiTeam; i++) {
+                        final int I = i;
+                        Platform.runLater(() -> handleOnServer(COMMANDS.get(I)));
+                        Thread.sleep(AI_TIME_BETWEEN_KEY_PRESSES); // TODO IMPORTANT race condition?
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } catch(InterruptedException e) {
-            e.printStackTrace();
-        }
-        ai.endTurn();
+            ai.endTurn();
+        }).start();
     }
 
     private String generateNoHitComment(String name) {
@@ -1516,11 +1531,11 @@ public class MapWindow extends Application implements Networkable {
                 break;
             case "ai": // makes the basic ai do the current turn
                 ArtificialIntelligence ai = new ArtificialIntelligence(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
-                handleAiTurn(ai);
+                handleAITurn(ai);
                 break;
             case "ais": // makes the simple ai do the current turn
                 ArtificialIntelligence ais = new SimpleAI(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
-                handleAiTurn(ais);
+                handleAITurn(ais);
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();

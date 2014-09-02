@@ -2,6 +2,7 @@ package de.hhu.propra.team61;
 
 import de.hhu.propra.team61.artificialIntelligence.AIType;
 import de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence;
+import de.hhu.propra.team61.artificialIntelligence.SimpleAI;
 import de.hhu.propra.team61.io.ItemManager;
 import de.hhu.propra.team61.io.json.JSONArray;
 import de.hhu.propra.team61.io.json.JSONObject;
@@ -90,6 +91,14 @@ public class Team extends StackPane {
         inventory = ItemManager.generateInventory(itemsArray);
         currentFigure = state.getInt("currentFigure");
         setAlignment(Pos.TOP_LEFT);
+        // TODO IMPORTANT ai
+//        switch(aiType) {
+//            case NULL:
+//                ai = null;
+//                break;
+//            case SIMPLE:
+//                ai = new SimpleAI(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
+//        }
     }
 
     /**
@@ -110,6 +119,22 @@ public class Team extends StackPane {
         output.put("number", number);
         output.put("currentFigure", currentFigure);
         return output;
+    }
+
+    public void setAI(ArtificialIntelligence ai) {
+        this.ai = ai;
+    }
+
+    public boolean hasAI() {
+        return ai != null;
+    }
+
+    public ArtificialIntelligence getAI() {
+        return ai;
+    }
+
+    public ArrayList<String> makeAIMove() {
+        return ai.makeMove();
     }
 
     /**
