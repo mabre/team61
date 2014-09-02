@@ -386,9 +386,7 @@ public class MapWindow extends Application implements Networkable {
                         System.out.println("camera autoscroll: " + autoScroll);
                         break;
                     default:
-                        if(!(Client.isLocalGame() && teams.get(currentTeam).hasAI())) { // do not allow user to control AIs (cannot be done in handleOnServer because we cannot distinguish between user and ai input)
-                            client.sendKeyEvent(keyEvent.getCode());
-                        }
+                        client.sendKeyEvent(keyEvent.getCode());
                 }
                 // we do not want the scrollPane to receive a key event
                 keyEvent.consume();
@@ -880,8 +878,12 @@ public class MapWindow extends Application implements Networkable {
                 while (turnTimer.get() > 0 && currentTeam == aiTeam && (commands = ai.makeMove()).size() > 0) {
                     final ArrayList<String> COMMANDS = commands;
                     for (int i = 0; i < commands.size() && turnTimer.get() > 0 && currentTeam == aiTeam; i++) {
-                        final int I = i;
-                        Platform.runLater(() -> handleOnServer(COMMANDS.get(I)));
+                        if(!pause) {
+                            final int I = i;
+                            Platform.runLater(() -> handleOnServer("AI " + COMMANDS.get(I)));
+                        } else {
+                            i--;
+                        }
                         Thread.sleep(AI_TIME_BETWEEN_KEY_PRESSES); // TODO IMPORTANT race condition?
                     }
                 }
@@ -979,6 +981,8 @@ public class MapWindow extends Application implements Networkable {
 
         if(moveObjectsThread != null) moveObjectsThread.interrupt();
         if(turnTimerThread != null) turnTimerThread.interrupt();
+
+        pause = false;
 
         GameState.save(this.toJson());
         System.out.println("MapWindow: saved game state");
@@ -1302,6 +1306,12 @@ public class MapWindow extends Application implements Networkable {
 
     @Override
     public void handleOnServer(String command) {
+        boolean commandIsFromAI = false;
+        if (command.startsWith("AI ")) {
+            commandIsFromAI = true;
+            command = extractPart(command, "AI ");
+        }
+
         if (command.startsWith("/kickteam ")) {
             String teamToKick = extractPart(command, "/kickteam ");
             try {
@@ -1367,6 +1377,10 @@ public class MapWindow extends Application implements Networkable {
         if (team != currentTeam && !client.isLocalGame()) {
             System.out.println("The key event " + command + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
             return;
+        }
+
+        if (teams.get(currentTeam).hasAI() && !commandIsFromAI) {
+            System.out.println("The key event " + command + " of team " + team + " has been discarded. Operation not allowed, the team is controlled by an ai");
         }
 
         switch(command) {
