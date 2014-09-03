@@ -202,7 +202,7 @@ public class MapWindow extends Application implements Networkable {
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names"), i));
         }
 
-        for(int i=0; i<teams.size(); i++) {
+        for(int i=1; i<teams.size(); i++) {
             teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings)); // TODO IMPORTANT config
         }
 
@@ -546,7 +546,9 @@ public class MapWindow extends Application implements Networkable {
             });
             moveObjectsThread.start();
 
-            handleAITurn(teams.get(currentTeam).getAI());
+            if(teams.get(currentTeam).hasAI()) {
+                handleAITurn(teams.get(currentTeam).getAI());
+            }
         }
     }
 
@@ -1381,6 +1383,7 @@ public class MapWindow extends Application implements Networkable {
 
         if (teams.get(currentTeam).hasAI() && !commandIsFromAI) {
             System.out.println("The key event " + command + " of team " + team + " has been discarded. Operation not allowed, the team is controlled by an ai");
+            return;
         }
 
         switch(command) {
