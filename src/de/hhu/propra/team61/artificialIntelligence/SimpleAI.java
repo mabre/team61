@@ -101,7 +101,7 @@ public class SimpleAI extends ArtificialIntelligence {
             }
         }
         // use digiwise randomly when having enough hp, or being the last figue of the team
-        if (ownTeam.getItem(7 - 1).getMunition() > 0) {
+        if (ownTeam.getItem(7 - 1).getMunition() > 0 && currentFigure.isDigitated()) {
             if ((currentFigure.getHealth() > USE_DIGIWISE_THRESHOLD && Math.random() < USE_DIGIWISE_PROBABILITY) ||
                     ownTeam.getNumberOfLivingFigures() == 1) {
                 commands.add(ownTeam.getNumber() + " 7");
@@ -185,13 +185,14 @@ public class SimpleAI extends ArtificialIntelligence {
 
         // choose weapon
         int weaponNumber;
-
         if(distanceToEnemy < 100) {
-            weaponNumber = (Math.random() < .5 ? 2 : 3); // grenade or shotgun
+            double grenadeProbability = (closestEnemy.getHealth() <= 40 ? .8 : .4);
+            weaponNumber = (Math.random() < grenadeProbability ? 2 : 3); // grenade or shotgun
         } else if(distanceToEnemy > 250) {
             weaponNumber = (Math.random() < .5 ? 3 : 4); // shotgun or rifle
         } else {
-            weaponNumber = (Math.random() < .5 ? 1 : 3); // bazooka or shotgun
+            double bazookaProbability = (closestEnemy.getHealth() <= 50 ? .8 : .4);
+            weaponNumber = (Math.random() < bazookaProbability ? 1 : 3); // bazooka or shotgun
         }
 
         if(ownTeam.getItem(weaponNumber-1).getMunition() <= 0) {
