@@ -5,6 +5,7 @@ import de.hhu.propra.team61.io.json.JSONObject;
 import de.hhu.propra.team61.objects.Crate;
 import de.hhu.propra.team61.objects.Figure;
 import de.hhu.propra.team61.objects.Terrain;
+import javafx.geometry.Point2D;
 
 import java.util.ArrayList;
 
@@ -74,6 +75,15 @@ public class ArtificialIntelligence {
         }
 
         return enemiesByDistance;
+    }
+
+    boolean friendIsNearPosition(Point2D pos) {
+        for(Figure f: ownTeam.getFigures()) {
+            if(pos.distance(f.getPosition().add(Figure.NORMED_OBJECT_SIZE/2, Figure.NORMED_OBJECT_SIZE/2)) < Figure.NORMED_OBJECT_SIZE) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

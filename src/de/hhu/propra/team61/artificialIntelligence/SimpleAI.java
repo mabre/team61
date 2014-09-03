@@ -14,6 +14,8 @@ import java.util.ArrayList;
 public class SimpleAI extends ArtificialIntelligence {
 
     private static int USE_MEDIPACK_THRESHOLD = 40;
+    private static int USE_DIGIWISE_THRESHOLD = 60;
+    private static double USE_DIGIWISE_PROBABILITY = .2;
 
     private Figure currentFigure; // TODO IMPORTANT doc
     Point2D currentFigurePosition;
@@ -60,8 +62,9 @@ public class SimpleAI extends ArtificialIntelligence {
     }
 
     /**
-     * Sets {@link #currentFigure}, {@link #currentFigurePosition}, and {@link #distanceToEnemy} to the n-th nearest enemy figure next to {@link #currentFigure}.
-     * If n is less than the number of enemies, the nearest enemy is chosen.
+     * Updates {@link #currentFigure}, {@link #currentFigurePosition}, and sets {@link #closestEnemy}, {@link #closestEnemyPosition}, and {@link #distanceToEnemy} to the n-th nearest enemy figure next to {@link #currentFigure}.
+     * If n is less than the number of enemies, the nearest enemy is chosen. If no enemy is found, {@link #closestEnemy}
+     * is set to null.
      * @param n
      */
     private void chooseEnemy(int n) {
@@ -73,7 +76,8 @@ public class SimpleAI extends ArtificialIntelligence {
         if(n < enemiesByDistance.size()) {
             closestEnemy = getEnemiesByDistance().get(n);
         } else if(enemiesByDistance.size() == 0) {
-            System.err.println("TODO IMPORTANT What now?");
+            closestEnemy = null;
+            return;
         } else {
             closestEnemy = getEnemiesByDistance().get(0);
         }
@@ -88,9 +92,21 @@ public class SimpleAI extends ArtificialIntelligence {
     }
 
     private void useItem(ArrayList<String> commands) {
-        if(currentFigure.getHealth() < USE_MEDIPACK_THRESHOLD && ownTeam.getItem(8-1).getMunition() > 0) {
-            commands.add(ownTeam.getNumber() + " 8");
-            commands.add(ownTeam.getNumber() + " Space");
+        // use medipack when having low hp, or being the last figure of the team
+        if (ownTeam.getItem(8 - 1).getMunition() > 0) {
+            if (currentFigure.getHealth() < USE_MEDIPACK_THRESHOLD ||
+                    ownTeam.getNumberOfLivingFigures() == 1) {
+                commands.add(ownTeam.getNumber() + " 8");
+                commands.add(ownTeam.getNumber() + " Space");
+            }
+        }
+        // use digiwise randomly when having enough hp, or being the last figue of the team
+        if (ownTeam.getItem(7 - 1).getMunition() > 0) {
+            if ((currentFigure.getHealth() > USE_DIGIWISE_THRESHOLD && Math.random() < USE_DIGIWISE_PROBABILITY) ||
+                    ownTeam.getNumberOfLivingFigures() == 1) {
+                commands.add(ownTeam.getNumber() + " 7");
+                commands.add(ownTeam.getNumber() + " Space");
+            }
         }
     }
 
@@ -112,29 +128,47 @@ public class SimpleAI extends ArtificialIntelligence {
 
         // try hitting one of the next 8 enemies, fall back to 1st one if no hit is possible
         boolean foundEnemy = false;
+        boolean hittingFriend = false;
         for(int i=0; i<8 && !foundEnemy; i++) {
             chooseEnemy(i);
 
+            if(closestEnemy == null) break;
+
             try {
+                hittingFriend = false;
                 Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * Math.cos(angleToEnemy) * Figure.NORMED_OBJECT_SIZE,
                         (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * Figure.NORMED_OBJECT_SIZE * Math.sin(angleToEnemy)); // TODO IMPORTANT also check skightly higher
                 System.out.println(crosshairOffset);
                 terrain.getPositionForDirection(currentFigurePosition.add(crosshairOffset), closestEnemyPosition.subtract(currentFigurePosition), new Rectangle2D(currentFigurePosition.getX() + crosshairOffset.getX(), currentFigurePosition.getY() + crosshairOffset.getY(), 1, 1), false, false, false, false);
                 System.err.println((i+1) + "st enemy good?");
-                foundEnemy = true;
+                foundEnemy =  true;
             } catch (CollisionException e) {
                 if (!e.getCollisionPartnerClass().equals("figure")) {
                     System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
                     System.out.println("angle " + angleToEnemy + ", steps " + (int) (angleToEnemy / Weapon.ANGLE_STEP));
                     System.out.println((i+1) + "st enemy not good");
                 } else {
-                    System.err.println((i+1) + "st enemy is good (hit)"); // TODO do not call a hit of a friend good
-                    foundEnemy = true;
+                    System.out.println((i+1) + "st enemy is good (hit)"); // TODO do not call a hit of a friend good
+                    if (friendIsNearPosition(e.getLastGoodPosition())) {
+                        foundEnemy = false;
+                        hittingFriend = true;
+                        System.out.println("no, hitting friend");
+                    } else {
+                        foundEnemy = true;
+                    }
                 }
             }
         }
 
         useItem(commands);
+
+        if(hittingFriend) {
+            closestEnemy = null;
+            angleToEnemy = 0;
+            commands.add(ownTeam.getNumber() + " 9");
+            state = AIState.TARGET_FACED;
+            return;
+        }
 
         state = AIState.TARGET_FOUND;
 
@@ -173,6 +207,9 @@ public class SimpleAI extends ArtificialIntelligence {
         // for "heavy" weapons, compensate for gravity
         if (weaponNumber == 1) {
             commands.add(ownTeam.getNumber() + " Up");
+            if (distanceToEnemy > 210) {
+                commands.add(ownTeam.getNumber() + " Up");
+            }
         } else if (weaponNumber == 2) {
             commands.add(ownTeam.getNumber() + " Up");
             commands.add(ownTeam.getNumber() + " Up");
