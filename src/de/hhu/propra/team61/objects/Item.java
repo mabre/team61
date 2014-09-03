@@ -69,6 +69,11 @@ public abstract class Item extends StackPane{
      * increases munition by 1
      */
     public void refill(){ munition++; }
+
+    /**
+     * Tells how much munition  this item has
+     * @return available munition
+     */
     public int getMunition() {
         return munition;
     }

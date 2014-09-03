@@ -13,6 +13,8 @@ import java.util.ArrayList;
  */
 public class SimpleAI extends ArtificialIntelligence {
 
+    private static int USE_MEDIPACK_THRESHOLD = 40;
+
     private Figure currentFigure; // TODO IMPORTANT doc
     Point2D currentFigurePosition;
 
@@ -21,6 +23,7 @@ public class SimpleAI extends ArtificialIntelligence {
 
     double angleToEnemy;
     boolean angleDown;
+    double distanceToEnemy;
 
     public SimpleAI(Team ownTeam, ArrayList<Team> teams, Terrain terrain, ArrayList<Crate> crates, JSONObject gameSettings) {
         super(ownTeam, teams, terrain, crates, gameSettings);
@@ -56,6 +59,11 @@ public class SimpleAI extends ArtificialIntelligence {
         return commands;
     }
 
+    /**
+     * Sets {@link #currentFigure}, {@link #currentFigurePosition}, and {@link #distanceToEnemy} to the n-th nearest enemy figure next to {@link #currentFigure}.
+     * If n is less than the number of enemies, the nearest enemy is chosen.
+     * @param n
+     */
     private void chooseEnemy(int n) {
         currentFigure = ownTeam.getCurrentFigure();
         currentFigurePosition = currentFigure.getPosition();
@@ -63,7 +71,7 @@ public class SimpleAI extends ArtificialIntelligence {
 
         ArrayList<Figure> enemiesByDistance = getEnemiesByDistance();
         if(n < enemiesByDistance.size()) {
-            closestEnemy = getEnemiesByDistance().get(n); // TODO IMPORTANT index check
+            closestEnemy = getEnemiesByDistance().get(n);
         } else if(enemiesByDistance.size() == 0) {
             System.err.println("TODO IMPORTANT What now?");
         } else {
@@ -72,9 +80,18 @@ public class SimpleAI extends ArtificialIntelligence {
         closestEnemyPosition = closestEnemy.getPosition();
         closestEnemyPosition = closestEnemyPosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
 
-        angleToEnemy = Math.toDegrees(Math.acos((closestEnemyPosition.getY()-currentFigurePosition.getY()) / currentFigurePosition.distance(closestEnemyPosition)));
+        distanceToEnemy = Math.sqrt(Math.pow(closestEnemyPosition.getX()-currentFigurePosition.getX(), 2) + Math.pow(closestEnemyPosition.getY()-currentFigurePosition.getY(), 2));
+
+        angleToEnemy = Math.toDegrees(Math.acos((closestEnemyPosition.getY() - currentFigurePosition.getY()) / currentFigurePosition.distance(closestEnemyPosition)));
         angleToEnemy = Math.abs(90 - angleToEnemy); // we want to have the angle to the horizontal
         angleDown = (closestEnemyPosition.getY() > currentFigurePosition.getY());
+    }
+
+    private void useItem(ArrayList<String> commands) {
+        if(currentFigure.getHealth() < USE_MEDIPACK_THRESHOLD && ownTeam.getItem(8-1).getMunition() > 0) {
+            commands.add(ownTeam.getNumber() + " 8");
+            commands.add(ownTeam.getNumber() + " Space");
+        }
     }
 
     private void aim(ArrayList<String> commands) {
@@ -93,25 +110,31 @@ public class SimpleAI extends ArtificialIntelligence {
         currentFigurePosition = currentFigure.getPosition();
         currentFigurePosition = currentFigurePosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
 
-        chooseEnemy(0);
+        // try hitting one of the next 8 enemies, fall back to 1st one if no hit is possible
+        boolean foundEnemy = false;
+        for(int i=0; i<8 && !foundEnemy; i++) {
+            chooseEnemy(i);
 
-        try {
-            Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1)*Math.cos(angleToEnemy) * Figure.NORMED_OBJECT_SIZE,
-                    (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1)*Figure.NORMED_OBJECT_SIZE * Math.sin(angleToEnemy));
-            System.out.println(crosshairOffset);
-            terrain.getPositionForDirection(currentFigurePosition.add(crosshairOffset), closestEnemyPosition.subtract(currentFigurePosition), new Rectangle2D(currentFigurePosition.getX()+crosshairOffset.getX(), currentFigurePosition.getY()+crosshairOffset.getY(), 1, 1), false, false, false, false);
-            System.err.println("first enemy good?"); //correct start position/end position for calculations (NORMED_OBJECT_SIZE)
-        } catch (CollisionException e) {
-            if(!e.getCollisionPartnerClass().equals("figure")) {
-                System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
-                System.out.println("angle " + angleToEnemy + ", steps " + (int)(angleToEnemy/Weapon.ANGLE_STEP));
-                System.out.println("first enemy not good");
-
-                chooseEnemy(1);
-            } else {
-                System.err.println("first enemy is good (hit)");
+            try {
+                Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * Math.cos(angleToEnemy) * Figure.NORMED_OBJECT_SIZE,
+                        (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * Figure.NORMED_OBJECT_SIZE * Math.sin(angleToEnemy)); // TODO IMPORTANT also check skightly higher
+                System.out.println(crosshairOffset);
+                terrain.getPositionForDirection(currentFigurePosition.add(crosshairOffset), closestEnemyPosition.subtract(currentFigurePosition), new Rectangle2D(currentFigurePosition.getX() + crosshairOffset.getX(), currentFigurePosition.getY() + crosshairOffset.getY(), 1, 1), false, false, false, false);
+                System.err.println((i+1) + "st enemy good?");
+                foundEnemy = true;
+            } catch (CollisionException e) {
+                if (!e.getCollisionPartnerClass().equals("figure")) {
+                    System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
+                    System.out.println("angle " + angleToEnemy + ", steps " + (int) (angleToEnemy / Weapon.ANGLE_STEP));
+                    System.out.println((i+1) + "st enemy not good");
+                } else {
+                    System.err.println((i+1) + "st enemy is good (hit)"); // TODO do not call a hit of a friend good
+                    foundEnemy = true;
+                }
             }
         }
+
+        useItem(commands);
 
         state = AIState.TARGET_FOUND;
 
@@ -127,11 +150,33 @@ public class SimpleAI extends ArtificialIntelligence {
         state = AIState.TARGET_FACED;
 
         // choose weapon
-        commands.add(ownTeam.getNumber() + " " + ((int)(Math.random()*4)+1));
+        int weaponNumber;
+
+        if(distanceToEnemy < 100) {
+            weaponNumber = (Math.random() < .5 ? 2 : 3); // grenade or shotgun
+        } else if(distanceToEnemy > 250) {
+            weaponNumber = (Math.random() < .5 ? 3 : 4); // shotgun or rifle
+        } else {
+            weaponNumber = (Math.random() < .5 ? 1 : 3); // bazooka or shotgun
+        }
+
+        if(ownTeam.getItem(weaponNumber-1).getMunition() <= 0) {
+            weaponNumber = 3; // has infinite munition
+        }
+
+        commands.add(ownTeam.getNumber() + " " + weaponNumber); // shotgun or rifle
 
         // aim
         System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
         System.out.println("angle " + angleToEnemy + ", steps " + (int)(angleToEnemy/Weapon.ANGLE_STEP));
+
+        // for "heavy" weapons, compensate for gravity
+        if (weaponNumber == 1) {
+            commands.add(ownTeam.getNumber() + " Up");
+        } else if (weaponNumber == 2) {
+            commands.add(ownTeam.getNumber() + " Up");
+            commands.add(ownTeam.getNumber() + " Up");
+        }
     }
 
 }
