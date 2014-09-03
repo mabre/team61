@@ -92,16 +92,19 @@ public class SimpleAI extends ArtificialIntelligence {
     }
 
     private void useItem(ArrayList<String> commands) {
-        // use medipack when having low hp, or being the last figure of the team
-        if (ownTeam.getItem(8 - 1).getMunition() > 0) {
+        // use medipack when having low hp, being the last figure of the team and can be killed with a bazooka, or when being poisoned
+        // do not use a medipack when standing on water (unless being the last figure)
+        if (ownTeam.getItem(8 - 1).getMunition() > 0 &&
+                (!terrain.standingOnLiquid(currentFigurePosition) || ownTeam.getNumberOfLivingFigures() == 1)) {
             if (currentFigure.getHealth() < USE_MEDIPACK_THRESHOLD ||
-                    ownTeam.getNumberOfLivingFigures() == 1) {
+                    (ownTeam.getNumberOfLivingFigures() == 1 && currentFigure.getHealth() <= 50) ||
+                    currentFigure.getIsPoisoned()) {
                 commands.add(ownTeam.getNumber() + " 8");
                 commands.add(ownTeam.getNumber() + " Space");
             }
         }
         // use digiwise randomly when having enough hp, or being the last figue of the team
-        if (ownTeam.getItem(7 - 1).getMunition() > 0 && currentFigure.isDigitated()) {
+        if (ownTeam.getItem(7 - 1).getMunition() > 0 && !currentFigure.isDigitated()) {
             if ((currentFigure.getHealth() > USE_DIGIWISE_THRESHOLD && Math.random() < USE_DIGIWISE_PROBABILITY) ||
                     ownTeam.getNumberOfLivingFigures() == 1) {
                 commands.add(ownTeam.getNumber() + " 7");
@@ -186,12 +189,16 @@ public class SimpleAI extends ArtificialIntelligence {
         // choose weapon
         int weaponNumber;
         if(distanceToEnemy < 100) {
-            double grenadeProbability = (closestEnemy.getHealth() <= 40 ? .8 : .4);
+            double grenadeProbability = ((closestEnemy.getHealth() <= 40 && closestEnemy.getHealth() >= 20) ? .8 : .4);
             weaponNumber = (Math.random() < grenadeProbability ? 2 : 3); // grenade or shotgun
-        } else if(distanceToEnemy > 250) {
+        } else if(distanceToEnemy > 140 && distanceToEnemy < 200 && Math.random() < .5 && ownTeam.getItem(6-1).getMunition() > 0) {
+            weaponNumber = 6;
+        } else if(distanceToEnemy > 250 && distanceToEnemy <= 400) {
             weaponNumber = (Math.random() < .5 ? 3 : 4); // shotgun or rifle
+        } else if(distanceToEnemy > 400) {
+            weaponNumber = (Math.random() < .1 ? 3 : 4); // shotgun or rifle
         } else {
-            double bazookaProbability = (closestEnemy.getHealth() <= 50 ? .8 : .4);
+            double bazookaProbability = ((closestEnemy.getHealth() <= 50 && closestEnemy.getHealth() >= 20) ? .8 : .4);
             weaponNumber = (Math.random() < bazookaProbability ? 1 : 3); // bazooka or shotgun
         }
 
@@ -199,7 +206,7 @@ public class SimpleAI extends ArtificialIntelligence {
             weaponNumber = 3; // has infinite munition
         }
 
-        commands.add(ownTeam.getNumber() + " " + weaponNumber); // shotgun or rifle
+        commands.add(ownTeam.getNumber() + " " + weaponNumber);
 
         // aim
         System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
@@ -212,6 +219,12 @@ public class SimpleAI extends ArtificialIntelligence {
                 commands.add(ownTeam.getNumber() + " Up");
             }
         } else if (weaponNumber == 2) {
+            commands.add(ownTeam.getNumber() + " Up");
+            commands.add(ownTeam.getNumber() + " Up");
+        } else if (weaponNumber == 6) {
+            commands.add(ownTeam.getNumber() + " Up");
+            commands.add(ownTeam.getNumber() + " Up");
+            commands.add(ownTeam.getNumber() + " Up");
             commands.add(ownTeam.getNumber() + " Up");
             commands.add(ownTeam.getNumber() + " Up");
         }
