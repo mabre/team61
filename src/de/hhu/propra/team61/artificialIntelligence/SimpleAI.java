@@ -139,16 +139,16 @@ public class SimpleAI extends ArtificialIntelligence {
 
             try {
                 hittingFriend = false;
-                Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * Math.cos(angleToEnemy) * Figure.NORMED_OBJECT_SIZE,
-                        (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * Figure.NORMED_OBJECT_SIZE * Math.sin(angleToEnemy)); // TODO IMPORTANT also check skightly higher
+                Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * Math.cos(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE,
+                        (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * Math.sin(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE); // TODO also check slightly higher
                 System.out.println(crosshairOffset);
+                System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
+                System.out.println("angle " + angleToEnemy + ", steps " + (int) (angleToEnemy / Weapon.ANGLE_STEP));
                 terrain.getPositionForDirection(currentFigurePosition.add(crosshairOffset), closestEnemyPosition.subtract(currentFigurePosition), new Rectangle2D(currentFigurePosition.getX() + crosshairOffset.getX(), currentFigurePosition.getY() + crosshairOffset.getY(), 1, 1), false, false, false, false);
                 System.err.println((i+1) + "st enemy good?");
                 foundEnemy =  true;
             } catch (CollisionException e) {
                 if (!e.getCollisionPartnerClass().equals("figure")) {
-                    System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
-                    System.out.println("angle " + angleToEnemy + ", steps " + (int) (angleToEnemy / Weapon.ANGLE_STEP));
                     System.out.println((i+1) + "st enemy not good");
                 } else {
                     System.out.println((i+1) + "st enemy is good (hit)"); // TODO do not call a hit of a friend good
@@ -161,6 +161,10 @@ public class SimpleAI extends ArtificialIntelligence {
                     }
                 }
             }
+        }
+
+        if(!foundEnemy) {
+            System.out.println("No enemy found.");
         }
 
         useItem(commands);
