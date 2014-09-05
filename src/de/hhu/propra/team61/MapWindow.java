@@ -75,6 +75,7 @@ public class MapWindow extends Application implements Networkable {
     /** names the boss can have (chosen randomly) */
     private final static String[] BOSS_NAMES = {"Marʔoz", "ʔock’mar", "Ånsgar", "Apfel"}; // similarity to Vel’Koz, Kog’Maw, a town in Norway, and an evil fruit is purely coincidental
     private final static int AI_TIME_BETWEEN_KEY_PRESSES = 250;
+    private final static int AI_TIME_BETWEEN_QUICK_KEY_PRESSES = 50;
 
     //JavaFX related variables
     private Scene drawing;
@@ -872,6 +873,8 @@ public class MapWindow extends Application implements Networkable {
             int aiTeam = currentTeam;
 
             try {
+                long before = System.currentTimeMillis(), now, sleep;
+
                 while (aiTeam == currentTeam && turnTimer.get() <= 0) {
                     Thread.sleep(1000); // wait till the freeze between turns is over
                 }
@@ -886,7 +889,17 @@ public class MapWindow extends Application implements Networkable {
                         } else {
                             i--;
                         }
-                        Thread.sleep(AI_TIME_BETWEEN_KEY_PRESSES); // TODO IMPORTANT race condition?
+                        int delay = AI_TIME_BETWEEN_KEY_PRESSES;
+                        if(COMMANDS.get(i).endsWith("Left") || COMMANDS.get(i).endsWith("Right")) {
+                            delay = AI_TIME_BETWEEN_QUICK_KEY_PRESSES;
+                        }
+                        // sleep thread, and assure constant frame rate
+                        now = System.currentTimeMillis();
+                        sleep = Math.max(0, (delay) - (now - before));
+                        Thread.sleep(sleep);
+                        before = System.currentTimeMillis();
+                        // TODO IMPORTANT race condition?
+
                     }
                 }
             } catch (InterruptedException e) {
