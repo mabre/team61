@@ -676,6 +676,20 @@ public class Terrain extends GridPane {
     }
 
     /**
+     * Checks if the figure at the given position is standing on ground (ie. not floating in air).
+     * @param position the position of the figure
+     * @return true if the figure at the given position is not flying
+     */
+    public boolean standingOnGround(Point2D position) {
+        try {
+            getPositionForDirection(position, new Point2D(0, 1), new Rectangle2D(position.getX(), position.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE), false, true, false, false);
+            return false;
+        } catch (CollisionException e) {
+            return true;
+        }
+    }
+
+    /**
      * Makes the liquid flow into wholes.
      * Replaces sky blocks in lines with a liquid with the liquid, starting at the bottom and stopping when a row without
      * a liquid is found. REPLACE_BLOCK commands are added to the given list.

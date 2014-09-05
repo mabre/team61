@@ -65,7 +65,7 @@ public class SimpleAI extends ArtificialIntelligence {
      * Updates {@link #currentFigure}, {@link #currentFigurePosition}, and sets {@link #closestEnemy}, {@link #closestEnemyPosition}, and {@link #distanceToEnemy} to the n-th nearest enemy figure next to {@link #currentFigure}.
      * If n is less than the number of enemies, the nearest enemy is chosen. If no enemy is found, {@link #closestEnemy}
      * is set to null.
-     * @param n
+     * @param n n-th closest enemy is chosen (counting starts from 0)
      */
     private void chooseEnemy(int n) {
         currentFigure = ownTeam.getCurrentFigure();
@@ -125,46 +125,68 @@ public class SimpleAI extends ArtificialIntelligence {
     }
 
     private void prepareAim(ArrayList<String> commands) {
-        currentFigure = ownTeam.getCurrentFigure();
-        currentFigurePosition = currentFigure.getPosition();
-        currentFigurePosition = currentFigurePosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
-
-        // try hitting one of the next 8 enemies, fall back to 1st one if no hit is possible
         boolean foundEnemy = false;
         boolean hittingFriend = false;
-        for(int i=0; i<8 && !foundEnemy; i++) {
-            chooseEnemy(i);
 
-            if(closestEnemy == null) break;
+        for(int repetition=0; repetition<2; repetition++) {
+            currentFigure = ownTeam.getCurrentFigure();
+            currentFigurePosition = currentFigure.getPosition();
+            currentFigurePosition = currentFigurePosition.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
 
-            try {
-                hittingFriend = false;
-                Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * Math.cos(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE,
-                        (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * Math.sin(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE); // TODO also check slightly higher
-                System.out.println(crosshairOffset);
-                System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
-                System.out.println("angle " + angleToEnemy + ", steps " + (int) (angleToEnemy / Weapon.ANGLE_STEP));
-                terrain.getPositionForDirection(currentFigurePosition.add(crosshairOffset), closestEnemyPosition.subtract(currentFigurePosition), new Rectangle2D(currentFigurePosition.getX() + crosshairOffset.getX(), currentFigurePosition.getY() + crosshairOffset.getY(), 1, 1), false, false, false, false);
-                System.err.println((i+1) + "st enemy good?");
-                foundEnemy =  true;
-            } catch (CollisionException e) {
-                if (!e.getCollisionPartnerClass().equals("figure")) {
-                    System.out.println((i+1) + "st enemy not good");
-                } else {
-                    System.out.println((i+1) + "st enemy is good (hit)"); // TODO do not call a hit of a friend good
-                    if (friendIsNearPosition(e.getLastGoodPosition())) {
-                        foundEnemy = false;
-                        hittingFriend = true;
-                        System.out.println("no, hitting friend");
+            // try hitting one of the next 8 enemies, fall back to 1st one if no hit is possible
+            foundEnemy = false;
+            hittingFriend = false;
+            for (int i = 0; i < 8 && !foundEnemy; i++) {
+                chooseEnemy(i);
+
+                if (closestEnemy == null) break;
+
+                try {
+                    hittingFriend = false;
+                    Point2D crosshairOffset = new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * Math.cos(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE,
+                            (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * Math.sin(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE); // TODO also check slightly higher
+                    System.out.println(crosshairOffset);
+                    System.out.println("standing at" + currentFigurePosition + ", aiming at " + closestEnemy.getName() + " " + closestEnemyPosition);
+                    System.out.println("angle " + angleToEnemy + ", steps " + (int) (angleToEnemy / Weapon.ANGLE_STEP));
+                    terrain.getPositionForDirection(currentFigurePosition.add(crosshairOffset), closestEnemyPosition.subtract(currentFigurePosition), new Rectangle2D(currentFigurePosition.getX() + crosshairOffset.getX(), currentFigurePosition.getY() + crosshairOffset.getY(), 1, 1), false, false, false, false);
+                    System.err.println((i + 1) + "st enemy good?");
+                    foundEnemy = true;
+                } catch (CollisionException e) {
+                    if (!e.getCollisionPartnerClass().equals("figure")) {
+                        System.out.println((i + 1) + "st enemy not good");
                     } else {
-                        foundEnemy = true;
+                        System.out.println((i + 1) + "st enemy is good (hit)"); // TODO do not call a hit of a friend good
+                        if (friendIsNearPosition(e.getLastGoodPosition())) {
+                            foundEnemy = false;
+                            hittingFriend = true;
+                            System.out.println("no, hitting friend");
+                        } else {
+                            foundEnemy = true;
+                        }
                     }
                 }
             }
-        }
 
-        if(!foundEnemy) {
-            System.out.println("No enemy found.");
+            if (!foundEnemy && repetition==0) {
+                System.out.println("No enemy within range found.");
+
+                chooseEnemy(0);
+                boolean goingLeft = closestEnemyPosition.getX() < currentFigurePosition.getX();
+                System.out.println("going left? " + goingLeft);
+                Point2D newGoToPos = currentFigurePosition.subtract(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2); // TODO IMPORTANT rename or change var
+                Point2D goToPos = null;
+                for (int i = 0; i < Math.max(gameSettings.getInt("turnTimer", 20), 20) && newGoToPos != null && !terrain.standingOnLiquid(newGoToPos)
+                        && terrain.standingOnGround(newGoToPos) && !facingWall(newGoToPos, goingLeft) && newGoToPos.distance(closestEnemyPosition) > 150; i++) {
+                    goToPos = newGoToPos;
+                    try {
+                        // TODO IMPORTANT friction (continious calculation?)
+                        newGoToPos = terrain.getPositionForDirection(goToPos, new Point2D((goingLeft ? -1 : 1) * Figure.WALK_SPEED, 0), new Rectangle2D(goToPos.getX(), goToPos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE), true, true, true, true);
+                        commands.add(ownTeam.getNumber() + (goingLeft ? " Left" : " Right"));
+                    } catch (CollisionException e) {
+                        newGoToPos = null;
+                    }
+                }
+            }
         }
 
         useItem(commands);
@@ -196,7 +218,7 @@ public class SimpleAI extends ArtificialIntelligence {
             double grenadeProbability = ((closestEnemy.getHealth() <= 40 && closestEnemy.getHealth() >= 20) ? .8 : .4);
             weaponNumber = (Math.random() < grenadeProbability ? 2 : 3); // grenade or shotgun
         } else if(distanceToEnemy > 140 && distanceToEnemy < 200 && Math.random() < .5 && ownTeam.getItem(6-1).getMunition() > 0) {
-            weaponNumber = 6;
+            weaponNumber = 6; // banana bomb
         } else if(distanceToEnemy > 250 && distanceToEnemy <= 400) {
             weaponNumber = (Math.random() < .5 ? 3 : 4); // shotgun or rifle
         } else if(distanceToEnemy > 400) {
@@ -231,6 +253,15 @@ public class SimpleAI extends ArtificialIntelligence {
             commands.add(ownTeam.getNumber() + " Up");
             commands.add(ownTeam.getNumber() + " Up");
             commands.add(ownTeam.getNumber() + " Up");
+        }
+    }
+
+    private boolean facingWall(Point2D pos, boolean left) {
+        try {
+            terrain.getPositionForDirection(pos, new Point2D((left ? -1 : 1) * Figure.NORMED_OBJECT_SIZE, 0), new Rectangle2D(pos.getX(), pos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE), true, true, false, false);
+            return false;
+        } catch(CollisionException e) {
+            return true;
         }
     }
 
