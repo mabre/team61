@@ -14,6 +14,7 @@ fixed problems:
 * network game: sometimes it was possible for all players to control the current figure (#113)
 * loading saved game: loading a saved game with dead figures was not possible (#114)
 * turn counter: the number displayed in the game started counting form 0
+* liquid damage: figures standing on the right end of the liquid did not get damage
 
 
 0.1 Afrobob (14/07/14)
