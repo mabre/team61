@@ -66,7 +66,7 @@ public class MapWindow extends Application implements Networkable {
     private final int TURNS_TILL_SUDDEN_DEATH = Settings.getSavedInt("turnsTillSuddenDeath", 30);
     /** number of turns the boss needs to destroy the whole map */
     private final static int SUDDEN_DEATH_TURNS = 20;
-    private final static int MILLISECONDS_PER_TURN = Settings.getSavedInt("secondsPerTurn", 30)*1000; // TODO IMPORTANT doc
+    private final int MILLISECONDS_PER_TURN = Settings.getSavedInt("secondsPerTurn", 30)*1000; // TODO IMPORTANT doc
     private static final int MILLISECONDS_BETWEEN_TURNS = 1000;
     /** names the boss can have (chosen randomly) */
     private final static String[] BOSS_NAMES = {"Marʔoz", "ʔock’mar", "Ånsgar", "Apfel"}; // similarity to Vel’Koz, Kog’Maw, a town in Norway, and an evil fruit is purely coincidental
