@@ -219,7 +219,8 @@ public class SimpleAI extends ArtificialIntelligence {
         if(distanceToEnemy < 100) {
             double grenadeProbability = ((closestEnemy.getHealth() <= 40 && closestEnemy.getHealth() >= 20) ? .8 : .4);
             weaponNumber = (Math.random() < grenadeProbability ? 2 : 3); // grenade or shotgun
-        } else if(distanceToEnemy > 140 && distanceToEnemy < 200 && Math.random() < .5 && ownTeam.getItem(6-1).getMunition() > 0) {
+        } else if(distanceToEnemy > 140 && distanceToEnemy < 200 && !(angleToEnemy > 45 && !angleDown) // do not aim up (probably won't work)
+                && Math.random() < .5 && ownTeam.getItem(6-1).getMunition() > 0) {
             weaponNumber = 6; // banana bomb
         } else if(distanceToEnemy > 250 && distanceToEnemy <= 400) {
             weaponNumber = (Math.random() < .5 ? 3 : 4); // shotgun or rifle
