@@ -5,6 +5,7 @@ new features and enhancements:
 * rampage: Figures which are on a rampage (ie. caused more than 75 hp damage) get a 30 hp shield and greater resistance against shock waves until their next turn; after the next turn, the figure gets a hp bonus basing upon the caused damage and the shield left.
 * local game: Teams can be removed.
 * network game: The host’s ip is displayed in the lobby, and the default ip is the client’s ip, thus making entering local network ips faster.
+* Launcher: start feedback; warning when old Java version is installed, or game crashed early
 * The game can be started even if it is saved in a read-only directory (eg. on a CD; customizing parts do not work).
 
 fixed problems:
