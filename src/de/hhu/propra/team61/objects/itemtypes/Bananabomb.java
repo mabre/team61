@@ -2,8 +2,7 @@ package de.hhu.propra.team61.objects.itemtypes;
 
 import de.hhu.propra.team61.Team;
 import de.hhu.propra.team61.io.json.JSONArray;
-import de.hhu.propra.team61.io.json.JSONObject;
-import de.hhu.propra.team61.objects.NoMunitionException;
+import de.hhu.propra.team61.objects.Figure;
 import de.hhu.propra.team61.objects.Projectile;
 import de.hhu.propra.team61.objects.Terrain;
 import de.hhu.propra.team61.objects.Weapon;
@@ -28,7 +27,7 @@ public class Bananabomb extends Weapon {
     private final static int     DAMAGE         =  40;
     private final static int     EXPLOSIONPOWER = 100;
     private final static int     SHOCKWAVE      =  15;
-    private final static int     SHARDS         =   5;
+    private final static int     NUMBER_OF_SHARDS = 5;
     private final static int     DELAY          =   5;  // ToDo make this variable
 
     private final static boolean POISONS       = false; // toggle isPoisoned
@@ -66,8 +65,10 @@ public class Bananabomb extends Weapon {
         output.addAll(super.handleCollision(terrain, teams, impactArea,isShard));
 
         if(!isShard) {
-            for (int i = 0; i < SHARDS; i++) {
-                Projectile shot = new Projectile(new Image(PROJECTILE_IMG,4,4,true,true), impactPoint, impactPoint.add((-Math.random() * 20 + 10), -Math.random() * 10), 8, this);
+            for (int i = 0; i < NUMBER_OF_SHARDS; i++) {
+                Point2D randomDirection =  new Point2D((-Math.random() * 20 + 10), -Math.random() * 10);
+                randomDirection = randomDirection.add(randomDirection.normalize().multiply(Figure.NORMED_OBJECT_SIZE)); // add some distance to prevent that a figure is killed by placing a banana "inside" is
+                Projectile shot = new Projectile(new Image(PROJECTILE_IMG,4,4,true,true), impactPoint, impactPoint.add(randomDirection), 8, this);
                 shot.setShard();
                 shards.put(shot.toJson());
             }
