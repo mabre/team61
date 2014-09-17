@@ -21,7 +21,7 @@ public class ArtificialIntelligence {
     protected final JSONObject gameSettings;
 
     protected enum AIState {
-        NEW_TURN, TARGET_FOUND, TARGET_FACED, TARGET_AIMED, TURN_FINISHED
+        NEW_TURN, COLLECTING_CRATE, CRATE_COLLECTED, TARGET_FOUND, TARGET_FACED, TARGET_AIMED, TURN_FINISHED
     }
 
     protected AIState state;
@@ -77,13 +77,27 @@ public class ArtificialIntelligence {
         return enemiesByDistance;
     }
 
-    boolean friendIsNearPosition(Point2D pos) {
+    /**
+     * Determines whether a team member is within {@link de.hhu.propra.team61.objects.Figure#NORMED_OBJECT_SIZE} distance to the given position
+     * @param pos position (top left corner) of an object
+     * @return true of a friend is nearby
+     */
+    protected boolean friendIsNearPosition(Point2D pos) {
         for(Figure f: ownTeam.getFigures()) {
             if(pos.distance(f.getPosition().add(Figure.NORMED_OBJECT_SIZE/2, Figure.NORMED_OBJECT_SIZE/2)) < Figure.NORMED_OBJECT_SIZE) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Calculated the center of the object at the given position with a width and height of {@link de.hhu.propra.team61.objects.Figure#NORMED_OBJECT_SIZE}.
+     * @param object the position of the top left corner of the object
+     * @return the center of the given normed object
+     */
+    protected Point2D getCenterForNormedObject(Point2D object) {
+        return object.add(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
     }
 
 }
