@@ -352,7 +352,7 @@ public class SimpleAI extends ArtificialIntelligence {
     }
 
     private Point2D getCrosshairOffset() {
-        new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * (Math.cos(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE - PROJECTILE_WIDTH/2),
+        return new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * (Math.cos(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE - PROJECTILE_WIDTH/2),
                 (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * (Math.sin(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE - PROJECTILE_WIDTH/2));
     }
 
