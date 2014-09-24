@@ -91,14 +91,6 @@ public class Team extends StackPane {
         inventory = ItemManager.generateInventory(itemsArray);
         currentFigure = state.getInt("currentFigure");
         setAlignment(Pos.TOP_LEFT);
-        // TODO IMPORTANT ai
-//        switch(aiType) {
-//            case NULL:
-//                ai = null;
-//                break;
-//            case SIMPLE:
-//                ai = new SimpleAI(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
-//        }
     }
 
     /**
@@ -118,6 +110,7 @@ public class Team extends StackPane {
         output.put("name", name);
         output.put("number", number);
         output.put("currentFigure", currentFigure);
+        output.put("aiType", getAIType().getValue());
         return output;
     }
 
@@ -131,6 +124,10 @@ public class Team extends StackPane {
 
     public ArtificialIntelligence getAI() {
         return ai;
+    }
+
+    private AIType getAIType() {
+        return (ai == null ? AIType.NULL : ai.getAIType() );
     }
 
     public ArrayList<String> makeAIMove() {

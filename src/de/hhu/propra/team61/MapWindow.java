@@ -1,5 +1,6 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.artificialIntelligence.AIType;
 import de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence;
 import de.hhu.propra.team61.artificialIntelligence.SimpleAI;
 import de.hhu.propra.team61.gui.*;
@@ -238,6 +239,19 @@ public class MapWindow extends Application implements Networkable {
             teams.add(new Team(teamsArray.getJSONObject(i)));
         }
 
+        for(int i=0; i<teamsArray.length(); i++) {
+            switch(AIType.fromInteger(teamsArray.getJSONObject(i).getInt("aiType", AIType.NULL.getValue()))) {
+                case NULL:
+                    break;
+                case DUMMY:
+                    teams.get(i).setAI(new ArtificialIntelligence(teams.get(i), teams, terrain, supplyDrops, gameSettings));
+                    break;
+                case SIMPLE:
+                    teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings));
+                    break;
+            }
+        }
+
         supplyDrops = new ArrayList<>();
         JSONArray cratesArray = input.getJSONArray("crates");
         for(int i=0; i<cratesArray.length(); i++) {
@@ -289,6 +303,19 @@ public class MapWindow extends Application implements Networkable {
         JSONArray teamsArray = input.getJSONArray("teams");
         for(int i=0; i<teamsArray.length(); i++) {
             teams.add(new Team(teamsArray.getJSONObject(i)));
+        }
+
+        for(int i=0; i<teamsArray.length(); i++) {
+            switch(AIType.fromInteger(teamsArray.getJSONObject(i).getInt("aiType", AIType.NULL.getValue()))) {
+                case NULL:
+                    break;
+                case DUMMY:
+                    teams.get(i).setAI(new ArtificialIntelligence(teams.get(i), teams, terrain, supplyDrops, gameSettings)); // TODO IMPORTANT gameSettings is null (should also break revenge)
+                    break;
+                case SIMPLE:
+                    teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings));
+                    break;
+            }
         }
 
         supplyDrops = new ArrayList<>();

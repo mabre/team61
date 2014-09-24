@@ -71,6 +71,11 @@ public class SimpleAI extends ArtificialIntelligence {
         return commands;
     }
 
+    @Override
+    public AIType getAIType() {
+        return AIType.SIMPLE;
+    }
+
     /**
      * updates {@link #currentFigure} and {@link #currentFigurePosition}
      */

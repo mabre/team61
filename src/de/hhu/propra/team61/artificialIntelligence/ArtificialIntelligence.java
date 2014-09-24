@@ -6,6 +6,7 @@ import de.hhu.propra.team61.objects.Crate;
 import de.hhu.propra.team61.objects.Figure;
 import de.hhu.propra.team61.objects.Terrain;
 import javafx.geometry.Point2D;
+import org.json.simple.JSONAware;
 
 import java.util.ArrayList;
 
@@ -35,6 +36,15 @@ public class ArtificialIntelligence {
         this.crates = crates;
         this.gameSettings = gameSettings;
         this.state = AIState.NEW_TURN;
+    }
+
+    /**
+     * Gets the type of this AI object.
+     * @see de.hhu.propra.team61.artificialIntelligence.AIType
+     * @return type of this AI
+     */
+    public AIType getAIType() {
+        return AIType.DUMMY;
     }
 
     public ArrayList<String> makeMove() {
