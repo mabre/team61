@@ -296,7 +296,7 @@ public class NetLobby extends Application implements Networkable {
                 }
                 if (differentColors) {
                     VorbisPlayer.stop();
-                    MapWindow mapwindow = new MapWindow(levelChooser.getValue()+".lvl", toJson(), client, clientThread, server, serverThread, sceneController);
+                    MapWindow mapwindow = new MapWindow(client, clientThread, server, serverThread, sceneController, toJson());
                 } else {
                     sameColor.setVisible(true);
                 }

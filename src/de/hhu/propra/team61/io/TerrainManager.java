@@ -32,10 +32,12 @@ public class TerrainManager {
 
     /**
      * Loads a level file into a json object.
+     * The if {@code filename} does not end with .lvl, it is automatically appended.
      * @param filename the file containing the level to be loaded
      * @return a JSONObject representing the level
      */
     public static JSONObject load(String filename) throws FileNotFoundException {
+        if(!filename.endsWith(".lvl")) filename += ".lvl";
         System.out.println("Loading level " + filename);
         //String dir = LEVEL_DIR;
         //if(filename.equals(SAVE_LEVEL_FILE)) dir = ""; //TODO Still necessary?

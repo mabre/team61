@@ -137,7 +137,6 @@ public class MapWindow extends Application implements Networkable {
 
     private int floodLevel = -1;
 
-    private String map; // TODO do we need this?
     private Chat chat;
     private SceneController sceneController;
     /** json holding the settings for the current game */
@@ -145,7 +144,6 @@ public class MapWindow extends Application implements Networkable {
 
     /**
      * Creates a new map window. Used by new local game, server, and game over window.
-     * @param map the filename of the level to be loaded
      * @param gameSettings JSONObject containing the settings for the game to be started
      * @param client a client object
      * @param clientThread the thread executing the client
@@ -153,9 +151,9 @@ public class MapWindow extends Application implements Networkable {
      * @param serverThread the thread executing the server, might be null
      * @param sceneController
      */
-    public MapWindow(String map, JSONObject gameSettings, Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController) {
+    public MapWindow(Client client, Thread clientThread, Server server, Thread serverThread, SceneController sceneController, JSONObject gameSettings) {
+        // TODO code duplication; we have to check what we actually need at the end of the week (JSON parameter in the end to temporarily circumvent haven 2 constructors with same parameter types)
         this.sceneController = sceneController;
-        this.map = map;
         this.client = client;
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
@@ -163,9 +161,8 @@ public class MapWindow extends Application implements Networkable {
         this.serverThread = serverThread;
         if(server != null) server.registerCurrentNetworkable(this);
 
-        // TODO code duplication; we have to check what we actually need at the end of the week
         try {
-            terrain = new Terrain(TerrainManager.load(map));
+            terrain = new Terrain(TerrainManager.load(gameSettings.getString("level")));
         } catch (FileNotFoundException e) {
             // TODO do something sensible here
             e.printStackTrace();
@@ -220,24 +217,8 @@ public class MapWindow extends Application implements Networkable {
         this.clientThread = clientThread;
         client.registerCurrentNetworkable(this);
 
-        // TODO implement fromJson (code duplication) -> bring the two json formats into line (weapons are team properties)
-        this.terrain = new Terrain(input.getJSONObject("terrain"));
+        fromJson(input);
 
-        JSONArray teamsArray = input.getJSONArray("teams");
-        for(int i=0; i<teamsArray.length(); i++) {
-            teams.add(new Team(teamsArray.getJSONObject(i)));
-        }
-
-        supplyDrops = new ArrayList<>();
-        JSONArray cratesArray = input.getJSONArray("crates");
-        for(int i=0; i<cratesArray.length(); i++) {
-            supplyDrops.add(new Crate(cratesArray.getJSONObject(i)));
-        }
-
-        turnCount = input.getInt("turnCount");
-        turnTimer.set(input.getInt("turnCount", MILLISECONDS_BETWEEN_TURNS));
-        currentTeam = input.getInt("currentTeam");
-        terrain.setWind(input.getDouble("windForce"));
         initialize();
     }
 
@@ -274,6 +255,20 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
+        fromJson(input);
+
+        initialize();
+
+        if(server != null) server.send(getStateForNewClient());
+    }
+
+    /**
+     * Inverse function to {@link #toJson()}.
+     * @param input a JSONObject containing a MapWindow state
+     */
+    private void fromJson(JSONObject input) {
+        // TODO bring the two json formats into line (weapons are team properties)
+
         this.terrain = new Terrain(input.getJSONObject("terrain"));
 
         JSONArray teamsArray = input.getJSONArray("teams");
@@ -287,14 +282,12 @@ public class MapWindow extends Application implements Networkable {
             supplyDrops.add(new Crate(cratesArray.getJSONObject(i)));
         }
 
+        gameSettings = input.getJSONObject("gameSettings");
+
         turnCount = input.getInt("turnCount");
         turnTimer.set(input.getInt("turnTimer", MILLISECONDS_BETWEEN_TURNS));
         currentTeam = input.getInt("currentTeam");
         terrain.setWind(input.getDouble("windForce"));
-
-        initialize();
-
-        if(server != null) server.send(getStateForNewClient());
     }
 
     /**
@@ -658,6 +651,7 @@ public class MapWindow extends Application implements Networkable {
             output.put("terrain", terrain.toJson());
             output.put("windForce", terrain.getWindMagnitude());
         }
+        output.put("gameSettings", gameSettings); // necessary for revenge and ai // TODO make gameSettings and toJson() format compatible (see TODO in constructor)?
         // TODO include sudden death status
         return output;
     }
@@ -1152,7 +1146,7 @@ public class MapWindow extends Application implements Networkable {
                 VorbisPlayer.stop();
                 ingameLabel.stopAllTimers();
                 String winnerName = (cmd[1].equals("-1") ? "NaN" : teams.get(Integer.parseInt(cmd[1])).getName()); // -1 = draw
-                GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, map, gameSettings, client, clientThread, server, serverThread);
+                GameOverWindow gameOverWindow = new GameOverWindow(sceneController, Integer.parseInt(cmd[1]), winnerName, gameSettings, client, clientThread, server, serverThread);
                 break;
             case "PROJECTILE_SET_POSITION": // TODO though server did null check, recheck here (problem when connecting later)
                 if(server==null) { // TODO code duplication should be avoided
