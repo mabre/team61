@@ -279,6 +279,7 @@ public class MapWindow extends Application implements Networkable {
      */
     private void fromJson(JSONObject input) {
         // TODO bring the two json formats into line (weapons are team properties)
+        gameSettings = input.getJSONObject("gameSettings");
 
         this.terrain = new Terrain(input.getJSONObject("terrain"));
 
@@ -292,7 +293,7 @@ public class MapWindow extends Application implements Networkable {
                 case NULL:
                     break;
                 case DUMMY:
-                    teams.get(i).setAI(new ArtificialIntelligence(teams.get(i), teams, terrain, supplyDrops, gameSettings)); // TODO IMPORTANT gameSettings is null (should also break revenge)
+                    teams.get(i).setAI(new ArtificialIntelligence(teams.get(i), teams, terrain, supplyDrops, gameSettings));
                     break;
                 case SIMPLE:
                     teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings));
@@ -305,9 +306,6 @@ public class MapWindow extends Application implements Networkable {
         for(int i=0; i<cratesArray.length(); i++) {
             supplyDrops.add(new Crate(cratesArray.getJSONObject(i)));
         }
-
-        gameSettings = input.getJSONObject("gameSettings");
-
         turnCount = input.getInt("turnCount");
         turnTimer.set(input.getInt("turnTimer", MILLISECONDS_BETWEEN_TURNS));
         currentTeam = input.getInt("currentTeam");
