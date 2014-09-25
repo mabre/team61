@@ -655,14 +655,15 @@ public class Terrain extends GridPane {
      * @return true if the figure at the given position is standing on a liquid
      */
     public boolean standingOnLiquid(Point2D position) {
-        final int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
-        final int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
-        final int maxY = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
-        final int minY = maxY - (Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE;
+        int minX = (int)Math.floor(position.getX() / BLOCK_SIZE);
+        int maxX = (int)Math.ceil((position.getX() + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        int maxY = (int)Math.ceil((Math.round(position.getY()) + Figure.NORMED_OBJECT_SIZE) / BLOCK_SIZE);
+        int minY = maxY - (Figure.NORMED_OBJECT_SIZE)/BLOCK_SIZE;
 
-        if(maxY >= terrain.size() || maxY < 0 || maxX < 0 || maxX >= terrain.get(0).size()) {
-            return false;
-        }
+        if(maxY >= terrain.size()) maxY = terrain.size()-1;
+        else if(maxY < 0) maxY = 0;
+        if(maxX < 0) maxX = 0;
+        else if(maxX >= terrain.get(0).size()) maxX = terrain.get(0).size()-1;
 
         for(int y=minY; y <= maxY && y < terrain.size(); y++) {
             for (int x = minX; x < maxX && x < terrain.get(y).size(); x++) {

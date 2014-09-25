@@ -40,14 +40,13 @@ public class GameOverWindow extends Application implements Networkable {
      * @param sceneController used to switch to menue or back to the game
      * @param winnerTeam the number of the winner team (counting starts from 0, -1 means draw)
      * @param winnerName the name of the winner team
-     * @param map the level that was just played in the game
      * @param gameSettings the JSONObject containing the saved settings of the last game
      * @param client the client object
      * @param clientThread the thread managing the client connection
      * @param server the server object
      * @param serverThread the thread managing the server connection
      */
-    public GameOverWindow(SceneController sceneController, int winnerTeam, String winnerName, String map, JSONObject gameSettings, Client client, Thread clientThread, Server server, Thread serverThread) {
+    public GameOverWindow(SceneController sceneController, int winnerTeam, String winnerName, JSONObject gameSettings, Client client, Thread clientThread, Server server, Thread serverThread) {
         BorderPane root = new BorderPane();
         this.sceneController = sceneController;
         this.server = server;
@@ -80,7 +79,7 @@ public class GameOverWindow extends Application implements Networkable {
         overGrid.add(revenge, 0, 3);
         overGrid.add(revengeText, 1, 3);
         revenge.setOnAction(e -> {
-            MapWindow mapwindow = new MapWindow(map, gameSettings, client, clientThread, server, serverThread, sceneController);
+            MapWindow mapwindow = new MapWindow(client, clientThread, server, serverThread, sceneController, gameSettings);
         });
         if(!client.isLocalGame()) revenge.setDisable(true); // TODO return to lobby in network mode (branch networkBackToLobby)
         client.registerCurrentNetworkable(this);

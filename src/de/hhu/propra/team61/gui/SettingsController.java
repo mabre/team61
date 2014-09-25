@@ -150,8 +150,7 @@ public class SettingsController {
                 serverThread = new Thread(server = new Server(() -> {
                     clientThread = new Thread(client = new Client(() -> {
                         JSONObject styleObject = CustomizeManager.getSavedSettings("gamestyles/" + gameStyle.getValue()+".json");
-                        String map = styleObject.getString("level");
-                        Platform.runLater(() -> new MapWindow(map, toJson(), client, clientThread, server, serverThread, sceneController));
+                        Platform.runLater(() -> new MapWindow(client, clientThread, server, serverThread, sceneController, toJson()));
                     }));
                     clientThread.start();
                 }));
