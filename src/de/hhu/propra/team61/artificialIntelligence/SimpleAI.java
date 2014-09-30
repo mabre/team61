@@ -9,33 +9,53 @@ import javafx.geometry.Rectangle2D;
 import java.util.ArrayList;
 
 /**
- * Created by markus on 29.08.14. // TODO IMPORTANT
+ * Implementation of an AI with difficulty "simple".
+ * See {@link #prepareAim(java.util.ArrayList)} for a basic description of the strategy.
  */
 public class SimpleAI extends ArtificialIntelligence {
 
+    /** medipack is used when hp drops below this value */
     private static int USE_MEDIPACK_THRESHOLD = 40;
+    /** digiwise is used when hp drops below this value, with a probability of {@link #USE_DIGIWISE_PROBABILITY} */
     private static int USE_DIGIWISE_THRESHOLD = 60;
+    /** probability for digiwise usage, see also {@link #USE_DIGIWISE_THRESHOLD} */
     private static double USE_DIGIWISE_PROBABILITY = .2;
+    /** width of a projectile, used for terrain collision calculations */
     private static int PROJECTILE_WIDTH = 4;
 
-    private Figure currentFigure; // TODO IMPORTANT doc
+    /** reference to the being moved in the current turn */
+    private Figure currentFigure;
+    /** position of the center of {@link #currentFigure} */
     Point2D currentFigurePosition;
 
+    /** reference to the crate closest to {@link #currentFigure} */
     Crate closestCrate;
+    /** position of the center of {@link #closestCrate} */
     Point2D closestCratePosition;
 
+    /** reference to the enemy figure the AI wants to hit (not necessarily the closest figure) */
     Figure closestEnemy;
+    /** position of the center of {@link #closestEnemy} */
     Point2D closestEnemyPosition;
 
+    /** angle between {@link #currentFigure} and {@link #closestEnemy} in degrees to the horizontal [0, 90] */
     double angleToEnemy;
+    /** whether {@link #angleToEnemy} is below or above horizontal */
     boolean angleDown;
+    /** distance to {@link #closestEnemy} in px */
     double distanceToEnemy;
+    /** counter for how many steps have been made during the current turn */
     int repetition = 0;
 
     public SimpleAI(Team ownTeam, ArrayList<Team> teams, Terrain terrain, ArrayList<Crate> crates, JSONObject gameSettings) {
         super(ownTeam, teams, terrain, crates, gameSettings);
     }
 
+    /**
+     * Let the AI calculate the next (partial) move.
+     * @return List of commands, empty if turn is finished
+     */
+    @Override
     public ArrayList<String> makeMove() {
         ArrayList<String> commands = new ArrayList<>();
 
@@ -77,7 +97,7 @@ public class SimpleAI extends ArtificialIntelligence {
     }
 
     /**
-     * updates {@link #currentFigure} and {@link #currentFigurePosition}
+     * Updates {@link #currentFigure} and {@link #currentFigurePosition}.
      */
     private void updateCurrentFigure() {
         currentFigure = ownTeam.getCurrentFigure();
@@ -115,6 +135,10 @@ public class SimpleAI extends ArtificialIntelligence {
         angleDown = (closestEnemyPosition.getY() > currentFigurePosition.getY());
     }
 
+    /**
+     * Uses a medipack and/or digiwise when certain conditions are met.
+     * @param commands reference to the list of commands returned to the game loop
+     */
     private void useItem(ArrayList<String> commands) {
         // use medipack when having low hp, being the last figure of the team and can be killed with a bazooka, or when being poisoned
         // do not use a medipack when standing on water (unless being the last figure)
@@ -137,6 +161,12 @@ public class SimpleAI extends ArtificialIntelligence {
         }
     }
 
+    /**
+     * Adds commands for moving the crosshair up/down, according to {@link #angleToEnemy}.
+     * The command for choosing a weapon must already be sent, the initial position should be horizontal, the figure
+     * must be looking into the right direction.
+     * @param commands reference to the list of commands returned to the game loop
+     */
     private void aim(ArrayList<String> commands) {
         for(int i = (int)Math.round(angleToEnemy/Weapon.ANGLE_STEP); i > 0; i--) {
             if(angleDown) {
@@ -148,6 +178,11 @@ public class SimpleAI extends ArtificialIntelligence {
         state = AIState.TARGET_AIMED;
     }
 
+    /**
+     * Calls {@link #updateCurrentFigure()}, updates {@link #closestCrate} and {@link #closestCratePosition}, and sets {@link #state} to {@link de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence.AIState#CRATE_COLLECTED}.
+     * Only crates within small distance to the current figures are found. If no suitable crate is found, {@link #closestCrate}
+     * is set to {@code null}.
+     */
     private void findCrate() {
         updateCurrentFigure();
 
@@ -167,6 +202,13 @@ public class SimpleAI extends ArtificialIntelligence {
         state = AIState.CRATE_COLLECTED;
     }
 
+    /**
+     * Adds commands for moving to the closest crate, if any.
+     * If there is no closest crate, are the crate has been hit, {@link #state} is set to {@link de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence.AIState#CRATE_COLLECTED}.
+     * Otherwise, one movement command is added.
+     * @param commands reference to the list of commands returned to the game loop
+     * @see #findCrate()
+     */
     private void collectCrate(ArrayList<String> commands) {
         if(closestCrate == null) {
             state = AIState.CRATE_COLLECTED;
@@ -184,6 +226,20 @@ public class SimpleAI extends ArtificialIntelligence {
         }
     }
 
+    /**
+     * Does all the calculation for hitting an enemy.
+     * <ol>
+     *     <li>call {@link #updateCurrentFigure()}</li>
+     *     <li>check if the 8 closest enemies can be hit from the current position</li>
+     *     <li>if no hit is possible, move to an enemy if there is enought time (and return from function without changing {@link #state})</li>
+     *     <li>call {@link #useItem(java.util.ArrayList)}</li>
+     *     <li>make the figure look in the right direction</li>
+     *     <li>choose an approriate weapon (considering distance and wind)</li>
+     *     <li>add corrections to the crosshair angle depending on weapon mass</li>
+     *     <li>set {@link #state} to {@link de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence.AIState#TARGET_FACED}</li>
+     * </ol>
+     * @param commands reference to the list of commands returned to the game loop
+     */
     private void prepareAim(ArrayList<String> commands) {
         updateCurrentFigure();
 
@@ -233,7 +289,7 @@ public class SimpleAI extends ArtificialIntelligence {
             chooseEnemy(0);
             boolean goingLeft = closestEnemyPosition.getX() < currentFigurePosition.getX();
             System.out.println("going left? " + goingLeft);
-            Point2D newGoToPos = currentFigurePosition.subtract(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2); // TODO IMPORTANT rename or change var
+            Point2D newGoToPos = currentFigurePosition.subtract(Figure.NORMED_OBJECT_SIZE / 2, Figure.NORMED_OBJECT_SIZE / 2);
             Point2D goToPos = null;
             for (int j = 0; j < 2 && newGoToPos != null && !terrain.standingOnLiquid(newGoToPos) && terrain.standingOnGround(newGoToPos)
                     && !facingWall(newGoToPos, goingLeft) && (newGoToPos.distance(closestEnemyPosition) > 150 || firstHittingFriend || hittingNearbyTerrain); j++) {
@@ -356,18 +412,13 @@ public class SimpleAI extends ArtificialIntelligence {
         }
     }
 
+    /**
+     * Calculates the vector between {@link #currentFigure} and the projectile spawn point when directly aiming at {@link #closestEnemy}.
+     * @return vector between current figure's center and projectile spawn point when crosshair points at chosen enemy
+     */
     private Point2D getCrosshairOffset() {
         return new Point2D((closestEnemyPosition.getX() < currentFigurePosition.getX() ? -1 : 1) * (Math.cos(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE - PROJECTILE_WIDTH/2),
                 (closestEnemyPosition.getY() < currentFigurePosition.getY() ? -1 : 1) * (Math.sin(Math.toRadians(angleToEnemy)) * Figure.NORMED_OBJECT_SIZE - PROJECTILE_WIDTH/2));
-    }
-
-    private boolean facingWall(Point2D pos, boolean left) {
-        try {
-            terrain.getPositionForDirection(pos, new Point2D((left ? -1 : 1) * Figure.NORMED_OBJECT_SIZE, 0), new Rectangle2D(pos.getX(), pos.getY(), Figure.NORMED_OBJECT_SIZE, Figure.NORMED_OBJECT_SIZE), true, true, false, false);
-            return false;
-        } catch(CollisionException e) {
-            return true;
-        }
     }
 
 }

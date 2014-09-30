@@ -1,7 +1,8 @@
 package de.hhu.propra.team61.artificialIntelligence;
 
 /**
- * Created by markus on 29.08.14. TODO IMPORTANT
+ * Types of AIs available.
+ * NULL means that there is no AI, ie. a human being controls the figures.
  */
 public enum AIType {
     NULL(0),
