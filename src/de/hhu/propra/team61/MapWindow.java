@@ -201,8 +201,17 @@ public class MapWindow extends Application implements Networkable {
             teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names"), i));
         }
 
-        for(int i=1; i<teams.size(); i++) {
-            teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings)); // TODO IMPORTANT config
+        for(int i=0; i<teams.size(); i++) {
+            switch(AIType.fromInteger(teamsArray.getJSONObject(i).getInt("aiType", AIType.NULL.getValue()))) {
+                case NULL:
+                    break;
+                case SIMPLE:
+                    teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings));
+                    break;
+                case DUMMY:
+                default:
+                    System.err.println("AIType " + teamsArray.getJSONObject(i).getInt("aiType", AIType.NULL.getValue()) + " not support here.");
+            }
         }
 
         for(int i=0; i<cratesArray.length(); i++) {
