@@ -27,7 +27,7 @@ import java.io.IOException;
  */
 public class Afrobob extends Application {
 
-    public static String VERSION_NUMBER = "0.2a140803";
+    public static String VERSION_NUMBER = "0.2a141004";
     public static String VERSION_CODENAME = "Bobtail";
 
     /** public, because sceneController needs to change the stage's scene */
