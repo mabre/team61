@@ -420,7 +420,7 @@ public class Figure extends StackPane {
      * @see #sufferDamage(int, boolean)
      */
     public void sufferDamage(final int damage) throws DeathException {
-        sufferDamage(damage, true);
+        sufferDamage(damage, false);
     }
 
     public void setHealth(int hp) {

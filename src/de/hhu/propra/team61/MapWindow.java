@@ -855,7 +855,7 @@ public class MapWindow extends Application implements Networkable {
 
     /**
      * Sums up the hp damage caused since last time calling this function.
-     * Does not include the damage caused at the currently active figure, put its recently suffered damage is poped anyway.
+     * Does not include the damage caused at the currently active figure, but its recently suffered damage is poped anyway.
      * @return hp damage caused since last time calling this function
      * @see de.hhu.propra.team61.objects.Figure#popRecentlySufferedDamage()
      */
