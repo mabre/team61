@@ -1,5 +1,8 @@
 package de.hhu.propra.team61;
 
+import de.hhu.propra.team61.artificialIntelligence.AIType;
+import de.hhu.propra.team61.artificialIntelligence.ArtificialIntelligence;
+import de.hhu.propra.team61.artificialIntelligence.SimpleAI;
 import de.hhu.propra.team61.gui.*;
 import de.hhu.propra.team61.io.GameState;
 import de.hhu.propra.team61.io.Settings;
@@ -41,6 +44,8 @@ import java.io.FileNotFoundException;
 
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static de.hhu.propra.team61.JavaFxUtils.arrayToString;
@@ -70,6 +75,8 @@ public class MapWindow extends Application implements Networkable {
     private static final int MILLISECONDS_BETWEEN_TURNS = 1000;
     /** names the boss can have (chosen randomly) */
     private final static String[] BOSS_NAMES = {"Marʔoz", "ʔock’mar", "Ånsgar", "Apfel"}; // similarity to Vel’Koz, Kog’Maw, a town in Norway, and an evil fruit is purely coincidental
+    private final static int AI_TIME_BETWEEN_KEY_PRESSES = 250;
+    private final static int AI_TIME_BETWEEN_QUICK_KEY_PRESSES = 50;
 
     //JavaFX related variables
     private Scene drawing;
@@ -191,7 +198,20 @@ public class MapWindow extends Application implements Networkable {
         //ToDo: Prepare start inventory of all teams
         for(int i=0; i<teamsArray.length(); i++) {
             ArrayList<Item> inventory = ItemManager.generateInventory(gameSettings.getJSONArray("inventory")); //ToDo add startInventory to settings
-            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names")));
+            teams.add(new Team(terrain.getRandomSpawnPoints(teamsize), inventory, Color.web(teamsArray.getJSONObject(i).getString("color")), teamsArray.getJSONObject(i).getString("name"), teamsArray.getJSONObject(i).getString("figure"), teamsArray.getJSONObject(i).getJSONArray("figure-names"), i));
+        }
+
+        for(int i=0; i<teams.size(); i++) {
+            switch(AIType.fromInteger(teamsArray.getJSONObject(i).getInt("aiType", AIType.NULL.getValue()))) {
+                case NULL:
+                    break;
+                case SIMPLE:
+                    teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings));
+                    break;
+                case DUMMY:
+                default:
+                    System.err.println("AIType " + teamsArray.getJSONObject(i).getInt("aiType", AIType.NULL.getValue()) + " not support here.");
+            }
         }
 
         for(int i=0; i<cratesArray.length(); i++) {
@@ -268,6 +288,7 @@ public class MapWindow extends Application implements Networkable {
      */
     private void fromJson(JSONObject input) {
         // TODO bring the two json formats into line (weapons are team properties)
+        gameSettings = input.getJSONObject("gameSettings");
 
         this.terrain = new Terrain(input.getJSONObject("terrain"));
 
@@ -276,14 +297,24 @@ public class MapWindow extends Application implements Networkable {
             teams.add(new Team(teamsArray.getJSONObject(i)));
         }
 
+        for(int i=0; i<teamsArray.length(); i++) {
+            switch(AIType.fromInteger(teamsArray.getJSONObject(i).getInt("aiType", AIType.NULL.getValue()))) {
+                case NULL:
+                    break;
+                case DUMMY:
+                    teams.get(i).setAI(new ArtificialIntelligence(teams.get(i), teams, terrain, supplyDrops, gameSettings));
+                    break;
+                case SIMPLE:
+                    teams.get(i).setAI(new SimpleAI(teams.get(i), teams, terrain, supplyDrops, gameSettings));
+                    break;
+            }
+        }
+
         supplyDrops = new ArrayList<>();
         JSONArray cratesArray = input.getJSONArray("crates");
         for(int i=0; i<cratesArray.length(); i++) {
             supplyDrops.add(new Crate(cratesArray.getJSONObject(i)));
         }
-
-        gameSettings = input.getJSONObject("gameSettings");
-
         turnCount = input.getInt("turnCount");
         turnTimer.set(input.getInt("turnTimer", MILLISECONDS_BETWEEN_TURNS));
         currentTeam = input.getInt("currentTeam");
@@ -529,6 +560,10 @@ public class MapWindow extends Application implements Networkable {
                 }
             });
             moveObjectsThread.start();
+
+            if(teams.get(currentTeam).hasAI()) {
+                handleAITurn(teams.get(currentTeam).getAI());
+            }
         }
     }
 
@@ -842,6 +877,51 @@ public class MapWindow extends Application implements Networkable {
             Server.send("SET_TURN_TIMER " + turnTimer.get());
             updateTurnTimerLabelText();
         }
+
+        if(teams.get(currentTeam).hasAI()) {
+            handleAITurn(teams.get(currentTeam).getAI());
+        }
+    }
+
+    private void handleAITurn(ArtificialIntelligence ai) {
+        new Thread(() -> { // new thread in order not to block JavaFX thread
+            int aiTeam = currentTeam;
+
+            try {
+                long before = System.currentTimeMillis(), now, sleep;
+
+                while (aiTeam == currentTeam && turnTimer.get() <= 0) {
+                    Thread.sleep(1000); // wait till the freeze between turns is over
+                }
+
+                ArrayList<String> commands;
+                while (turnTimer.get() > 0 && currentTeam == aiTeam && (commands = ai.makeMove()).size() > 0) {
+                    final ArrayList<String> COMMANDS = commands;
+                    for (int i = 0; i < commands.size() && turnTimer.get() > 0 && currentTeam == aiTeam; i++) {
+                        if(!pause) {
+                            final int I = i;
+                            Platform.runLater(() -> handleOnServer("AI " + COMMANDS.get(I)));
+                        } else {
+                            i--;
+                        }
+                        int delay = AI_TIME_BETWEEN_KEY_PRESSES;
+                        if(COMMANDS.get(i).endsWith("Left") || COMMANDS.get(i).endsWith("Right")) {
+                            delay = AI_TIME_BETWEEN_QUICK_KEY_PRESSES;
+                        }
+                        // sleep thread, and assure constant frame rate
+                        now = System.currentTimeMillis();
+                        sleep = Math.max(0, (delay) - (now - before));
+                        Thread.sleep(sleep);
+                        before = System.currentTimeMillis();
+                        // TODO IMPORTANT race condition?
+
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            ai.endTurn();
+        }).start();
     }
 
     private String generateNoHitComment(String name) {
@@ -931,6 +1011,8 @@ public class MapWindow extends Application implements Networkable {
 
         if(moveObjectsThread != null) moveObjectsThread.interrupt();
         if(turnTimerThread != null) turnTimerThread.interrupt();
+
+        pause = false;
 
         GameState.save(this.toJson());
         System.out.println("MapWindow: saved game state");
@@ -1254,6 +1336,12 @@ public class MapWindow extends Application implements Networkable {
 
     @Override
     public void handleOnServer(String command) {
+        boolean commandIsFromAI = false;
+        if (command.startsWith("AI ")) {
+            commandIsFromAI = true;
+            command = extractPart(command, "AI ");
+        }
+
         if (command.startsWith("/kickteam ")) {
             String teamToKick = extractPart(command, "/kickteam ");
             try {
@@ -1280,13 +1368,11 @@ public class MapWindow extends Application implements Networkable {
             return;
         }
 
-        Point2D v = null;
-
         int team = -1;
         try {
             team = Integer.parseInt(command.split(" ", 2)[0]);
         } catch(NumberFormatException e) {
-            System.out.println("handleOnServer: NumberFormatException" + e.getMessage());
+            System.out.println("handleOnServer: NumberFormatException " + e.getMessage());
             return;
         }
         command = command.split(" ", 2)[1];
@@ -1320,6 +1406,11 @@ public class MapWindow extends Application implements Networkable {
 
         if (team != currentTeam && !client.isLocalGame()) {
             System.out.println("The key event " + command + " of team " + team + " has been discarded. Operation not allowed, currentTeam is " + currentTeam);
+            return;
+        }
+
+        if (teams.get(currentTeam).hasAI() && !commandIsFromAI) {
+            System.out.println("The key event " + command + " of team " + team + " has been discarded. Operation not allowed, the team is controlled by an ai");
             return;
         }
 
@@ -1482,6 +1573,14 @@ public class MapWindow extends Application implements Networkable {
                 undoDigitations();
                 server.send("SET_GAME_COMMENT 0 Returning to Baby I");
                 System.out.println("Returning to Baby I");
+                break;
+            case "ai": // makes the basic ai do the current turn
+                ArtificialIntelligence ai = new ArtificialIntelligence(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
+                handleAITurn(ai);
+                break;
+            case "ais": // makes the simple ai do the current turn
+                ArtificialIntelligence ais = new SimpleAI(teams.get(currentTeam), teams, terrain, supplyDrops, gameSettings);
+                handleAITurn(ais);
                 break;
             case "digitate": // calls doDigitations() method
                 doDigitations();

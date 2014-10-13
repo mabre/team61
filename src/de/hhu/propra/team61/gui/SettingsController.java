@@ -51,6 +51,8 @@ public class SettingsController {
     private int numberOfTeams;
     /** contains ChoiceBoxes to choose custom team from, one for each team */
     private ArrayList<ChoiceBox<String>> teams = new ArrayList<>();
+    /** contains AIChoiceBoxes to choose AI Type, one for each team */
+    private ArrayList<AIChoiceBox> teamAIs = new ArrayList<>();
 
     Server server;
     Thread serverThread;
@@ -77,12 +79,16 @@ public class SettingsController {
         ArrayList<String> availableTeams = getTeams();
         for (int i=0; i<4; i++) {
             teams.add(new ChoiceBox<>());
+            teamAIs.add(new AIChoiceBox());
             for (int j=0; j<availableTeams.size(); j++) {
                 teams.get(i).getItems().add(JavaFxUtils.removeExtension(availableTeams.get(j), 5));
             }
             teams.get(i).getSelectionModel().select(i);
             settingGrid.add(teams.get(i), 0, i+2, 3, 1);
+            settingGrid.add(teamAIs.get(i), 1, i+2, 1, 1);
             teams.get(i).setVisible(i<2);
+            teamAIs.get(i).setVisible(i<2);
+
         }
         numberOfTeams = 2;
         cont.getStyleClass().addAll("mainButton", "startButton");
@@ -172,11 +178,12 @@ public class SettingsController {
     }
 
     /**
-     * Removes the last team
+     * Removes the last team by making them invisible
      * @param number number of teams existing before removing one
      */
     private void changeTeams(int number, boolean bool) {
         teams.get(number).setVisible(bool);
+        teamAIs.get(number).setVisible(bool);
     }
 
     /**
@@ -224,16 +231,16 @@ public class SettingsController {
         }
         output.put("inventory", weaponsSettings);
         JSONArray teamsArray = new JSONArray();
-        JSONObject team1 = getJsonForTeam(teams.get(0).getValue());
+        JSONObject team1 = getJsonForTeam(0);
         teamsArray.put(team1);
-        JSONObject team2 = getJsonForTeam(teams.get(1).getValue());
+        JSONObject team2 = getJsonForTeam(1);
         teamsArray.put(team2);
         if (numberOfTeams > 2) {
-            JSONObject team3 = getJsonForTeam(teams.get(2).getValue());
+            JSONObject team3 = getJsonForTeam(2);
             teamsArray.put(team3);
         }
         if (numberOfTeams > 3) {
-            JSONObject team4 = getJsonForTeam(teams.get(3).getValue());
+            JSONObject team4 = getJsonForTeam(3);
             teamsArray.put(team4);
         }
         output.put("teams", teamsArray);
@@ -241,16 +248,18 @@ public class SettingsController {
     }
 
     /**
-     * Gets and saves team-settings from JSON-Object
-     * @param fileName the name of the chosen team (= name of that team's JSON-file)
+     * Gets team settings (name, color, figureType, names of figures, ai type) as JSONObject
+     * @param teamNumber the index of the team in {@link #teams}
      * @return JSON-Object that contains all information about the chosen team
      */
-    private JSONObject getJsonForTeam(String fileName) {
-        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+fileName+".json");
+    private JSONObject getJsonForTeam(int teamNumber) {
+        String teamName = teams.get(teamNumber).getValue();
+        JSONObject teamObject = CustomizeManager.getSavedSettings("teams/"+teamName+".json");
         JSONObject team = new JSONObject();
         team.put("name", teamObject.getString("name"));
         team.put("color", teamObject.getString("color"));
         team.put("figure", teamObject.getString("figure"));
+        team.put("aiType", teamAIs.get(teamNumber).getAIValue().getValue());
         JSONArray figureNames = new JSONArray();
         JSONObject figureNamesObject = teamObject.getJSONObject("figure-names");
         for (int i=0; i<6; i++) {

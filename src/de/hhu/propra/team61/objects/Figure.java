@@ -587,6 +587,10 @@ public class Figure extends StackPane {
         });
     }
 
+    public boolean isDigitated() {
+        return digitated;
+    }
+
     public int getCausedHpDamage() {
         return causedHpDamage;
     }
