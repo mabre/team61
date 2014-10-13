@@ -108,7 +108,7 @@ public class SimpleAI extends ArtificialIntelligence {
     /**
      * Updates {@link #currentFigure}, {@link #currentFigurePosition}, and sets {@link #closestEnemy}, {@link #closestEnemyPosition}, and {@link #distanceToEnemy} to the n-th nearest enemy figure next to {@link #currentFigure}.
      * If n is less than the number of enemies, the nearest enemy is chosen. If no enemy is found, {@link #closestEnemy}
-     * is set to null.
+     * is set to null, and {@link #closestEnemyPosition} is not changed.
      * @param n n-th closest enemy is chosen (counting starts from 0)
      */
     private void chooseEnemy(int n) {
@@ -306,7 +306,7 @@ public class SimpleAI extends ArtificialIntelligence {
 
         useItem(commands);
 
-        if(hittingFriend) {
+        if(hittingFriend || closestEnemy == null) {
             closestEnemy = null;
             angleToEnemy = 0;
             commands.add(ownTeam.getNumber() + " 9");
