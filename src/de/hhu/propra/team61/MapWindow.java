@@ -774,13 +774,11 @@ public class MapWindow extends Application implements Networkable {
             Server.send("END_RAMPAGE " + getFigureId(teams.get(currentTeam).getCurrentFigure()) + " " + causedDamageInTurn);
         }
 
-        if (causedDamageInTurn >= HIGH_DAMAGE_THRESHOLD) {
+        if(causedDamageInTurn >= RAMPAGE_THRESHOLD) {
             server.send("PLAY_SFX highDamage");
-            if(causedDamageInTurn >= RAMPAGE_THRESHOLD) {
-                teams.get(currentTeam).getCurrentFigure().startRampage();
-                Server.send("START_RAMPAGE " + getFigureId(teams.get(currentTeam).getCurrentFigure()));
-                server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
-            }
+            teams.get(currentTeam).getCurrentFigure().startRampage();
+            Server.send("START_RAMPAGE " + getFigureId(teams.get(currentTeam).getCurrentFigure()));
+            server.send("SET_GAME_COMMENT 0 "+teams.get(currentTeam).getCurrentFigure().getName()+" is on a rampage.");
         } else if (causedDamageInTurn == 0 && Math.random() < NO_HIT_COMMENT_PROBABILITY) {
             server.send("SET_GAME_COMMENT 0 " + generateNoHitComment(teams.get(currentTeam).getCurrentFigure().getName())); // TODO class for generating random comments.
         }
@@ -1138,6 +1136,9 @@ public class MapWindow extends Application implements Networkable {
                         //ToDo setRoundTimer down to 5sec
                     } else { //Treatment for "true" Items
                         fieldPane.getChildren().remove(teams.get(currentTeam).getCurrentFigure().getSelectedItem());
+                        if(teams.get(currentTeam).getCurrentFigure().getSelectedItem() instanceof Digiwise) {
+                            Server.send("PLAY_SFX digitation");
+                        }
                     }
                 } catch (NoMunitionException e) {
                     System.out.println("no munition");
