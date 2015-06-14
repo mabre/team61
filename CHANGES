@@ -2,7 +2,7 @@
 
 new features and enhancements:
 * artificial intelligence: In a local game, you can play against simple bots.
-* new level: „Rocky Mountain“ (by tibor) with new background music „The Distance in Between“ by Mindslave
+* new level: “Rocky Mountain” (by tibor) with new background music “The Distance in Between” by Mindslave
 * turn timer: The time for each turn can be limited.
 * rampage: Figures which are on a rampage (ie. caused more than 75 hp damage) get a 30 hp shield and greater resistance against shock waves until their next turn; after the next turn, the figure gets a hp bonus basing upon the caused damage and the shield left.
 * local game: Teams can be removed.
